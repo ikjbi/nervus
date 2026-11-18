@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from nervus import Diagram
@@ -19,3 +21,26 @@ def first_order() -> Diagram:
     d.connect(u, scope.in_port(0))
     d.connect(y, scope.in_port(1))
     return d
+
+
+_EXIT_STATUS = 0
+
+
+def pytest_sessionfinish(session, exitstatus) -> None:  # type: ignore[no-untyped-def]
+    global _EXIT_STATUS
+    _EXIT_STATUS = int(exitstatus)
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_unconfigure(config) -> None:  # type: ignore[no-untyped-def]
+    """In CI, skip Python's interpreter teardown once results (and coverage) are reported.
+
+    PySide6 can crash while Python deallocates its objects at exit ("none_dealloc"), which turns a green run
+    red. The exit status of the test session is preserved.
+    """
+    if os.environ.get("NERVUS_HARD_EXIT") == "1":
+        import sys
+
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(_EXIT_STATUS)

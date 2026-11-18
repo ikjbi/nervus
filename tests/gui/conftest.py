@@ -36,3 +36,18 @@ def window(qtbot, qsettings):  # type: ignore[no-untyped-def]
     w.simulation.wait()
     w.close()
     w.deleteLater()
+
+
+def pytest_sessionfinish(session, exitstatus) -> None:  # type: ignore[no-untyped-def]
+    """Delete all Qt windows before Python shuts down (avoids PySide6 teardown crashes)."""
+    import gc
+
+    from PySide6.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if app is not None:
+        for w in QApplication.topLevelWidgets():
+            w.close()
+            w.deleteLater()
+        app.processEvents()
+    gc.collect()

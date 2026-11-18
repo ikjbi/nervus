@@ -33,4 +33,5 @@ jobs:
       - name: Test
         env:
           QT_QPA_PLATFORM: offscreen
-        run: uv run pytest --cov=nervus
+          NERVUS_HARD_EXIT: "1"
+        run: uv run pytest --cov=nervus --cov-report=term
