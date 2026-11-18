@@ -1,0 +1,123 @@
+"""Simulation results."""
+
+from __future__ import annotations
+
+import csv
+from collections.abc import Iterator
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
+from nervus.core.types import Array
+
+
+@dataclass
+class SimStats:
+    solver: str
+    step: float | None
+    n_points: int
+    n_major_steps: int
+    wall_time: float
+    stopped_early: bool = False
+
+
+@dataclass
+class SimResult:
+    """Logged signals of a simulation run.
+
+    Every block output is logged. Look signals up by block name (output port 0) or ``"block:port"``::
+
+        res["y"]          # output 0 of block 'y'; shape (N,) if scalar, (N, width) if vector
+        res["mux:1"]      # output 1 of block 'mux'
+        res.inputs("scope")  # list of the signals going into block 'scope'
+        res.t             # time vector, shape (N,)
+    """
+
+    t: Array
+    signals: dict[str, Array]
+    """Raw logged data, keyed ``"block:port"``, each of shape (N, width)."""
+    input_keys: dict[str, list[str]] = field(default_factory=dict)
+    """For each block, the signal keys driving its inputs."""
+    aliases: dict[str, str] = field(default_factory=dict)
+    """Extra names (e.g. To Workspace variable names) mapped to signal keys."""
+    stats: SimStats | None = None
+
+    def _key(self, name: str) -> str:
+        if name in self.signals:
+            return name
+        if name in self.aliases:
+            return self.aliases[name]
+        if f"{name}:0" in self.signals:
+            return f"{name}:0"
+        raise KeyError(f"no signal named {name!r}; available: {', '.join(self.names())}")
+
+    def __getitem__(self, name: str) -> Array:
+        data = self.signals[self._key(name)]
+        return data[:, 0] if data.shape[1] == 1 else data
+
+    def __contains__(self, name: object) -> bool:
+        try:
+            self._key(str(name))
+        except KeyError:
+            return False
+        return True
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.signals)
+
+    def signal(self, block: str, port: int = 0) -> Array:
+        return self[f"{block}:{port}"]
+
+    def inputs(self, block: str) -> list[Array]:
+        """The signals driving each input of ``block`` (useful for Scope blocks)."""
+        try:
+            keys = self.input_keys[block]
+        except KeyError:
+            raise KeyError(f"no block named {block!r}") from None
+        return [self[k] for k in keys]
+
+    def names(self) -> list[str]:
+        """Friendly signal names: ``"block"`` for single-output blocks, ``"block:port"`` otherwise."""
+        counts: dict[str, int] = {}
+        for k in self.signals:
+            b = k.rsplit(":", 1)[0]
+            counts[b] = counts.get(b, 0) + 1
+        return [k.rsplit(":", 1)[0] if counts[k.rsplit(":", 1)[0]] == 1 else k for k in self.signals]
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {"t": self.t}
+        for name in self.names():
+            out[name] = self[name]
+        return out
+
+    def to_csv(self, path: str | Path) -> None:
+        """Write all signals to a CSV file; vector signals get one column per element."""
+        headers = ["t"]
+        columns: list[Array] = [self.t]
+        for name in self.names():
+            data = self.signals[self._key(name)]
+            if data.shape[1] == 1:
+                headers.append(name)
+            else:
+                headers.extend(f"{name}[{j}]" for j in range(data.shape[1]))
+            columns.extend(data.T)
+        with open(path, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(headers)
+            w.writerows(np.column_stack(columns).tolist())
+
+    def to_dataframe(self) -> Any:
+        """Return a :class:`pandas.DataFrame` indexed by time (requires pandas)."""
+        import pandas as pd
+
+        cols: dict[str, Array] = {}
+        for name in self.names():
+            data = self.signals[self._key(name)]
+            if data.shape[1] == 1:
+                cols[name] = data[:, 0]
+            else:
+                for j in range(data.shape[1]):
+                    cols[f"{name}[{j}]"] = data[:, j]
+        return pd.DataFrame(cols, index=pd.Index(self.t, name="t"))

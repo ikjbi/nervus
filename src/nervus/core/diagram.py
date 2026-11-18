@@ -1,0 +1,223 @@
+"""The :class:`Diagram`: a set of named blocks and the connections between their ports."""
+
+from __future__ import annotations
+
+import re
+from collections.abc import Iterator
+from dataclasses import dataclass
+from enum import StrEnum
+from itertools import pairwise
+from typing import Any, TypeVar
+
+from nervus.core.block import Block, InPort, OutPort
+from nervus.core.errors import ModelError
+
+B = TypeVar("B", bound=Block)
+
+SourceLike = Block | OutPort | tuple[Block, int]
+DestLike = Block | InPort | tuple[Block, int]
+
+
+@dataclass(frozen=True, eq=False)
+class Connection:
+    """A signal line from an output port to an input port."""
+
+    src: Block
+    src_port: int
+    dst: Block
+    dst_port: int
+
+    def __repr__(self) -> str:
+        return f"<Connection {self.src.name}[{self.src_port}] -> {self.dst.name}[{self.dst_port}]>"
+
+
+class Severity(StrEnum):
+    ERROR = "error"
+    WARNING = "warning"
+
+
+@dataclass(frozen=True)
+class Issue:
+    """A problem found by :meth:`Diagram.check`."""
+
+    severity: Severity
+    message: str
+    blocks: tuple[str, ...] = ()
+
+
+class Diagram:
+    """A block diagram.
+
+    Blocks have unique names inside a diagram. Each input port is driven by at most one connection;
+    an output port can drive any number of inputs (fan-out).
+    """
+
+    def __init__(self, name: str = "untitled") -> None:
+        self.name = name
+        self.meta: dict[str, Any] = {}
+        self._blocks: dict[str, Block] = {}
+        self._connections: list[Connection] = []
+
+    # ------------------------------------------------------------------ blocks
+
+    @property
+    def blocks(self) -> list[Block]:
+        return list(self._blocks.values())
+
+    def __iter__(self) -> Iterator[Block]:
+        return iter(list(self._blocks.values()))
+
+    def __len__(self) -> int:
+        return len(self._blocks)
+
+    def __contains__(self, item: object) -> bool:
+        if isinstance(item, str):
+            return item in self._blocks
+        return isinstance(item, Block) and self._blocks.get(item.name) is item
+
+    def block(self, name: str) -> Block:
+        try:
+            return self._blocks[name]
+        except KeyError:
+            raise KeyError(f"no block named {name!r} in diagram {self.name!r}") from None
+
+    def add(self, block: B, name: str | None = None) -> B:
+        """Add ``block`` to the diagram and return it. A unique name is generated if none is given."""
+        if block.diagram is not None:
+            raise ModelError(f"block {block.name!r} already belongs to a diagram", (block.name,))
+        if name is not None:
+            block.name = name
+        if not block.name:
+            block.name = self.unique_name(block.label or type(block).__name__)
+        if block.name in self._blocks:
+            raise ModelError(f"a block named {block.name!r} already exists", (block.name,))
+        self._blocks[block.name] = block
+        block.diagram = self
+        return block
+
+    def unique_name(self, base: str) -> str:
+        """Return ``base`` or ``base1``, ``base2``, ... whichever is not taken yet."""
+        if base not in self._blocks:
+            return base
+        stem = re.sub(r"\d+$", "", base) or base
+        i = 1
+        while f"{stem}{i}" in self._blocks:
+            i += 1
+        return f"{stem}{i}"
+
+    def remove(self, block: Block | str) -> list[Connection]:
+        """Remove a block and every connection touching it. Returns the removed connections."""
+        b = self._resolve(block)
+        removed = [c for c in self._connections if c.src is b or c.dst is b]
+        self._connections = [c for c in self._connections if c.src is not b and c.dst is not b]
+        del self._blocks[b.name]
+        b.diagram = None
+        return removed
+
+    def rename(self, block: Block | str, new_name: str) -> None:
+        b = self._resolve(block)
+        if not new_name:
+            raise ModelError("block name cannot be empty", (b.name,))
+        if new_name == b.name:
+            return
+        if new_name in self._blocks:
+            raise ModelError(f"a block named {new_name!r} already exists", (b.name,))
+        # Rebuild the dict to keep insertion order.
+        self._blocks = {(new_name if k == b.name else k): v for k, v in self._blocks.items()}
+        b.name = new_name
+
+    def _resolve(self, block: Block | str) -> Block:
+        b = self.block(block) if isinstance(block, str) else block
+        if b not in self:
+            raise ModelError(f"block {b.name!r} is not part of diagram {self.name!r}", (b.name,))
+        return b
+
+    # ------------------------------------------------------------------ connections
+
+    @property
+    def connections(self) -> list[Connection]:
+        return list(self._connections)
+
+    def connect(self, src: SourceLike, dst: DestLike) -> Connection:
+        """Connect an output port to an input port.
+
+        ``src`` may be a block (meaning output port 0), an :class:`OutPort` or a ``(block, index)`` tuple;
+        likewise ``dst`` for input ports.
+        """
+        if isinstance(src, Block):
+            src = src.out_port(0)
+        elif isinstance(src, tuple):
+            src = src[0].out_port(src[1])
+        if isinstance(dst, Block):
+            dst = dst.in_port(0)
+        elif isinstance(dst, tuple):
+            dst = dst[0].in_port(dst[1])
+        for b in (src.block, dst.block):
+            if b not in self:
+                raise ModelError(f"block {b.name!r} is not part of diagram {self.name!r}", (b.name,))
+        existing = self.driver(dst.block, dst.index)
+        if existing is not None:
+            raise ModelError(
+                f"input {dst.index} of {dst.block.name!r} is already driven by {existing.src.name!r}",
+                (dst.block.name,),
+            )
+        conn = Connection(src.block, src.index, dst.block, dst.index)
+        self._connections.append(conn)
+        return conn
+
+    def chain(self, *blocks: Block) -> list[Connection]:
+        """Connect output 0 of each block to input 0 of the next."""
+        return [self.connect(a, b) for a, b in pairwise(blocks)]
+
+    def disconnect(self, conn: Connection) -> None:
+        self._connections.remove(conn)
+
+    def driver(self, block: Block, in_port: int) -> Connection | None:
+        """The connection driving ``block``'s input ``in_port``, if any."""
+        for c in self._connections:
+            if c.dst is block and c.dst_port == in_port:
+                return c
+        return None
+
+    def fanout(self, block: Block, out_port: int) -> list[Connection]:
+        return [c for c in self._connections if c.src is block and c.src_port == out_port]
+
+    # ------------------------------------------------------------------ checks
+
+    def check(self) -> list[Issue]:
+        """Find structural problems without compiling the model."""
+        issues: list[Issue] = []
+        for c in self._connections:
+            if c.src_port >= c.src.num_outputs():
+                issues.append(
+                    Issue(
+                        Severity.ERROR,
+                        f"{c.src.name!r} has no output port {c.src_port} (connection is dangling)",
+                        (c.src.name, c.dst.name),
+                    )
+                )
+            if c.dst_port >= c.dst.num_inputs():
+                issues.append(
+                    Issue(
+                        Severity.ERROR,
+                        f"{c.dst.name!r} has no input port {c.dst_port} (connection is dangling)",
+                        (c.src.name, c.dst.name),
+                    )
+                )
+        for b in self._blocks.values():
+            for i in range(b.num_inputs()):
+                if self.driver(b, i) is None:
+                    issues.append(Issue(Severity.ERROR, f"input {i} of {b.name!r} is not connected", (b.name,)))
+            for o in range(b.num_outputs()):
+                if not self.fanout(b, o):
+                    issues.append(
+                        Issue(
+                            Severity.WARNING,
+                            f"output {o} of {b.name!r} is not connected",
+                            (b.name,),
+                        )
+                    )
+        return issues
+
+    def __repr__(self) -> str:
+        return f"<Diagram {self.name!r}: {len(self._blocks)} blocks, {len(self._connections)} connections>"

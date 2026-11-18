@@ -51,36 +51,37 @@ tests/
 ---
 
 ## Phase 0 – Project setup
-- [ ] Choose the project name, then rename the folder and create the GitHub repo `ikjbi/nervus`
-- [ ] `git init`, `.gitignore`, MIT `LICENSE`, first commit and push
-- [ ] `pyproject.toml` (src layout, Python ≥ 3.11) with `uv` for environments
-- [ ] Tooling: `ruff` (lint and format), `mypy`, `pytest`, `pre-commit`
-- [ ] GitHub Actions CI: lint, type-check and tests on every push and PR
-- [ ] `README.md` (what it is, install, quick start), `CONTRIBUTING.md`, `CHANGELOG.md`
-- [ ] Docs skeleton with MkDocs Material, published to GitHub Pages
+- [x] Choose the project name (**Nervus**), then rename the folder and create the private GitHub repo `ikjbi/nervus`
+- [x] `git init`, `.gitignore`, MIT `LICENSE`, first commit and push
+- [x] `pyproject.toml` (src layout, Python ≥ 3.11) with `uv` for environments
+- [x] Tooling: `ruff` (lint and format), `mypy`, `pytest`, `pre-commit`
+- [x] GitHub Actions CI: lint, type-check and tests on every push and PR
+- [x] `README.md` (what it is, install, quick start), `CONTRIBUTING.md`, `CHANGELOG.md`
+- [x] Docs skeleton with MkDocs Material
+- [ ] Publish the docs to GitHub Pages (once the repo is public, or on a paid plan)
 
 ## Phase 1 – Core simulation engine (headless)
-- [ ] `Block` base class: input and output ports, parameters, states, `outputs()`, `update()` (discrete),
+- [x] `Block` base class: input and output ports, parameters, states, `outputs()`, `update()` (discrete),
       `derivatives()` (continuous), direct-feedthrough flag, sample time
-- [ ] Signals: scalar and vector (NumPy), with basic data types (`double` first)
-- [ ] `Diagram`: blocks plus connections, with validation (unconnected ports, fan-in, type and size mismatch)
-- [ ] Execution ordering: topological sort over direct-feedthrough dependencies
-- [ ] Algebraic loop detection, with clear error messages
-- [ ] Fixed-step solvers: forward Euler, RK4
-- [ ] Variable-step solver via `scipy.integrate.solve_ivp` (RK45 / LSODA)
-- [ ] Sample times: continuous, discrete (period/offset), inherited, constant; multi-rate scheduling
-- [ ] Simulation results: logged signals, time vector, export to NumPy / pandas / CSV
-- [ ] Python API: build and run a diagram entirely in code
+- [x] Signals: scalar and vector (NumPy), with basic data types (`double` first)
+- [x] `Diagram`: blocks plus connections, with validation (unconnected ports, fan-in, type and size mismatch)
+- [x] Execution ordering: topological sort over direct-feedthrough dependencies
+- [x] Algebraic loop detection, with clear error messages
+- [x] Fixed-step solvers: forward Euler, RK4
+- [x] Variable-step solver via `scipy.integrate.solve_ivp` (RK45 / LSODA)
+- [x] Sample times: continuous, discrete (period/offset), inherited, constant; multi-rate scheduling
+- [x] Simulation results: logged signals, time vector, export to NumPy / pandas / CSV
+- [x] Python API: build and run a diagram entirely in code
 
 ## Phase 2 – Core block library (~15 blocks)
-- [ ] Sources: Constant, Step, Ramp, Sine, Pulse, Clock, From Workspace (array or CSV)
-- [ ] Math: Gain, Sum (configurable signs), Product, Abs, Saturation, Math Function
-- [ ] Continuous: Integrator (with limits and reset), Derivative, Transfer Function, State-Space
-- [ ] Discrete: Unit Delay, Zero-Order Hold, Discrete Integrator
-- [ ] Control: PID (continuous and discrete, anti-windup)
-- [ ] Sinks: Scope (logging), To Workspace, Terminator
-- [ ] Routing: Mux, Demux, Switch
-- [ ] Python Function block (user-defined code, the equivalent of MATLAB Function)
+- [x] Sources: Constant, Step, Ramp, Sine, Pulse, Clock, From Workspace (array or CSV)
+- [x] Math: Gain, Sum (configurable signs), Product, Abs, Saturation, Math Function
+- [x] Continuous: Integrator (with limits and reset), Derivative, Transfer Function, State-Space
+- [x] Discrete: Unit Delay, Zero-Order Hold, Discrete Integrator
+- [x] Control: PID (continuous and discrete; anti-windup by clamping or back-calculation)
+- [x] Sinks: Scope (logging), To Workspace, Terminator
+- [x] Routing: Mux, Demux, Switch
+- [x] Python Function block (user-defined code, the equivalent of MATLAB Function)
 
 ## Phase 3 – Model file format
 - [ ] JSON schema: blocks, parameters, positions, connections, solver settings, schema version
@@ -120,7 +121,8 @@ tests/
 - [ ] Lookup tables: 1-D, 2-D and n-D with interpolation and extrapolation modes. These are critical for ECU
       calibration maps (fuel, ignition, boost)
 - [ ] Logic and relational blocks: AND/OR/NOT, compare, relay (hysteresis), rate limiter, dead zone
-- [ ] Zero-crossing and event detection for discontinuities
+- [ ] Zero-crossing and event detection for discontinuities (Saturation, Switch, Abs, Integrator limits,
+      PID clamping). Without it, clamping in a continuous PID chatters under variable-step solvers
 - [ ] Buses (named, structured signals)
 - [ ] Goto/From, data stores
 - [ ] Model workspace / parameter files (calibration data separate from the model)
@@ -194,3 +196,8 @@ roads. Production ECU software needs ISO 26262 processes, qualified tools and ce
 | 2026-11-18 | MIT license                                                            |
 | 2026-11-18 | Headless engine before GUI; JSON model files                           |
 | 2026-11-18 | Long-term goal: C code generation for car/truck ECUs                   |
+| 2026-11-18 | Blocks are pure functions (outputs/derivatives/update); simulator owns all state |
+| 2026-11-18 | Discrete block outputs are computed only at sample hits and held in between |
+| 2026-11-18 | Variable-step solvers stop exactly at block breakpoints (Step, Pulse, ...) |
+| 2026-11-18 | Frequencies in rad/s and most defaults follow Simulink, to ease moving between the two |
+| 2026-11-18 | CI runs on Ubuntu only while the repo is private, to save Actions minutes |
