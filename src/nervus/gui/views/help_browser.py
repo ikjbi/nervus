@@ -48,6 +48,7 @@ HELP_PAGES = [
     ("getting_started", "Getting started"),
     ("editor", "Using the editor"),
     ("simulation", "Running simulations"),
+    ("workspace", "Workspace and calibrations"),
     ("shortcuts", "Keyboard shortcuts"),
 ]
 

@@ -11,7 +11,7 @@ import ast
 import math
 import operator
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 
 _NAMES = {"pi": math.pi, "e": math.e, "inf": math.inf, "Inf": math.inf, "nan": math.nan, "true": 1.0, "false": 0.0}
@@ -51,20 +51,41 @@ def _matlab_to_python(text: str) -> str:
     return py_rows[0] if py_rows else "[]"
 
 
-def _eval(node: ast.AST) -> Any:
+class UnknownNameError(ValueError):
+    """An expression refers to names that are not defined (e.g. workspace variables not available)."""
+
+    def __init__(self, names: set[str]) -> None:
+        super().__init__("unknown variable" + ("s " if len(names) > 1 else " ") + ", ".join(sorted(names)))
+        self.names = names
+
+
+def names_in(text: str) -> set[str]:
+    """Variable names used by an expression (excluding built-in constants and functions)."""
+    try:
+        tree = ast.parse(_matlab_to_python(text.strip()), mode="eval")
+    except SyntaxError:
+        return set()
+    called = {n.func.id for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+    return {n.id for n in ast.walk(tree) if isinstance(n, ast.Name) and n.id not in _NAMES and n.id not in called}
+
+
+def _eval(node: ast.AST, names: Mapping[str, Any] | None = None) -> Any:
+    names = names or {}
     if isinstance(node, ast.Expression):
-        return _eval(node.body)
+        return _eval(node.body, names)
     if isinstance(node, ast.Constant) and isinstance(node.value, int | float) and not isinstance(node.value, bool):
         return float(node.value)
+    if isinstance(node, ast.Name) and node.id in names:
+        return _as_operand(names[node.id])
     if isinstance(node, ast.Name) and node.id in _NAMES:
         return _NAMES[node.id]
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub | ast.UAdd):
-        v = _eval(node.operand)
+        v = _eval(node.operand, names)
         return -v if isinstance(node.op, ast.USub) else v
     if isinstance(node, ast.BinOp) and type(node.op) in _BINOPS:
-        return _BINOPS[type(node.op)](_eval(node.left), _eval(node.right))
+        return _BINOPS[type(node.op)](_eval(node.left, names), _eval(node.right, names))
     if isinstance(node, ast.List | ast.Tuple):
-        return [_eval(e) for e in node.elts]
+        return [_eval(e, names) for e in node.elts]
     if (
         isinstance(node, ast.Call)
         and isinstance(node.func, ast.Name)
@@ -72,12 +93,33 @@ def _eval(node: ast.AST) -> Any:
         and len(node.args) == 1
         and not node.keywords
     ):
-        return _FUNCS[node.func.id](_eval(node.args[0]))
+        return _FUNCS[node.func.id](_eval(node.args[0], names))
+    if isinstance(node, ast.Subscript):
+        import numpy as np
+
+        base = np.asarray(_eval(node.value, names), dtype=float)
+        index = _eval(node.slice, names)
+        idx = tuple(int(i) for i in index) if isinstance(index, list) else int(index)
+        return base[idx].tolist() if isinstance(base[idx], np.ndarray) else float(base[idx])
     raise ValueError(f"unsupported expression: {ast.unparse(node)}")
 
 
-def parse_value(text: str) -> Any:
-    """Parse ``text`` into a float or (nested) list of floats. Raises :class:`ValueError` if invalid."""
+def _as_operand(value: Any) -> Any:
+    import numpy as np
+
+    if isinstance(value, list | tuple):
+        return np.asarray(value, dtype=float)
+    if isinstance(value, np.ndarray) and value.ndim == 0:
+        return float(value)
+    return value
+
+
+def parse_value(text: str, names: Mapping[str, Any] | None = None) -> Any:
+    """Parse ``text`` into a float, a (nested) list of floats or an array.
+
+    ``names`` maps variable names (e.g. workspace variables) to values. Raises :class:`UnknownNameError` if the
+    expression uses names that are not defined, and :class:`ValueError` for any other problem.
+    """
     text = text.strip()
     if not text:
         raise ValueError("value is empty")
@@ -85,8 +127,11 @@ def parse_value(text: str) -> Any:
         tree = ast.parse(_matlab_to_python(text), mode="eval")
     except SyntaxError as exc:
         raise ValueError(f"cannot parse {text!r}") from exc
+    missing = names_in(text) - set(names or {})
+    if missing:
+        raise UnknownNameError(missing)
     try:
-        return _eval(tree)
+        return _eval(tree, names)
     except ZeroDivisionError as exc:
         raise ValueError("division by zero") from exc
 

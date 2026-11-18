@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from nervus.core import Block, Param, ParamKind
+from nervus.core.block import EXPRESSION_KINDS
 from nervus.core.expressions import format_value, parse_value
 from nervus.gui.controllers.editor_controller import EditorController
 from nervus.gui.models.diagram_model import DiagramModel
@@ -148,7 +149,7 @@ class PropertyPanel(QWidget):
         self._editors["__name__"] = name_edit
 
         for p in b.PARAMS:
-            editor = self._editor_for(p, b.params[p.name])
+            editor = self._editor_for(p, b.param_source(p.name))
             label = QLabel(p.name + (f" [{p.unit}]" if p.unit else ""))
             label.setToolTip(p.description)
             editor.setToolTip(p.description)
@@ -189,9 +190,9 @@ class PropertyPanel(QWidget):
             box.addWidget(edit)
             box.addWidget(apply, 0, Qt.AlignmentFlag.AlignRight)
             return host
-        line = QLineEdit(str(value) if p.kind is ParamKind.STR else format_value(value))
+        line = QLineEdit(value if isinstance(value, str) else format_value(value))
         if p.kind is ParamKind.ARRAY:
-            line.setPlaceholderText("e.g. 2, [1 2 3], [1 0; 0 1], 2*pi")
+            line.setPlaceholderText("e.g. 2, [1 2 3], [1 0; 0 1], 2*pi, Kp")
         if p.kind is ParamKind.SAMPLE_TIME:
             line.setPlaceholderText("-1 inherit · 0 continuous · T or [T, offset]")
         line.editingFinished.connect(lambda name=p.name, le=line: self._apply_text(name, le))
@@ -209,11 +210,14 @@ class PropertyPanel(QWidget):
         if self._updating or self.block is None:
             return
         p = self.block.param_spec(name)
-        try:
-            value = _parse(p, edit.text())
-        except ValueError as exc:
-            self._show_error(edit, f"{name}: {exc}")
-            return
+        if p.kind in EXPRESSION_KINDS:
+            value: Any = edit.text().strip()  # a literal or a workspace expression; the block decides
+        else:
+            try:
+                value = _parse(p, edit.text())
+            except ValueError as exc:
+                self._show_error(edit, f"{name}: {exc}")
+                return
         if self.controller.set_params(self.block, {name: value}):
             self._clear_error(edit)
         else:

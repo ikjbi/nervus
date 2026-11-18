@@ -1,6 +1,6 @@
 {
   "format": "nervus-model",
-  "schema_version": 1,
+  "schema_version": 2,
   "name": "throttle_pi",
   "meta": {},
   "settings": {
@@ -12,6 +12,42 @@
     "rtol": 1e-06,
     "atol": 1e-08
   },
+  "workspace": [
+    {
+      "name": "Kp",
+      "value": 1.5,
+      "description": "Proportional gain",
+      "unit": "%/°",
+      "min": 0.0
+    },
+    {
+      "name": "Ki",
+      "value": 40.0,
+      "description": "Integral gain",
+      "unit": "%/(°·s)",
+      "min": 0.0
+    },
+    {
+      "name": "Ts",
+      "value": 0.01,
+      "description": "ECU task period",
+      "unit": "s",
+      "min": 0.001
+    },
+    {
+      "name": "tau",
+      "value": 0.05,
+      "description": "Actuator time constant",
+      "unit": "s",
+      "min": 0.0
+    },
+    {
+      "name": "k_act",
+      "value": 0.9,
+      "description": "Actuator gain",
+      "unit": "°/%"
+    }
+  ],
   "blocks": [
     {
       "name": "target_angle",
@@ -42,7 +78,7 @@
       "name": "tps_sample",
       "type": "discrete.zero_order_hold",
       "params": {
-        "sample_time": 0.01
+        "sample_time": "Ts"
       },
       "meta": {
         "position": [
@@ -68,8 +104,8 @@
       "name": "throttle_pi",
       "type": "control.discrete_pid",
       "params": {
-        "P": 1.5,
-        "I": 40.0,
+        "P": "Kp",
+        "I": "Ki",
         "D": 0.0,
         "N": 100.0,
         "initial_integrator": 0.0,
@@ -77,7 +113,7 @@
         "lower": 0.0,
         "anti_windup": "clamping",
         "Kb": 1.0,
-        "sample_time": 0.01
+        "sample_time": "Ts"
       },
       "meta": {
         "position": [
@@ -90,7 +126,7 @@
       "name": "deg_per_pct",
       "type": "math.gain",
       "params": {
-        "gain": 0.9,
+        "gain": "k_act",
         "multiplication": "elementwise"
       },
       "meta": {
@@ -117,7 +153,7 @@
       "name": "1/tau",
       "type": "math.gain",
       "params": {
-        "gain": 20.0,
+        "gain": "1/tau",
         "multiplication": "elementwise"
       },
       "meta": {

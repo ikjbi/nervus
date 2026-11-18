@@ -7,6 +7,7 @@
 | **Library** (left) | All blocks, grouped by category. Type in the search box to filter. Drag a block onto the canvas or double-click it. Hover for a short description. |
 | **Canvas** (centre) | The diagram. |
 | **Properties** (right) | Parameters of the selected block. Press **?** for the block's help. |
+| **Model Workspace** (bottom, tab) | Named parameters that blocks can use. See *Workspace and calibrations*. |
 | **Diagnostics** (bottom) | Problems in the model, such as unconnected inputs or algebraic loops. Click an entry to select the blocks involved. |
 
 Panels can be moved, closed and reopened from the **View** menu.
@@ -39,6 +40,7 @@ Numeric fields accept:
 | `2*pi`, `1/0.05`, `sqrt(2)` | arithmetic; `pi`, `e`, `inf` are known |
 | `[1 2 3]` or `[1, 2, 3]` | vectors |
 | `[1 2; 3 4]` | matrices (rows separated by `;`, as in MATLAB) |
+| `Kp`, `1/tau`, `2*Kp` | workspace variables and expressions of them |
 
 Press Enter or leave the field to apply. If a value is invalid the field turns red and the old value is
 kept.

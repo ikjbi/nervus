@@ -32,6 +32,7 @@ from nervus.gui.views.library import LibraryBrowser
 from nervus.gui.views.properties import PropertyPanel
 from nervus.gui.views.scope_window import ScopeWindow
 from nervus.gui.views.settings_dialog import SettingsDialog
+from nervus.gui.views.workspace_panel import WorkspacePanel
 from nervus.io import FILE_EXTENSION
 
 FILE_FILTER = f"Nervus models (*{FILE_EXTENSION});;All files (*)"
@@ -55,6 +56,7 @@ class MainWindow(QMainWindow):
         self.library = LibraryBrowser()
         self.properties = PropertyPanel(self.diagram_model, self.editor)
         self.diagnostics = DiagnosticsPanel(self.diagram_model, self.sim_model)
+        self.workspace_panel = WorkspacePanel(self.diagram_model, self.editor)
         self.scopes: dict[int, ScopeWindow] = {}
         self._help: HelpBrowser | None = None
 
@@ -89,6 +91,11 @@ class MainWindow(QMainWindow):
         self.diagnostics_dock = self._dock(
             "Diagnostics", self.diagnostics, Qt.DockWidgetArea.BottomDockWidgetArea, "diagnostics"
         )
+        self.workspace_dock = self._dock(
+            "Model Workspace", self.workspace_panel, Qt.DockWidgetArea.BottomDockWidgetArea, "workspace"
+        )
+        self.tabifyDockWidget(self.diagnostics_dock, self.workspace_dock)
+        self.diagnostics_dock.raise_()
         self.resizeDocks([self.library_dock, self.properties_dock], [230, 300], Qt.Orientation.Horizontal)
         self.resizeDocks([self.diagnostics_dock], [130], Qt.Orientation.Vertical)
 
@@ -167,7 +174,7 @@ class MainWindow(QMainWindow):
         m = mb.addMenu("&View")
         m.addActions([self.act_zoom_in, self.act_zoom_out, self.act_fit])
         m.addSeparator()
-        for dock in (self.library_dock, self.properties_dock, self.diagnostics_dock):
+        for dock in (self.library_dock, self.properties_dock, self.diagnostics_dock, self.workspace_dock):
             m.addAction(dock.toggleViewAction())
         m.addSeparator()
         theme_menu = m.addMenu("&Theme")
@@ -250,6 +257,7 @@ class MainWindow(QMainWindow):
         self.diagram_model.diagramReset.connect(self._on_reset)
         self.files.errorOccurred.connect(lambda msg: QMessageBox.warning(self, "Nervus", msg))
         self.files.recentFilesChanged.connect(self._rebuild_recent)
+        self.workspace_panel.statusMessage.connect(self.status_label.setText)
         self.sim_model.stateChanged.connect(self._sim_state_changed)
         self.sim_model.progressChanged.connect(lambda f: self.progress.setValue(int(f * 1000)))
         self.view.zoomChanged.connect(lambda z: self.zoom_label.setText(f"{z * 100:.0f}%"))

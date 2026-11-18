@@ -8,8 +8,10 @@ A model file is UTF-8 JSON with the extension ``.nervus``::
       "name": "first_order",
       "meta": {},
       "settings": {"t_start": 0.0, "t_final": 10.0, "solver": "auto", ...},
+      "workspace": [{"name": "Kp", "value": 1.5, "unit": "", "description": "..."}],
       "blocks": [
-        {"name": "u", "type": "sources.step", "params": {"time": 1.0, ...}, "meta": {"position": [0, 0]}}
+        {"name": "u", "type": "sources.step", "params": {"time": 1.0, ...}, "meta": {"position": [0, 0]}},
+        {"name": "k", "type": "math.gain", "params": {"gain": "Kp", ...}}
       ],
       "connections": [
         {"src": "u", "src_port": 0, "dst": "sum", "dst_port": 0}
@@ -36,12 +38,20 @@ from nervus.blocks.registry import get_block_class
 from nervus.core.diagram import Diagram
 from nervus.core.errors import ModelError, ParameterError
 from nervus.core.settings import SimulationSettings
+from nervus.core.workspace import Workspace
 
 FORMAT = "nervus-model"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 FILE_EXTENSION = ".nervus"
 
-MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {}
+
+def _v1_to_v2(doc: dict[str, Any]) -> dict[str, Any]:
+    """Version 2 added the model workspace."""
+    doc.setdefault("workspace", [])
+    return doc
+
+
+MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {1: _v1_to_v2}
 """``MIGRATIONS[n]`` upgrades a version-``n`` document to version ``n + 1``."""
 
 
@@ -52,6 +62,7 @@ def to_dict(diagram: Diagram) -> dict[str, Any]:
         "name": diagram.name,
         "meta": diagram.meta,
         "settings": diagram.settings.to_dict(),
+        "workspace": diagram.workspace.to_list(),
         "blocks": [
             {
                 "name": b.name,
@@ -97,6 +108,10 @@ def from_dict(data: dict[str, Any]) -> Diagram:
         d.settings = SimulationSettings.from_dict(dict(data.get("settings", {})))
     except (TypeError, ValueError) as exc:
         raise ModelError(f"invalid simulation settings: {exc}") from exc
+    try:
+        d.workspace = Workspace.from_list(list(data.get("workspace", [])))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ModelError(f"invalid workspace: {exc}") from exc
     for entry in data.get("blocks", []):
         name = entry.get("name", "")
         try:

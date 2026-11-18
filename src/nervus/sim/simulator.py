@@ -116,16 +116,23 @@ def simulate(
     rtol: float | None = None,
     atol: float | None = None,
     settings: SimulationSettings | None = None,
+    params: dict[str, Any] | None = None,
     progress: Callable[[float], None] | None = None,
     should_stop: Callable[[], bool] | None = None,
 ) -> SimResult:
     """Simulate ``diagram`` and return the logged signals.
 
     Settings come from ``settings`` if given, otherwise from ``diagram.settings``; keyword arguments override
-    individual values. ``progress(t)`` is called after each major step; if ``should_stop()`` returns true the
-    run ends early (used by the GUI's Stop button).
+    individual values. ``params`` overrides workspace variables for this run, e.g. ``params={"Kp": 2.0}``.
+    ``progress(t)`` is called after each major step; if ``should_stop()`` returns true the run ends early (used
+    by the GUI's Stop button).
     """
-    model = diagram if isinstance(diagram, CompiledModel) else compile_diagram(diagram)
+    if isinstance(diagram, CompiledModel):
+        if params:
+            raise ValueError("params cannot be used with an already compiled model; pass the Diagram instead")
+        model = diagram
+    else:
+        model = compile_diagram(diagram, params)
     base = settings or model.diagram.settings
     overrides: dict[str, Any] = {
         "t_final": t_final,

@@ -7,6 +7,10 @@ duty cycle, limited to 0–100 %.
 
 The pedal (target angle) steps from 5° (idle) to 60°, then back to 20°.
 
+The controller gains and timing are **workspace variables** (calibration data): the blocks refer to them by
+name. ``throttle_tight.nervcal`` is an alternative calibration with higher gains you can load in the editor
+(Model Workspace → Load set…) or in Python with ``ParameterSet.load``.
+
 Run with ``uv run python examples/throttle_pi.py``.
 """
 
@@ -16,8 +20,9 @@ from pathlib import Path
 
 import numpy as np
 
-from nervus import Diagram, SimResult, save, simulate
+from nervus import Diagram, ParameterSet, SimResult, save, simulate
 from nervus.blocks import DiscretePID, FromWorkspace, Gain, Integrator, Scope, Sum, ZeroOrderHold
+from nervus.core import Variable
 from nervus.core.layout import auto_layout
 
 TAU = 0.05  # s, actuator time constant
@@ -28,21 +33,27 @@ TS = 0.01  # s, ECU task period
 def build() -> Diagram:
     d = Diagram("throttle_pi")
     d.settings.t_final = 2.0
+    ws = d.workspace
+    ws.add(Variable("Kp", 1.5, "Proportional gain", "%/°", min=0.0))
+    ws.add(Variable("Ki", 40.0, "Integral gain", "%/(°·s)", min=0.0))
+    ws.add(Variable("Ts", TS, "ECU task period", "s", min=0.001))
+    ws.add(Variable("tau", TAU, "Actuator time constant", "s", min=0.0))
+    ws.add(Variable("k_act", GAIN, "Actuator gain", "°/%"))
 
     target = d.add(
         FromWorkspace(time=[0.0, 0.2, 1.2], data=[5.0, 60.0, 20.0], interpolation="hold"), name="target_angle"
     )
-    sensor = d.add(ZeroOrderHold(sample_time=TS), name="tps_sample")
+    sensor = d.add(ZeroOrderHold(sample_time="Ts"), name="tps_sample")
     err = d.add(Sum(signs="+-"), name="error")
     pi = d.add(
-        DiscretePID(P=1.5, I=40.0, upper=100.0, lower=0.0, anti_windup="clamping", sample_time=TS),
+        DiscretePID(P="Kp", I="Ki", upper=100.0, lower=0.0, anti_windup="clamping", sample_time="Ts"),
         name="throttle_pi",
     )
 
     # Actuator: angle' = (GAIN * duty - angle) / TAU, limited to 0..90 degrees
-    k = d.add(Gain(gain=GAIN), name="deg_per_pct")
+    k = d.add(Gain(gain="k_act"), name="deg_per_pct")
     lag = d.add(Sum(signs="+-"), name="lag")
-    inv_tau = d.add(Gain(gain=1 / TAU), name="1/tau")
+    inv_tau = d.add(Gain(gain="1/tau"), name="1/tau")
     angle = d.add(Integrator(initial=5.0, lower=0.0, upper=90.0), name="plate_angle")
     scope = d.add(Scope(num_inputs=3), name="scope")
 
@@ -90,6 +101,9 @@ def main(show_plot: bool = True) -> SimResult:
     d = build()
     auto_layout(d)  # give the blocks positions for the editor
     save(d, Path(__file__).with_suffix(".nervus"))
+    ParameterSet("tight", {"Kp": 3.0, "Ki": 80.0}, "Higher gains: less overshoot").save(
+        Path(__file__).with_name("throttle_tight.nervcal")
+    )
     res = simulate(d)
     report(res)
     if show_plot:

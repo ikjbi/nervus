@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -10,8 +11,9 @@ from itertools import pairwise
 from typing import Any, TypeVar
 
 from nervus.core.block import Block, InPort, OutPort
-from nervus.core.errors import ModelError
+from nervus.core.errors import ModelError, ParameterError
 from nervus.core.settings import SimulationSettings
+from nervus.core.workspace import Workspace
 
 B = TypeVar("B", bound=Block)
 
@@ -59,6 +61,8 @@ class Diagram:
         """Free-form metadata (e.g. GUI view state). Saved in model files."""
         self.settings = SimulationSettings()
         """Default time span and solver used by :func:`nervus.simulate`."""
+        self.workspace = Workspace()
+        """Named parameters that block parameters can refer to (``Gain(gain="Kp")``)."""
         self._blocks: dict[str, Block] = {}
         self._connections: list[Connection] = []
 
@@ -97,7 +101,20 @@ class Diagram:
             raise ModelError(f"a block named {block.name!r} already exists", (block.name,))
         self._blocks[block.name] = block
         block.diagram = self
+        if block.expressions:
+            with contextlib.suppress(Exception):  # unresolved variables are reported by check()
+                block.resolve(self.workspace.namespace())
         return block
+
+    def resolve_parameters(self, overrides: dict[str, Any] | None = None) -> None:
+        """Evaluate every block's parameter expressions with the workspace (plus ``overrides``).
+        Raises :class:`ModelError` naming the block on failure."""
+        ns = self.workspace.namespace(overrides)
+        for b in self._blocks.values():
+            try:
+                b.resolve(ns)
+            except ParameterError as exc:
+                raise ModelError(f"{b.name}: {exc}", (b.name,)) from exc
 
     def unique_name(self, base: str) -> str:
         """Return ``base`` or ``base1``, ``base2``, ... whichever is not taken yet."""
@@ -191,6 +208,19 @@ class Diagram:
     def check(self) -> list[Issue]:
         """Find structural problems without compiling the model."""
         issues: list[Issue] = []
+        try:
+            ns = self.workspace.namespace()
+        except ModelError as exc:
+            issues.append(Issue(Severity.ERROR, str(exc)))
+            ns = None
+        if ns is not None:
+            for b in self._blocks.values():
+                try:
+                    b.resolve(ns)
+                except ParameterError as exc:
+                    issues.append(Issue(Severity.ERROR, f"{b.name}: {exc}", (b.name,)))
+            for msg in self.workspace.check_ranges(ns):
+                issues.append(Issue(Severity.WARNING, f"workspace: {msg}"))
         for c in self._connections:
             if c.src_port >= c.src.num_outputs():
                 issues.append(

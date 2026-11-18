@@ -22,11 +22,15 @@ from typing import Any, ClassVar
 import numpy as np
 
 from nervus.core.errors import ParameterError
-from nervus.core.params import Param, to_jsonable
+from nervus.core.expressions import UnknownNameError, parse_value
+from nervus.core.params import Param, ParamKind, to_jsonable
 from nervus.core.sample_time import CONTINUOUS, INHERITED, SampleTime
 from nervus.core.types import EMPTY, Array
 
 Width = int | None
+
+EXPRESSION_KINDS = frozenset({ParamKind.FLOAT, ParamKind.INT, ParamKind.ARRAY, ParamKind.SAMPLE_TIME})
+"""Parameter kinds that may be given as an expression using workspace variables, e.g. ``"2*Kp"``."""
 
 
 @dataclass(frozen=True, eq=False)
@@ -100,8 +104,12 @@ class Block:
                 f"valid parameters: {', '.join(declared) or 'none'}"
             )
         self.params: dict[str, Any] = {}
+        self.expressions: dict[str, str] = {}
+        """Parameters given as expressions of workspace variables, by parameter name. ``params`` holds their
+        most recently resolved values (or the defaults until the block is resolved)."""
         for p in self.PARAMS:
-            self.params[p.name] = p.coerce(params.get(p.name, p.default))
+            self.params[p.name] = p.coerce(p.default)
+            self._assign(p, params.get(p.name, p.default))
         self.validate_params()
         self.in_widths: list[int] = []
         self.out_widths: list[int] = []
@@ -115,22 +123,74 @@ class Block:
                 return p
         raise ParameterError(f"{cls.__name__} has no parameter '{name}'")
 
-    def set_param(self, name: str, value: Any) -> None:
-        """Set one parameter, validating it. The old value is kept if validation fails."""
-        new = self.param_spec(name).coerce(value)
-        old = self.params[name]
-        self.params[name] = new
+    def _namespace(self) -> dict[str, Any] | None:
+        d = self.diagram
+        if d is None:
+            return None
         try:
+            return d.workspace.namespace()
+        except Exception:
+            return None
+
+    def _assign(self, p: Param, value: Any, namespace: dict[str, Any] | None = None) -> None:
+        """Store ``value`` for parameter ``p``: a literal, or an expression of workspace variables."""
+        if p.kind in EXPRESSION_KINDS and isinstance(value, str):
+            try:
+                literal = parse_value(value)
+            except UnknownNameError:
+                ns = namespace if namespace is not None else self._namespace()
+                if ns is not None:  # attached to a diagram: the variables must exist
+                    try:
+                        resolved = parse_value(value, ns)
+                    except ValueError as exc:
+                        raise ParameterError(f"parameter '{p.name}': {exc}") from exc
+                    self.params[p.name] = p.coerce(resolved)
+                self.expressions[p.name] = value.strip()
+                return
+            except ValueError as exc:
+                raise ParameterError(f"parameter '{p.name}': {exc}") from exc
+            value = literal
+        self.expressions.pop(p.name, None)
+        self.params[p.name] = p.coerce(value)
+
+    def set_param(self, name: str, value: Any) -> None:
+        """Set one parameter (a value or a workspace expression), validating it.
+        The old value is kept if validation fails."""
+        spec = self.param_spec(name)
+        old_value, old_expr = self.params[name], self.expressions.get(name)
+        try:
+            self._assign(spec, value)
             self.validate_params()
         except Exception:
-            self.params[name] = old
+            self.params[name] = old_value
+            if old_expr is None:
+                self.expressions.pop(name, None)
+            else:
+                self.expressions[name] = old_expr
             raise
+
+    def param_source(self, name: str) -> Any:
+        """What the user wrote: the expression string if there is one, otherwise the value."""
+        return self.expressions.get(name, self.params[name])
+
+    def resolve(self, namespace: dict[str, Any]) -> None:
+        """Evaluate all parameter expressions with ``namespace`` (workspace variable values)."""
+        if not self.expressions:
+            return
+        for name, expr in list(self.expressions.items()):
+            spec = self.param_spec(name)
+            try:
+                self.params[name] = spec.coerce(parse_value(expr, namespace))
+            except ValueError as exc:
+                raise ParameterError(f"parameter '{name}' = {expr!r}: {exc}") from exc
+        self.validate_params()
 
     def validate_params(self) -> None:
         """Check parameter combinations. Raise :class:`ParameterError` if invalid."""
 
     def params_jsonable(self) -> dict[str, Any]:
-        return {k: to_jsonable(v) for k, v in self.params.items()}
+        """Parameters for saving: expressions are kept as written, values converted for JSON."""
+        return {k: self.expressions.get(k, to_jsonable(v)) for k, v in self.params.items()}
 
     # ------------------------------------------------------------------ ports
 

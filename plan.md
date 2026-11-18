@@ -125,13 +125,14 @@ tests/
 
 ## Phase 7 – Parameters, model workspace and calibration data
 *ECU software is "code + calibration". Parameters must live outside the blocks, as named, tunable values.*
-- [ ] Model workspace: named variables (`Kp = 1.5`, `fuel_map = [...]`) stored in the model file
-- [ ] Block parameters can be expressions using workspace variables (`Kp`, `2*Kp`, `1/tau`)
-- [ ] Variables carry metadata: description, unit, min/max (for calibration and A2L later)
-- [ ] Parameter sets ("calibrations"): save/load named sets of variable values as separate files and switch
+- [x] Model workspace: named variables (`Kp = 1.5`, `fuel_map = [...]`) stored in the model file
+- [x] Block parameters can be expressions using workspace variables (`Kp`, `2*Kp`, `1/tau`)
+- [x] Variables carry metadata: description, unit, min/max (for calibration and A2L later)
+- [x] Parameter sets ("calibrations"): save/load named sets of variable values as separate files and switch
       between them (e.g. `petrol.nervcal.json` vs `diesel.nervcal.json`)
-- [ ] GUI: Model Workspace panel to add/edit/delete variables; parameter fields show and autocomplete names
-- [ ] Python API: `diagram.workspace["Kp"] = 2.0`, `simulate(d, params={...})` overrides
+- [x] GUI: Model Workspace panel to add/edit/delete variables; parameter fields accept and show expressions
+- [ ] Autocomplete variable names in parameter fields; "find usages" of a variable
+- [x] Python API: `diagram.workspace["Kp"] = 2.0`, `simulate(d, params={...})` overrides
 
 ## Phase 8 – ECU block library
 *The blocks that real engine/vehicle control software is built from.*

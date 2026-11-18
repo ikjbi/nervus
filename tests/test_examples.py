@@ -57,3 +57,13 @@ def test_app_help_copies_are_up_to_date() -> None:
     out = EXAMPLES.parent / "docs" / "app-help"
     for page in src.glob("*.md"):
         assert (out / page.name).read_text() == page.read_text(), f"docs/app-help/{page.name} is stale"
+
+
+def test_throttle_calibration_file() -> None:
+    from nervus import ParameterSet
+
+    d = load(EXAMPLES / "throttle_pi.nervus")
+    base = simulate(d)["plate_angle"].max()
+    d.workspace.apply(ParameterSet.load(EXAMPLES / "throttle_tight.nervcal").values)
+    tight = simulate(d)["plate_angle"].max()
+    assert tight < base - 1.0  # less overshoot over the 60 degree target

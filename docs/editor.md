@@ -16,6 +16,7 @@ uv run nervus examples/throttle_pi.nervus
 | **Library** (left) | All blocks by category, with search. Drag a block onto the canvas or double-click it. |
 | **Canvas** (centre) | The diagram. Drag from an output port (▸ on the right of a block) to an input port to draw a line. |
 | **Properties** (right) | Parameters of the selected block. Fields accept expressions (`2*pi`) and MATLAB-style matrices (`[1 2; 3 4]`). |
+| **Model Workspace** (bottom, tab) | Named parameters (calibration data) that block parameters can use, and parameter sets. See [Workspace and calibrations](workspace.md). |
 | **Diagnostics** (bottom) | Problems such as unconnected inputs or algebraic loops. Click one to select the blocks involved; they also get a red outline. |
 
 Dark mode follows the system setting, or choose it under **View → Theme**:
@@ -46,6 +47,7 @@ The in-app guide pages are also available here:
 [Getting started](app-help/getting_started.md) ·
 [Using the editor](app-help/editor.md) ·
 [Running simulations](app-help/simulation.md) ·
+[Workspace and calibrations](app-help/workspace.md) ·
 [Keyboard shortcuts](app-help/shortcuts.md)
 
 ## Troubleshooting

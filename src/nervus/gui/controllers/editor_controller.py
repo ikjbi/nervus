@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QObject, QPointF, Signal
 from PySide6.QtGui import QUndoStack
 
 from nervus.blocks import create_block, get_block_class
-from nervus.core import Block, Connection, NervusError, SimulationSettings
+from nervus.core import Block, Connection, NervusError, ParameterSet, SimulationSettings, Variable
+from nervus.core.expressions import parse_value
 from nervus.gui.controllers.commands import (
     AddBlockCommand,
+    ApplyValuesCommand,
     Command,
     ConnectCommand,
     MoveBlocksCommand,
@@ -19,6 +22,7 @@ from nervus.gui.controllers.commands import (
     RenameCommand,
     SetParamsCommand,
     SetSettingsCommand,
+    SetVariableCommand,
 )
 from nervus.gui.models.diagram_model import DiagramModel, block_position
 
@@ -78,12 +82,16 @@ class EditorController(QObject):
             self._push(MoveBlocksCommand(self.model, moves))
 
     def set_params(self, block: Block, params: dict[str, Any]) -> bool:
-        changed = {k: v for k, v in params.items() if not _same(block.params.get(k), v)}
+        changed = {k: v for k, v in params.items() if not _same(block.param_source(k), v)}
         if not changed:
             return True
         try:  # validate on a scratch copy first, so a bad value never reaches the undo stack
-            probe = type(block)(**{**block.params, **changed})
-            del probe
+            probe = type(block)(**{k: block.param_source(k) for k in block.params})
+            ns = self.model.diagram.workspace.namespace()
+            probe.resolve(ns)
+            for k, v in changed.items():
+                probe._assign(probe.param_spec(k), v, ns)
+            probe.validate_params()
         except (NervusError, ValueError, TypeError) as exc:
             self.errorOccurred.emit(f"{block.name}: {exc}")
             return False
@@ -113,6 +121,83 @@ class EditorController(QObject):
             self.errorOccurred.emit(str(exc))
             return False
         return self._push(SetSettingsCommand(self.model, settings))
+
+    # ------------------------------------------------------------------ workspace
+
+    @staticmethod
+    def parse_variable_value(text: str) -> object:
+        """A literal (number/array) if ``text`` is one, otherwise the text as an expression."""
+        try:
+            return parse_value(text)
+        except ValueError:
+            return text.strip()
+
+    def add_variable(self, name: str | None = None, value: object = 0.0) -> Variable | None:
+        ws = self.model.diagram.workspace
+        if name is None:
+            i = 1
+            while f"var{i}" in ws:
+                i += 1
+            name = f"var{i}"
+        if name in ws:
+            self.errorOccurred.emit(f"A variable named '{name}' already exists.")
+            return None
+        try:
+            var = Variable(name, value)
+        except NervusError as exc:
+            self.errorOccurred.emit(str(exc))
+            return None
+        return var if self._push(SetVariableCommand(self.model, None, var)) else None
+
+    def update_variable(self, name: str, /, **changes: object) -> bool:
+        """Change fields of a variable (name, value, unit, description, min, max)."""
+        ws = self.model.diagram.workspace
+        old = ws.variable(name)
+        fields = {**old.__dict__, **changes}
+        if fields["name"] != name and fields["name"] in ws:
+            self.errorOccurred.emit(f"A variable named '{fields['name']}' already exists.")
+            return False
+        try:
+            new = Variable(**fields)
+            trial = ws.copy()
+            trial.replace(name, new)
+            trial.namespace()
+        except NervusError as exc:
+            self.errorOccurred.emit(str(exc))
+            return False
+        if new.__dict__ == old.__dict__:
+            return True
+        copy = Variable(**old.__dict__)
+        return self._push(SetVariableCommand(self.model, copy, new))
+
+    def delete_variable(self, name: str) -> bool:
+        ws = self.model.diagram.workspace
+        users = [b.name for b in self.model.diagram.blocks if any(name in e for e in b.expressions.values())]
+        if users:
+            self.errorOccurred.emit(f"'{name}' is used by {', '.join(users)}; change those parameters first.")
+            return False
+        return self._push(SetVariableCommand(self.model, Variable(**ws.variable(name).__dict__), None))
+
+    def load_parameter_set(self, path: str | Path) -> bool:
+        try:
+            ps = ParameterSet.load(path)
+            known = {k: v for k, v in ps.values.items() if k in self.model.diagram.workspace}
+            missing = sorted(set(ps.values) - set(known))
+        except NervusError as exc:
+            self.errorOccurred.emit(str(exc))
+            return False
+        ok = self._push(ApplyValuesCommand(self.model, known, ps.name))
+        if ok and missing:
+            self.errorOccurred.emit(f"Ignored values for unknown variables: {', '.join(missing)}")
+        return ok
+
+    def save_parameter_set(self, path: str | Path, name: str | None = None) -> Path | None:
+        p = Path(path)
+        try:
+            return ParameterSet.from_workspace(self.model.diagram.workspace, name or p.stem).save(p)
+        except OSError as exc:
+            self.errorOccurred.emit(f"Could not save {p.name}: {exc}")
+            return None
 
     # ------------------------------------------------------------------ clipboard
 
@@ -164,6 +249,8 @@ class EditorController(QObject):
 
 
 def _same(a: Any, b: Any) -> bool:
+    if isinstance(a, str) or isinstance(b, str):
+        return isinstance(a, str) and isinstance(b, str) and a.strip() == b.strip()
     try:
         import numpy as np
 

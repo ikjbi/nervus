@@ -9,7 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, Qt
 from PySide6.QtWidgets import QApplication, QWidget
 
 ROOT = Path(__file__).parent.parent
@@ -44,6 +44,12 @@ def main() -> None:
         win.scene.select_blocks(["throttle_pi"])
         suffix = "" if mode is ThemeMode.LIGHT else "-dark"
         grab(win, f"editor{suffix}.png")
+        if mode is ThemeMode.LIGHT:
+            win.workspace_dock.raise_()
+            win.resizeDocks([win.workspace_dock], [210], Qt.Orientation.Vertical)
+            grab(win, "workspace.png")
+            grab(win.workspace_panel, "workspace-panel.png")
+            win.diagnostics_dock.raise_()
 
         win.simulation.run()
         win.simulation.wait()

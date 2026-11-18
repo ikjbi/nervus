@@ -1,6 +1,6 @@
 {
   "format": "nervus-model",
-  "schema_version": 1,
+  "schema_version": 2,
   "name": "mass_spring_damper_pid",
   "meta": {},
   "settings": {
@@ -12,6 +12,7 @@
     "rtol": 1e-06,
     "atol": 1e-08
   },
+  "workspace": [],
   "blocks": [
     {
       "name": "reference",

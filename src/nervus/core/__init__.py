@@ -12,6 +12,7 @@ from nervus.core.errors import (
 from nervus.core.params import Param, ParamKind
 from nervus.core.sample_time import CONSTANT, CONTINUOUS, INHERITED, SampleTime
 from nervus.core.settings import SimulationSettings
+from nervus.core.workspace import ParameterSet, Variable, Workspace
 
 __all__ = [
     "CONSTANT",
@@ -29,8 +30,11 @@ __all__ = [
     "Param",
     "ParamKind",
     "ParameterError",
+    "ParameterSet",
     "SampleTime",
     "Severity",
     "SimulationError",
     "SimulationSettings",
+    "Variable",
+    "Workspace",
 ]

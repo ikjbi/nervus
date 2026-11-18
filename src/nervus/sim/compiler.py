@@ -18,6 +18,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 import numpy as np
 
@@ -159,9 +160,15 @@ class CompiledModel:
 # ---------------------------------------------------------------------------- compile
 
 
-def compile_diagram(diagram: Diagram) -> CompiledModel:
-    """Compile ``diagram``. Raises :class:`ModelError` describing the first problem found."""
+def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> CompiledModel:
+    """Compile ``diagram``. Raises :class:`ModelError` describing the first problem found.
+
+    ``params`` overrides workspace variables for this compilation (e.g. one point of a parameter sweep).
+    Block parameter expressions are re-evaluated every time a diagram is compiled.
+    """
     errors = [i for i in diagram.check() if i.severity is Severity.ERROR]
+    if not errors:
+        diagram.resolve_parameters(params)
     if errors:
         if len(errors) == 1:
             raise ModelError(errors[0].message, errors[0].blocks)

@@ -11,7 +11,7 @@ from nervus.core.expressions import format_value
 
 
 def _num(v: object) -> str:
-    s = format_value(v)
+    s = v if isinstance(v, str) else format_value(v)
     return s if len(s) <= 10 else s[:9] + "…"
 
 
@@ -35,14 +35,14 @@ def _tf(b: Block, var: str) -> str:
 
 
 _GLYPHS: dict[str, Callable[[Block], str]] = {
-    "sources.constant": lambda b: _num(b.params["value"]),
+    "sources.constant": lambda b: _num(b.param_source("value")),
     "sources.step": lambda b: "⌐ step",
     "sources.ramp": lambda b: "⟋",
     "sources.sine": lambda b: "∿",
     "sources.pulse": lambda b: "⊓⊓",
     "sources.clock": lambda b: "🕒 t",
     "sources.from_workspace": lambda b: "data",
-    "math.gain": lambda b: _num(b.params["gain"]),
+    "math.gain": lambda b: _num(b.param_source("gain")),
     "math.sum": lambda b: "Σ " + b.params["signs"].replace("|", ""),
     "math.product": lambda b: "× " + b.params["ops"],
     "math.abs": lambda b: "|u|",

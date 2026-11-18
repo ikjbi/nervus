@@ -6,12 +6,13 @@ All edits from the GUI go through this class, so it can tell the views what chan
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QObject, QPointF, Signal
 
-from nervus.core import Block, Connection, Diagram, SimulationSettings
+from nervus.core import Block, Connection, Diagram, SimulationSettings, Variable
 from nervus.core.layout import auto_layout
 
 
@@ -29,6 +30,7 @@ class DiagramModel(QObject):
     connectionAdded = Signal(object)  # Connection
     connectionRemoved = Signal(object)  # Connection
     settingsChanged = Signal()
+    workspaceChanged = Signal()
     diagramReset = Signal()  # a whole new diagram was loaded
     filePathChanged = Signal(object)  # Path | None
     changed = Signal()  # any structural or parameter change
@@ -46,6 +48,7 @@ class DiagramModel(QObject):
             self.connectionAdded,
             self.connectionRemoved,
             self.settingsChanged,
+            self.workspaceChanged,
             self.diagramReset,
         ):
             sig.connect(self.changed)
@@ -135,6 +138,39 @@ class DiagramModel(QObject):
             if c.src is src and c.src_port == src_port and c.dst is dst and c.dst_port == dst_port:
                 return c
         return None
+
+    # ------------------------------------------------------------------ workspace
+
+    def set_variable(self, old_name: str | None, var: Variable | None, index: int | None = None) -> None:
+        """Add (``old_name`` None, optionally at ``index``), replace/rename, or delete (``var`` None) a
+        workspace variable."""
+        ws = self._diagram.workspace
+        if var is None:
+            if old_name is not None:
+                del ws[old_name]
+        elif old_name is not None:
+            ws.replace(old_name, var)
+        elif index is not None:
+            ws.insert(index, var)
+        else:
+            ws.add(var)
+        self._workspace_changed()
+
+    def apply_values(self, values: dict[str, object]) -> None:
+        self._diagram.workspace.apply(values)
+        self._workspace_changed()
+
+    def _workspace_changed(self) -> None:
+        ns = None
+        with contextlib.suppress(Exception):
+            ns = self._diagram.workspace.namespace()
+        for b in self._diagram.blocks:
+            if b.expressions:
+                if ns is not None:
+                    with contextlib.suppress(Exception):
+                        b.resolve(ns)
+                self.paramsChanged.emit(b)
+        self.workspaceChanged.emit()
 
     def set_settings(self, settings: SimulationSettings) -> None:
         settings.validate()

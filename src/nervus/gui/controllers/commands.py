@@ -7,7 +7,7 @@ from typing import Any
 from PySide6.QtCore import QPointF
 from PySide6.QtGui import QUndoCommand
 
-from nervus.core import Block, Connection, SimulationSettings
+from nervus.core import Block, Connection, SimulationSettings, Variable
 from nervus.gui.models.diagram_model import DiagramModel, block_position
 
 
@@ -107,7 +107,7 @@ class SetParamsCommand(Command):
         super().__init__(f"Change {block.name}")
         self.model, self.block = model, block
         self.new = dict(params)
-        self.old = {k: block.params[k] for k in params}
+        self.old = {k: block.param_source(k) for k in params}
         self._dropped: list[Connection] = []
 
     def do(self) -> None:
@@ -172,3 +172,39 @@ class SetSettingsCommand(Command):
 
     def revert(self) -> None:
         self.model.set_settings(self.old)
+
+
+class SetVariableCommand(Command):
+    """Add, edit, rename or delete one workspace variable."""
+
+    def __init__(self, model: DiagramModel, old: Variable | None, new: Variable | None) -> None:
+        verb = "Add" if old is None else "Delete" if new is None else "Change"
+        super().__init__(f"{verb} variable {(new or old).name}")  # type: ignore[union-attr]
+        self.model, self.old, self.new = model, old, new
+        names = list(model.diagram.workspace)
+        self._index = names.index(old.name) if old is not None else len(names)
+
+    def do(self) -> None:
+        self.model.set_variable(self.old.name if self.old else None, self.new)
+
+    def revert(self) -> None:
+        if self.new is None:  # undo a delete: put it back where it was
+            self.model.set_variable(None, self.old, index=self._index)
+        else:
+            self.model.set_variable(self.new.name, self.old)
+
+
+class ApplyValuesCommand(Command):
+    """Apply a parameter set (several variable values at once)."""
+
+    def __init__(self, model: DiagramModel, values: dict[str, object], label: str) -> None:
+        super().__init__(f"Load parameter set {label}")
+        self.model, self.new = model, dict(values)
+        current = model.diagram.workspace.values()
+        self.old = {k: current[k] for k in values if k in current}
+
+    def do(self) -> None:
+        self.model.apply_values(self.new)
+
+    def revert(self) -> None:
+        self.model.apply_values(self.old)

@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Model workspace: named variables (value, unit, min/max, description) stored in the model; block
+  parameters can be expressions of them (`Gain(gain="Kp")`, `"1/tau"`, `sample_time="Ts"`).
+- Parameter sets (`.nervcal`): save, load and apply calibrations; `simulate(..., params={...})` overrides.
+- Model Workspace panel in the editor, with undo and parameter-set load/save.
+- Model file schema version 2 (adds `workspace`); version 1 files are migrated automatically.
 - Desktop editor (`nervus` command), built with PySide6 in a Model–View–Controller structure: canvas with
   drag-and-drop blocks and wires, block library with search, property editor with expressions and MATLAB-style
   matrices, undo/redo for every edit, copy/paste, diagnostics panel, threaded simulation with progress and stop,

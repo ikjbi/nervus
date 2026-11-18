@@ -1,0 +1,10 @@
+{
+  "format": "nervus-parameters",
+  "schema_version": 1,
+  "name": "tight",
+  "description": "Higher gains: less overshoot",
+  "values": {
+    "Kp": 3.0,
+    "Ki": 80.0
+  }
+}
