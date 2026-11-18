@@ -10,9 +10,6 @@ from scipy.integrate import solve_ivp
 from nervus.core.errors import SimulationError
 from nervus.core.types import Array
 
-VARIABLE_STEP_METHODS = ("RK45", "RK23", "DOP853", "Radau", "BDF", "LSODA")
-"""RK45/RK23/DOP853 are explicit (non-stiff); Radau/BDF/LSODA handle stiff systems."""
-
 
 def integrate_variable(
     f: Callable[[float, Array], Array],

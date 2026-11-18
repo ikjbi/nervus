@@ -11,6 +11,7 @@ from typing import Any, TypeVar
 
 from nervus.core.block import Block, InPort, OutPort
 from nervus.core.errors import ModelError
+from nervus.core.settings import SimulationSettings
 
 B = TypeVar("B", bound=Block)
 
@@ -55,6 +56,9 @@ class Diagram:
     def __init__(self, name: str = "untitled") -> None:
         self.name = name
         self.meta: dict[str, Any] = {}
+        """Free-form metadata (e.g. GUI view state). Saved in model files."""
+        self.settings = SimulationSettings()
+        """Default time span and solver used by :func:`nervus.simulate`."""
         self._blocks: dict[str, Block] = {}
         self._connections: list[Connection] = []
 

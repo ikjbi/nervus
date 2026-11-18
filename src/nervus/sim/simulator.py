@@ -17,52 +17,20 @@ from __future__ import annotations
 import math
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import replace
 from fractions import Fraction
+from typing import Any
 
 import numpy as np
 
 from nervus.core.diagram import Diagram
 from nervus.core.errors import SimulationError
 from nervus.core.sample_time import SampleTime
+from nervus.core.settings import SimulationSettings
 from nervus.core.types import Array
 from nervus.sim.compiler import CompiledModel, Kind, compile_diagram
 from nervus.sim.result import SimResult, SimStats
-from nervus.solvers import FIXED_STEP_METHODS, VARIABLE_STEP_METHODS, integrate_variable
-
-
-@dataclass
-class SolverOptions:
-    """Solver settings.
-
-    ``solver``: ``"auto"`` (RK45), a fixed-step method (``"euler"``, ``"rk4"``) or a variable-step method
-    (``"RK45"``, ``"RK23"``, ``"DOP853"``, ``"Radau"``, ``"BDF"``, ``"LSODA"``).
-    ``step``: fixed step size; defaults to the fastest discrete rate, or (t_final - t_start)/1000.
-    ``max_step``: largest step a variable-step solver may take; defaults to (t_final - t_start)/50.
-    """
-
-    solver: str = "auto"
-    step: float | None = None
-    max_step: float | None = None
-    rtol: float = 1e-6
-    atol: float = 1e-8
-
-    @property
-    def method(self) -> str:
-        return "RK45" if self.solver == "auto" else self.solver
-
-    @property
-    def is_fixed_step(self) -> bool:
-        return self.method in FIXED_STEP_METHODS
-
-    def validate(self) -> None:
-        if self.method not in FIXED_STEP_METHODS and self.method not in VARIABLE_STEP_METHODS:
-            valid = ", ".join(["auto", *FIXED_STEP_METHODS, *VARIABLE_STEP_METHODS])
-            raise ValueError(f"unknown solver {self.solver!r}; choose one of {valid}")
-        if self.step is not None and self.step <= 0:
-            raise ValueError("step must be > 0")
-        if self.max_step is not None and self.max_step <= 0:
-            raise ValueError("max_step must be > 0")
+from nervus.solvers import FIXED_STEP_METHODS, integrate_variable
 
 
 def _tol(t: float) -> float:
@@ -139,43 +107,53 @@ def default_fixed_step(model: CompiledModel, t_start: float, t_final: float) -> 
 
 def simulate(
     diagram: Diagram | CompiledModel,
-    t_final: float,
+    t_final: float | None = None,
     *,
-    t_start: float = 0.0,
-    solver: str = "auto",
+    t_start: float | None = None,
+    solver: str | None = None,
     step: float | None = None,
     max_step: float | None = None,
-    rtol: float = 1e-6,
-    atol: float = 1e-8,
-    options: SolverOptions | None = None,
+    rtol: float | None = None,
+    atol: float | None = None,
+    settings: SimulationSettings | None = None,
     progress: Callable[[float], None] | None = None,
     should_stop: Callable[[], bool] | None = None,
 ) -> SimResult:
-    """Simulate ``diagram`` from ``t_start`` to ``t_final`` and return the logged signals.
+    """Simulate ``diagram`` and return the logged signals.
 
-    Solver settings may be passed as keyword arguments or as a :class:`SolverOptions` object.
-    ``progress(t)`` is called after each major step; if ``should_stop()`` returns true the run ends early.
+    Settings come from ``settings`` if given, otherwise from ``diagram.settings``; keyword arguments override
+    individual values. ``progress(t)`` is called after each major step; if ``should_stop()`` returns true the
+    run ends early (used by the GUI's Stop button).
     """
-    opts = options or SolverOptions(solver=solver, step=step, max_step=max_step, rtol=rtol, atol=atol)
-    opts.validate()
-    if t_final < t_start:
-        raise ValueError("t_final must be >= t_start")
     model = diagram if isinstance(diagram, CompiledModel) else compile_diagram(diagram)
+    base = settings or model.diagram.settings
+    overrides: dict[str, Any] = {
+        "t_final": t_final,
+        "t_start": t_start,
+        "solver": solver,
+        "step": step,
+        "max_step": max_step,
+        "rtol": rtol,
+        "atol": atol,
+    }
+    opts = replace(base, **{k: v for k, v in overrides.items() if v is not None})
+    opts.validate()
     model.reset()
     wall0 = time.perf_counter()
     log = _Logger(model)
+    t0, tf = opts.t_start, opts.t_final
     if opts.is_fixed_step:
-        h, n_major, stopped = _run_fixed(model, opts, t_start, t_final, log, progress, should_stop)
+        h, n_major, stopped = _run_fixed(model, opts, t0, tf, log, progress, should_stop)
     else:
         h = None
-        n_major, stopped = _run_variable(model, opts, t_start, t_final, log, progress, should_stop)
+        n_major, stopped = _run_variable(model, opts, t0, tf, log, progress, should_stop)
     stats = SimStats(opts.method, h, len(log.t), n_major, time.perf_counter() - wall0, stopped)
     return log.result(stats)
 
 
 def _run_fixed(
     model: CompiledModel,
-    opts: SolverOptions,
+    opts: SimulationSettings,
     t0: float,
     tf: float,
     log: _Logger,
@@ -218,7 +196,7 @@ def _run_fixed(
 
 def _run_variable(
     model: CompiledModel,
-    opts: SolverOptions,
+    opts: SimulationSettings,
     t0: float,
     tf: float,
     log: _Logger,

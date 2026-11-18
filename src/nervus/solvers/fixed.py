@@ -26,7 +26,7 @@ def rk4_step(f: Derivative, t: float, x: Array, h: float) -> Array:
     return x + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
 
 
-FIXED_STEP_METHODS: dict[str, Callable[[Derivative, float, Array, float], Array]] = {
+FIXED_STEP_METHODS: dict[str, Callable[[Derivative, float, Array, float], Array]] = {  # keys match settings
     "euler": euler_step,
     "rk4": rk4_step,
 }

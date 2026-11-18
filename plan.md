@@ -84,16 +84,16 @@ tests/
 - [x] Python Function block (user-defined code, the equivalent of MATLAB Function)
 
 ## Phase 3 – Model file format
-- [ ] JSON schema: blocks, parameters, positions, connections, solver settings, schema version
-- [ ] Save and load round-trip tests
-- [ ] Schema migration hook for future versions
-- [ ] Block registry so files reference blocks by type id
+- [x] JSON schema: blocks, parameters, positions, connections, solver settings, schema version
+- [x] Save and load round-trip tests
+- [x] Schema migration hook for future versions
+- [x] Block registry so files reference blocks by type id
 
 ## Phase 4 – Verification and first example
-- [ ] Tests against analytical solutions (first and second order systems, integrator, step responses)
-- [ ] Solver accuracy and convergence tests
-- [ ] Example: PID-controlled mass-spring-damper (script and `.json` model)
-- [ ] Example: first-order throttle actuator with a PI controller
+- [x] Tests against analytical solutions (first and second order systems, integrator, step responses)
+- [x] Solver accuracy and convergence tests
+- [x] Example: PID-controlled mass-spring-damper (script and `.json` model)
+- [x] Example: first-order throttle actuator with a discrete PI controller (10 ms ECU task)
 
 ## Phase 5 – GUI MVP (PySide6, MVC)
 - [ ] App shell: main window, menus, toolbar, status bar, modern light and dark theme
@@ -108,10 +108,11 @@ tests/
 - [ ] Error and diagnostics panel (algebraic loops, unconnected ports), with click to highlight the block
 
 ## Phase 6 – Documentation and in-app help
-- [ ] User guide: getting started, building your first model, running simulations
-- [ ] Block reference, generated from block docstrings and parameter metadata
+- [x] User guide (Python API): getting started, concepts, coming from Simulink, model files
+- [ ] User guide (GUI): building your first model in the editor, running simulations
+- [x] Block reference, generated from block docstrings and parameter metadata
 - [ ] In-app help: F1 or the "?" button on a block opens its reference page; tooltips on parameters
-- [ ] Developer docs: architecture (engine and MVC), how to write a custom block
+- [x] Developer docs: architecture (engine and MVC), how to write a custom block
 - [ ] Tutorials that follow the examples
 
 ## Phase 7 – Modeling features needed for real control software

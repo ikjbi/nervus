@@ -23,6 +23,7 @@ dependencies = [
 
 [project.optional-dependencies]
 gui = ["PySide6>=6.7", "pyqtgraph>=0.13"]
+plot = ["matplotlib>=3.8"]
 
 [project.urls]
 Homepage = "https://github.com/ikjbi/nervus"

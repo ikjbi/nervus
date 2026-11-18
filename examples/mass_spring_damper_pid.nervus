@@ -1,0 +1,191 @@
+{
+  "format": "nervus-model",
+  "schema_version": 1,
+  "name": "mass_spring_damper_pid",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 10.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08
+  },
+  "blocks": [
+    {
+      "name": "reference",
+      "type": "sources.step",
+      "params": {
+        "time": 0.5,
+        "initial": 0.0,
+        "final": 1.0,
+        "sample_time": 0.0
+      }
+    },
+    {
+      "name": "error",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-"
+      }
+    },
+    {
+      "name": "pid",
+      "type": "control.pid",
+      "params": {
+        "P": 40.0,
+        "I": 30.0,
+        "D": 8.0,
+        "N": 100.0,
+        "initial_integrator": 0.0,
+        "upper": 50.0,
+        "lower": -50.0,
+        "anti_windup": "back_calculation",
+        "Kb": 1.0
+      }
+    },
+    {
+      "name": "forces",
+      "type": "math.sum",
+      "params": {
+        "signs": "+--"
+      }
+    },
+    {
+      "name": "1/m",
+      "type": "math.gain",
+      "params": {
+        "gain": 1.0,
+        "multiplication": "elementwise"
+      }
+    },
+    {
+      "name": "velocity",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": "-inf"
+      }
+    },
+    {
+      "name": "position",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": "-inf"
+      }
+    },
+    {
+      "name": "c",
+      "type": "math.gain",
+      "params": {
+        "gain": 0.5,
+        "multiplication": "elementwise"
+      }
+    },
+    {
+      "name": "k",
+      "type": "math.gain",
+      "params": {
+        "gain": 2.0,
+        "multiplication": "elementwise"
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "reference",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 0
+    },
+    {
+      "src": "position",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 1
+    },
+    {
+      "src": "error",
+      "src_port": 0,
+      "dst": "pid",
+      "dst_port": 0
+    },
+    {
+      "src": "pid",
+      "src_port": 0,
+      "dst": "forces",
+      "dst_port": 0
+    },
+    {
+      "src": "c",
+      "src_port": 0,
+      "dst": "forces",
+      "dst_port": 1
+    },
+    {
+      "src": "k",
+      "src_port": 0,
+      "dst": "forces",
+      "dst_port": 2
+    },
+    {
+      "src": "forces",
+      "src_port": 0,
+      "dst": "1/m",
+      "dst_port": 0
+    },
+    {
+      "src": "1/m",
+      "src_port": 0,
+      "dst": "velocity",
+      "dst_port": 0
+    },
+    {
+      "src": "velocity",
+      "src_port": 0,
+      "dst": "position",
+      "dst_port": 0
+    },
+    {
+      "src": "velocity",
+      "src_port": 0,
+      "dst": "c",
+      "dst_port": 0
+    },
+    {
+      "src": "position",
+      "src_port": 0,
+      "dst": "k",
+      "dst_port": 0
+    },
+    {
+      "src": "reference",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "position",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "pid",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    }
+  ]
+}

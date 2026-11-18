@@ -1,0 +1,179 @@
+{
+  "format": "nervus-model",
+  "schema_version": 1,
+  "name": "throttle_pi",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 2.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08
+  },
+  "blocks": [
+    {
+      "name": "target_angle",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          0.2,
+          1.2
+        ],
+        "data": [
+          5.0,
+          60.0,
+          20.0
+        ],
+        "csv_file": "",
+        "interpolation": "hold",
+        "sample_time": 0.0
+      }
+    },
+    {
+      "name": "tps_sample",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      }
+    },
+    {
+      "name": "error",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-"
+      }
+    },
+    {
+      "name": "throttle_pi",
+      "type": "control.discrete_pid",
+      "params": {
+        "P": 1.5,
+        "I": 40.0,
+        "D": 0.0,
+        "N": 100.0,
+        "initial_integrator": 0.0,
+        "upper": 100.0,
+        "lower": 0.0,
+        "anti_windup": "clamping",
+        "Kb": 1.0,
+        "sample_time": 0.01
+      }
+    },
+    {
+      "name": "deg_per_pct",
+      "type": "math.gain",
+      "params": {
+        "gain": 0.9,
+        "multiplication": "elementwise"
+      }
+    },
+    {
+      "name": "lag",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-"
+      }
+    },
+    {
+      "name": "1/tau",
+      "type": "math.gain",
+      "params": {
+        "gain": 20.0,
+        "multiplication": "elementwise"
+      }
+    },
+    {
+      "name": "plate_angle",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 5.0,
+        "upper": 90.0,
+        "lower": 0.0
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "plate_angle",
+      "src_port": 0,
+      "dst": "tps_sample",
+      "dst_port": 0
+    },
+    {
+      "src": "target_angle",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 0
+    },
+    {
+      "src": "tps_sample",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 1
+    },
+    {
+      "src": "error",
+      "src_port": 0,
+      "dst": "throttle_pi",
+      "dst_port": 0
+    },
+    {
+      "src": "throttle_pi",
+      "src_port": 0,
+      "dst": "deg_per_pct",
+      "dst_port": 0
+    },
+    {
+      "src": "deg_per_pct",
+      "src_port": 0,
+      "dst": "lag",
+      "dst_port": 0
+    },
+    {
+      "src": "plate_angle",
+      "src_port": 0,
+      "dst": "lag",
+      "dst_port": 1
+    },
+    {
+      "src": "lag",
+      "src_port": 0,
+      "dst": "1/tau",
+      "dst_port": 0
+    },
+    {
+      "src": "1/tau",
+      "src_port": 0,
+      "dst": "plate_angle",
+      "dst_port": 0
+    },
+    {
+      "src": "target_angle",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "plate_angle",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "throttle_pi",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    }
+  ]
+}

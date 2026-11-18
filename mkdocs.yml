@@ -23,3 +23,22 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 nav:
   - Home: index.md
+  - User guide:
+      - Getting started: getting-started.md
+      - Concepts: concepts.md
+      - Coming from Simulink: coming-from-simulink.md
+      - Model files: model-files.md
+  - Block reference:
+      - Overview: blocks/index.md
+      - Sources: blocks/sources.md
+      - Math Operations: blocks/math-operations.md
+      - Discontinuities: blocks/discontinuities.md
+      - Continuous: blocks/continuous.md
+      - Discrete: blocks/discrete.md
+      - Control: blocks/control.md
+      - Signal Routing: blocks/signal-routing.md
+      - Sinks: blocks/sinks.md
+      - User-Defined: blocks/user-defined.md
+  - Developer:
+      - Architecture: developer/architecture.md
+      - Writing a block: developer/custom-blocks.md
