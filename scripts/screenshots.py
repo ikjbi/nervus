@@ -76,6 +76,18 @@ def main() -> None:
             win.diagram_model.up()
             for _ in range(4):
                 win.editor.undo_stack.undo()
+            # Code generation dialog for the ECU subsystem of the throttle_ecu example.
+            win.files.open(ROOT / "examples" / "throttle_ecu.nervus")
+            win.view.fit()
+            win.scene.select_blocks(["ECU"])
+            dlg = win.generate_code()
+            assert dlg is not None
+            dlg.resize(1000, 720)
+            dlg.tabs.setCurrentIndex(1)
+            dlg.run_sil()
+            grab(dlg, "codegen.png")
+            dlg.close()
+            win.files.open(ROOT / "examples" / "throttle_pi.nervus")
             win.show_help_for_type("control.discrete_pid")
             assert win._help is not None
             grab(win._help, "help.png")

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from PySide6.QtCore import QObject, Qt, Signal
-from PySide6.QtGui import QColor, QGuiApplication, QPalette
+from PySide6.QtGui import QColor, QFont, QFontDatabase, QGuiApplication, QPalette
 from PySide6.QtWidgets import QApplication
 
 
@@ -230,3 +230,17 @@ class ThemeManager(QObject):
 
 def current_theme() -> Theme:
     return ThemeManager.instance().theme
+
+
+def monospace_font(point_size: float = 11.0) -> QFont:
+    """A fixed-width font for code (Menlo on macOS, Consolas on Windows, DejaVu Sans Mono on Linux)."""
+    available = set(QFontDatabase.families())
+    for family in ("Menlo", "SF Mono", "Consolas", "DejaVu Sans Mono", "Liberation Mono", "Courier New"):
+        if family in available:
+            font = QFont(family)
+            break
+    else:
+        font = QFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+    font.setStyleHint(QFont.StyleHint.TypeWriter)
+    font.setPointSizeF(point_size)
+    return font

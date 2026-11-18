@@ -79,3 +79,16 @@ def test_coolant_fan_hysteresis() -> None:
     on_times = res.t[1:][np.diff(fan) > 0.5]
     # The fan switches on only once the filtered temperature reaches T_on.
     assert all(res["temp_filtered"][np.searchsorted(res.t, ton)] >= 97.9 for ton in on_times)
+
+
+def test_throttle_ecu_and_committed_generated_code() -> None:
+    """examples/generated/ECU must match what the generator produces now (run examples/throttle_ecu.py)."""
+    mod = _import("throttle_ecu")
+    d = mod.build()
+    from nervus.codegen import generate_c
+
+    code = generate_c(d.block("ECU"))
+    for name, text in code.c_files.items():
+        assert (EXAMPLES / "generated" / "ECU" / name).read_text() == text, f"generated/ECU/{name} is stale"
+    res = simulate(d)
+    assert float(np.interp(1.15, res.t, res["plate_angle"])) == pytest.approx(60.0, abs=0.5)

@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont, QFontDatabase
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -26,6 +25,7 @@ from nervus.core.block import EXPRESSION_KINDS
 from nervus.core.expressions import format_value, parse_value
 from nervus.gui.controllers.editor_controller import EditorController
 from nervus.gui.models.diagram_model import DiagramModel
+from nervus.gui.theme import monospace_font
 from nervus.help import block_doc
 
 
@@ -182,8 +182,7 @@ class PropertyPanel(QWidget):
             box = QVBoxLayout(host)
             box.setContentsMargins(0, 0, 0, 0)
             edit = QPlainTextEdit(str(value))
-            mono = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-            edit.setFont(QFont(mono))
+            edit.setFont(monospace_font())
             edit.setMinimumHeight(140)
             apply = QPushButton("Apply code")
             apply.clicked.connect(lambda _=False, name=p.name, e=edit: self._apply(name, e.toPlainText()))

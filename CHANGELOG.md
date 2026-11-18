@@ -6,10 +6,20 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- A Transfer Fcn without dynamics (e.g. `3/2`) failed to build its state-space form.
+- 1-D lookup with `nearest` interpolation and linear extrapolation rounded halves to even.
 - An empty diagram passed to the editor model or a Subsystem was replaced by a default one.
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- C code generation (`nervus.codegen.generate_c`) for models and subsystems: `<name>.h`/`<name>.c` with
+  `_initialize()`/`_step()`, static memory, input/output/parameter/state structs, shared calibration
+  parameters for workspace variables, base-rate multi-rate scheduling, a `main_example.c` template and an
+  HTML report with block-to-code traceability. Templates for 38 block types.
+- Software-in-the-loop back-to-back testing (`nervus.codegen.sil`): compiles the generated code and compares
+  it with the Python model step by step; tested for every block template.
+- Editor: Code → Generate C Code (Ctrl+B) with a code viewer, SIL check, save and report.
+- Example `throttle_ecu.py` with its generated code committed in `examples/generated/ECU`.
 - Subsystems: Subsystem, In and Out blocks; hierarchies are flattened at compile time; results and errors use
   path names (`ECU/throttle_pi`); model file schema version 3 stores nested systems.
 - Editor: open subsystems by double-click, breadcrumb navigation, Up to Parent, Create Subsystem from

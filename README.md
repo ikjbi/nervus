@@ -16,7 +16,8 @@ tool for designing, simulating and eventually generating C code for that kind of
 - A **clean, modern desktop editor** built with PySide6 (Qt), using a Model–View–Controller architecture.
 - A **block library** for control engineering, with automotive blocks such as engine and vehicle dynamics models,
   lookup tables and state machines.
-- **C code generation** for embedded targets (ECUs), verified against the Python simulation.
+- **C code generation** for embedded targets (ECUs), verified against the Python simulation (working:
+  see below).
 - **Git-friendly model files**: plain JSON that can be diffed and reviewed.
 
 ## Installation (development)
@@ -40,6 +41,14 @@ Drag blocks from the library, connect ports, edit parameters, press **▶ Run** 
 **F1** on any block for its help page, with equations and figures. See [docs/editor.md](docs/editor.md).
 
 <img src="docs/images/scope.png" width="600" alt="A scope window">
+
+## C code for the ECU
+
+Select the controller subsystem and choose **Code → Generate C Code**. You get `model.h`/`model.c` with
+`model_initialize()` and `model_step()`, static memory only, and calibratable parameters. A
+software-in-the-loop check compiles the code and compares it with the model step by step. See
+[docs/codegen.md](docs/codegen.md) and the generated example in
+[examples/generated/ECU](examples/generated/ECU).
 
 ## Quick start (Python)
 

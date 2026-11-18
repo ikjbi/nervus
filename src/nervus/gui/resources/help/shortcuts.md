@@ -16,6 +16,7 @@ On macOS use ⌘ where *Ctrl* is listed.
 | Run simulation | Ctrl+R or F5 |
 | Stop simulation | Ctrl+. |
 | Simulation settings | Ctrl+E |
+| Generate C code | Ctrl+B |
 | Zoom in / out | Ctrl++ / Ctrl+- or Ctrl + wheel |
 | Fit diagram to window | Ctrl+0 |
 | Pan | Space + drag, middle mouse, or trackpad scroll |

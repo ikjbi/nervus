@@ -171,18 +171,23 @@ tests/
 - [ ] Python API for all of the above (usable from pytest for regression tests)
 
 ## Phase 11 – C code generation
-- [ ] Restrict to fixed-step, discrete-time models (clear errors otherwise; continuous plants stay in
+- [x] Restrict to fixed-step, discrete-time models (clear errors otherwise; continuous plants stay in
       simulation)
-- [ ] Generate `model.h` / `model.c` with `model_initialize()` and `model_step()`, static memory only, no malloc
-- [ ] Structs for inputs, outputs, states and parameters; parameters as `const` or as calibratable globals
-- [ ] Per-block C templates for all discrete/stateless blocks, including lookup tables
-- [ ] Multi-rate: one step function per rate, or a base-rate scheduler with rate counters
-- [ ] Software-in-the-loop (SIL): compile the generated C, run it via ctypes, and compare it with the Python
+- [x] Generate `model.h` / `model.c` with `model_initialize()` and `model_step()`, static memory only, no malloc
+- [x] Structs for inputs, outputs, states and parameters; parameters as `const` or as calibratable globals
+- [x] Per-block C templates for all discrete/stateless blocks, including lookup tables
+- [x] Multi-rate: a base-rate scheduler with rate counters
+- [ ] Multi-rate: one step function per rate (for RTOS tasks), with rate transition blocks
+- [x] Software-in-the-loop (SIL): compile the generated C, run it via ctypes, and compare it with the Python
       simulation (back-to-back test)
-- [ ] Code generation report (HTML): block-to-code traceability, memory use
-- [ ] Generated code follows MISRA C guidelines (checked with cppcheck's MISRA addon)
-- [ ] GUI: Code → Generate C Code, with a report and "run SIL comparison"
-- [ ] Example: an ECU-style project folder with a `main.c` that calls `model_step()` every 10 ms
+- [x] Code generation report (HTML): block-to-code traceability, memory use
+- [ ] Generated code follows MISRA C guidelines (checked with cppcheck's MISRA addon); compiles with
+      `-Wall -Wextra -Werror -pedantic` already
+- [ ] Generate code for blocks with offsets exactly like the simulation's first step
+- [ ] Optional `const` parameters (ROM) instead of calibratable RAM
+- [ ] Reusable functions for subsystems instead of inlining
+- [x] GUI: Code → Generate C Code, with a report and "run SIL comparison"
+- [x] Example: an ECU-style project folder with a `main.c` that calls `model_step()` every 10 ms
 
 ## Phase 12 – Zero crossings, events and solver robustness
 - [ ] Zero-crossing detection for discontinuities (Saturation, Switch, Abs, Relay, Integrator limits,

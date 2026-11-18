@@ -128,6 +128,8 @@ def _tf_to_ss(num: Array, den: Array) -> tuple[Array, Array, Array, Array]:
         raise ParameterError("denominator cannot be zero")
     if num.size > den.size:
         raise ParameterError("transfer function must be proper (numerator order <= denominator order)")
+    if den.size == 1:  # a static gain: no states
+        return np.zeros((0, 0)), np.zeros((0, 1)), np.zeros((1, 0)), np.array([[num[-1] / den[0]]])
     a, b, c, d = sps.tf2ss(num, den)
     return (
         np.atleast_2d(np.asarray(a, float)).reshape(den.size - 1, den.size - 1),

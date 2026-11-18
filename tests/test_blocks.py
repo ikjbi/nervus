@@ -217,3 +217,8 @@ def test_python_function_errors() -> None:
         PythonFunction(code="def f(:\n")
     with pytest.raises(ParameterError, match="named f"):
         PythonFunction(code="def g(t, u):\n    return u\n")
+
+
+def test_static_transfer_function() -> None:
+    y = run(TransferFunction(numerator=[3.0], denominator=[2.0]), Step(time=0.0), solver="rk4", step=0.1)
+    assert y[-1] == pytest.approx(1.5)

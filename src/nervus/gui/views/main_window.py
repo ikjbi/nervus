@@ -24,10 +24,17 @@ from PySide6.QtWidgets import (
 from nervus import __version__
 from nervus.core import Block, Diagram
 from nervus.core.expressions import format_value, parse_value
-from nervus.gui.controllers import CLIPBOARD_MIME, EditorController, FileController, SimulationController
+from nervus.gui.controllers import (
+    CLIPBOARD_MIME,
+    CodegenController,
+    EditorController,
+    FileController,
+    SimulationController,
+)
 from nervus.gui.models import DiagramModel, SimulationModel, SimulationState
 from nervus.gui.theme import ThemeManager, ThemeMode
 from nervus.gui.views.canvas import DiagramScene, DiagramView
+from nervus.gui.views.codegen_dialog import CodegenDialog
 from nervus.gui.views.diagnostics import DiagnosticsPanel
 from nervus.gui.views.help_browser import HelpBrowser
 from nervus.gui.views.icons import icon
@@ -53,6 +60,7 @@ class MainWindow(QMainWindow):
         self.editor = EditorController(self.diagram_model, self)
         self.files = FileController(self.diagram_model, self.editor, self.qsettings, self)
         self.simulation = SimulationController(self.diagram_model, self.sim_model, self.editor, self)
+        self.codegen = CodegenController(self.diagram_model, self)
         # Views
         self.scene = DiagramScene(self.diagram_model, self.editor, self)
         self.view = DiagramView(self.scene)
@@ -172,6 +180,12 @@ class MainWindow(QMainWindow):
         self.act_settings = self._action(
             "Simulation &Settings…", self.edit_settings, "Ctrl+E", "Solver and time span", "settings"
         )
+        self.act_codegen = self._action(
+            "Generate &C Code…",
+            self.generate_code,
+            "Ctrl+B",
+            "Generate C code for the selected subsystem, or for the whole model",
+        )
         self.act_help = self._action("Nervus &Help", self.show_help, K.HelpContents, "Open the help", "help")
         self.act_block_help = self._action("Help for Selected &Block", self.show_block_help, Qt.Key.Key_F1)
         self.act_about = self._action("&About Nervus", self.about)
@@ -213,6 +227,8 @@ class MainWindow(QMainWindow):
         m.addActions([self.act_run, self.act_stop])
         m.addSeparator()
         m.addAction(self.act_settings)
+        m = mb.addMenu("&Code")
+        m.addAction(self.act_codegen)
         m = mb.addMenu("&Help")
         m.addActions([self.act_help, self.act_block_help])
         m.addSeparator()
@@ -282,12 +298,31 @@ class MainWindow(QMainWindow):
         self.diagram_model.currentChanged.connect(self._on_current_changed)
         self.diagram_model.blockRenamed.connect(self._on_renamed)
         self.files.errorOccurred.connect(lambda msg: QMessageBox.warning(self, "Nervus", msg))
+        self.codegen.errorOccurred.connect(self._codegen_error)
         self.files.recentFilesChanged.connect(self._rebuild_recent)
         self.workspace_panel.statusMessage.connect(self.status_label.setText)
         self.sim_model.stateChanged.connect(self._sim_state_changed)
         self.sim_model.progressChanged.connect(lambda f: self.progress.setValue(int(f * 1000)))
         self.view.zoomChanged.connect(lambda z: self.zoom_label.setText(f"{z * 100:.0f}%"))
         ThemeManager.instance().themeChanged.connect(self._refresh_icons)
+
+    # ------------------------------------------------------------------ code generation
+
+    def generate_code(self) -> CodegenDialog | None:
+        target = self.codegen.target_for(self.scene.selected_blocks())
+        code = self.codegen.generate(target)
+        if code is None:
+            return None
+        dlg = CodegenDialog(self.codegen, target, code, self)
+        dlg.show()
+        self.status_label.setText(f"Generated C code for {code.name}")
+        return dlg
+
+    def _codegen_error(self, message: str, blocks: tuple[str, ...]) -> None:
+        self.sim_model.set_error(message, blocks)
+        self.status_label.setText("Code generation failed — see Diagnostics.")
+        self.diagnostics_dock.show()
+        self.diagnostics_dock.raise_()
 
     # ------------------------------------------------------------------ helpers
 

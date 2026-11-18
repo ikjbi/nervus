@@ -1,0 +1,347 @@
+{
+  "format": "nervus-model",
+  "schema_version": 3,
+  "name": "throttle_ecu",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 2.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08
+  },
+  "workspace": [
+    {
+      "name": "Kp",
+      "value": 1.5,
+      "description": "Proportional gain",
+      "unit": "%/°",
+      "min": 0.0
+    },
+    {
+      "name": "Ki",
+      "value": 40.0,
+      "description": "Integral gain",
+      "unit": "%/(°·s)",
+      "min": 0.0
+    },
+    {
+      "name": "Ts",
+      "value": 0.01,
+      "description": "ECU task period",
+      "unit": "s",
+      "min": 0.001
+    },
+    {
+      "name": "tau",
+      "value": 0.05,
+      "description": "Actuator time constant",
+      "unit": "s",
+      "min": 0.0
+    },
+    {
+      "name": "k_act",
+      "value": 0.9,
+      "description": "Actuator gain",
+      "unit": "°/%"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "pedal_target",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          0.2,
+          1.2
+        ],
+        "data": [
+          5.0,
+          60.0,
+          20.0
+        ],
+        "csv_file": "",
+        "interpolation": "hold",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "ECU",
+      "type": "ports.subsystem",
+      "params": {},
+      "meta": {
+        "position": [
+          160.0,
+          0.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "target_deg",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "tps_deg",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0
+            },
+            "meta": {
+              "position": [
+                0.0,
+                110.0
+              ]
+            }
+          },
+          {
+            "name": "tps_sample",
+            "type": "discrete.zero_order_hold",
+            "params": {
+              "sample_time": "Ts"
+            },
+            "meta": {
+              "position": [
+                160.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "error",
+            "type": "math.sum",
+            "params": {
+              "signs": "+-"
+            },
+            "meta": {
+              "position": [
+                320.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "throttle_pi",
+            "type": "control.discrete_pid",
+            "params": {
+              "P": "Kp",
+              "I": "Ki",
+              "D": 0.0,
+              "N": 100.0,
+              "initial_integrator": 0.0,
+              "upper": 100.0,
+              "lower": 0.0,
+              "anti_windup": "clamping",
+              "Kb": 1.0,
+              "sample_time": "Ts"
+            },
+            "meta": {
+              "position": [
+                480.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "duty_pct",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                640.0,
+                0.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "tps_deg",
+            "src_port": 0,
+            "dst": "tps_sample",
+            "dst_port": 0
+          },
+          {
+            "src": "target_deg",
+            "src_port": 0,
+            "dst": "error",
+            "dst_port": 0
+          },
+          {
+            "src": "tps_sample",
+            "src_port": 0,
+            "dst": "error",
+            "dst_port": 1
+          },
+          {
+            "src": "error",
+            "src_port": 0,
+            "dst": "throttle_pi",
+            "dst_port": 0
+          },
+          {
+            "src": "throttle_pi",
+            "src_port": 0,
+            "dst": "duty_pct",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "deg_per_pct",
+      "type": "math.gain",
+      "params": {
+        "gain": "k_act",
+        "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          320.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "lag",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-"
+      },
+      "meta": {
+        "position": [
+          480.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "1/tau",
+      "type": "math.gain",
+      "params": {
+        "gain": "1/tau",
+        "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          640.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "plate_angle",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 5.0,
+        "upper": 90.0,
+        "lower": 0.0
+      },
+      "meta": {
+        "position": [
+          800.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          960.0,
+          0.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "pedal_target",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 0
+    },
+    {
+      "src": "plate_angle",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 1
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "deg_per_pct",
+      "dst_port": 0
+    },
+    {
+      "src": "deg_per_pct",
+      "src_port": 0,
+      "dst": "lag",
+      "dst_port": 0
+    },
+    {
+      "src": "plate_angle",
+      "src_port": 0,
+      "dst": "lag",
+      "dst_port": 1
+    },
+    {
+      "src": "lag",
+      "src_port": 0,
+      "dst": "1/tau",
+      "dst_port": 0
+    },
+    {
+      "src": "1/tau",
+      "src_port": 0,
+      "dst": "plate_angle",
+      "dst_port": 0
+    },
+    {
+      "src": "pedal_target",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "plate_angle",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    }
+  ]
+}
