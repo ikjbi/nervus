@@ -34,4 +34,11 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           NERVUS_HARD_EXIT: "1"
-        run: uv run pytest --cov=nervus --cov-report=term
+        # PySide6 6.12 aborts intermittently on Python 3.11 in headless CI (a refcount bug inside PySide);
+        # the GUI tests therefore run on 3.13 only. The engine, codegen and SIL tests run on every version.
+        run: |
+          if [ "${{ matrix.python-version }}" = "3.11" ]; then
+            uv run pytest --ignore=tests/gui --cov=nervus --cov-report=term
+          else
+            uv run pytest --cov=nervus --cov-report=term
+          fi
