@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # Ubuntu only while the repo is private (macOS/Windows runners burn the free minutes 10x/2x faster).
+    # Add macos-latest and windows-latest to the matrix once the repo is public.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Set up Python
+        run: uv python install ${{ matrix.python-version }}
+      - name: Install
+        run: uv sync --python ${{ matrix.python-version }}
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+      - name: Type check
+        run: uv run mypy
+      - name: Test
+        run: uv run pytest --cov=nervus
