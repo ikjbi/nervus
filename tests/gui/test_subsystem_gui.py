@@ -19,7 +19,7 @@ def _chain(window):  # type: ignore[no-untyped-def]
 
 
 def test_create_subsystem_from_selection(window, qtbot) -> None:  # type: ignore[no-untyped-def]
-    s, g, i, sc = _chain(window)
+    _s, g, i, _sc = _chain(window)
     root = window.diagram_model.root
     sub = window.editor.create_subsystem([g, i])
     assert isinstance(sub, Subsystem)
@@ -28,8 +28,9 @@ def test_create_subsystem_from_selection(window, qtbot) -> None:  # type: ignore
     assert {b.name for b in sub.system.blocks} == {"Gain", "Integrator", "In1", "Out1"}
     assert not root.check() or all(x.severity.value == "warning" for x in root.check())
     # It still simulates the same: y = 2t
-    with qtbot.waitSignal(window.sim_model.stateChanged, timeout=20000,
-                          check_params_cb=lambda st: st is SimulationState.FINISHED):
+    with qtbot.waitSignal(
+        window.sim_model.stateChanged, timeout=20000, check_params_cb=lambda st: st is SimulationState.FINISHED
+    ):
         window.simulation.run()
     res = window.sim_model.result
     assert abs(res["Subsystem/Integrator"][-1] - 2 * res.t[-1]) < 1e-6

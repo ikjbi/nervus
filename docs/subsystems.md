@@ -34,7 +34,7 @@ from nervus.blocks import Gain, Inport, Integrator, Outport, Scope, Step, Subsys
 plant = Diagram("plant")
 u = plant.add(Inport(port=1), name="u")
 e = plant.add(Sum(signs="+-"), name="e")
-k = plant.add(Gain(gain="1/tau"), name="k")      # uses the model workspace
+k = plant.add(Gain(gain="1/tau"), name="k")  # uses the model workspace
 y = plant.add(Integrator(), name="y")
 plant.connect(u, (e, 0))
 plant.connect(y, (e, 1))
@@ -46,7 +46,7 @@ sub = model.add(Subsystem(system=plant), name="plant")
 model.chain(model.add(Step(time=0.0)), sub, model.add(Scope()))
 
 res = simulate(model, 2.0)
-res["plant/y"]            # blocks inside subsystems are named by path
+res["plant/y"]  # blocks inside subsystems are named by path
 ```
 
 ## How it works
