@@ -50,6 +50,12 @@ software-in-the-loop check compiles the code and compares it with the model step
 [docs/codegen.md](docs/codegen.md) and the generated example in
 [examples/generated/ECU](examples/generated/ECU).
 
+## Test cases
+
+Test cases are saved with the model: input scenarios, calibrations and pass/fail checks. Run them from the
+**Test Manager** and compare runs in the **Data Inspector**, or from Python and pytest. See
+[docs/testing.md](docs/testing.md).
+
 ## Quick start (Python)
 
 ```python

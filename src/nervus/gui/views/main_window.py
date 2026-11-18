@@ -31,10 +31,12 @@ from nervus.gui.controllers import (
     FileController,
     SimulationController,
 )
+from nervus.gui.controllers.test_controller import TestController
 from nervus.gui.models import DiagramModel, SimulationModel, SimulationState
 from nervus.gui.theme import ThemeManager, ThemeMode
 from nervus.gui.views.canvas import DiagramScene, DiagramView
 from nervus.gui.views.codegen_dialog import CodegenDialog
+from nervus.gui.views.data_inspector import DataInspector
 from nervus.gui.views.diagnostics import DiagnosticsPanel
 from nervus.gui.views.help_browser import HelpBrowser
 from nervus.gui.views.icons import icon
@@ -42,6 +44,7 @@ from nervus.gui.views.library import LibraryBrowser
 from nervus.gui.views.properties import PropertyPanel
 from nervus.gui.views.scope_window import ScopeWindow
 from nervus.gui.views.settings_dialog import SettingsDialog
+from nervus.gui.views.test_manager import TestManagerPanel
 from nervus.gui.views.workspace_panel import WorkspacePanel
 from nervus.io import FILE_EXTENSION
 
@@ -61,6 +64,7 @@ class MainWindow(QMainWindow):
         self.files = FileController(self.diagram_model, self.editor, self.qsettings, self)
         self.simulation = SimulationController(self.diagram_model, self.sim_model, self.editor, self)
         self.codegen = CodegenController(self.diagram_model, self)
+        self.tests = TestController(self.diagram_model, self.sim_model, self.editor, self)
         # Views
         self.scene = DiagramScene(self.diagram_model, self.editor, self)
         self.view = DiagramView(self.scene)
@@ -68,6 +72,8 @@ class MainWindow(QMainWindow):
         self.properties = PropertyPanel(self.diagram_model, self.editor)
         self.diagnostics = DiagnosticsPanel(self.diagram_model, self.sim_model)
         self.workspace_panel = WorkspacePanel(self.diagram_model, self.editor)
+        self.test_panel = TestManagerPanel(self.diagram_model, self.editor, self.tests)
+        self._inspector: DataInspector | None = None
         self.scopes: dict[int, ScopeWindow] = {}
         self._help: HelpBrowser | None = None
 
@@ -115,7 +121,9 @@ class MainWindow(QMainWindow):
         self.workspace_dock = self._dock(
             "Model Workspace", self.workspace_panel, Qt.DockWidgetArea.BottomDockWidgetArea, "workspace"
         )
+        self.tests_dock = self._dock("Test Manager", self.test_panel, Qt.DockWidgetArea.BottomDockWidgetArea, "tests")
         self.tabifyDockWidget(self.diagnostics_dock, self.workspace_dock)
+        self.tabifyDockWidget(self.workspace_dock, self.tests_dock)
         self.diagnostics_dock.raise_()
         self.resizeDocks([self.library_dock, self.properties_dock], [230, 300], Qt.Orientation.Horizontal)
         self.resizeDocks([self.diagnostics_dock], [130], Qt.Orientation.Vertical)
@@ -177,6 +185,10 @@ class MainWindow(QMainWindow):
         self.act_run.setShortcuts([QKeySequence("Ctrl+R"), QKeySequence(Qt.Key.Key_F5)])
         self.act_stop = self._action("&Stop", self.simulation.stop, "Ctrl+.", "Stop the simulation", "stop")
         self.act_stop.setEnabled(False)
+        self.act_inspector = self._action(
+            "&Data Inspector", self.show_inspector, "Ctrl+I", "Compare signals from several runs"
+        )
+        self.act_run_tests = self._action("Run All &Tests", self.test_panel.run_all, "Ctrl+T", "Run every test case")
         self.act_settings = self._action(
             "Simulation &Settings…", self.edit_settings, "Ctrl+E", "Solver and time span", "settings"
         )
@@ -212,7 +224,13 @@ class MainWindow(QMainWindow):
         m.addActions([self.act_zoom_in, self.act_zoom_out, self.act_fit])
         m.addAction(self.act_up)
         m.addSeparator()
-        for dock in (self.library_dock, self.properties_dock, self.diagnostics_dock, self.workspace_dock):
+        for dock in (
+            self.library_dock,
+            self.properties_dock,
+            self.diagnostics_dock,
+            self.workspace_dock,
+            self.tests_dock,
+        ):
             m.addAction(dock.toggleViewAction())
         m.addSeparator()
         theme_menu = m.addMenu("&Theme")
@@ -225,6 +243,8 @@ class MainWindow(QMainWindow):
         self.theme_menu = theme_menu
         m = mb.addMenu("&Simulation")
         m.addActions([self.act_run, self.act_stop])
+        m.addSeparator()
+        m.addActions([self.act_run_tests, self.act_inspector])
         m.addSeparator()
         m.addAction(self.act_settings)
         m = mb.addMenu("&Code")
@@ -301,10 +321,28 @@ class MainWindow(QMainWindow):
         self.codegen.errorOccurred.connect(self._codegen_error)
         self.files.recentFilesChanged.connect(self._rebuild_recent)
         self.workspace_panel.statusMessage.connect(self.status_label.setText)
+        self.test_panel.statusMessage.connect(self.status_label.setText)
+        self.test_panel.openResult.connect(self._open_test_result)
         self.sim_model.stateChanged.connect(self._sim_state_changed)
         self.sim_model.progressChanged.connect(lambda f: self.progress.setValue(int(f * 1000)))
         self.view.zoomChanged.connect(lambda z: self.zoom_label.setText(f"{z * 100:.0f}%"))
         ThemeManager.instance().themeChanged.connect(self._refresh_icons)
+
+    def show_inspector(self) -> DataInspector:
+        if self._inspector is None:
+            self._inspector = DataInspector(self.sim_model, self)
+        self._inspector.show()
+        self._inspector.raise_()
+        return self._inspector
+
+    def _open_test_result(self, name: str) -> None:
+        res = self.tests.results.get(name)
+        if res is None or res.result is None:
+            self.status_label.setText(f"Run '{name}' first.")
+            return
+        inspector = self.show_inspector()
+        signals = sorted({c.signal for c in res.case.checks})
+        inspector.select([f"test: {name}"], signals)
 
     # ------------------------------------------------------------------ code generation
 
@@ -647,6 +685,8 @@ class MainWindow(QMainWindow):
             return
         self.simulation.stop()
         self.simulation.wait(5000)
+        self.tests.stop()
+        self.tests.wait(5000)
         self.qsettings.setValue("geometry", self.saveGeometry())
         self.qsettings.setValue("windowState", self.saveState())
         for w in self.scopes.values():

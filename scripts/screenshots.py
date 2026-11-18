@@ -87,6 +87,22 @@ def main() -> None:
             dlg.run_sil()
             grab(dlg, "codegen.png")
             dlg.close()
+
+            # Test Manager with results, then the Data Inspector comparing two calibrations.
+            win.tests_dock.raise_()
+            win.resizeDocks([win.tests_dock], [230], Qt.Orientation.Vertical)
+            win.test_panel.run_all()
+            win.tests.wait()
+            for _ in range(30):
+                QApplication.processEvents()
+            win.test_panel.tree.resizeColumnToContents(0)
+            grab(win, "test-manager.png")
+            inspector = win.show_inspector()
+            inspector.resize(1100, 560)
+            inspector.select(["test: tip-in, baseline calibration", "test: tip-in, tight calibration"], ["plate_angle"])
+            grab(inspector, "data-inspector.png")
+            inspector.close()
+            win.diagnostics_dock.raise_()
             win.files.open(ROOT / "examples" / "throttle_pi.nervus")
             win.show_help_for_type("control.discrete_pid")
             assert win._help is not None

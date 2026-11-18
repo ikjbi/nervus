@@ -40,10 +40,11 @@ from nervus.core.block import Block
 from nervus.core.diagram import Diagram
 from nervus.core.errors import ModelError, ParameterError
 from nervus.core.settings import SimulationSettings
+from nervus.core.testcase import TestCase
 from nervus.core.workspace import Workspace
 
 FORMAT = "nervus-model"
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 FILE_EXTENSION = ".nervus"
 
 
@@ -58,7 +59,13 @@ def _v2_to_v3(doc: dict[str, Any]) -> dict[str, Any]:
     return doc
 
 
-MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {1: _v1_to_v2, 2: _v2_to_v3}
+def _v3_to_v4(doc: dict[str, Any]) -> dict[str, Any]:
+    """Version 4 added test cases."""
+    doc.setdefault("tests", [])
+    return doc
+
+
+MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4}
 """``MIGRATIONS[n]`` upgrades a version-``n`` document to version ``n + 1``."""
 
 
@@ -94,6 +101,7 @@ def to_dict(diagram: Diagram) -> dict[str, Any]:
         "settings": diagram.settings.to_dict(),
         "workspace": diagram.workspace.to_list(),
         **{k: v for k, v in system_to_dict(diagram).items() if k != "meta"},
+        "tests": [t.to_dict() for t in diagram.tests],
     }
 
 
@@ -131,6 +139,10 @@ def from_dict(data: dict[str, Any]) -> Diagram:
     except (KeyError, TypeError, ValueError) as exc:
         raise ModelError(f"invalid workspace: {exc}") from exc
     _fill_system(d, data, "")
+    try:
+        d.tests = [TestCase.from_dict(t) for t in data.get("tests", [])]
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ModelError(f"invalid test case: {exc}") from exc
     # Expressions inside subsystems can only be resolved once the whole tree (and workspace) exists.
     with contextlib.suppress(ModelError):
         d.resolve_parameters()

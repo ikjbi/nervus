@@ -42,7 +42,15 @@ class Inport(Block):
         Param("sample_time", -1.0, ParamKind.SAMPLE_TIME, "Sample time of the external input (-1 = inherit)", "s"),
     )
 
+    def __init__(self, name: str = "", **params: Any) -> None:
+        super().__init__(name, **params)
+        self.signal: Any = None
+        """A :class:`~nervus.core.signals.Signal` driving this (top-level) input during a simulation; set by
+        ``simulate(..., inputs=...)``. When ``None`` the block outputs *value*."""
+
     def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        if self.signal is not None:
+            return [self.signal.width]
         return [as_signal(self.params["value"]).size]
 
     def sample_time(self) -> Any:
@@ -50,7 +58,12 @@ class Inport(Block):
         return CONTINUOUS if st.is_inherited else st
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        if self.signal is not None:
+            return [self.signal(t)]
         return [as_signal(self.params["value"]).copy()]
+
+    def breakpoints(self, t_start: float, t_final: float) -> list[float]:
+        return self.signal.breakpoints() if self.signal is not None else []
 
 
 @register

@@ -51,6 +51,7 @@ HELP_PAGES = [
     ("workspace", "Workspace and calibrations"),
     ("subsystems", "Subsystems"),
     ("codegen", "C code generation"),
+    ("testing", "Test cases and the Data Inspector"),
     ("shortcuts", "Keyboard shortcuts"),
 ]
 

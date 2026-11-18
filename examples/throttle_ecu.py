@@ -36,7 +36,7 @@ from nervus.blocks import (
 )
 from nervus.codegen import GeneratedCode, generate_c
 from nervus.codegen.sil import back_to_back, find_compiler
-from nervus.core import Variable
+from nervus.core import Check, TestCase, Variable
 from nervus.core.layout import auto_layout
 
 HERE = Path(__file__).parent
@@ -89,8 +89,34 @@ def build() -> Diagram:
     d.connect(target, scope.in_port(0))
     d.connect(angle, scope.in_port(1))
     d.connect(ecu, scope.in_port(2))
-    auto_layout(d)
+    auto_layout(d, width_of=lambda b: 190.0 if isinstance(b, Subsystem) else 70.0)
+    d.tests = test_cases()
     return d
+
+
+def test_cases() -> list[TestCase]:
+    """Requirements for the throttle controller, as test cases stored with the model."""
+    return [
+        TestCase(
+            "tip-in, baseline calibration",
+            "Reaches 59° within 150 ms of the step to 60°, with at most 5° overshoot",
+            checks=[
+                Check("reaches", "plate_angle", {"value": 59.0, "before": 0.35}),
+                Check("max", "plate_angle", {"value": 65.0}),
+                Check("final_value", "plate_angle", {"value": 20.0, "tolerance": 0.5}),
+            ],
+        ),
+        TestCase(
+            "tip-in, tight calibration",
+            "The higher-gain calibration overshoots less than 1°",
+            parameter_set="throttle_tight.nervcal",
+            checks=[Check("max", "plate_angle", {"value": 61.0})],
+        ),
+        TestCase(
+            "duty cycle within actuator limits",
+            checks=[Check("bounds", "ECU/throttle_pi", {"lower": 0.0, "upper": 100.0})],
+        ),
+    ]
 
 
 def generate(d: Diagram, folder: Path = HERE / "generated" / "ECU") -> GeneratedCode:
@@ -107,6 +133,10 @@ def main() -> SimResult:
     save(d, HERE / "throttle_ecu.nervus")
     res = simulate(d)
     print(f"angle at t = 1.15 s: {float(np.interp(1.15, res.t, res['plate_angle'])):.2f}° (target 60°)")
+    from nervus.testing import run_tests
+
+    for result in run_tests(d, base_dir=HERE):
+        print(result.summary())
     code = generate(d)
     print(f"generated {', '.join(code.c_files)}: call {code.name}_step() every {code.base_period:g} s")
     if find_compiler():

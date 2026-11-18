@@ -23,6 +23,7 @@ from nervus.gui.controllers.commands import (
     RenameCommand,
     SetParamsCommand,
     SetSettingsCommand,
+    SetTestsCommand,
     SetVariableCommand,
 )
 from nervus.gui.models.diagram_model import DiagramModel, block_position
@@ -130,7 +131,7 @@ class EditorController(QObject):
         d = self.model.diagram
         old = {id(b): block_position(b) for b in d.blocks}
         saved = {id(b): b.meta.get("position") for b in d.blocks}
-        auto_layout(d, only_missing=False)
+        auto_layout(d, only_missing=False, width_of=block_width)
         moves = [(b, old[id(b)], block_position(b)) for b in d.blocks]
         for b in d.blocks:  # restore, then apply through an undoable command
             if saved[id(b)] is None:
@@ -138,6 +139,9 @@ class EditorController(QObject):
             else:
                 b.meta["position"] = saved[id(b)]
         self.move_blocks(moves)
+
+    def set_tests(self, tests: list[object], text: str = "Edit test cases") -> bool:
+        return self._push(SetTestsCommand(self.model, tests, text))
 
     def create_subsystem(self, blocks: list[Block]) -> Block | None:
         """Move ``blocks`` into a new Subsystem (one undo step)."""
@@ -272,6 +276,13 @@ class EditorController(QObject):
         finally:
             self.undo_stack.endMacro()
         return list(created.values())
+
+
+def block_width(block: Block) -> float:
+    """The width a block is drawn with on the canvas (for auto layout)."""
+    from nervus.gui.views.items import BlockItem
+
+    return BlockItem(block).size[0]
 
 
 def _same(a: Any, b: Any) -> bool:

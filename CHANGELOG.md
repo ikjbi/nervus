@@ -12,6 +12,14 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Test cases saved with the model (schema version 4): input signals for top-level In blocks, parameter
+  overrides or a parameter-set file, stop time, and checks (`bounds`, `final_value`, `reaches`, `max`, `min`,
+  `baseline`). `nervus.testing.run_tests()` runs them.
+- `simulate(..., inputs={...})` drives top-level In blocks with `Signal`s (steps, ramps, CSV).
+- Results: `SimResult.save()/load()` (`.nervres`), `to_mat()`, and `compare_results()`.
+- Editor: Test Manager panel (background test runs, pass/fail, undoable edits) and Data Inspector (overlay and
+  compare runs, differences, save/load/export).
+- The throttle_ecu example stores three requirement test cases.
 - C code generation (`nervus.codegen.generate_c`) for models and subsystems: `<name>.h`/`<name>.c` with
   `_initialize()`/`_step()`, static memory, input/output/parameter/state structs, shared calibration
   parameters for workspace variables, base-rate multi-rate scheduling, a `main_example.c` template and an

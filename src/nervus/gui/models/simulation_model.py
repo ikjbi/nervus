@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
 
 from PySide6.QtCore import QObject, Signal
@@ -17,8 +18,18 @@ class SimulationState(Enum):
     FAILED = "failed"
 
 
+MAX_RUNS = 20
+
+
+@dataclass
+class Run:
+    label: str
+    result: SimResult
+
+
 class SimulationModel(QObject):
     stateChanged = Signal(object)  # SimulationState
+    runsChanged = Signal()
     progressChanged = Signal(float)  # fraction 0..1
     resultChanged = Signal(object)  # SimResult | None
     errorOccurred = Signal(str, tuple)  # message, block names
@@ -28,6 +39,9 @@ class SimulationModel(QObject):
         self._state = SimulationState.IDLE
         self._result: SimResult | None = None
         self._error: str = ""
+        self.runs: list[Run] = []
+        """Recent results (newest last), for the Data Inspector."""
+        self._counter = 0
 
     @property
     def state(self) -> SimulationState:
@@ -56,6 +70,23 @@ class SimulationModel(QObject):
     def set_result(self, result: SimResult | None) -> None:
         self._result = result
         self.resultChanged.emit(result)
+
+    def add_run(self, result: SimResult, label: str | None = None) -> Run:
+        self._counter += 1
+        run = Run(label or f"Run {self._counter}", result)
+        self.runs.append(run)
+        del self.runs[:-MAX_RUNS]
+        self.runsChanged.emit()
+        return run
+
+    def remove_run(self, run: Run) -> None:
+        if run in self.runs:
+            self.runs.remove(run)
+            self.runsChanged.emit()
+
+    def clear_runs(self) -> None:
+        self.runs.clear()
+        self.runsChanged.emit()
 
     def set_error(self, message: str, blocks: tuple[str, ...] = ()) -> None:
         self._error = message

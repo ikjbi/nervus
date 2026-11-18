@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from nervus.core.block import Block
 from nervus.core.diagram import Diagram
 
-COLUMN_WIDTH = 160.0
+COLUMN_GAP = 90.0
 ROW_HEIGHT = 110.0
+DEFAULT_WIDTH = 70.0
 
 
 def _feedback_edges(diagram: Diagram) -> set[tuple[int, int]]:
@@ -40,12 +43,14 @@ def _feedback_edges(diagram: Diagram) -> set[tuple[int, int]]:
     return back
 
 
-def auto_layout(diagram: Diagram, only_missing: bool = True) -> int:
+def auto_layout(diagram: Diagram, only_missing: bool = True, width_of: Callable[[Block], float] | None = None) -> int:
     """Place blocks in columns by signal-flow depth. Returns how many blocks were placed.
 
     With ``only_missing`` (the default), blocks that already have a position are left alone, and nothing is
-    done unless at least one block lacks a position.
+    done unless at least one block lacks a position. ``width_of`` gives a block's drawn width (the editor
+    passes its real sizes) so wide blocks such as subsystems get room.
     """
+    width = width_of or (lambda b: DEFAULT_WIDTH)
     blocks = diagram.blocks
     missing = [b for b in blocks if "position" not in b.meta]
     if only_missing and not missing:
@@ -72,8 +77,11 @@ def auto_layout(diagram: Diagram, only_missing: bool = True) -> int:
     for b in blocks:
         columns.setdefault(level(id(b)), []).append(b)
     target_ids = {id(b) for b in targets}
-    for col, members in columns.items():
+    x = 0.0
+    for col in sorted(columns):
+        members = columns[col]
         for row, b in enumerate(members):
             if id(b) in target_ids:
-                b.meta["position"] = [col * COLUMN_WIDTH, row * ROW_HEIGHT]
+                b.meta["position"] = [round(x / 10) * 10, row * ROW_HEIGHT]
+        x += max(width(b) for b in members) + COLUMN_GAP
     return len(targets)

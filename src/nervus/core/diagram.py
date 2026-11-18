@@ -64,6 +64,8 @@ class Diagram:
         self.workspace = Workspace()
         """Named parameters that block parameters can refer to (``Gain(gain="Kp")``). Only the top-level
         diagram's workspace is used; subsystems see their model's workspace."""
+        self.tests: list[Any] = []
+        """Test cases (:class:`nervus.core.testcase.TestCase`) stored with the model."""
         self.parent: Block | None = None
         """The Subsystem block that contains this diagram (``None`` for a model)."""
         self._blocks: dict[str, Block] = {}

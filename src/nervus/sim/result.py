@@ -108,6 +108,57 @@ class SimResult:
             w.writerow(headers)
             w.writerows(np.column_stack(columns).tolist())
 
+    # ------------------------------------------------------------------ files
+
+    def save(self, path: str | Path) -> Path:
+        """Save to a compressed ``.nervres`` file (NumPy NPZ with the signal names and metadata)."""
+        import json
+
+        p = Path(path)
+        if not p.suffix:
+            p = p.with_suffix(".nervres")
+        meta = {
+            "format": "nervus-result",
+            "schema_version": 1,
+            "keys": list(self.signals),
+            "input_keys": self.input_keys,
+            "aliases": self.aliases,
+            "stats": self.stats.__dict__ if self.stats is not None else None,
+        }
+        arrays: dict[str, Any] = {f"s{k}": v for k, v in enumerate(self.signals.values())}
+        arrays["t"] = self.t
+        arrays["meta"] = np.array(json.dumps(meta))
+        with open(p, "wb") as fh:
+            np.savez_compressed(fh, **arrays)
+        return p
+
+    @classmethod
+    def load(cls, path: str | Path) -> SimResult:
+        import json
+
+        with np.load(Path(path), allow_pickle=False) as data:
+            meta = json.loads(str(data["meta"]))
+            if meta.get("format") != "nervus-result":
+                raise ValueError(f"{path} is not a Nervus result file")
+            signals = {key: data[f"s{k}"] for k, key in enumerate(meta["keys"])}
+            t = data["t"]
+        stats = SimStats(**meta["stats"]) if meta.get("stats") else None
+        return cls(t, signals, meta.get("input_keys", {}), meta.get("aliases", {}), stats)
+
+    def to_mat(self, path: str | Path) -> None:
+        """Save as a MATLAB ``.mat`` file: ``t`` plus one variable per signal (names made MATLAB-safe)."""
+        import re
+
+        from scipy.io import savemat
+
+        out: dict[str, Any] = {"t": self.t}
+        for name in self.names():
+            var = re.sub(r"\W", "_", name)
+            if not var or not var[0].isalpha():
+                var = "s_" + var
+            out[var[:63]] = self.signals[self._key(name)]
+        savemat(str(path), out)
+
     def to_dataframe(self) -> Any:
         """Return a :class:`pandas.DataFrame` indexed by time (requires pandas)."""
         import pandas as pd

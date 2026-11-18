@@ -31,6 +31,7 @@ class DiagramModel(QObject):
     connectionRemoved = Signal(object)  # Connection
     settingsChanged = Signal()
     workspaceChanged = Signal()
+    testsChanged = Signal()
     diagramReset = Signal()  # a whole new diagram was loaded
     currentChanged = Signal(object)  # Diagram: the editor now shows this (sub)system
     filePathChanged = Signal(object)  # Path | None
@@ -51,6 +52,7 @@ class DiagramModel(QObject):
             self.connectionRemoved,
             self.settingsChanged,
             self.workspaceChanged,
+            self.testsChanged,
             self.diagramReset,
         ):
             sig.connect(self.changed)
@@ -116,11 +118,13 @@ class DiagramModel(QObject):
         return self._path.name if self._path else f"{self._root.name}"
 
     def set_diagram(self, diagram: Diagram, path: Path | None = None) -> None:
-        auto_layout(diagram)  # diagrams built in Python have no positions yet
+        from nervus.gui.controllers.editor_controller import block_width
+
+        auto_layout(diagram, width_of=block_width)  # diagrams built in Python have no positions yet
         for _name, b in diagram.walk():
             system = getattr(b, "system", None)
             if isinstance(system, Diagram):
-                auto_layout(system)
+                auto_layout(system, width_of=block_width)
         self._root = diagram
         self._diagram = diagram
         self.diagramReset.emit()
@@ -236,6 +240,10 @@ class DiagramModel(QObject):
                         b.resolve(ns)
                 self.paramsChanged.emit(b)
         self.workspaceChanged.emit()
+
+    def set_tests(self, tests: list[Any]) -> None:
+        self._root.tests = list(tests)
+        self.testsChanged.emit()
 
     def set_settings(self, settings: SimulationSettings) -> None:
         settings.validate()

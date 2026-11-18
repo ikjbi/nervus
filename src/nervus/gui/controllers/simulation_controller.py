@@ -114,6 +114,7 @@ class SimulationController(QObject):
         self.editor.set_editing_enabled(True)
         self.sim_model.set_progress(1.0)
         self.sim_model.set_result(result)
+        self.sim_model.add_run(result)
         stopped = result.stats is not None and result.stats.stopped_early
         self.sim_model.set_state(SimulationState.STOPPED if stopped else SimulationState.FINISHED)
 

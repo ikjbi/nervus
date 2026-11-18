@@ -160,15 +160,17 @@ tests/
 
 ## Phase 10 – Test cases, scenarios and results
 *"Save/load cases": reproducible simulations you can rerun and compare.*
-- [ ] Test case = name + input scenario + parameter set + stop time + expected results/tolerances,
-      saved as a file next to the model
-- [ ] Scenario inputs: piecewise signals (Signal Builder-like), CSV, and recorded data replay
-- [ ] Save/load simulation results (`.nervres`, compressed NPZ) and export CSV / MAT
+- [x] Test case = name + input scenario + parameter set + stop time + checks, saved with the model
+- [ ] Export/import test suites as separate files
+- [x] Scenario inputs: piecewise signals (hold/linear), CSV replay
+- [ ] Graphical signal editor (Signal Builder-like)
+- [x] Save/load simulation results (`.nervres`, compressed NPZ) and export CSV / MAT
 - [ ] Import/export ASAM MDF4 (`.mf4`, via `asammdf`), the format of INCA/CANape vehicle logs
-- [ ] Run several cases in batch; parameter sweeps; summary report
-- [ ] Simulation Data Inspector: overlay and compare runs, with differences and tolerance checks
-- [ ] GUI: Test Manager panel (create, run, pass/fail), compare-runs window
-- [ ] Python API for all of the above (usable from pytest for regression tests)
+- [x] Run several cases in batch
+- [ ] Parameter sweeps and Monte Carlo runs; HTML test report
+- [x] Simulation Data Inspector: overlay and compare runs, with differences and tolerance checks
+- [x] GUI: Test Manager panel (create, run, pass/fail), compare-runs window
+- [x] Python API for all of the above (usable from pytest for regression tests)
 
 ## Phase 11 – C code generation
 - [x] Restrict to fixed-step, discrete-time models (clear errors otherwise; continuous plants stay in

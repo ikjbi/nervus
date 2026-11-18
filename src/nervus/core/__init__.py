@@ -12,6 +12,8 @@ from nervus.core.errors import (
 from nervus.core.params import Param, ParamKind
 from nervus.core.sample_time import CONSTANT, CONTINUOUS, INHERITED, SampleTime
 from nervus.core.settings import SimulationSettings
+from nervus.core.signals import Signal
+from nervus.core.testcase import Check, TestCase
 from nervus.core.workspace import ParameterSet, Variable, Workspace
 
 __all__ = [
@@ -20,6 +22,7 @@ __all__ = [
     "INHERITED",
     "AlgebraicLoopError",
     "Block",
+    "Check",
     "Connection",
     "Diagram",
     "InPort",
@@ -33,8 +36,10 @@ __all__ = [
     "ParameterSet",
     "SampleTime",
     "Severity",
+    "Signal",
     "SimulationError",
     "SimulationSettings",
+    "TestCase",
     "Variable",
     "Workspace",
 ]

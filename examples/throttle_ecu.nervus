@@ -1,6 +1,6 @@
 {
   "format": "nervus-model",
-  "schema_version": 3,
+  "schema_version": 4,
   "name": "throttle_ecu",
   "meta": {},
   "settings": {
@@ -69,7 +69,7 @@
       },
       "meta": {
         "position": [
-          0.0,
+          0,
           0.0
         ]
       }
@@ -80,7 +80,7 @@
       "params": {},
       "meta": {
         "position": [
-          160.0,
+          160,
           0.0
         ]
       },
@@ -96,7 +96,7 @@
             },
             "meta": {
               "position": [
-                0.0,
+                0,
                 0.0
               ]
             }
@@ -111,7 +111,7 @@
             },
             "meta": {
               "position": [
-                0.0,
+                0,
                 110.0
               ]
             }
@@ -124,7 +124,7 @@
             },
             "meta": {
               "position": [
-                160.0,
+                160,
                 0.0
               ]
             }
@@ -137,7 +137,7 @@
             },
             "meta": {
               "position": [
-                320.0,
+                320,
                 0.0
               ]
             }
@@ -159,7 +159,7 @@
             },
             "meta": {
               "position": [
-                480.0,
+                480,
                 0.0
               ]
             }
@@ -172,7 +172,7 @@
             },
             "meta": {
               "position": [
-                640.0,
+                640,
                 0.0
               ]
             }
@@ -221,7 +221,7 @@
       },
       "meta": {
         "position": [
-          320.0,
+          440,
           0.0
         ]
       }
@@ -234,7 +234,7 @@
       },
       "meta": {
         "position": [
-          480.0,
+          600,
           0.0
         ]
       }
@@ -248,7 +248,7 @@
       },
       "meta": {
         "position": [
-          640.0,
+          760,
           0.0
         ]
       }
@@ -263,7 +263,7 @@
       },
       "meta": {
         "position": [
-          800.0,
+          920,
           0.0
         ]
       }
@@ -276,7 +276,7 @@
       },
       "meta": {
         "position": [
-          960.0,
+          1080,
           0.0
         ]
       }
@@ -342,6 +342,57 @@
       "src_port": 0,
       "dst": "scope",
       "dst_port": 2
+    }
+  ],
+  "tests": [
+    {
+      "name": "tip-in, baseline calibration",
+      "description": "Reaches 59° within 150 ms of the step to 60°, with at most 5° overshoot",
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "reaches",
+          "signal": "plate_angle",
+          "value": 59.0,
+          "before": 0.35
+        },
+        {
+          "kind": "max",
+          "signal": "plate_angle",
+          "value": 65.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "plate_angle",
+          "value": 20.0,
+          "tolerance": 0.5
+        }
+      ]
+    },
+    {
+      "name": "tip-in, tight calibration",
+      "description": "The higher-gain calibration overshoots less than 1°",
+      "parameter_set": "throttle_tight.nervcal",
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "max",
+          "signal": "plate_angle",
+          "value": 61.0
+        }
+      ]
+    },
+    {
+      "name": "duty cycle within actuator limits",
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "ECU/throttle_pi",
+          "lower": 0.0,
+          "upper": 100.0
+        }
+      ]
     }
   ]
 }

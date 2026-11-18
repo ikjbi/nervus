@@ -5,7 +5,7 @@ Models are saved as UTF-8 JSON files with the extension `.nervus`:
 ```json
 {
   "format": "nervus-model",
-  "schema_version": 3,
+  "schema_version": 4,
   "name": "first_order",
   "meta": {},
   "settings": {"t_start": 0.0, "t_final": 10.0, "solver": "auto", "step": null,
@@ -35,7 +35,8 @@ Models are saved as UTF-8 JSON files with the extension `.nervus`:
 
 `schema_version` is increased whenever the format changes, and Nervus upgrades older files automatically when
 it loads them. Version 2 added `workspace`; version 3 added subsystems (a block entry may contain a nested
-`"system"` with its own `blocks` and `connections`). Files from a *newer* version of Nervus are rejected with a message asking you to upgrade.
+`"system"` with its own `blocks` and `connections`); version 4 added `tests` (test cases with inputs,
+parameters and checks, see [Test cases and results](testing.md)). Files from a *newer* version of Nervus are rejected with a message asking you to upgrade.
 
 !!! warning "Python Function blocks run code"
     A model containing a Python Function block runs that code when it is loaded and simulated.

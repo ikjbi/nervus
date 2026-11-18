@@ -298,3 +298,24 @@ class CreateSubsystemCommand(Command):
             self.model.add_block(b, None, self.outer)
         for src, sp, dst, dp in self._saved:
             self.model.add_connection(src, sp, dst, dp)
+
+
+class SetTestsCommand(Command):
+    """Replace the model's list of test cases (add, edit, delete and reorder are all this command)."""
+
+    def __init__(self, model: DiagramModel, tests: list[object], text: str) -> None:
+        super().__init__(text)
+        self.model = model
+        self.new = [t.to_dict() for t in tests]  # type: ignore[attr-defined]
+        self.old = [t.to_dict() for t in model.root.tests]
+
+    def _apply(self, data: list[dict[str, object]]) -> None:
+        from nervus.core.testcase import TestCase
+
+        self.model.set_tests([TestCase.from_dict(d) for d in data])
+
+    def do(self) -> None:
+        self._apply(self.new)
+
+    def revert(self) -> None:
+        self._apply(self.old)

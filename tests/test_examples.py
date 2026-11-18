@@ -92,3 +92,11 @@ def test_throttle_ecu_and_committed_generated_code() -> None:
         assert (EXAMPLES / "generated" / "ECU" / name).read_text() == text, f"generated/ECU/{name} is stale"
     res = simulate(d)
     assert float(np.interp(1.15, res.t, res["plate_angle"])) == pytest.approx(60.0, abs=0.5)
+
+
+def test_throttle_ecu_stored_tests_pass() -> None:
+    from nervus.testing import run_tests
+
+    results = run_tests(load(EXAMPLES / "throttle_ecu.nervus"), base_dir=EXAMPLES)
+    assert len(results) == 3
+    assert all(r.passed for r in results), "\n".join(r.summary() for r in results)

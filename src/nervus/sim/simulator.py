@@ -24,7 +24,7 @@ from typing import Any
 import numpy as np
 
 from nervus.core.diagram import Diagram
-from nervus.core.errors import SimulationError
+from nervus.core.errors import ModelError, SimulationError
 from nervus.core.sample_time import SampleTime
 from nervus.core.settings import SimulationSettings
 from nervus.core.types import Array
@@ -117,6 +117,7 @@ def simulate(
     atol: float | None = None,
     settings: SimulationSettings | None = None,
     params: dict[str, Any] | None = None,
+    inputs: dict[str, Any] | None = None,
     progress: Callable[[float], None] | None = None,
     should_stop: Callable[[], bool] | None = None,
 ) -> SimResult:
@@ -124,15 +125,58 @@ def simulate(
 
     Settings come from ``settings`` if given, otherwise from ``diagram.settings``; keyword arguments override
     individual values. ``params`` overrides workspace variables for this run, e.g. ``params={"Kp": 2.0}``.
+    ``inputs`` drives the model's top-level In blocks, by name: a :class:`~nervus.core.signals.Signal`, a
+    number/vector (constant) or a ``(time, values)`` pair.
     ``progress(t)`` is called after each major step; if ``should_stop()`` returns true the run ends early (used
     by the GUI's Stop button).
     """
     if isinstance(diagram, CompiledModel):
-        if params:
-            raise ValueError("params cannot be used with an already compiled model; pass the Diagram instead")
-        model = diagram
-    else:
+        if params or inputs:
+            raise ValueError("params/inputs cannot be used with an already compiled model; pass the Diagram")
+        return _simulate_compiled(
+            diagram, t_final, t_start, solver, step, max_step, rtol, atol, settings, progress, should_stop
+        )
+    attached = _attach_inputs(diagram, inputs or {})
+    try:
         model = compile_diagram(diagram, params)
+        return _simulate_compiled(
+            model, t_final, t_start, solver, step, max_step, rtol, atol, settings, progress, should_stop
+        )
+    finally:
+        for block in attached:
+            block.signal = None
+
+
+def _attach_inputs(diagram: Diagram, inputs: dict[str, Any]) -> list[Any]:
+    from nervus.blocks.ports import Inport
+    from nervus.core.signals import Signal
+
+    ports = {b.name: b for b in diagram.blocks if isinstance(b, Inport)}
+    unknown = set(inputs) - set(ports)
+    if unknown:
+        raise ModelError(
+            f"no top-level In block named {', '.join(sorted(unknown))}; inputs: {', '.join(ports) or 'none'}"
+        )
+    attached = []
+    for name, value in inputs.items():
+        ports[name].signal = Signal.coerce(value)
+        attached.append(ports[name])
+    return attached
+
+
+def _simulate_compiled(
+    model: CompiledModel,
+    t_final: float | None,
+    t_start: float | None,
+    solver: str | None,
+    step: float | None,
+    max_step: float | None,
+    rtol: float | None,
+    atol: float | None,
+    settings: SimulationSettings | None,
+    progress: Callable[[float], None] | None,
+    should_stop: Callable[[], bool] | None,
+) -> SimResult:
     base = settings or model.diagram.settings
     overrides: dict[str, Any] = {
         "t_final": t_final,
