@@ -52,7 +52,10 @@ class Constant(_Source):
 class Step(_Source):
     """Steps from *initial* to *final* at *time*.
 
-    $$ y(t) = \\begin{cases} \\text{initial} & t < \\text{time} \\\\ \\text{final} & t \\ge \\text{time} \\end{cases} $$
+    ![Step parameters](figures/step.png)
+
+    $$ y(t) = \\begin{cases} \\text{initial} & \\text{if } t < \\text{time} \\\\
+    \\text{final} & \\text{if } t \\ge \\text{time} \\end{cases} $$
     """
 
     type_id = "sources.step"
@@ -78,7 +81,12 @@ class Step(_Source):
 
 @register
 class Ramp(_Source):
-    """A ramp starting at *start_time*: ``y = initial + slope * max(0, t - start_time)``."""
+    """A ramp starting at *start_time*:
+
+    $$ y(t) = \\mathrm{initial} + \\mathrm{slope} \\cdot \\max(0,\\ t - t_\\mathrm{start}) $$
+
+    ![Ramp parameters](figures/ramp.png)
+    """
 
     type_id = "sources.ramp"
     label = "Ramp"
@@ -99,7 +107,13 @@ class Ramp(_Source):
 
 @register
 class Sine(_Source):
-    """Sine wave: ``y = amplitude * sin(frequency * t + phase) + bias``.
+    """Sine wave:
+
+    $$ y(t) = A \\sin(\\omega t + \\varphi) + b $$
+
+    with amplitude *A*, angular *frequency* ω, *phase* φ and *bias* b.
+
+    ![Sine Wave parameters](figures/sine.png)
 
     *frequency* is in rad/s, as in Simulink. For a frequency *f* in Hz use ``2*pi*f``.
     """
@@ -122,7 +136,10 @@ class Sine(_Source):
 @register
 class Pulse(_Source):
     """Square pulse train. High (*amplitude*) for *duty* percent of each *period*, otherwise 0.
-    The first pulse starts at *delay*."""
+    The first pulse starts at *delay*.
+
+    ![Pulse Generator parameters](figures/pulse.png)
+    """
 
     type_id = "sources.pulse"
     label = "Pulse Generator"
@@ -178,6 +195,8 @@ class Clock(_Source):
 @register
 class FromWorkspace(_Source):
     """Plays back recorded data.
+
+    ![Linear interpolation vs hold](figures/from_workspace.png)
 
     Give either *time* and *data* arrays (data has one row per time point, one column per signal element), or a
     *csv_file* whose first column is time and remaining columns are data (a header row is skipped automatically).

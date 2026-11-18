@@ -13,6 +13,7 @@ from pathlib import Path
 
 from nervus import Diagram, SimResult, save, simulate
 from nervus.blocks import PID, Gain, Integrator, Scope, Step, Sum
+from nervus.core.layout import auto_layout
 
 M, C, K = 1.0, 0.5, 2.0  # kg, N·s/m, N/m
 
@@ -81,6 +82,7 @@ def plot(res: SimResult) -> None:
 
 def main(show_plot: bool = True) -> SimResult:
     d = build()
+    auto_layout(d)  # give the blocks positions for the editor
     save(d, Path(__file__).with_suffix(".nervus"))
     res = simulate(d)
     report(res)

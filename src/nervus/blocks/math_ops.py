@@ -23,8 +23,13 @@ class _Math(Block):
 class Gain(_Math):
     """Multiplies the input by a constant.
 
-    With *multiplication* = ``elementwise`` the output is ``gain .* u`` (scalars expand). With ``matrix``
-    the output is the matrix product ``gain @ u``.
+    ![The three ways a Gain multiplies its input](figures/gain_modes.png)
+
+    With *multiplication* = ``elementwise`` each element is multiplied by the matching gain element (a scalar
+    gain multiplies every element). With ``matrix`` the output is the matrix product of the gain matrix *K* and
+    the input vector:
+
+    $$ y_i = k_i\\,u_i \\qquad\\qquad y = K\\,u $$
     """
 
     type_id = "math.gain"
@@ -67,8 +72,12 @@ class Gain(_Math):
 class Sum(_Math):
     """Adds and subtracts its inputs.
 
+    ![signs = "+-+"](figures/sum_signs.png)
+
     *signs* holds one ``+`` or ``-`` per input, e.g. ``"+-"`` gives ``u0 - u1``. ``|`` characters are ignored
     (for spacing, as in Simulink).
+
+    $$ y = \\sum_i s_i\\,u_i, \\quad s_i \\in \\{+1, -1\\} $$
     """
 
     type_id = "math.sum"
@@ -98,6 +107,8 @@ class Product(_Math):
     """Multiplies and divides its inputs elementwise.
 
     *ops* holds one ``*`` or ``/`` per input, e.g. ``"*/"`` gives ``u0 / u1``.
+
+    $$ y = \\prod_i u_i^{\\,p_i}, \\quad p_i \\in \\{+1, -1\\} $$
     """
 
     type_id = "math.product"
@@ -132,7 +143,12 @@ class Abs(_Math):
 
 @register
 class Saturation(_Math):
-    """Limits the input to the range [*lower*, *upper*]."""
+    """Limits the input to the range [*lower*, *upper*]:
+
+    $$ y = \\min(\\max(u, \\mathrm{lower}), \\mathrm{upper}) $$
+
+    ![Saturation characteristic and time response](figures/saturation.png)
+    """
 
     type_id = "math.saturation"
     label = "Saturation"

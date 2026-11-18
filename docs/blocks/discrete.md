@@ -4,7 +4,11 @@
 
 `discrete.unit_delay` · Discrete
 
-Delays its input by one sample period: ``y[k] = u[k-1]``, with ``y[0] = initial``.
+Delays its input by one sample period:
+
+$$ y[k] = u[k-1], \qquad y[0] = \mathrm{initial} $$
+
+![Unit Delay input and output](../images/blocks/unit_delay.png)
 
 Like an Integrator in continuous time, a Unit Delay breaks algebraic loops in discrete-time feedback.
 
@@ -23,7 +27,11 @@ Like an Integrator in continuous time, a Unit Delay breaks algebraic loops in di
 
 `discrete.zero_order_hold` · Discrete
 
-Samples its input every *sample_time* seconds and holds the value until the next sample.
+Samples its input every *sample_time* seconds and holds the value until the next sample:
+
+$$ y(t) = u(kT) \quad \mathrm{for}\ kT \leq t < (k+1)T $$
+
+![Sampling a continuous signal with a Zero-Order Hold](../images/blocks/zero_order_hold.png)
 
 This is how a continuous signal (e.g. a sensor) enters a discrete controller.
 
@@ -43,9 +51,15 @@ This is how a continuous signal (e.g. a sensor) enters a discrete controller.
 
 Discrete-time integrator (accumulator).
 
-``forward_euler``:  ``y[k] = x[k]``,  ``x[k+1] = x[k] + K·T·u[k]``  (no direct feedthrough)
+![Forward vs backward Euler](../images/blocks/discrete_integrator.png)
 
-``backward_euler``: ``y[k] = x[k] + K·T·u[k]``, ``x[k+1] = y[k]``
+``forward_euler`` (no direct feedthrough):
+
+$$ y[k] = x[k], \qquad x[k+1] = x[k] + K\,T\,u[k] $$
+
+``backward_euler``:
+
+$$ y[k] = x[k] + K\,T\,u[k], \qquad x[k+1] = y[k] $$
 
 The state is limited to [*lower*, *upper*].
 

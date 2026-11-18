@@ -76,6 +76,8 @@ class _PIDBase(Block):
 class PID(_PIDBase):
     """Continuous PID controller (parallel form) with a filtered derivative:
 
+    ![PID structure](figures/pid_structure.png)
+
     $$ u = P\\,e + I \\int e\\,dt + D \\frac{N s}{s + N} e $$
 
     The input is the control error *e*. The output is limited to [*lower*, *upper*]. When the output saturates,
@@ -84,6 +86,8 @@ class PID(_PIDBase):
     - ``clamping`` stops integrating while the output is saturated and the error would push it further out.
     - ``back_calculation`` feeds the excess ``Kb·(y - u_unsat)`` back into the integrator. It is smooth, which
       variable-step solvers handle well.
+
+    ![Anti-windup comparison](figures/pid_anti_windup.png)
 
     !!! note
         ``clamping`` switches abruptly. With variable-step solvers it can make the simulation very slow,

@@ -4,7 +4,11 @@
 
 `math.saturation` · Discontinuities
 
-Limits the input to the range [*lower*, *upper*].
+Limits the input to the range [*lower*, *upper*]:
+
+$$ y = \min(\max(u, \mathrm{lower}), \mathrm{upper}) $$
+
+![Saturation characteristic and time response](../images/blocks/saturation.png)
 
 ### Parameters
 

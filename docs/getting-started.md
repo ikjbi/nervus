@@ -12,6 +12,11 @@ uv sync --extra gui           # + the desktop editor (PySide6)
 uv sync --extra plot          # + matplotlib for the example plots
 ```
 
+## The editor
+
+`uv run nervus` starts the desktop editor; see [The editor](editor.md). The rest of this page builds a model
+in Python.
+
 ## Your first model
 
 A model is a **diagram** of **blocks** connected by **signal lines**. This builds the first-order system

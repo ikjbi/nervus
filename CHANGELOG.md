@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Desktop editor (`nervus` command), built with PySide6 in a Model–View–Controller structure: canvas with
+  drag-and-drop blocks and wires, block library with search, property editor with expressions and MATLAB-style
+  matrices, undo/redo for every edit, copy/paste, diagnostics panel, threaded simulation with progress and stop,
+  scope windows with hover readout, simulation settings dialog, recent files, light and dark themes.
+- In-app help: user guide pages and the full block reference (F1 on a selected block), with typeset LaTeX
+  equations and explanatory figures.
+- Block figures (`scripts/gen_figures.py`) and editor screenshots (`scripts/screenshots.py`) for the docs.
+- LaTeX equations in every block's documentation.
+- Automatic left-to-right layout for diagrams without block positions.
 - Simulation engine: block base class, diagrams, width propagation, execution ordering, algebraic loop
   detection, sample-time inheritance, multi-rate discrete scheduling.
 - Solvers: fixed-step Euler and RK4; variable-step RK45, RK23, DOP853, Radau, BDF and LSODA (via SciPy).

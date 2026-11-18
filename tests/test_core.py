@@ -166,3 +166,14 @@ class TestDiagram:
     def test_integrator_block_metadata(self) -> None:
         assert Integrator.type_id == "continuous.integrator"
         assert Integrator.__doc__
+
+
+def test_auto_layout_places_blocks_left_to_right(first_order: Diagram) -> None:
+    from nervus.core.layout import auto_layout
+
+    assert auto_layout(first_order) == 5
+    x = {b.name: b.meta["position"][0] for b in first_order}
+    assert x["u"] < x["err"] < x["k"] < x["y"] < x["scope"]  # the y -> err feedback is ignored
+    positions = [tuple(b.meta["position"]) for b in first_order]
+    assert len(set(positions)) == len(positions)
+    assert auto_layout(first_order) == 0  # nothing missing any more

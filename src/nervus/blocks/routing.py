@@ -20,7 +20,10 @@ class _Routing(Block):
 
 @register
 class Mux(_Routing):
-    """Combines its inputs into one vector signal, in port order."""
+    """Combines its inputs into one vector signal, in port order.
+
+    ![Mux and Demux](figures/mux_demux.png)
+    """
 
     type_id = "routing.mux"
     label = "Mux"
@@ -40,7 +43,10 @@ class Mux(_Routing):
 
 @register
 class Demux(_Routing):
-    """Splits a vector signal into *num_outputs* equally sized parts."""
+    """Splits a vector signal into *num_outputs* equally sized parts.
+
+    ![Mux and Demux](figures/mux_demux.png)
+    """
 
     type_id = "routing.demux"
     label = "Demux"
@@ -63,7 +69,11 @@ class Demux(_Routing):
 
 @register
 class Switch(_Routing):
-    """Passes input 0 when the control input (input 1) satisfies *criterion*, otherwise input 2.
+    """Passes input 0 when the control input (input 1) satisfies *criterion*, otherwise input 2:
+
+    $$ y = \\begin{cases} u_0 & \\text{if } u_1 \\geq \\mathrm{threshold} \\\\ u_2 & \\text{otherwise} \\end{cases} $$
+
+    ![Switch ports](figures/switch.png)
 
     Criteria: ``u1 >= threshold``, ``u1 > threshold`` or ``u1 != 0``. The control input must be scalar.
     """

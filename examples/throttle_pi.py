@@ -18,6 +18,7 @@ import numpy as np
 
 from nervus import Diagram, SimResult, save, simulate
 from nervus.blocks import DiscretePID, FromWorkspace, Gain, Integrator, Scope, Sum, ZeroOrderHold
+from nervus.core.layout import auto_layout
 
 TAU = 0.05  # s, actuator time constant
 GAIN = 0.9  # degrees per % duty cycle at steady state
@@ -87,6 +88,7 @@ def plot(res: SimResult) -> None:
 
 def main(show_plot: bool = True) -> SimResult:
     d = build()
+    auto_layout(d)  # give the blocks positions for the editor
     save(d, Path(__file__).with_suffix(".nervus"))
     res = simulate(d)
     report(res)

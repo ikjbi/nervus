@@ -4,7 +4,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 ## [Continuous](continuous.md)
 
-- **Integrator**: Integrates its input: ``y(t) = initial + ∫ u dt``.
+- **Integrator**: Integrates its input:
 - **Derivative**: Approximate time derivative of the input.
 - **Transfer Fcn**: Continuous SISO transfer function
 - **State-Space**: Continuous linear state-space system
@@ -16,12 +16,12 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 ## [Discontinuities](discontinuities.md)
 
-- **Saturation**: Limits the input to the range [*lower*, *upper*].
+- **Saturation**: Limits the input to the range [*lower*, *upper*]:
 
 ## [Discrete](discrete.md)
 
-- **Unit Delay**: Delays its input by one sample period: ``y[k] = u[k-1]``, with ``y[0] = initial``.
-- **Zero-Order Hold**: Samples its input every *sample_time* seconds and holds the value until the next sample.
+- **Unit Delay**: Delays its input by one sample period:
+- **Zero-Order Hold**: Samples its input every *sample_time* seconds and holds the value until the next sample:
 - **Discrete-Time Integrator**: Discrete-time integrator (accumulator).
 - **Discrete Transfer Fcn**: Discrete SISO transfer function
 
@@ -37,7 +37,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 - **Mux**: Combines its inputs into one vector signal, in port order.
 - **Demux**: Splits a vector signal into *num_outputs* equally sized parts.
-- **Switch**: Passes input 0 when the control input (input 1) satisfies *criterion*, otherwise input 2.
+- **Switch**: Passes input 0 when the control input (input 1) satisfies *criterion*, otherwise input 2:
 
 ## [Sinks](sinks.md)
 
@@ -49,8 +49,8 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 - **Constant**: Outputs a constant value (scalar or vector).
 - **Step**: Steps from *initial* to *final* at *time*.
-- **Ramp**: A ramp starting at *start_time*: ``y = initial + slope * max(0, t - start_time)``.
-- **Sine Wave**: Sine wave: ``y = amplitude * sin(frequency * t + phase) + bias``.
+- **Ramp**: A ramp starting at *start_time*:
+- **Sine Wave**: Sine wave:
 - **Pulse Generator**: Square pulse train. High (*amplitude*) for *duty* percent of each *period*, otherwise 0.
 - **Clock**: Outputs the simulation time *t*.
 - **From Workspace**: Plays back recorded data.

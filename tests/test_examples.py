@@ -49,3 +49,11 @@ def test_block_reference_is_up_to_date() -> None:
     docs = EXAMPLES.parent / "docs" / "blocks"
     for name, text in reference_pages().items():
         assert (docs / name).read_text(encoding="utf-8") == text.rstrip() + "\n", f"docs/blocks/{name} is stale"
+
+
+def test_app_help_copies_are_up_to_date() -> None:
+    """docs/app-help mirrors the in-app help. Regenerate with: uv run python scripts/gen_block_reference.py"""
+    src = EXAMPLES.parent / "src" / "nervus" / "gui" / "resources" / "help"
+    out = EXAMPLES.parent / "docs" / "app-help"
+    for page in src.glob("*.md"):
+        assert (out / page.name).read_text() == page.read_text(), f"docs/app-help/{page.name} is stale"

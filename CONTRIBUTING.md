@@ -10,7 +10,13 @@ uv run pre-commit install
 ## Workflow
 
 1. Pick an item from [`plan.md`](plan.md), or open an issue.
-2. Write the code **and** its tests **and** its documentation (user docs in `docs/`, docstrings for blocks).
+2. Write the code **and** its tests **and** its documentation, both in the app and on GitHub:
+   - block docstrings (shown in the in-app help and the generated reference), with LaTeX equations,
+   - in-app guide pages in `src/nervus/gui/resources/help/`,
+   - user docs in `docs/`, with pictures where they help:
+     `uv run python scripts/gen_figures.py` (block figures) and
+     `QT_QPA_PLATFORM=offscreen uv run python scripts/screenshots.py` (editor screenshots),
+   - then `uv run python scripts/gen_block_reference.py`.
 3. Run the checks:
    ```bash
    uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest

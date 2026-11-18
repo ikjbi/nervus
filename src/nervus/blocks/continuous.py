@@ -25,7 +25,13 @@ class _Continuous(Block):
 
 @register
 class Integrator(_Continuous):
-    """Integrates its input: ``y(t) = initial + ∫ u dt``.
+    """Integrates its input:
+
+    $$ y(t) = y_0 + \\int_0^t u(\\tau)\\,d\\tau $$
+
+    where y₀ is *initial*.
+
+    ![Integrator with and without limits](figures/integrator_limits.png)
 
     The output is limited to [*lower*, *upper*]. At a limit the integration stops (no wind-up).
     A vector *initial* gives a vector integrator; a scalar *initial* expands to the input width.
@@ -182,6 +188,8 @@ class _StateSpaceBase(Block):
 @register
 class TransferFunction(_StateSpaceBase, _Continuous):
     """Continuous SISO transfer function
+
+    ![Step responses of a first- and a second-order transfer function](figures/transfer_function.png)
 
     $$ G(s) = \\frac{b_0 s^m + \\dots + b_m}{a_0 s^n + \\dots + a_n} $$
 

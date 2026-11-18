@@ -27,7 +27,10 @@ Outputs a constant value (scalar or vector).
 
 Steps from *initial* to *final* at *time*.
 
-$$ y(t) = \begin{cases} \text{initial} & t < \text{time} \\ \text{final} & t \ge \text{time} \end{cases} $$
+![Step parameters](../images/blocks/step.png)
+
+$$ y(t) = \begin{cases} \text{initial} & \text{if } t < \text{time} \\
+\text{final} & \text{if } t \ge \text{time} \end{cases} $$
 
 ### Parameters
 
@@ -46,7 +49,11 @@ $$ y(t) = \begin{cases} \text{initial} & t < \text{time} \\ \text{final} & t \ge
 
 `sources.ramp` · Sources
 
-A ramp starting at *start_time*: ``y = initial + slope * max(0, t - start_time)``.
+A ramp starting at *start_time*:
+
+$$ y(t) = \mathrm{initial} + \mathrm{slope} \cdot \max(0,\ t - t_\mathrm{start}) $$
+
+![Ramp parameters](../images/blocks/ramp.png)
 
 ### Parameters
 
@@ -65,7 +72,13 @@ A ramp starting at *start_time*: ``y = initial + slope * max(0, t - start_time)`
 
 `sources.sine` · Sources
 
-Sine wave: ``y = amplitude * sin(frequency * t + phase) + bias``.
+Sine wave:
+
+$$ y(t) = A \sin(\omega t + \varphi) + b $$
+
+with amplitude *A*, angular *frequency* ω, *phase* φ and *bias* b.
+
+![Sine Wave parameters](../images/blocks/sine.png)
 
 *frequency* is in rad/s, as in Simulink. For a frequency *f* in Hz use ``2*pi*f``.
 
@@ -89,6 +102,8 @@ Sine wave: ``y = amplitude * sin(frequency * t + phase) + bias``.
 
 Square pulse train. High (*amplitude*) for *duty* percent of each *period*, otherwise 0.
 The first pulse starts at *delay*.
+
+![Pulse Generator parameters](../images/blocks/pulse.png)
 
 ### Parameters
 
@@ -119,6 +134,8 @@ Outputs the simulation time *t*.
 `sources.from_workspace` · Sources
 
 Plays back recorded data.
+
+![Linear interpolation vs hold](../images/blocks/from_workspace.png)
 
 Give either *time* and *data* arrays (data has one row per time point, one column per signal element), or a
 *csv_file* whose first column is time and remaining columns are data (a header row is skipped automatically).

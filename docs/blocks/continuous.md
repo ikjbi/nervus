@@ -4,7 +4,13 @@
 
 `continuous.integrator` · Continuous
 
-Integrates its input: ``y(t) = initial + ∫ u dt``.
+Integrates its input:
+
+$$ y(t) = y_0 + \int_0^t u(\tau)\,d\tau $$
+
+where y₀ is *initial*.
+
+![Integrator with and without limits](../images/blocks/integrator_limits.png)
 
 The output is limited to [*lower*, *upper*]. At a limit the integration stops (no wind-up).
 A vector *initial* gives a vector integrator; a scalar *initial* expands to the input width.
@@ -49,6 +55,8 @@ so a non-zero input at t = 0 gives an initial spike.
 `continuous.transfer_function` · Continuous
 
 Continuous SISO transfer function
+
+![Step responses of a first- and a second-order transfer function](../images/blocks/transfer_function.png)
 
 $$ G(s) = \frac{b_0 s^m + \dots + b_m}{a_0 s^n + \dots + a_n} $$
 

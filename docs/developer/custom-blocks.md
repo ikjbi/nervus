@@ -52,5 +52,8 @@ class LowPass(Block):
 - **Discontinuities**: return their times from `breakpoints()` (like Step) so variable-step solvers hit them.
 - **Ports**: set `NUM_INPUTS`/`NUM_OUTPUTS`, or override `num_inputs()`/`num_outputs()` if they depend on
   parameters.
-- **Docs**: the class docstring is the help text. Describe the equation, ports and parameters.
+- **Docs**: the class docstring is the help text, in the app and in the docs. Write the equation in LaTeX
+  between `$$ ... $$` (use `\\` for backslashes in a normal docstring). If a picture helps, add a figure
+  function to `scripts/gen_figures.py` and reference it as `![description](figures/<name>.png)`. Then run
+  `scripts/gen_figures.py` and `scripts/gen_block_reference.py`.
 - **Tests**: check against an analytical solution.

@@ -31,6 +31,57 @@ def block_doc(cls: type[Block]) -> str:
     return re.sub(r":\w+:`([^`]+)`", r"`\1`", doc)
 
 
+_LATEX_SYMBOLS = {
+    r"\tau": "τ",
+    r"\int": "∫",
+    r"\cdot": "·",
+    r"\le": "≤",
+    r"\ge": "≥",
+    r"\infty": "∞",
+    r"\qquad": "\n",
+    r"\quad": "  ",
+    r"\,": " ",
+    r"\dots": "…",
+}
+
+
+def latex_to_text(tex: str) -> str:
+    """Turn the small LaTeX subset used in block docstrings into readable plain text (for the in-app help,
+    whose Markdown renderer has no math support)."""
+    s = tex
+    s = re.sub(r"\\begin\{cases\}|\\end\{cases\}", "", s)
+    s = re.sub(r"\\text\{([^{}]*)\}", r"\1", s)
+    s = re.sub(r"\\dot\s*\{?(\w)\}?", lambda m: m.group(1) + "\u0307", s)
+    for _ in range(3):  # nested fractions
+        s = re.sub(r"\\frac\{([^{}]*)\}\{([^{}]*)\}", r"(\1) / (\2)", s)
+    for k, v in _LATEX_SYMBOLS.items():
+        s = s.replace(k.replace("\\\\", "\\"), v)
+    s = s.replace("\\\\", "\n").replace("&", " ")
+    s = re.sub(r",?\s*\n\s*", "\n", s)
+    return re.sub(r"[ \t]+", " ", s).strip()
+
+
+def admonitions_to_quotes(markdown: str) -> str:
+    """MkDocs ``!!! note`` admonitions become block quotes, which Qt's Markdown renderer understands."""
+    return re.sub(
+        r"!!! (\w+)(?: \"[^\"]*\")?\n((?:    .*\n?)+)",
+        lambda m: f"> **{m.group(1).title()}:** " + " ".join(x.strip() for x in m.group(2).splitlines()) + "\n",
+        markdown,
+    )
+
+
+def app_markdown(markdown: str) -> str:
+    """Prepare Markdown for a renderer without math support: math becomes plain-text code blocks."""
+
+    def block(m: re.Match[str]) -> str:
+        lines = [ln.strip() for ln in latex_to_text(m.group(1)).splitlines() if ln.strip()]
+        return "\n\n```\n" + "\n".join(lines) + "\n```\n\n"
+
+    out = re.sub(r"\$\$(.+?)\$\$", block, markdown, flags=re.S)
+    out = re.sub(r"\$([^$\n]+)\$", lambda m: "`" + latex_to_text(m.group(1)) + "`", out)
+    return admonitions_to_quotes(out)
+
+
 def block_help_markdown(cls: type[Block], heading_level: int = 2) -> str:
     h = "#" * heading_level
     lines = [f"{h} {cls.label}", "", f"`{cls.type_id}` · {cls.category}", "", block_doc(cls), ""]
@@ -59,6 +110,11 @@ def category_slug(category: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", category.lower()).strip("-")
 
 
+def docs_markdown(markdown: str) -> str:
+    """Point figure links at the copies in docs/images/blocks (for the MkDocs block reference)."""
+    return markdown.replace("](figures/", "](../images/blocks/")
+
+
 def reference_pages() -> dict[str, str]:
     """Markdown pages for the block reference, keyed by file name."""
     pages: dict[str, str] = {}
@@ -76,7 +132,7 @@ def reference_pages() -> dict[str, str]:
         index.append("")
         body = [f"# {cat}", ""]
         for c in classes:
-            body.append(block_help_markdown(c))
+            body.append(docs_markdown(block_help_markdown(c)))
             body.append("---\n")
         pages[f"{slug}.md"] = "\n".join(body)
     pages["index.md"] = "\n".join(index)

@@ -30,6 +30,12 @@
         "csv_file": "",
         "interpolation": "hold",
         "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
       }
     },
     {
@@ -37,6 +43,12 @@
       "type": "discrete.zero_order_hold",
       "params": {
         "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          1120.0,
+          0.0
+        ]
       }
     },
     {
@@ -44,6 +56,12 @@
       "type": "math.sum",
       "params": {
         "signs": "+-"
+      },
+      "meta": {
+        "position": [
+          160.0,
+          0.0
+        ]
       }
     },
     {
@@ -60,6 +78,12 @@
         "anti_windup": "clamping",
         "Kb": 1.0,
         "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          320.0,
+          0.0
+        ]
       }
     },
     {
@@ -68,6 +92,12 @@
       "params": {
         "gain": 0.9,
         "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          480.0,
+          0.0
+        ]
       }
     },
     {
@@ -75,6 +105,12 @@
       "type": "math.sum",
       "params": {
         "signs": "+-"
+      },
+      "meta": {
+        "position": [
+          640.0,
+          0.0
+        ]
       }
     },
     {
@@ -83,6 +119,12 @@
       "params": {
         "gain": 20.0,
         "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          800.0,
+          0.0
+        ]
       }
     },
     {
@@ -92,6 +134,12 @@
         "initial": 5.0,
         "upper": 90.0,
         "lower": 0.0
+      },
+      "meta": {
+        "position": [
+          960.0,
+          0.0
+        ]
       }
     },
     {
@@ -99,6 +147,12 @@
       "type": "sinks.scope",
       "params": {
         "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          1120.0,
+          110.0
+        ]
       }
     }
   ],

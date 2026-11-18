@@ -21,6 +21,12 @@
         "initial": 0.0,
         "final": 1.0,
         "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
       }
     },
     {
@@ -28,6 +34,12 @@
       "type": "math.sum",
       "params": {
         "signs": "+-"
+      },
+      "meta": {
+        "position": [
+          160.0,
+          0.0
+        ]
       }
     },
     {
@@ -43,6 +55,12 @@
         "lower": -50.0,
         "anti_windup": "back_calculation",
         "Kb": 1.0
+      },
+      "meta": {
+        "position": [
+          320.0,
+          0.0
+        ]
       }
     },
     {
@@ -50,6 +68,12 @@
       "type": "math.sum",
       "params": {
         "signs": "+--"
+      },
+      "meta": {
+        "position": [
+          480.0,
+          0.0
+        ]
       }
     },
     {
@@ -58,6 +82,12 @@
       "params": {
         "gain": 1.0,
         "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          640.0,
+          0.0
+        ]
       }
     },
     {
@@ -67,6 +97,12 @@
         "initial": 0.0,
         "upper": "inf",
         "lower": "-inf"
+      },
+      "meta": {
+        "position": [
+          800.0,
+          0.0
+        ]
       }
     },
     {
@@ -76,6 +112,12 @@
         "initial": 0.0,
         "upper": "inf",
         "lower": "-inf"
+      },
+      "meta": {
+        "position": [
+          960.0,
+          0.0
+        ]
       }
     },
     {
@@ -84,6 +126,12 @@
       "params": {
         "gain": 0.5,
         "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          960.0,
+          110.0
+        ]
       }
     },
     {
@@ -92,6 +140,12 @@
       "params": {
         "gain": 2.0,
         "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          1120.0,
+          0.0
+        ]
       }
     },
     {
@@ -99,6 +153,12 @@
       "type": "sinks.scope",
       "params": {
         "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          1120.0,
+          110.0
+        ]
       }
     }
   ],

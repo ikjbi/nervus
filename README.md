@@ -5,6 +5,8 @@
 *Nervus* is Latin for *nerve*. An engine control unit (ECU) is a vehicle's nervous system, and Nervus aims to be a
 tool for designing, simulating and eventually generating C code for that kind of control software.
 
+![The Nervus editor](docs/images/editor.png)
+
 > **Status: pre-alpha.** The simulation engine and core blocks are under active development. See
 > [`plan.md`](plan.md) for the roadmap.
 
@@ -25,10 +27,21 @@ Nervus uses [uv](https://docs.astral.sh/uv/) to manage the environment.
 git clone git@github.com:ikjbi/nervus.git
 cd nervus
 uv sync                 # engine + dev tools
-uv sync --extra gui     # also install the desktop GUI dependencies
+uv sync --extra gui     # also install the desktop editor (PySide6, pyqtgraph, matplotlib)
 ```
 
-## Quick start
+## The editor
+
+```bash
+uv run nervus examples/throttle_pi.nervus
+```
+
+Drag blocks from the library, connect ports, edit parameters, press **▶ Run** and look at the scopes. Press
+**F1** on any block for its help page, with equations and figures. See [docs/editor.md](docs/editor.md).
+
+<img src="docs/images/scope.png" width="600" alt="A scope window">
+
+## Quick start (Python)
 
 ```python
 from nervus import Diagram, simulate

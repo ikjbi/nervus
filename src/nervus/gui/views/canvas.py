@@ -1,0 +1,434 @@
+"""The diagram canvas: a scene that mirrors the DiagramModel, and a zoomable view.
+
+The scene never changes the model itself. User gestures (dragging blocks, drawing wires, dropping blocks from
+the library) are turned into calls on the :class:`EditorController`; the model then emits signals that update
+the scene.
+"""
+
+from __future__ import annotations
+
+import contextlib
+from typing import Any
+
+from PySide6.QtCore import QMimeData, QPointF, QRect, QRectF, Qt, Signal
+from PySide6.QtGui import QKeyEvent, QNativeGestureEvent, QPainter, QPainterPath, QPen, QWheelEvent
+from PySide6.QtWidgets import (
+    QGraphicsItem,
+    QGraphicsPathItem,
+    QGraphicsScene,
+    QGraphicsSceneDragDropEvent,
+    QGraphicsSceneMouseEvent,
+    QGraphicsView,
+    QWidget,
+)
+
+from nervus.core import Block, Connection
+from nervus.gui.controllers.editor_controller import EditorController
+from nervus.gui.models.diagram_model import DiagramModel, block_position
+from nervus.gui.theme import ThemeManager, current_theme
+from nervus.gui.views.items import GRID, BlockItem, PortItem, WireItem, route, snap
+
+BLOCK_MIME = "application/x-nervus-block-type"
+
+
+def block_mime(type_id: str) -> QMimeData:
+    mime = QMimeData()
+    mime.setData(BLOCK_MIME, type_id.encode())
+    mime.setText(type_id)
+    return mime
+
+
+class DiagramScene(QGraphicsScene):
+    selectedBlocksChanged = Signal(list)  # list[Block]
+    blockActivated = Signal(object)  # Block (double-click)
+
+    def __init__(self, model: DiagramModel, controller: EditorController, parent: Any = None) -> None:
+        super().__init__(parent)
+        self.model = model
+        self.controller = controller
+        self.blocks: dict[int, BlockItem] = {}
+        self.wires: dict[int, WireItem] = {}
+        self._temp_wire: QGraphicsPathItem | None = None
+        self._wire_from: PortItem | None = None
+        self._press_positions: dict[int, QPointF] = {}
+        self.setSceneRect(QRectF(-5000, -5000, 10000, 10000))
+
+        model.blockAdded.connect(self._on_block_added)
+        model.blockRemoved.connect(self._on_block_removed)
+        model.blockMoved.connect(self._on_block_moved)
+        model.blockRenamed.connect(lambda b, _old: self._item(b) and self._item(b).update())  # type: ignore[union-attr]
+        model.paramsChanged.connect(self._on_params_changed)
+        model.connectionAdded.connect(self._on_connection_added)
+        model.connectionRemoved.connect(self._on_connection_removed)
+        model.diagramReset.connect(self.rebuild)
+        controller.editingEnabledChanged.connect(self._on_editing_enabled)
+        self.selectionChanged.connect(self._emit_selection)
+        ThemeManager.instance().themeChanged.connect(self._on_theme)
+        self.rebuild()
+
+    def _on_theme(self, _theme: object) -> None:
+        self.update()
+
+    # ------------------------------------------------------------------ model -> scene
+
+    def rebuild(self) -> None:
+        self.clear()
+        self.blocks.clear()
+        self.wires.clear()
+        self._temp_wire = None
+        for b in self.model.diagram.blocks:
+            self._on_block_added(b)
+        for c in self.model.diagram.connections:
+            self._on_connection_added(c)
+
+    def _item(self, block: Block) -> BlockItem | None:
+        return self.blocks.get(id(block))
+
+    def _on_block_added(self, block: Block) -> None:
+        item = BlockItem(block)
+        item.setPos(block_position(block))
+        item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, self.controller.editing_enabled)
+        self.addItem(item)
+        self.blocks[id(block)] = item
+
+    def _on_block_removed(self, block: Block) -> None:
+        item = self.blocks.pop(id(block), None)
+        if item is not None:
+            self.removeItem(item)
+
+    def _on_block_moved(self, block: Block) -> None:
+        item = self._item(block)
+        if item is not None and item.pos() != block_position(block):
+            item.setPos(block_position(block))
+
+    def _on_params_changed(self, block: Block) -> None:
+        item = self._item(block)
+        if item is None:
+            return
+        item.refresh()
+        for w in self.wires.values():
+            c = w.connection
+            if c.src is block:
+                port = item.port(False, c.src_port)
+                if port:
+                    w.src = port
+            if c.dst is block:
+                port = item.port(True, c.dst_port)
+                if port:
+                    w.dst = port
+            w.update_path()
+
+    def _on_connection_added(self, conn: Connection) -> None:
+        src_item, dst_item = self._item(conn.src), self._item(conn.dst)
+        if src_item is None or dst_item is None:
+            return
+        sp, dp = src_item.port(False, conn.src_port), dst_item.port(True, conn.dst_port)
+        if sp is None or dp is None:
+            return
+        wire = WireItem(conn, sp, dp)
+        self.addItem(wire)
+        self.wires[id(conn)] = wire
+        self._refresh_fanout(conn)
+
+    def _on_connection_removed(self, conn: Connection) -> None:
+        wire = self.wires.pop(id(conn), None)
+        if wire is not None:
+            self.removeItem(wire)
+        self._refresh_fanout(conn)
+
+    def _refresh_fanout(self, conn: Connection) -> None:
+        for w in self.wires.values():
+            if w.connection.src is conn.src and w.connection.src_port == conn.src_port:
+                w.update()
+
+    def fanout(self, conn: Connection) -> int:
+        return sum(
+            1 for w in self.wires.values() if w.connection.src is conn.src and w.connection.src_port == conn.src_port
+        )
+
+    def block_item_moved(self, item: BlockItem) -> None:
+        for w in self.wires.values():
+            if w.connection.src is item.block or w.connection.dst is item.block:
+                w.update_path()
+
+    def _on_editing_enabled(self, enabled: bool) -> None:
+        for item in self.blocks.values():
+            item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, enabled)
+
+    # ------------------------------------------------------------------ selection / highlighting
+
+    def selected_blocks(self) -> list[Block]:
+        return [i.block for i in self.selectedItems() if isinstance(i, BlockItem)]
+
+    def selected_connections(self) -> list[Connection]:
+        return [i.connection for i in self.selectedItems() if isinstance(i, WireItem)]
+
+    def _emit_selection(self) -> None:
+        with contextlib.suppress(RuntimeError):  # scene being destroyed
+            self.selectedBlocksChanged.emit(self.selected_blocks())
+
+    def select_blocks(self, names: list[str] | tuple[str, ...]) -> None:
+        self.clearSelection()
+        for item in self.blocks.values():
+            if item.block.name in names:
+                item.setSelected(True)
+
+    def mark_errors(self, names: list[str] | tuple[str, ...]) -> None:
+        for item in self.blocks.values():
+            err = item.block.name in names
+            if item.error != err:
+                item.error = err
+                item.update()
+
+    def items_rect(self) -> QRectF:
+        rect = QRectF()
+        for item in self.blocks.values():
+            rect = rect.united(item.sceneBoundingRect())
+        return rect
+
+    # ------------------------------------------------------------------ mouse: wires and moves
+
+    def _port_at(self, pos: QPointF) -> PortItem | None:
+        for item in self.items(pos):
+            if isinstance(item, PortItem):
+                return item
+        return None
+
+    def _block_at(self, pos: QPointF) -> BlockItem | None:
+        for item in self.items(pos):
+            if isinstance(item, BlockItem):
+                return item
+        return None
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton and self.controller.editing_enabled:
+            port = self._port_at(event.scenePos())
+            if port is not None:
+                self._wire_from = port
+                self._temp_wire = QGraphicsPathItem()
+                t = current_theme()
+                self._temp_wire.setPen(QPen(t.color("accent"), 1.5, Qt.PenStyle.DashLine))
+                self._temp_wire.setZValue(3)
+                self.addItem(self._temp_wire)
+                event.accept()
+                return
+        super().mousePressEvent(event)
+        self._press_positions = {id(i.block): i.pos() for i in self.selectedItems() if isinstance(i, BlockItem)}
+
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if self._temp_wire is not None and self._wire_from is not None:
+            a = self._wire_from.scene_anchor()
+            b = event.scenePos()
+            path = route(a, b) if not self._wire_from.is_input else route(b, a)
+            self._temp_wire.setPath(path)
+            event.accept()
+            return
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if self._temp_wire is not None and self._wire_from is not None:
+            self.removeItem(self._temp_wire)
+            self._temp_wire = None
+            start, self._wire_from = self._wire_from, None
+            self._finish_wire(start, event.scenePos())
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
+        moves = []
+        for i in self.selectedItems():
+            if isinstance(i, BlockItem):
+                old = self._press_positions.get(id(i.block))
+                if old is not None and old != i.pos():
+                    moves.append((i.block, old, i.pos()))
+        self._press_positions = {}
+        if moves:
+            self.controller.move_blocks(moves)
+
+    def _finish_wire(self, start: PortItem, pos: QPointF) -> None:
+        target = self._port_at(pos)
+        if target is None:
+            # Dropped on a block body: use its first free port of the right kind.
+            block_item = self._block_at(pos)
+            if block_item is not None and block_item is not start.block_item:
+                target = self._free_port(block_item, want_input=not start.is_input)
+        if target is None or target.is_input == start.is_input:
+            return
+        src, dst = (target, start) if start.is_input else (start, target)
+        self.controller.connect_ports(src.block, src.index, dst.block, dst.index)
+
+    def _free_port(self, item: BlockItem, want_input: bool) -> PortItem | None:
+        ports = item.in_ports if want_input else item.out_ports
+        if not want_input:
+            return ports[0] if ports else None
+        for p in ports:
+            if self.model.diagram.driver(item.block, p.index) is None:
+                return p
+        return ports[0] if ports else None
+
+    def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        item = self._block_at(event.scenePos())
+        if item is not None:
+            self.blockActivated.emit(item.block)
+            event.accept()
+            return
+        super().mouseDoubleClickEvent(event)
+
+    # ------------------------------------------------------------------ drag & drop from the library
+
+    def dragEnterEvent(self, event: QGraphicsSceneDragDropEvent) -> None:
+        if event.mimeData().hasFormat(BLOCK_MIME):
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dragMoveEvent(self, event: QGraphicsSceneDragDropEvent) -> None:
+        if event.mimeData().hasFormat(BLOCK_MIME):
+            event.acceptProposedAction()
+        else:
+            super().dragMoveEvent(event)
+
+    def dropEvent(self, event: QGraphicsSceneDragDropEvent) -> None:
+        if event.mimeData().hasFormat(BLOCK_MIME):
+            type_id = bytes(event.mimeData().data(BLOCK_MIME).data()).decode()
+            pos = event.scenePos() - QPointF(35, 23)
+            self.controller.add_block(type_id, QPointF(snap(pos.x()), snap(pos.y())))
+            event.acceptProposedAction()
+        else:
+            super().dropEvent(event)
+
+
+class DiagramView(QGraphicsView):
+    """Zoom with Ctrl/⌘ + wheel or pinch; pan with the trackpad, middle mouse button or Space + drag."""
+
+    zoomChanged = Signal(float)
+
+    def __init__(self, scene: DiagramScene, parent: QWidget | None = None) -> None:
+        super().__init__(scene, parent)
+        self.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.TextAntialiasing)
+        self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
+        self.setAcceptDrops(True)
+        self.setFrameShape(QGraphicsView.Shape.NoFrame)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._space = False
+        self._panning = False
+        self._pan_start = QPointF()
+        self.centerOn(0, 0)
+        ThemeManager.instance().themeChanged.connect(self._on_theme)
+
+    def _on_theme(self, _theme: object) -> None:
+        self.viewport().update()
+
+    @property
+    def zoom(self) -> float:
+        return self.transform().m11()
+
+    def set_zoom(self, factor: float) -> None:
+        factor = max(0.2, min(4.0, factor))
+        self.scale(factor / self.zoom, factor / self.zoom)
+        self.zoomChanged.emit(self.zoom)
+
+    def zoom_in(self) -> None:
+        self.set_zoom(self.zoom * 1.25)
+
+    def zoom_out(self) -> None:
+        self.set_zoom(self.zoom / 1.25)
+
+    def fit(self) -> None:
+        scene: DiagramScene = self.scene()  # type: ignore[assignment]
+        rect = scene.items_rect()
+        if rect.isEmpty():
+            self.resetTransform()
+            self.centerOn(0, 0)
+        else:
+            self.fitInView(rect.adjusted(-60, -60, 60, 60), Qt.AspectRatioMode.KeepAspectRatio)
+            if self.zoom > 1.5:
+                self.set_zoom(1.5)
+        self.zoomChanged.emit(self.zoom)
+
+    def drawBackground(self, painter: QPainter, rect: QRectF | QRect) -> None:
+        rect = QRectF(rect)
+        t = current_theme()
+        painter.fillRect(rect, t.color("canvas"))
+        if self.zoom < 0.45:
+            return
+        step = GRID * 2
+        left = float(rect.left() // step * step)
+        top = float(rect.top() // step * step)
+        painter.setPen(QPen(t.color("grid"), 1.6 / self.zoom))
+        path = QPainterPath()
+        x = left
+        while x < rect.right():
+            y = top
+            while y < rect.bottom():
+                path.moveTo(x, y)
+                path.lineTo(x + 0.01, y)
+                y += step
+            x += step
+        painter.drawPath(path)
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        mods = event.modifiers()
+        zoom_mod = mods & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.MetaModifier)
+        if zoom_mod or event.pixelDelta().isNull():
+            factor = 1.0015 ** event.angleDelta().y()
+            self.set_zoom(self.zoom * factor)
+        else:  # trackpad scroll pans
+            d = event.pixelDelta()
+            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - d.x())
+            self.verticalScrollBar().setValue(self.verticalScrollBar().value() - d.y())
+        event.accept()
+
+    def event(self, event: Any) -> bool:
+        if isinstance(event, QNativeGestureEvent) and event.gestureType() == Qt.NativeGestureType.ZoomNativeGesture:
+            self.set_zoom(self.zoom * (1 + event.value()))
+            return True
+        return super().event(event)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_Space and not event.isAutoRepeat():
+            self._space = True
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+            return
+        super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_Space and not event.isAutoRepeat():
+            self._space = False
+            self.unsetCursor()
+            return
+        super().keyReleaseEvent(event)
+
+    def mousePressEvent(self, event: Any) -> None:
+        if event.button() == Qt.MouseButton.MiddleButton or (
+            self._space and event.button() == Qt.MouseButton.LeftButton
+        ):
+            self._panning = True
+            self._pan_start = event.position()
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: Any) -> None:
+        if self._panning:
+            d = event.position() - self._pan_start
+            self._pan_start = event.position()
+            self.horizontalScrollBar().setValue(int(self.horizontalScrollBar().value() - d.x()))
+            self.verticalScrollBar().setValue(int(self.verticalScrollBar().value() - d.y()))
+            event.accept()
+            return
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event: Any) -> None:
+        if self._panning:
+            self._panning = False
+            self.setCursor(Qt.CursorShape.OpenHandCursor if self._space else Qt.CursorShape.ArrowCursor)
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
+
+    def view_center_scene(self) -> QPointF:
+        return self.mapToScene(self.viewport().rect().center())
