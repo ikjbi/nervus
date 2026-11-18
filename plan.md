@@ -123,21 +123,86 @@ tests/
 - [x] Developer docs: architecture (engine and MVC), how to write a custom block
 - [ ] Tutorials that follow the examples
 
-## Phase 7 – Modeling features needed for real control software
-- [ ] Subsystems (hierarchical), with Inport and Outport blocks; open a subsystem by double-clicking
-- [ ] Masks: custom parameter dialog and icon for a subsystem
-- [ ] Enabled and triggered subsystems
-- [ ] Lookup tables: 1-D, 2-D and n-D with interpolation and extrapolation modes. These are critical for ECU
-      calibration maps (fuel, ignition, boost)
-- [ ] Logic and relational blocks: AND/OR/NOT, compare, relay (hysteresis), rate limiter, dead zone
-- [ ] Zero-crossing and event detection for discontinuities (Saturation, Switch, Abs, Integrator limits,
-      PID clamping). Without it, clamping in a continuous PID chatters under variable-step solvers
-- [ ] Buses (named, structured signals)
-- [ ] Goto/From, data stores
-- [ ] Model workspace / parameter files (calibration data separate from the model)
-- [ ] Reusable libraries and linked blocks
+## Phase 7 – Parameters, model workspace and calibration data
+*ECU software is "code + calibration". Parameters must live outside the blocks, as named, tunable values.*
+- [ ] Model workspace: named variables (`Kp = 1.5`, `fuel_map = [...]`) stored in the model file
+- [ ] Block parameters can be expressions using workspace variables (`Kp`, `2*Kp`, `1/tau`)
+- [ ] Variables carry metadata: description, unit, min/max (for calibration and A2L later)
+- [ ] Parameter sets ("calibrations"): save/load named sets of variable values as separate files and switch
+      between them (e.g. `petrol.nervcal.json` vs `diesel.nervcal.json`)
+- [ ] GUI: Model Workspace panel to add/edit/delete variables; parameter fields show and autocomplete names
+- [ ] Python API: `diagram.workspace["Kp"] = 2.0`, `simulate(d, params={...})` overrides
 
-## Phase 8 – Automotive and ECU learning library
+## Phase 8 – ECU block library
+*The blocks that real engine/vehicle control software is built from.*
+- [ ] Lookup tables: 1-D and 2-D (n-D later) with linear / nearest / hold interpolation and clip/linear
+      extrapolation. Calibration maps (fuel, ignition, boost) are 2-D tables
+- [ ] Relational Operator (`<`, `<=`, `==`, `!=`, `>=`, `>`), Logical Operator (AND, OR, NOT, XOR, NAND, NOR),
+      Compare To Constant
+- [ ] Relay (hysteresis), Dead Zone, Rate Limiter (discrete), Quantizer, Sign, MinMax, Bias
+- [ ] Integer Delay (z⁻ⁿ), Memory, Counter (free-running / limited), Edge Detect (rising/falling/either),
+      Debounce (signal must hold for N samples), Discrete Filter (first-order low-pass), Moving Average
+- [ ] Ground, Initial Condition, Signal-specific Data Type Conversion (once Phase 13 lands)
+- [ ] Figures, equations and help for every new block
+
+## Phase 9 – Hierarchy: subsystems, masks, conditional execution, variants
+- [ ] Subsystem block with Inport/Outport blocks; flattened at compile time
+- [ ] GUI: double-click to open a subsystem, breadcrumb navigation, "Create Subsystem from Selection"
+- [ ] Atomic subsystems with their own sample time (one ECU task = one atomic subsystem)
+- [ ] Masks: parameter dialog and icon text for a subsystem; mask parameters as local workspace
+- [ ] Enabled, triggered and function-call subsystems (task scheduling, event-driven code)
+- [ ] Variant subsystems (choose an implementation by a workspace variable, e.g. engine type)
+- [ ] Reusable component libraries (a subsystem saved to a library file and linked)
+
+## Phase 10 – Test cases, scenarios and results
+*"Save/load cases": reproducible simulations you can rerun and compare.*
+- [ ] Test case = name + input scenario + parameter set + stop time + expected results/tolerances,
+      saved as a file next to the model
+- [ ] Scenario inputs: piecewise signals (Signal Builder-like), CSV, and recorded data replay
+- [ ] Save/load simulation results (`.nervres`, compressed NPZ) and export CSV / MAT
+- [ ] Import/export ASAM MDF4 (`.mf4`, via `asammdf`), the format of INCA/CANape vehicle logs
+- [ ] Run several cases in batch; parameter sweeps; summary report
+- [ ] Simulation Data Inspector: overlay and compare runs, with differences and tolerance checks
+- [ ] GUI: Test Manager panel (create, run, pass/fail), compare-runs window
+- [ ] Python API for all of the above (usable from pytest for regression tests)
+
+## Phase 11 – C code generation
+- [ ] Restrict to fixed-step, discrete-time models (clear errors otherwise; continuous plants stay in
+      simulation)
+- [ ] Generate `model.h` / `model.c` with `model_initialize()` and `model_step()`, static memory only, no malloc
+- [ ] Structs for inputs, outputs, states and parameters; parameters as `const` or as calibratable globals
+- [ ] Per-block C templates for all discrete/stateless blocks, including lookup tables
+- [ ] Multi-rate: one step function per rate, or a base-rate scheduler with rate counters
+- [ ] Software-in-the-loop (SIL): compile the generated C, run it via ctypes, and compare it with the Python
+      simulation (back-to-back test)
+- [ ] Code generation report (HTML): block-to-code traceability, memory use
+- [ ] Generated code follows MISRA C guidelines (checked with cppcheck's MISRA addon)
+- [ ] GUI: Code → Generate C Code, with a report and "run SIL comparison"
+- [ ] Example: an ECU-style project folder with a `main.c` that calls `model_step()` every 10 ms
+
+## Phase 12 – Zero crossings, events and solver robustness
+- [ ] Zero-crossing detection for discontinuities (Saturation, Switch, Abs, Relay, Integrator limits,
+      PID clamping), locating events precisely with variable-step solvers
+- [ ] Integrator external reset and saturation ports
+- [ ] Algebraic loop solver (optional), with warnings
+- [ ] Simulation stop block and assertions
+- [ ] Performance: avoid per-step Python overhead (vectorised execution, Numba, or simulate the generated C:
+      "accelerator mode")
+
+## Phase 13 – Data types and fixed-point (required for ECU code)
+- [ ] Integer types (int8/16/32, uint8/16/32), boolean, single
+- [ ] Fixed-point with slope and bias scaling, overflow and saturation modes, rounding
+- [ ] Data type propagation and checking across the diagram
+- [ ] Simulation that matches the integer behaviour of the generated code bit for bit
+- [ ] Data dictionary: signal and parameter objects with type, unit, range, description
+
+## Phase 14 – State machines
+- [ ] State chart block (a Stateflow-like subset): states, transitions, guards, entry/during/exit actions
+- [ ] Graphical state-chart editor
+- [ ] C code generation for charts
+- [ ] Example: gear-shift logic, engine operating modes (crank, idle, run, fuel cut-off)
+
+## Phase 15 – Automotive and ECU learning library
 - [ ] Mean-value engine model: throttle and intake manifold, air mass flow, torque production, crank dynamics
 - [ ] Fuel control: injector model, lambda (AFR) closed-loop control, short and long term fuel trim
 - [ ] Ignition timing from speed/load maps, knock retard
@@ -145,32 +210,18 @@ tests/
 - [ ] Electronic throttle control (DC motor, return spring, PID)
 - [ ] Vehicle longitudinal dynamics: driveline, gearbox, tire slip, aero and rolling resistance
 - [ ] Driver model and drive cycles (WLTP, NEDC, FTP-75)
-- [ ] Sensor and actuator models: quantization, noise, delay, faults
+- [ ] Sensor and actuator models: quantisation, noise, delay, faults
 - [ ] Truck-specific models: heavy-duty diesel, exhaust brake, AMT gearbox
-- [ ] Tutorial series: "Learn engine control with nervus"
+- [ ] Tutorial series: "Learn engine control with Nervus"
 
-## Phase 9 – Data types and fixed-point (required for ECU code)
-- [ ] Integer types (int8/16/32, uint8/16/32), boolean, single
-- [ ] Fixed-point with slope and bias scaling, overflow and saturation modes, rounding
-- [ ] Data type propagation and checking across the diagram
-- [ ] Simulation that matches the integer behavior of the generated code bit for bit
+## Phase 16 – Control design and analysis tools
+- [ ] Linearise a model around an operating point (state-space / transfer function)
+- [ ] Trim: find steady states
+- [ ] Bode, Nyquist, step and pole-zero plots; stability margins
+- [ ] PID auto-tuning against a linearised plant
+- [ ] Scripting console in the GUI (Python, with the model and results in scope)
 
-## Phase 10 – State machines
-- [ ] State chart block (a Stateflow-like subset): states, transitions, guards, entry/during/exit actions
-- [ ] Graphical state-chart editor
-- [ ] Example: gear-shift logic, engine operating modes (crank, idle, run, fuel cut-off)
-
-## Phase 11 – C code generation
-- [ ] Restrict to fixed-step, discrete models (with a check and clear errors otherwise)
-- [ ] Generate `model.h` / `model.c` with `model_init()` and `model_step()`, static memory only, no malloc
-- [ ] Per-block code templates; parameters as `const` or as calibratable globals
-- [ ] Generated code follows MISRA C guidelines (checked with cppcheck's MISRA addon)
-- [ ] Software-in-the-loop (SIL): compile the generated C, run it via ctypes/cffi, and compare it with the Python
-      simulation in tests
-- [ ] Code generation report (HTML): block-to-code traceability
-- [ ] Multi-rate tasks (one step function per rate)
-
-## Phase 12 – ECU integration and calibration
+## Phase 17 – ECU integration and calibration
 - [ ] CAN: import DBC files (`cantools`), CAN receive and transmit blocks, signal packing
 - [ ] A2L file generation for calibration tools (measurements and characteristics)
 - [ ] XCP-on-CAN basics for live measurement and calibration
@@ -178,19 +229,17 @@ tests/
 - [ ] Processor-in-the-loop (PIL) testing
 - [ ] Hardware-in-the-loop (HIL): run the plant model in real time against a real ECU
 
-## Phase 13 – Interoperability
+## Phase 18 – Interoperability
 - [ ] FMI 2.0/3.0: import FMUs as blocks (`fmpy`), export models as FMUs
 - [ ] Import a subset of Simulink `.slx`/`.mdl` (useful for comparing against work models)
 - [ ] Export results to MAT files (`scipy.io`) for MATLAB users
 
-## Phase 14 – Quality, testing and release
-- [ ] Model-level test harness: test cases, expected outputs, coverage of blocks and states
+## Phase 19 – Quality, testing and release
+- [ ] Model coverage: which blocks, switch branches and states were exercised by the test cases
 - [ ] Requirements traceability (link requirements to blocks and tests)
-- [ ] Performance: vectorized execution, optional Numba for hot paths
+- [ ] Model advisor: style and safety checks (e.g. no floating-point equality, all signals named)
 - [ ] Packaging: PyPI release, standalone installers (PyInstaller / Briefcase) for macOS, Windows and Linux
-- [ ] Versioned docs, release notes
-
----
+- [ ] Versioned docs, release notes; publish docs to GitHub Pages
 
 ## Safety note
 
