@@ -75,9 +75,31 @@ class Integrator(_Continuous):
         if not self._limited:
             return u[0] if u[0].shape == xc.shape else np.broadcast_to(u[0], xc.shape).copy()
         du = np.broadcast_to(u[0], xc.shape).copy()
+        if self.mode is not None:  # frozen: held at a limit (+1/-1) or free (0)
+            du[self.mode != 0] = 0.0
+            return du
         du[(xc >= self.params["upper"]) & (du > 0)] = 0.0
         du[(xc <= self.params["lower"]) & (du < 0)] = 0.0
         return du
+
+    def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        if not self._limited:
+            return None
+        lo, hi = self.params["lower"], self.params["upper"]
+        parts = [np.broadcast_to(u[0], xc.shape)]  # leaving a limit: the input changes sign
+        if np.isfinite(hi):
+            parts.append(xc - hi)
+        if np.isfinite(lo):
+            parts.append(xc - lo)
+        return np.concatenate(parts)
+
+    def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        if not self._limited:
+            return None
+        lo, hi = self.params["lower"], self.params["upper"]
+        tol = 1e-9 * max(1.0, float(np.max(np.abs(np.nan_to_num(xc)))) if xc.size else 1.0)
+        du = np.broadcast_to(u[0], xc.shape)
+        return np.where((xc >= hi - tol) & (du >= 0), 1.0, np.where((xc <= lo + tol) & (du <= 0), -1.0, 0.0))
 
 
 @register

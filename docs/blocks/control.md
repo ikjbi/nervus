@@ -19,9 +19,8 @@ the integral term keeps growing ("winds up") and causes overshoot. *anti_windup*
 
 ![Anti-windup comparison](../images/blocks/pid_anti_windup.png)
 
-!!! note
-    ``clamping`` switches abruptly. With variable-step solvers it can make the simulation very slow,
-    until zero-crossing detection is implemented. Prefer ``back_calculation``, or use a fixed-step solver.
+With variable-step solvers, zero-crossing detection locates the moments the output saturates and the
+integrator is clamped exactly.
 
 ### Parameters
 

@@ -73,6 +73,8 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **Scope**: Plots its input signals. In scripts, read the data with ``result.inputs("scope_name")``.
 - **To Workspace**: Saves its input in the simulation result under *variable*, so ``result[variable]`` returns it.
 - **Terminator**: Terminates an unused output, so the diagram has no unconnected-output warnings.
+- **Stop Simulation**: Stops the simulation at the first major time step where the input is non-zero (true).
+- **Assertion**: Fails the simulation with an error if the input is zero (false) at a major time step.
 
 ## [Sources](sources.md)
 

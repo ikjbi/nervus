@@ -24,13 +24,14 @@ from nervus.blocks.math_ops import Abs, Bias, Gain, MathFunction, MinMax, Produc
 from nervus.blocks.ports import Inport, Outport, Subsystem
 from nervus.blocks.registry import block_types, categories, create_block, get_block_class, register
 from nervus.blocks.routing import Demux, Mux, Switch
-from nervus.blocks.sinks import Scope, Terminator, ToWorkspace
+from nervus.blocks.sinks import Assertion, Scope, StopSimulation, Terminator, ToWorkspace
 from nervus.blocks.sources import Clock, Constant, FromWorkspace, Ground, Pulse, Ramp, Sine, Step
 from nervus.blocks.user import PythonFunction
 
 __all__ = [
     "PID",
     "Abs",
+    "Assertion",
     "Bias",
     "Clock",
     "CompareToConstant",
@@ -72,6 +73,7 @@ __all__ = [
     "Sine",
     "StateSpace",
     "Step",
+    "StopSimulation",
     "Subsystem",
     "Sum",
     "Switch",

@@ -45,7 +45,15 @@ class DeadZone(Block):
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
         lo, hi = self.params["start"], self.params["end"]
         x = u[0]
-        return [np.where(x > hi, x - hi, np.where(x < lo, x - lo, 0.0))]
+        m = self.mode if self.mode is not None else np.where(x > hi, 1.0, np.where(x < lo, -1.0, 0.0))
+        return [np.where(m > 0, x - hi, np.where(m < 0, x - lo, 0.0))]
+
+    def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        return np.concatenate([u[0] - self.params["start"], u[0] - self.params["end"]])
+
+    def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        x = u[0]
+        return np.where(x > self.params["end"], 1.0, np.where(x < self.params["start"], -1.0, 0.0))
 
 
 @register

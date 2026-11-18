@@ -100,9 +100,20 @@ class Switch(_Routing):
         if in_widths[1] != 1:
             raise ValueError("the control input (input 1) must be scalar")
 
-    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+    def _passed(self, u: Sequence[Array]) -> bool:
         c, thr = float(u[1][0]), self.params["threshold"]
         crit = self.params["criterion"]
-        passed = c >= thr if crit == "u1 >= threshold" else c > thr if crit == "u1 > threshold" else c != 0
+        return bool(c >= thr if crit == "u1 >= threshold" else c > thr if crit == "u1 > threshold" else c != 0)
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        passed = bool(self.mode[0] > 0.5) if self.mode is not None else self._passed(u)
         chosen = u[0] if passed else u[2]
         return [np.broadcast_to(chosen, (self.out_widths[0],)).copy()]
+
+    def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        if self.params["criterion"] == "u1 != 0":
+            return u[1]
+        return u[1] - self.params["threshold"]
+
+    def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        return np.array([1.0 if self._passed(u) else 0.0])

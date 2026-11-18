@@ -28,6 +28,8 @@ class SimulationSettings:
     max_step: float | None = None
     rtol: float = 1e-6
     atol: float = 1e-8
+    zero_crossing: bool = True
+    """Locate discontinuities (saturation limits, switches, ...) exactly with variable-step solvers."""
 
     @property
     def method(self) -> str:

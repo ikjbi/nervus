@@ -59,13 +59,20 @@ class _PIDBase(Block):
         xi, xf = x[:w], x[w:]
         d_term = p["D"] * p["N"] * (e - xf)
         unsat = p["P"] * e + xi + d_term
-        y = np.clip(unsat, p["lower"], p["upper"])
         di = p["I"] * e
-        if p["anti_windup"] == "clamping":
-            # Stop integrating when the output is saturated and integrating would push it further out.
-            pushing = (unsat != y) & (np.sign(unsat - y) == np.sign(di))
-            di = np.where(pushing, 0.0, di)
-        elif p["anti_windup"] == "back_calculation":
+        mode = getattr(self, "mode", None)
+        if mode is not None:  # frozen during integration: [saturation (-1/0/1), clamped (0/1)]
+            sat, clamped = mode[:w], mode[w:]
+            y = np.where(sat > 0, p["upper"], np.where(sat < 0, p["lower"], unsat))
+            if p["anti_windup"] == "clamping":
+                di = np.where(clamped > 0.5, 0.0, di)
+        else:
+            y = np.clip(unsat, p["lower"], p["upper"])
+            if p["anti_windup"] == "clamping":
+                # Stop integrating when the output is saturated and integrating would push it further out.
+                pushing = (unsat != y) & (np.sign(unsat - y) == np.sign(di))
+                di = np.where(pushing, 0.0, di)
+        if p["anti_windup"] == "back_calculation":
             # Bleed the integrator by the amount the output exceeds the limit.
             di = di + p["Kb"] * (y - unsat)
         df = p["N"] * (e - xf)
@@ -89,9 +96,8 @@ class PID(_PIDBase):
 
     ![Anti-windup comparison](figures/pid_anti_windup.png)
 
-    !!! note
-        ``clamping`` switches abruptly. With variable-step solvers it can make the simulation very slow,
-        until zero-crossing detection is implemented. Prefer ``back_calculation``, or use a fixed-step solver.
+    With variable-step solvers, zero-crossing detection locates the moments the output saturates and the
+    integrator is clamped exactly.
     """
 
     type_id = "control.pid"
@@ -108,6 +114,26 @@ class PID(_PIDBase):
     def derivatives(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
         _, di, df = self._law(u[0], xc)
         return np.concatenate([di, df])
+
+    def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        p = self.params
+        if not (np.isfinite(p["upper"]) or np.isfinite(p["lower"])):
+            return None
+        w = u[0].size
+        unsat = p["P"] * u[0] + xc[:w] + p["D"] * p["N"] * (u[0] - xc[w:])
+        return np.concatenate([unsat - p["upper"], unsat - p["lower"], p["I"] * u[0]])
+
+    def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        p = self.params
+        if not (np.isfinite(p["upper"]) or np.isfinite(p["lower"])):
+            return None
+        w = u[0].size
+        e = u[0]
+        unsat = p["P"] * e + xc[:w] + p["D"] * p["N"] * (e - xc[w:])
+        sat = np.where(unsat > p["upper"], 1.0, np.where(unsat < p["lower"], -1.0, 0.0))
+        di = p["I"] * e
+        clamped = (sat != 0) & (np.sign(sat) == np.sign(di))
+        return np.concatenate([sat, clamped.astype(float)])
 
 
 @register

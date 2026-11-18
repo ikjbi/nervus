@@ -12,6 +12,10 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Zero-crossing detection for variable-step solvers: discontinuous blocks freeze their mode during
+  integration and events are located exactly; a chattering guard reports a warning. A clamped continuous PID
+  that took 33 s now takes 0.1 s. Toggle with `settings.zero_crossing`.
+- Stop Simulation and Assertion blocks.
 - Test cases saved with the model (schema version 4): input signals for top-level In blocks, parameter
   overrides or a parameter-set file, stop time, and checks (`bounds`, `final_value`, `reaches`, `max`, `min`,
   `baseline`). `nervus.testing.run_tests()` runs them.

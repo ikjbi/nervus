@@ -31,7 +31,7 @@ def _outport(e: Emitter) -> BlockCode:
     return BlockCode(e.each(e.in_widths[0], lambda ix: [f"{e.gen.prefix}_Y.{field}[{ix}] = {e.u(0, ix)};"]))
 
 
-@template("sinks.scope", "sinks.to_workspace", "sinks.terminator")
+@template("sinks.scope", "sinks.to_workspace", "sinks.terminator", "sinks.stop", "sinks.assertion")
 def _sink(e: Emitter) -> BlockCode:
     return BlockCode()  # simulation-only blocks: nothing on the target
 

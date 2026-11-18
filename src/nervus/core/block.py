@@ -116,6 +116,9 @@ class Block:
         self.out_widths: list[int] = []
         self.resolved_sample_time: SampleTime | None = None
         """Set by the compiler: the sample time after inheritance is resolved."""
+        self.mode: Array | None = None
+        """Frozen discontinuity mode during variable-step integration (set by the simulator, see
+        :meth:`compute_mode`). ``None`` means: choose the branch from the current inputs."""
 
     # ------------------------------------------------------------------ parameters
 
@@ -263,6 +266,21 @@ class Block:
 
     def initial_discrete_state(self) -> Array:
         return EMPTY
+
+    def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        """Signals whose sign changes exactly where the block's output (or derivative) is discontinuous,
+        e.g. ``u - upper`` for a saturation. Variable-step solvers locate these events precisely. Return
+        ``None`` (the default) if the block has none."""
+        return None
+
+    def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        """Which branch of a discontinuity the block is on (e.g. -1/0/+1 for lower/linear/upper of a saturation).
+
+        Blocks with :meth:`zero_crossings` can implement this. The simulator freezes the mode during each
+        integration step so the equations stay smooth, and switches it only at a located zero crossing. This is
+        what makes discontinuities exact. While :attr:`mode` is ``None`` the block picks its branch itself.
+        """
+        return None
 
     def breakpoints(self, t_start: float, t_final: float) -> list[float]:
         """Times where the block's output is discontinuous (e.g. a step). Variable-step solvers stop exactly

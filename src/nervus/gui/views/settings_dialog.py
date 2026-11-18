@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -49,6 +50,8 @@ class SettingsDialog(QDialog):
         self.max_step.setPlaceholderText("auto")
         self.rtol = QLineEdit(format_value(settings.rtol))
         self.atol = QLineEdit(format_value(settings.atol))
+        self.zero_crossing = QCheckBox("Locate discontinuities exactly (zero-crossing detection)")
+        self.zero_crossing.setChecked(settings.zero_crossing)
         self.error = QLabel()
         self.error.setObjectName("error")
         self.error.setWordWrap(True)
@@ -62,6 +65,7 @@ class SettingsDialog(QDialog):
         form.addRow("Max step size [s]", self.max_step)
         form.addRow("Relative tolerance", self.rtol)
         form.addRow("Absolute tolerance", self.atol)
+        form.addRow("", self.zero_crossing)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self._accept)
         buttons.rejected.connect(self.reject)
@@ -76,7 +80,7 @@ class SettingsDialog(QDialog):
     def _solver_changed(self, name: str) -> None:
         fixed = name in FIXED_STEP_SOLVERS
         self.step.setEnabled(fixed)
-        for w in (self.max_step, self.rtol, self.atol):
+        for w in (self.max_step, self.rtol, self.atol, self.zero_crossing):
             w.setEnabled(not fixed)
         self.solver_help.setText(SOLVER_HELP.get(name, ""))
 
@@ -99,6 +103,7 @@ class SettingsDialog(QDialog):
                 max_step=self._num(self.max_step, optional=True),
                 rtol=self._num(self.rtol) or 0.0,
                 atol=self._num(self.atol) or 0.0,
+                zero_crossing=self.zero_crossing.isChecked(),
             )
             s.validate()
         except ValueError as exc:

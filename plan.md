@@ -192,11 +192,11 @@ tests/
 - [x] Example: an ECU-style project folder with a `main.c` that calls `model_step()` every 10 ms
 
 ## Phase 12 – Zero crossings, events and solver robustness
-- [ ] Zero-crossing detection for discontinuities (Saturation, Switch, Abs, Relay, Integrator limits,
-      PID clamping), locating events precisely with variable-step solvers
+- [x] Zero-crossing detection with frozen modes (Saturation, Switch, Abs, Dead Zone, comparisons, Integrator
+      limits, PID limits/clamping), direction-aware events and a chattering (Zeno) guard
 - [ ] Integrator external reset and saturation ports
 - [ ] Algebraic loop solver (optional), with warnings
-- [ ] Simulation stop block and assertions
+- [x] Simulation stop block and assertions
 - [x] First performance pass: precomputed execution tables, scalar fast paths (~25 % faster)
 - [ ] Performance: avoid per-step Python overhead (vectorised execution, Numba, or simulate the generated C:
       "accelerator mode")

@@ -139,7 +139,15 @@ class Abs(_Math):
     label = "Abs"
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        if self.mode is not None:
+            return [self.mode * u[0]]
         return [np.abs(u[0])]
+
+    def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        return u[0]
+
+    def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        return np.where(u[0] < 0, -1.0, 1.0)
 
 
 @register
@@ -164,7 +172,17 @@ class Saturation(_Math):
             raise ParameterError("lower limit must be <= upper limit")
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
-        return [np.minimum(np.maximum(u[0], self.params["lower"]), self.params["upper"])]
+        lo, hi = self.params["lower"], self.params["upper"]
+        if self.mode is not None:
+            return [np.where(self.mode > 0, hi, np.where(self.mode < 0, lo, u[0]))]
+        return [np.minimum(np.maximum(u[0], lo), hi)]
+
+    def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        return np.concatenate([u[0] - self.params["upper"], u[0] - self.params["lower"]])
+
+    def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        x = np.broadcast_to(u[0], (self.out_widths[0],))
+        return np.where(x > self.params["upper"], 1.0, np.where(x < self.params["lower"], -1.0, 0.0))
 
 
 _FUNCTIONS: dict[str, Callable[[Array], Array]] = {
@@ -199,7 +217,15 @@ class MathFunction(_Math):
     PARAMS = (Param("function", "exp", ParamKind.CHOICE, "Function", choices=tuple(_FUNCTIONS)),)
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        if self.mode is not None and self.params["function"] == "sign":
+            return [self.mode.copy()]
         return [_FUNCTIONS[self.params["function"]](u[0])]
+
+    def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        return u[0] if self.params["function"] == "sign" else None
+
+    def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        return np.sign(u[0]) if self.params["function"] == "sign" else None
 
 
 @register

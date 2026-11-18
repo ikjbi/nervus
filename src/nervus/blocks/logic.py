@@ -41,8 +41,17 @@ class RelationalOperator(Block):
     PARAMS = (Param("operator", "<=", ParamKind.CHOICE, "Comparison", choices=tuple(_RELATIONS)),)
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        if self.mode is not None:
+            return [self.mode.copy()]
         res = _RELATIONS[self.params["operator"]](u[0], u[1])
         return [np.broadcast_to(np.asarray(res, dtype=float), (self.out_widths[0],)).copy()]
+
+    def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        return np.broadcast_to(u[0] - u[1], (self.out_widths[0],)).copy()
+
+    def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        res = _RELATIONS[self.params["operator"]](u[0], u[1])
+        return np.broadcast_to(np.asarray(res, dtype=float), (self.out_widths[0],)).copy()
 
 
 @register
@@ -58,7 +67,15 @@ class CompareToConstant(Block):
     )
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        if self.mode is not None:
+            return [self.mode.copy()]
         return [np.asarray(_RELATIONS[self.params["operator"]](u[0], self.params["constant"]), dtype=float)]
+
+    def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        return u[0] - self.params["constant"]
+
+    def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        return np.asarray(_RELATIONS[self.params["operator"]](u[0], self.params["constant"]), dtype=float)
 
 
 _LOGIC = ("AND", "OR", "NOT", "XOR", "NAND", "NOR")

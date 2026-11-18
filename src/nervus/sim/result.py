@@ -21,6 +21,9 @@ class SimStats:
     n_major_steps: int
     wall_time: float
     stopped_early: bool = False
+    zero_crossings: int = 0
+    """Number of discontinuities located by zero-crossing detection."""
+    warnings: list[str] | None = None
 
 
 @dataclass

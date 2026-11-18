@@ -92,6 +92,15 @@ class CompiledModel:
             for i, b in enumerate(self.blocks)
         ]
         self._cont_states = [(i, b, sl, self.inputs[i]) for i, b, _k, _r, sl, _inp in self._plan if sl.stop > sl.start]
+        from nervus.core.block import Block as _Block
+
+        self._zc_blocks = [
+            (i, b, sl, self.inputs[i])
+            for i, b, kind, _r, sl, _inp in self._plan
+            if kind is Kind.CONTINUOUS and type(b).zero_crossings is not _Block.zero_crossings
+        ]
+        self.n_zero_crossings = -1  # determined on first evaluation
+        self._monitors = [(i, b, self.inputs[i]) for i, b, *_ in self._plan if hasattr(b, "check_major")]
 
     def _u(self, i: int) -> list[Array]:
         y = self.y
@@ -149,6 +158,43 @@ class CompiledModel:
                 name = self.names[i]
                 raise SimulationError(f"{name}: error computing derivatives at t={t:g}: {exc}", (name,)) from exc
         return dx
+
+    def check_monitors(self, t: float) -> bool:
+        """Run Stop Simulation / Assertion blocks at a major step. Returns True if the run should stop."""
+        stop = False
+        for i, b, inputs in self._monitors:
+            verdict = b.check_major(t, [self.y[s][p] for s, p in inputs])
+            if verdict == "stop":
+                stop = True
+            elif verdict and verdict.startswith("error:"):
+                raise SimulationError(f"{self.names[i]}: {verdict[6:]}", (self.names[i],))
+        return stop
+
+    @property
+    def has_zero_crossings(self) -> bool:
+        return bool(self._zc_blocks)
+
+    def zero_crossing_values(self, t: float, xc: Array) -> Array:
+        """All zero-crossing signals at (t, xc), with discrete outputs held. Infinite limits are ignored."""
+        self.eval_outputs(t, xc, None)
+        y, xd = self.y, self.xd
+        parts = []
+        for i, b, sl, inputs in self._zc_blocks:
+            z = b.zero_crossings(t, [y[s][p] for s, p in inputs], xc[sl], xd[i])
+            if z is not None:
+                parts.append(np.asarray(z, dtype=float).ravel())
+        values = np.concatenate(parts) if parts else EMPTY
+        return np.where(np.isfinite(values), values, np.sign(values))
+
+    def zero_crossing_names(self, t: float, xc: Array) -> list[str]:
+        """Which block each zero-crossing signal belongs to (for messages)."""
+        self.eval_outputs(t, xc, None)
+        names = []
+        for i, b, sl, inputs in self._zc_blocks:
+            z = b.zero_crossings(t, [self.y[s][p] for s, p in inputs], xc[sl], self.xd[i])
+            if z is not None:
+                names.extend([self.names[i]] * np.asarray(z).size)
+        return names
 
     def update(self, t: float, xc: Array, hits: frozenset[int]) -> None:
         """Advance the discrete states of every block that has a sample hit now."""

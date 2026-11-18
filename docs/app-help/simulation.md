@@ -19,6 +19,16 @@ Variable-step solvers stop exactly at discontinuities that blocks announce (the 
 of a Pulse). Fixed-step solvers need a step that divides every discrete sample time; leave it empty and
 Nervus chooses one.
 
+## Discontinuities (zero crossings)
+
+When a Saturation hits its limit, a Switch changes input or a comparison flips, variable-step solvers stop
+**exactly** at that moment instead of stepping over it. The status bar shows how many such *zero crossings*
+were found. If a block chatters back and forth along a limit, detection is turned off for it and a warning
+appears in Diagnostics. You can switch the feature off in Simulation Settings.
+
+Use **Stop Simulation** to end a run when a condition becomes true, and **Assertion** to fail the run when a
+condition that must always hold becomes false.
+
 ## Sample times
 
 Discrete blocks (Unit Delay, Zero-Order Hold, Discrete PID, ...) have a **sample_time** in seconds: they

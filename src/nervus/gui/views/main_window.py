@@ -604,7 +604,12 @@ class MainWindow(QMainWindow):
             info = ""
             if res is not None and res.stats is not None:
                 info = f" — {res.stats.n_points} points in {res.stats.wall_time:.2f} s ({res.stats.solver})"
+                if res.stats.zero_crossings:
+                    info += f", {res.stats.zero_crossings} zero crossings"
             self.status_label.setText(("Stopped" if state is SimulationState.STOPPED else "Finished") + info)
+            if res is not None and res.stats is not None and res.stats.warnings:
+                self.sim_model.set_error("Warning: " + "; ".join(res.stats.warnings), ())
+                self.diagnostics_dock.show()
             self._open_scopes_after_run()
         elif state is SimulationState.FAILED:
             self.status_label.setText("Simulation failed — see Diagnostics.")

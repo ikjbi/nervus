@@ -61,6 +61,8 @@ _GLYPHS: dict[str, Callable[[Block], str]] = {
     "sinks.scope": lambda b: "📈",
     "sinks.to_workspace": lambda b: b.params["variable"],
     "sinks.terminator": lambda b: "⊣",
+    "sinks.stop": lambda b: "■ stop",
+    "sinks.assertion": lambda b: "assert",
     "routing.mux": lambda b: "mux",
     "routing.demux": lambda b: "demux",
     "routing.switch": lambda b: "switch",

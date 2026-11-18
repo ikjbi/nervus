@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+import numpy as np
+
 from nervus.blocks.registry import register
 from nervus.core.block import Block
 from nervus.core.errors import ParameterError
@@ -58,3 +60,36 @@ class Terminator(_Sink):
 
     type_id = "sinks.terminator"
     label = "Terminator"
+
+
+@register
+class StopSimulation(_Sink):
+    """Stops the simulation at the first major time step where the input is non-zero (true).
+
+    Use it to end a run when something happens, e.g. when the engine stalls or a test scenario is complete.
+    The result contains everything up to that point.
+    """
+
+    type_id = "sinks.stop"
+    label = "Stop Simulation"
+
+    def check_major(self, t: float, u: Sequence[Array]) -> str | None:
+        return "stop" if np.any(u[0] != 0) else None
+
+
+@register
+class Assertion(_Sink):
+    """Fails the simulation with an error if the input is zero (false) at a major time step.
+
+    Connect a condition that must always hold, e.g. ``engine_speed < 7000`` from a Compare To Constant block.
+    The error message names the block and the time.
+    """
+
+    type_id = "sinks.assertion"
+    label = "Assertion"
+    PARAMS = (Param("message", "assertion failed", ParamKind.STR, "Error message"),)
+
+    def check_major(self, t: float, u: Sequence[Array]) -> str | None:
+        if np.any(u[0] == 0):
+            return f"error:{self.params['message']} at t = {t:g}"
+        return None

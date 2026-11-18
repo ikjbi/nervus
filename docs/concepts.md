@@ -71,10 +71,28 @@ captured accurately.
 Fixed-step solvers use `step` everywhere. The step must divide every discrete sample time. If you don't set
 it, Nervus picks one.
 
-!!! note "Discontinuities and zero crossings"
-    Switching *inside* a model (a Saturation hitting its limit, a Switch changing input) is not yet detected
-    precisely. Variable-step solvers still handle it, but sometimes take many small steps. Zero-crossing
-    detection is planned.
+## Zero crossings and discontinuities
+
+Switching *inside* a model, such as a Saturation hitting its limit, a Switch changing input, an Integrator
+reaching its limit or a comparison flipping, makes the equations discontinuous. Variable-step solvers cannot
+step across a discontinuity accurately, so Nervus uses **zero-crossing detection** (like Simulink):
+
+1. Each such block declares a *zero-crossing signal* that changes sign exactly at the discontinuity, e.g.
+   `u − upper` for a saturation.
+2. During integration the block's branch (its **mode**, e.g. "saturated at the upper limit") is frozen, so the
+   equations stay smooth.
+3. The solver stops exactly where a zero-crossing signal changes sign, and the modes are re-evaluated there.
+
+The result is exact switching times and accurate integrals, e.g. ∫ clip(sin t) to 1e-8 with large steps.
+If a signal keeps crossing back and forth very rapidly (the system *chatters* along a limit), detection is
+switched off for that block and the run reports a warning in Diagnostics.
+
+Turn it off in **Simulation Settings** (*Locate discontinuities exactly*) or with
+`d.settings.zero_crossing = False`. Fixed-step solvers never use it: on an ECU the code also just steps.
+
+Blocks with zero crossings: Saturation, Dead Zone, Abs, Sign (Math Function), Switch, Relational Operator,
+Compare To Constant, Integrator (with limits), PID Controller (with limits). Stop Simulation stops a run at
+the exact moment its input becomes true, and Assertion fails it when its input becomes false.
 
 ## Simulation loop
 

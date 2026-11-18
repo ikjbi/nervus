@@ -10,7 +10,8 @@
     "step": null,
     "max_step": null,
     "rtol": 1e-06,
-    "atol": 1e-08
+    "atol": 1e-08,
+    "zero_crossing": true
   },
   "workspace": [],
   "blocks": [
