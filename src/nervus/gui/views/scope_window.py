@@ -20,11 +20,12 @@ class ScopeWindow(QWidget):
     colour. A legend is shown when there is more than one series.
     """
 
-    def __init__(self, block: Block, sim: SimulationModel, parent: QWidget | None = None) -> None:
+    def __init__(self, block: Block, sim: SimulationModel, parent: QWidget | None = None, path: str = "") -> None:
         super().__init__(parent, Qt.WindowType.Window)
         self.block = block
+        self.path = path or block.name
         self.sim = sim
-        self.setWindowTitle(f"Scope — {block.name}")
+        self.setWindowTitle(f"Scope — {self.path}")
         self.resize(760, 460)
 
         pg.setConfigOptions(antialias=True)
@@ -72,9 +73,9 @@ class ScopeWindow(QWidget):
     def _on_result(self, result: SimResult | None) -> None:
         self._series = []
         self._t = np.zeros(0)
-        if result is not None and self.block.name in result.input_keys:
+        if result is not None and self.path in result.input_keys:
             self._t = result.t
-            for key in result.input_keys[self.block.name]:
+            for key in result.input_keys[self.path]:
                 data = result.signals[key]
                 label = key[:-2] if key.endswith(":0") else key
                 if data.shape[1] == 1:

@@ -21,6 +21,7 @@ from nervus.blocks.discrete import (
 from nervus.blocks.logic import CompareToConstant, LogicalOperator, RelationalOperator
 from nervus.blocks.lookup import Lookup1D, Lookup2D
 from nervus.blocks.math_ops import Abs, Bias, Gain, MathFunction, MinMax, Product, Saturation, Sum
+from nervus.blocks.ports import Inport, Outport, Subsystem
 from nervus.blocks.registry import block_types, categories, create_block, get_block_class, register
 from nervus.blocks.routing import Demux, Mux, Switch
 from nervus.blocks.sinks import Scope, Terminator, ToWorkspace
@@ -47,6 +48,7 @@ __all__ = [
     "FromWorkspace",
     "Gain",
     "Ground",
+    "Inport",
     "IntegerDelay",
     "Integrator",
     "LogicalOperator",
@@ -56,6 +58,7 @@ __all__ = [
     "MinMax",
     "MovingAverage",
     "Mux",
+    "Outport",
     "Product",
     "Pulse",
     "PythonFunction",
@@ -69,6 +72,7 @@ __all__ = [
     "Sine",
     "StateSpace",
     "Step",
+    "Subsystem",
     "Sum",
     "Switch",
     "Terminator",

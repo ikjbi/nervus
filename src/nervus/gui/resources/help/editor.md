@@ -45,6 +45,11 @@ Numeric fields accept:
 Press Enter or leave the field to apply. If a value is invalid the field turns red and the old value is
 kept.
 
+## Tidying up
+
+**Edit → Auto Layout** (⇧⌘L / Ctrl+Shift+L) arranges the blocks of the shown diagram from left to right
+in signal-flow order. It can be undone like any other edit.
+
 ## Undo
 
 Every change, including moves, can be undone with ⌘Z and redone with ⇧⌘Z (Ctrl+Z / Ctrl+Y).

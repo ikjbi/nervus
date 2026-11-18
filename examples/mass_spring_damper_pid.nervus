@@ -1,6 +1,6 @@
 {
   "format": "nervus-model",
-  "schema_version": 2,
+  "schema_version": 3,
   "name": "mass_spring_damper_pid",
   "meta": {},
   "settings": {

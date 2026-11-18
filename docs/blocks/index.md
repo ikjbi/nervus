@@ -56,6 +56,12 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **MinMax**: Smallest or largest value.
 - **Bias**: Adds a constant: ``y = u + bias``.
 
+## [Ports & Subsystems](ports-subsystems.md)
+
+- **In**: An input port.
+- **Out**: An output port. Inside a subsystem it is the subsystem's output number *port*; at the top level it is an
+- **Subsystem**: A block that contains its own diagram. Double-click it in the editor to open it.
+
 ## [Signal Routing](signal-routing.md)
 
 - **Mux**: Combines its inputs into one vector signal, in port order.

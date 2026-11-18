@@ -9,17 +9,20 @@ from PySide6.QtGui import QAction, QCloseEvent, QGuiApplication, QKeySequence
 from PySide6.QtWidgets import (
     QDockWidget,
     QFileDialog,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
     QMessageBox,
     QProgressBar,
     QToolBar,
+    QToolButton,
+    QVBoxLayout,
     QWidget,
 )
 
 from nervus import __version__
-from nervus.core import Block
+from nervus.core import Block, Diagram
 from nervus.core.expressions import format_value, parse_value
 from nervus.gui.controllers import CLIPBOARD_MIME, EditorController, FileController, SimulationController
 from nervus.gui.models import DiagramModel, SimulationModel, SimulationState
@@ -60,7 +63,16 @@ class MainWindow(QMainWindow):
         self.scopes: dict[int, ScopeWindow] = {}
         self._help: HelpBrowser | None = None
 
-        self.setCentralWidget(self.view)
+        self.breadcrumb = QWidget()
+        self.breadcrumb_layout = QHBoxLayout(self.breadcrumb)
+        self.breadcrumb_layout.setContentsMargins(8, 4, 8, 4)
+        central = QWidget()
+        central_layout = QVBoxLayout(central)
+        central_layout.setContentsMargins(0, 0, 0, 0)
+        central_layout.setSpacing(0)
+        central_layout.addWidget(self.breadcrumb)
+        central_layout.addWidget(self.view, 1)
+        self.setCentralWidget(central)
         self._docks()
         self._actions()
         self._menus()
@@ -68,6 +80,7 @@ class MainWindow(QMainWindow):
         self._statusbar()
         self._wire()
         self._update_title()
+        self._rebuild_breadcrumb()
         self.resize(1280, 800)
         self._restore_layout()
 
@@ -142,6 +155,13 @@ class MainWindow(QMainWindow):
         self.act_delete = self._action("&Delete", self.delete_selection, None, "Delete selection")
         self.act_delete.setShortcuts([QKeySequence(Qt.Key.Key_Delete), QKeySequence(Qt.Key.Key_Backspace)])
         self.act_select_all = self._action("Select &All", self.select_all, K.SelectAll)
+        self.act_create_subsystem = self._action(
+            "Create &Subsystem from Selection", self.create_subsystem, "Ctrl+G", "Group the selected blocks"
+        )
+        self.act_up = self._action("&Up to Parent", self.diagram_model.up, "Ctrl+Up", "Leave this subsystem")
+        self.act_layout = self._action(
+            "Auto &Layout", self.auto_layout, "Ctrl+Shift+L", "Arrange the blocks of this diagram left to right"
+        )
         self.act_zoom_in = self._action("Zoom &In", self.view.zoom_in, K.ZoomIn)
         self.act_zoom_out = self._action("Zoom &Out", self.view.zoom_out, K.ZoomOut)
         self.act_fit = self._action("&Fit to Window", self.view.fit, "Ctrl+0", "Show the whole diagram", "fit")
@@ -171,8 +191,12 @@ class MainWindow(QMainWindow):
         m.addActions([self.act_cut, self.act_copy, self.act_paste, self.act_delete])
         m.addSeparator()
         m.addAction(self.act_select_all)
+        m.addSeparator()
+        m.addAction(self.act_create_subsystem)
+        m.addAction(self.act_layout)
         m = mb.addMenu("&View")
         m.addActions([self.act_zoom_in, self.act_zoom_out, self.act_fit])
+        m.addAction(self.act_up)
         m.addSeparator()
         for dock in (self.library_dock, self.properties_dock, self.diagnostics_dock, self.workspace_dock):
             m.addAction(dock.toggleViewAction())
@@ -255,6 +279,8 @@ class MainWindow(QMainWindow):
         self.diagram_model.filePathChanged.connect(lambda _p: self._update_title())
         self.diagram_model.settingsChanged.connect(self._sync_settings_widgets)
         self.diagram_model.diagramReset.connect(self._on_reset)
+        self.diagram_model.currentChanged.connect(self._on_current_changed)
+        self.diagram_model.blockRenamed.connect(self._on_renamed)
         self.files.errorOccurred.connect(lambda msg: QMessageBox.warning(self, "Nervus", msg))
         self.files.recentFilesChanged.connect(self._rebuild_recent)
         self.workspace_panel.statusMessage.connect(self.status_label.setText)
@@ -269,13 +295,44 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"{self.diagram_model.title}[*] — Nervus")
         self.setWindowModified(self.files.is_modified)
 
+    def _rebuild_breadcrumb(self) -> None:
+        while self.breadcrumb_layout.count():
+            item = self.breadcrumb_layout.takeAt(0)
+            w = item.widget() if item is not None else None
+            if w is not None:
+                w.hide()
+                w.setParent(None)
+                w.deleteLater()
+        crumbs = self.diagram_model.breadcrumbs()
+        for k, (label, diagram) in enumerate(crumbs):
+            if k:
+                sep = QLabel("›")
+                sep.setObjectName("muted")
+                self.breadcrumb_layout.addWidget(sep)
+            button = QToolButton()
+            button.setText(label)
+            button.setEnabled(k < len(crumbs) - 1)
+            button.clicked.connect(lambda _c=False, d=diagram: self.diagram_model.show(d))
+            self.breadcrumb_layout.addWidget(button)
+        self.breadcrumb_layout.addStretch(1)
+        self.act_up.setEnabled(len(crumbs) > 1)
+
+    def _on_current_changed(self, _diagram: object) -> None:
+        self._rebuild_breadcrumb()
+        self.properties.show_blocks([])
+        self.view.fit()
+
+    def _on_renamed(self, block: Block, _old: str) -> None:
+        if getattr(block, "system", None) is not None:
+            self._rebuild_breadcrumb()
+
     def _sync_settings_widgets(self) -> None:
-        s = self.diagram_model.diagram.settings
+        s = self.diagram_model.root.settings
         self.stop_time.setText(format_value(s.t_final))
         self.solver_label.setText(f"  {s.solver}" + (f", h={format_value(s.step)}" if s.step else "") + "  ")
 
     def _stop_time_edited(self) -> None:
-        s = self.diagram_model.diagram.settings
+        s = self.diagram_model.root.settings
         try:
             value = parse_value(self.stop_time.text())
             if not isinstance(value, float):
@@ -311,6 +368,7 @@ class MainWindow(QMainWindow):
             w.close()
         self.scopes.clear()
         self._sync_settings_widgets()
+        self._rebuild_breadcrumb()
         self.view.fit()
 
     def _editor_error(self, message: str) -> None:
@@ -318,6 +376,13 @@ class MainWindow(QMainWindow):
         self.properties.show_controller_error(message)
 
     def _highlight(self, names: tuple[str, ...]) -> None:
+        # Open the subsystem that contains the first block, then select it.
+        if names and "/" in names[0]:
+            target = self._diagram_of_path(names[0])
+            if target is not None:
+                self.diagram_model.show(target)
+        elif names:
+            self.diagram_model.show(self.diagram_model.root)
         self.scene.select_blocks(names)
         items = [i for i in self.scene.blocks.values() if i.block.name in names]
         if items:
@@ -406,6 +471,30 @@ class MainWindow(QMainWindow):
         created = self.editor.paste_from_text(bytes(mime.data(CLIPBOARD_MIME).data()).decode())
         self.scene.select_blocks([b.name for b in created])
 
+    def _diagram_of_path(self, path: str) -> Diagram | None:
+        d: Diagram = self.diagram_model.root
+        for part in path.split("/")[:-1]:
+            if part not in d:
+                return None
+            system = getattr(d.block(part), "system", None)
+            if not isinstance(system, Diagram):
+                return None
+            d = system
+        return d
+
+    def auto_layout(self) -> None:
+        self.editor.auto_layout()
+        self.view.fit()
+
+    def create_subsystem(self) -> None:
+        blocks = self.scene.selected_blocks()
+        if not blocks:
+            self.status_label.setText("Select the blocks to group first.")
+            return
+        sub = self.editor.create_subsystem(blocks)
+        if sub is not None:
+            self.scene.select_blocks([sub.name])
+
     def select_all(self) -> None:
         for item in self.scene.blocks.values():
             item.setSelected(True)
@@ -425,7 +514,7 @@ class MainWindow(QMainWindow):
             self.diagnostics_dock.show()
 
     def edit_settings(self) -> None:
-        dlg = SettingsDialog(self.diagram_model.diagram.settings, self)
+        dlg = SettingsDialog(self.diagram_model.root.settings, self)
         if dlg.exec() and dlg.result_settings is not None:
             self.editor.set_settings(dlg.result_settings)
 
@@ -452,14 +541,14 @@ class MainWindow(QMainWindow):
         """Open every scope the first time a model runs, like Simulink's 'open at simulation start'."""
         if self.scopes:
             return
-        for b in self.diagram_model.diagram.blocks:
+        for _path, b in self.diagram_model.root.walk():
             if b.type_id == "sinks.scope":
                 self.open_scope(b)
 
     def open_scope(self, block: Block) -> ScopeWindow:
         win = self.scopes.get(id(block))
         if win is None:
-            win = ScopeWindow(block, self.sim_model, self)
+            win = ScopeWindow(block, self.sim_model, self, self.diagram_model.path_of(block))
             self.scopes[id(block)] = win
             self.diagram_model.blockRemoved.connect(lambda b, w=win, blk=block: b is blk and w.close())
         win.show()
@@ -467,7 +556,9 @@ class MainWindow(QMainWindow):
         return win
 
     def _block_activated(self, block: Block) -> None:
-        if block.LOGS_INPUTS and block.type_id == "sinks.scope":
+        if getattr(block, "system", None) is not None:
+            self.diagram_model.enter(block)
+        elif block.LOGS_INPUTS and block.type_id == "sinks.scope":
             self.open_scope(block)
         else:
             self.properties_dock.show()

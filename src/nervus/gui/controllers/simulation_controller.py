@@ -74,12 +74,12 @@ class SimulationController(QObject):
             return False
         try:
             # Compile on the GUI thread: it touches the blocks, which only this thread may change.
-            compiled = compile_diagram(self.diagram_model.diagram)
+            compiled = compile_diagram(self.diagram_model.root)
         except ModelError as exc:
             self.sim_model.set_error(str(exc), exc.blocks)
             self.sim_model.set_state(SimulationState.FAILED)
             return False
-        settings = SimulationSettings(**self.diagram_model.diagram.settings.to_dict())
+        settings = SimulationSettings(**self.diagram_model.root.settings.to_dict())
         self._stop.clear()
         self.editor.set_editing_enabled(False)
         self.sim_model.set_error("")

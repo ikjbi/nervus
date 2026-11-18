@@ -66,6 +66,8 @@ _GLYPHS: dict[str, Callable[[Block], str]] = {
     "routing.switch": lambda b: "switch",
     "user.python_function": lambda b: "f(u)",
     "sources.ground": lambda b: "⏚ 0",
+    "ports.inport": lambda b: str(b.params["port"]),
+    "ports.outport": lambda b: str(b.params["port"]),
     "math.minmax": lambda b: b.params["function"],
     "math.bias": lambda b: "u + " + _num(b.param_source("bias")),
     "lookup.table_1d": lambda b: "1-D\n▁▃▆",

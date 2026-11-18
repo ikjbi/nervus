@@ -81,9 +81,12 @@ def test_unknown_variable_reported() -> None:
 def test_set_param_expression_validation() -> None:
     d = _gain_model()
     g = d.block("g")
-    with pytest.raises(ParameterError, match="unknown variable"):
-        g.set_param("gain", "Kpp")
-    assert g.expressions == {"gain": "Kp"}  # unchanged
+    g.set_param("gain", "Kpp")  # accepted, but reported by check() and at simulation time
+    assert any("unknown variable Kpp" in i.message for i in d.check())
+    with pytest.raises(ModelError, match="Kpp"):
+        simulate(d, 1.0)
+    with pytest.raises(ParameterError, match="unknown variable"):  # strict, as used by the editor
+        g._assign(g.param_spec("gain"), "Kpp", d.workspace.namespace())
     g.set_param("gain", "2*Kp")
     assert float(g.params["gain"]) == 6.0
     g.set_param("gain", 4.0)

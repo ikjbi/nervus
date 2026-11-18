@@ -28,6 +28,7 @@ file from the previous version, so old files keep loading.
 
 from __future__ import annotations
 
+import contextlib
 import json
 from collections.abc import Callable
 from pathlib import Path
@@ -35,13 +36,14 @@ from typing import Any
 
 import nervus.blocks  # noqa: F401  (registers the standard blocks)
 from nervus.blocks.registry import get_block_class
+from nervus.core.block import Block
 from nervus.core.diagram import Diagram
 from nervus.core.errors import ModelError, ParameterError
 from nervus.core.settings import SimulationSettings
 from nervus.core.workspace import Workspace
 
 FORMAT = "nervus-model"
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 FILE_EXTENSION = ".nervus"
 
 
@@ -51,8 +53,36 @@ def _v1_to_v2(doc: dict[str, Any]) -> dict[str, Any]:
     return doc
 
 
-MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {1: _v1_to_v2}
+def _v2_to_v3(doc: dict[str, Any]) -> dict[str, Any]:
+    """Version 3 added subsystems (a block may contain a nested "system"); nothing to convert."""
+    return doc
+
+
+MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {1: _v1_to_v2, 2: _v2_to_v3}
 """``MIGRATIONS[n]`` upgrades a version-``n`` document to version ``n + 1``."""
+
+
+def _block_dict(b: Block) -> dict[str, Any]:
+    d: dict[str, Any] = {"name": b.name, "type": b.type_id, "params": b.params_jsonable()}
+    if b.meta:
+        d["meta"] = b.meta
+    system = getattr(b, "system", None)
+    if isinstance(system, Diagram):
+        d["system"] = system_to_dict(system)
+    return d
+
+
+def system_to_dict(diagram: Diagram) -> dict[str, Any]:
+    """Blocks and connections of a diagram (used for the model and for nested subsystems)."""
+    out: dict[str, Any] = {}
+    if diagram.meta:
+        out["meta"] = diagram.meta
+    out["blocks"] = [_block_dict(b) for b in diagram.blocks]
+    out["connections"] = [
+        {"src": c.src.name, "src_port": c.src_port, "dst": c.dst.name, "dst_port": c.dst_port}
+        for c in diagram.connections
+    ]
+    return out
 
 
 def to_dict(diagram: Diagram) -> dict[str, Any]:
@@ -63,19 +93,7 @@ def to_dict(diagram: Diagram) -> dict[str, Any]:
         "meta": diagram.meta,
         "settings": diagram.settings.to_dict(),
         "workspace": diagram.workspace.to_list(),
-        "blocks": [
-            {
-                "name": b.name,
-                "type": b.type_id,
-                "params": b.params_jsonable(),
-                **({"meta": b.meta} if b.meta else {}),
-            }
-            for b in diagram.blocks
-        ],
-        "connections": [
-            {"src": c.src.name, "src_port": c.src_port, "dst": c.dst.name, "dst_port": c.dst_port}
-            for c in diagram.connections
-        ],
+        **{k: v for k, v in system_to_dict(diagram).items() if k != "meta"},
     }
 
 
@@ -112,16 +130,31 @@ def from_dict(data: dict[str, Any]) -> Diagram:
         d.workspace = Workspace.from_list(list(data.get("workspace", [])))
     except (KeyError, TypeError, ValueError) as exc:
         raise ModelError(f"invalid workspace: {exc}") from exc
+    _fill_system(d, data, "")
+    # Expressions inside subsystems can only be resolved once the whole tree (and workspace) exists.
+    with contextlib.suppress(ModelError):
+        d.resolve_parameters()
+    return d
+
+
+def _fill_system(d: Diagram, data: dict[str, Any], prefix: str) -> None:
     for entry in data.get("blocks", []):
         name = entry.get("name", "")
+        path = prefix + name
         try:
             cls = get_block_class(entry["type"])
         except KeyError as exc:
-            raise ModelError(f"block {name!r}: {exc.args[0]}", (name,)) from exc
+            raise ModelError(f"block {path!r}: {exc.args[0]}", (path,)) from exc
         try:
-            block = cls(name, **entry.get("params", {}))
+            if "system" in entry:
+                inner = Diagram(name)
+                inner.meta = dict(entry["system"].get("meta", {}))
+                block = cls(name, system=inner, **entry.get("params", {}))
+                _fill_system(inner, entry["system"], path + "/")
+            else:
+                block = cls(name, **entry.get("params", {}))
         except ParameterError as exc:
-            raise ModelError(f"block {name!r}: {exc}", (name,)) from exc
+            raise ModelError(f"block {path!r}: {exc}", (path,)) from exc
         block.meta = dict(entry.get("meta", {}))
         d.add(block)
     for c in data.get("connections", []):
@@ -129,8 +162,7 @@ def from_dict(data: dict[str, Any]) -> Diagram:
             src, dst = d.block(c["src"]), d.block(c["dst"])
             d.connect((src, int(c["src_port"])), (dst, int(c["dst_port"])))
         except (KeyError, IndexError) as exc:
-            raise ModelError(f"invalid connection {c}: {exc}") from exc
-    return d
+            raise ModelError(f"invalid connection {prefix}{c}: {exc}") from exc
 
 
 def dumps(diagram: Diagram) -> str:

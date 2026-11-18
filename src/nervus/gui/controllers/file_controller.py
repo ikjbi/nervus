@@ -61,10 +61,10 @@ class FileController(QObject):
         p = Path(path)
         if not p.suffix:
             p = p.with_suffix(FILE_EXTENSION)
-        if self.model.diagram.name in ("", "untitled"):
-            self.model.diagram.name = p.stem
+        if self.model.root.name in ("", "untitled"):
+            self.model.root.name = p.stem
         try:
-            p = save(self.model.diagram, p)
+            p = save(self.model.root, p)
         except OSError as exc:
             self.errorOccurred.emit(f"Could not save {p.name}:\n{exc}")
             return False

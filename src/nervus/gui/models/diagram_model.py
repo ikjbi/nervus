@@ -32,12 +32,14 @@ class DiagramModel(QObject):
     settingsChanged = Signal()
     workspaceChanged = Signal()
     diagramReset = Signal()  # a whole new diagram was loaded
+    currentChanged = Signal(object)  # Diagram: the editor now shows this (sub)system
     filePathChanged = Signal(object)  # Path | None
     changed = Signal()  # any structural or parameter change
 
     def __init__(self, diagram: Diagram | None = None, parent: QObject | None = None) -> None:
         super().__init__(parent)
-        self._diagram = diagram or Diagram()
+        self._root = diagram if diagram is not None else Diagram()
+        self._diagram = self._root  # the (sub)system shown in the editor
         self._path: Path | None = None
         for sig in (
             self.blockAdded,
@@ -57,7 +59,48 @@ class DiagramModel(QObject):
 
     @property
     def diagram(self) -> Diagram:
+        """The diagram currently shown in the editor (the model, or a subsystem inside it)."""
         return self._diagram
+
+    @property
+    def root(self) -> Diagram:
+        """The model: owns the settings, the workspace, and what is saved and simulated."""
+        return self._root
+
+    def show(self, diagram: Diagram) -> None:
+        """Show ``diagram`` (the model or one of its subsystems) in the editor."""
+        if diagram is not self._diagram:
+            self._diagram = diagram
+            self.currentChanged.emit(diagram)
+
+    def enter(self, subsystem: Block) -> None:
+        system = getattr(subsystem, "system", None)
+        if isinstance(system, Diagram):
+            self.show(system)
+
+    def up(self) -> None:
+        parent = self._diagram.parent
+        if parent is not None and parent.diagram is not None:
+            self.show(parent.diagram)
+
+    def breadcrumbs(self) -> list[tuple[str, Diagram]]:
+        """(label, diagram) from the model down to the current subsystem."""
+        crumbs: list[tuple[str, Diagram]] = []
+        d: Diagram | None = self._diagram
+        while d is not None:
+            label = d.parent.name if d.parent is not None else (self._root.name or "model")
+            crumbs.append((label, d))
+            d = d.parent.diagram if d.parent is not None else None
+        return list(reversed(crumbs))
+
+    def path_of(self, block: Block) -> str:
+        """Full path name of a block, as used in simulation results and diagnostics."""
+        prefix = block.diagram.path if block.diagram is not None else ""
+        return f"{prefix}/{block.name}" if prefix else block.name
+
+    def _focus(self, diagram: Diagram | None) -> None:
+        if diagram is not None and diagram is not self._diagram:
+            self.show(diagram)
 
     @property
     def file_path(self) -> Path | None:
@@ -70,47 +113,62 @@ class DiagramModel(QObject):
 
     @property
     def title(self) -> str:
-        return self._path.name if self._path else f"{self._diagram.name}"
+        return self._path.name if self._path else f"{self._root.name}"
 
     def set_diagram(self, diagram: Diagram, path: Path | None = None) -> None:
         auto_layout(diagram)  # diagrams built in Python have no positions yet
+        for _name, b in diagram.walk():
+            system = getattr(b, "system", None)
+            if isinstance(system, Diagram):
+                auto_layout(system)
+        self._root = diagram
         self._diagram = diagram
         self.diagramReset.emit()
         self.file_path = path
 
     # ------------------------------------------------------------------ primitive edits
 
-    def add_block(self, block: Block, position: QPointF | None = None) -> Block:
+    def add_block(self, block: Block, position: QPointF | None = None, diagram: Diagram | None = None) -> Block:
+        target = diagram if diagram is not None else self._diagram
+        self._focus(target)
         if position is not None:
             block.meta["position"] = [round(position.x(), 1), round(position.y(), 1)]
-        self._diagram.add(block)
+        target.add(block)
         self.blockAdded.emit(block)
         return block
 
     def remove_block(self, block: Block) -> list[Connection]:
         """Remove ``block`` and its connections. Returns the removed connections (for undo)."""
-        conns = [c for c in self._diagram.connections if c.src is block or c.dst is block]
+        d = block.diagram
+        assert d is not None
+        self._focus(d)
+        conns = [c for c in d.connections if c.src is block or c.dst is block]
         for c in conns:
             self.remove_connection(c)
-        self._diagram.remove(block)
+        d.remove(block)
         self.blockRemoved.emit(block)
         return conns
 
     def move_block(self, block: Block, position: QPointF) -> None:
+        self._focus(block.diagram)
         block.meta["position"] = [round(position.x(), 1), round(position.y(), 1)]
         self.blockMoved.emit(block)
 
     def rename_block(self, block: Block, new_name: str) -> None:
+        self._focus(block.diagram)
         old = block.name
-        self._diagram.rename(block, new_name)
+        assert block.diagram is not None
+        block.diagram.rename(block, new_name)
         self.blockRenamed.emit(block, old)
 
     def set_param(self, block: Block, name: str, value: Any) -> None:
+        self._focus(block.diagram)
         block.set_param(name, value)
         self.paramsChanged.emit(block)
 
     def set_params(self, block: Block, params: dict[str, Any]) -> None:
         """Set several parameters at once; all-or-nothing."""
+        self._focus(block.diagram)
         old = dict(block.params)
         try:
             for k, v in params.items():
@@ -122,7 +180,10 @@ class DiagramModel(QObject):
         self.paramsChanged.emit(block)
 
     def add_connection(self, src: Block, src_port: int, dst: Block, dst_port: int) -> Connection:
-        conn = self._diagram.connect((src, src_port), (dst, dst_port))
+        d = dst.diagram
+        assert d is not None
+        self._focus(d)
+        conn = d.connect((src, src_port), (dst, dst_port))
         self.connectionAdded.emit(conn)
         return conn
 
@@ -130,11 +191,15 @@ class DiagramModel(QObject):
         return self.add_connection(conn.src, conn.src_port, conn.dst, conn.dst_port)
 
     def remove_connection(self, conn: Connection) -> None:
-        self._diagram.disconnect(conn)
+        d = conn.dst.diagram
+        assert d is not None
+        self._focus(d)
+        d.disconnect(conn)
         self.connectionRemoved.emit(conn)
 
     def find_connection(self, src: Block, src_port: int, dst: Block, dst_port: int) -> Connection | None:
-        for c in self._diagram.connections:
+        d = dst.diagram
+        for c in d.connections if d is not None else []:
             if c.src is src and c.src_port == src_port and c.dst is dst and c.dst_port == dst_port:
                 return c
         return None
@@ -144,7 +209,7 @@ class DiagramModel(QObject):
     def set_variable(self, old_name: str | None, var: Variable | None, index: int | None = None) -> None:
         """Add (``old_name`` None, optionally at ``index``), replace/rename, or delete (``var`` None) a
         workspace variable."""
-        ws = self._diagram.workspace
+        ws = self._root.workspace
         if var is None:
             if old_name is not None:
                 del ws[old_name]
@@ -157,14 +222,14 @@ class DiagramModel(QObject):
         self._workspace_changed()
 
     def apply_values(self, values: dict[str, object]) -> None:
-        self._diagram.workspace.apply(values)
+        self._root.workspace.apply(values)
         self._workspace_changed()
 
     def _workspace_changed(self) -> None:
         ns = None
         with contextlib.suppress(Exception):
-            ns = self._diagram.workspace.namespace()
-        for b in self._diagram.blocks:
+            ns = self._root.workspace.namespace()
+        for _name, b in self._root.walk():
             if b.expressions:
                 if ns is not None:
                     with contextlib.suppress(Exception):
@@ -174,5 +239,5 @@ class DiagramModel(QObject):
 
     def set_settings(self, settings: SimulationSettings) -> None:
         settings.validate()
-        self._diagram.settings = settings
+        self._root.settings = settings
         self.settingsChanged.emit()

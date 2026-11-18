@@ -10,6 +10,9 @@ On macOS use ⌘ where *Ctrl* is listed.
 | Cut / Copy / Paste | Ctrl+X / Ctrl+C / Ctrl+V |
 | Delete selection | Delete or Backspace |
 | Select all | Ctrl+A |
+| Create subsystem from selection | Ctrl+G |
+| Auto layout | Ctrl+Shift+L |
+| Up to the parent system | Ctrl+Up |
 | Run simulation | Ctrl+R or F5 |
 | Stop simulation | Ctrl+. |
 | Simulation settings | Ctrl+E |

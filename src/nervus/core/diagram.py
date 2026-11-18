@@ -62,9 +62,46 @@ class Diagram:
         self.settings = SimulationSettings()
         """Default time span and solver used by :func:`nervus.simulate`."""
         self.workspace = Workspace()
-        """Named parameters that block parameters can refer to (``Gain(gain="Kp")``)."""
+        """Named parameters that block parameters can refer to (``Gain(gain="Kp")``). Only the top-level
+        diagram's workspace is used; subsystems see their model's workspace."""
+        self.parent: Block | None = None
+        """The Subsystem block that contains this diagram (``None`` for a model)."""
         self._blocks: dict[str, Block] = {}
         self._connections: list[Connection] = []
+
+    # ------------------------------------------------------------------ hierarchy
+
+    @property
+    def root(self) -> Diagram:
+        """The top-level diagram (the model) this diagram belongs to."""
+        d = self
+        while d.parent is not None and d.parent.diagram is not None:
+            d = d.parent.diagram
+        return d
+
+    @property
+    def path(self) -> str:
+        """``""`` for the model, ``"sub/inner"`` for nested subsystems."""
+        parts: list[str] = []
+        d = self
+        while d.parent is not None:
+            parts.append(d.parent.name)
+            if d.parent.diagram is None:
+                break
+            d = d.parent.diagram
+        return "/".join(reversed(parts))
+
+    def subsystems(self) -> list[Block]:
+        return [b for b in self._blocks.values() if hasattr(b, "system")]
+
+    def walk(self) -> Iterator[tuple[str, Block]]:
+        """All blocks in this diagram and in nested subsystems, with path names (``"sub/gain"``)."""
+        for b in self._blocks.values():
+            yield b.name, b
+            system = getattr(b, "system", None)
+            if isinstance(system, Diagram):
+                for name, inner in system.walk():
+                    yield f"{b.name}/{name}", inner
 
     # ------------------------------------------------------------------ blocks
 
@@ -103,18 +140,18 @@ class Diagram:
         block.diagram = self
         if block.expressions:
             with contextlib.suppress(Exception):  # unresolved variables are reported by check()
-                block.resolve(self.workspace.namespace())
+                block.resolve(self.root.workspace.namespace())
         return block
 
     def resolve_parameters(self, overrides: dict[str, Any] | None = None) -> None:
         """Evaluate every block's parameter expressions with the workspace (plus ``overrides``).
         Raises :class:`ModelError` naming the block on failure."""
-        ns = self.workspace.namespace(overrides)
-        for b in self._blocks.values():
+        ns = self.root.workspace.namespace(overrides)
+        for name, b in self.walk():
             try:
                 b.resolve(ns)
             except ParameterError as exc:
-                raise ModelError(f"{b.name}: {exc}", (b.name,)) from exc
+                raise ModelError(f"{name}: {exc}", (name,)) from exc
 
     def unique_name(self, base: str) -> str:
         """Return ``base`` or ``base1``, ``base2``, ... whichever is not taken yet."""
@@ -206,51 +243,56 @@ class Diagram:
     # ------------------------------------------------------------------ checks
 
     def check(self) -> list[Issue]:
-        """Find structural problems without compiling the model."""
+        """Find structural problems without compiling the model (including inside subsystems)."""
         issues: list[Issue] = []
         try:
-            ns = self.workspace.namespace()
+            ns = self.root.workspace.namespace()
         except ModelError as exc:
             issues.append(Issue(Severity.ERROR, str(exc)))
             ns = None
-        if ns is not None:
-            for b in self._blocks.values():
+        if ns is not None and self.parent is None:
+            for name, b in self.walk():
                 try:
                     b.resolve(ns)
                 except ParameterError as exc:
-                    issues.append(Issue(Severity.ERROR, f"{b.name}: {exc}", (b.name,)))
+                    issues.append(Issue(Severity.ERROR, f"{name}: {exc}", (name,)))
             for msg in self.workspace.check_ranges(ns):
                 issues.append(Issue(Severity.WARNING, f"workspace: {msg}"))
+        issues.extend(self._check_structure(""))
+        return issues
+
+    def _check_structure(self, prefix: str) -> list[Issue]:
+        """Connection and port problems in this diagram and its subsystems; names are prefixed paths."""
+        issues: list[Issue] = []
+        for sub in self.subsystems():
+            path = prefix + sub.name
+            try:
+                sub.validate_ports()  # type: ignore[attr-defined]
+            except ParameterError as exc:
+                issues.append(Issue(Severity.ERROR, f"{path}: {exc}", (path,)))
+            issues.extend(sub.system._check_structure(path + "/"))  # type: ignore[attr-defined]
         for c in self._connections:
+            src, dst = prefix + c.src.name, prefix + c.dst.name
             if c.src_port >= c.src.num_outputs():
                 issues.append(
                     Issue(
-                        Severity.ERROR,
-                        f"{c.src.name!r} has no output port {c.src_port} (connection is dangling)",
-                        (c.src.name, c.dst.name),
+                        Severity.ERROR, f"{src!r} has no output port {c.src_port} (connection is dangling)", (src, dst)
                     )
                 )
             if c.dst_port >= c.dst.num_inputs():
                 issues.append(
                     Issue(
-                        Severity.ERROR,
-                        f"{c.dst.name!r} has no input port {c.dst_port} (connection is dangling)",
-                        (c.src.name, c.dst.name),
+                        Severity.ERROR, f"{dst!r} has no input port {c.dst_port} (connection is dangling)", (src, dst)
                     )
                 )
         for b in self._blocks.values():
+            path = prefix + b.name
             for i in range(b.num_inputs()):
                 if self.driver(b, i) is None:
-                    issues.append(Issue(Severity.ERROR, f"input {i} of {b.name!r} is not connected", (b.name,)))
+                    issues.append(Issue(Severity.ERROR, f"input {i} of {path!r} is not connected", (path,)))
             for o in range(b.num_outputs()):
                 if not self.fanout(b, o):
-                    issues.append(
-                        Issue(
-                            Severity.WARNING,
-                            f"output {o} of {b.name!r} is not connected",
-                            (b.name,),
-                        )
-                    )
+                    issues.append(Issue(Severity.WARNING, f"output {o} of {path!r} is not connected", (path,)))
         return issues
 
     def __repr__(self) -> str:

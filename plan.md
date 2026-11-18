@@ -109,6 +109,8 @@ tests/
 - [x] File: new, open, save, save as, recent files
 - [x] Error and diagnostics panel (algebraic loops, unconnected ports), with click to highlight the block
 - [ ] Manual wire routing (drag segments, waypoints) and draggable branch points
+- [ ] Obstacle-avoiding automatic wire routing (wires currently may pass behind blocks)
+- [x] Auto Layout command (left-to-right by signal flow), undoable
 - [ ] Rotate / flip blocks, resize blocks, nudge with arrow keys
 - [ ] Show signal widths and sample-time colours on the canvas (like Simulink's "port data types" / "sample time colors")
 - [ ] Right-click context menus on blocks, wires and the canvas
@@ -148,8 +150,8 @@ tests/
 - [x] Figures, equations and help for every new block
 
 ## Phase 9 – Hierarchy: subsystems, masks, conditional execution, variants
-- [ ] Subsystem block with Inport/Outport blocks; flattened at compile time
-- [ ] GUI: double-click to open a subsystem, breadcrumb navigation, "Create Subsystem from Selection"
+- [x] Subsystem block with Inport/Outport blocks; flattened at compile time
+- [x] GUI: double-click to open a subsystem, breadcrumb navigation, "Create Subsystem from Selection"
 - [ ] Atomic subsystems with their own sample time (one ECU task = one atomic subsystem)
 - [ ] Masks: parameter dialog and icon text for a subsystem; mask parameters as local workspace
 - [ ] Enabled, triggered and function-call subsystems (task scheduling, event-driven code)

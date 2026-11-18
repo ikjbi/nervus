@@ -60,6 +60,22 @@ def main() -> None:
         grab(scope, f"scope{suffix}.png")
 
         if mode is ThemeMode.LIGHT:
+            # Subsystems: group the ECU part of the throttle model.
+            root = win.diagram_model.root
+            ecu = win.editor.create_subsystem([root.block(n) for n in ("tps_sample", "error", "throttle_pi")])
+            assert ecu is not None
+            win.editor.rename(ecu, "ECU")
+            win.editor.auto_layout()
+            win.view.fit()
+            win.scene.select_blocks(["ECU"])
+            grab(win, "subsystem-outer.png")
+            win.diagram_model.enter(ecu)
+            win.editor.auto_layout()
+            win.view.fit()
+            grab(win, "subsystem-inner.png")
+            win.diagram_model.up()
+            for _ in range(4):
+                win.editor.undo_stack.undo()
             win.show_help_for_type("control.discrete_pid")
             assert win._help is not None
             grab(win._help, "help.png")

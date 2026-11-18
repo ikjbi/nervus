@@ -75,7 +75,7 @@ class WorkspacePanel(QWidget):
 
     def refresh(self) -> None:
         self._updating = True
-        ws = self.model.diagram.workspace
+        ws = self.model.root.workspace
         try:
             ns: dict[str, Any] | None = ws.namespace()
         except Exception:
@@ -136,7 +136,7 @@ class WorkspacePanel(QWidget):
     def _add(self) -> None:
         var = self.controller.add_variable()
         if var is not None:
-            row = list(self.model.diagram.workspace).index(var.name)
+            row = list(self.model.root.workspace).index(var.name)
             self.table.setCurrentCell(row, 0)
             item = self.table.item(row, 0)
             if item is not None:

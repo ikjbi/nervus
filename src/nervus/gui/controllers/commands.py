@@ -44,9 +44,10 @@ class AddBlockCommand(Command):
     def __init__(self, model: DiagramModel, block: Block, position: QPointF) -> None:
         super().__init__(f"Add {block.label}")
         self.model, self.block, self.position = model, block, position
+        self.target = model.diagram  # the (sub)system shown when the block was added
 
     def do(self) -> None:
-        self.model.add_block(self.block, self.position)
+        self.model.add_block(self.block, self.position, self.target)
 
     def revert(self) -> None:
         self.model.remove_block(self.block)
@@ -60,6 +61,7 @@ class RemoveCommand(Command):
         super().__init__(f"Delete {n} item{'s' if n != 1 else ''}")
         self.model = model
         self.blocks = list(blocks)
+        self._homes = [b.diagram for b in blocks]
         block_set = {id(b) for b in blocks}
         # Connections removed together with their blocks are handled by remove_block.
         self.connections = [c for c in connections if id(c.src) not in block_set and id(c.dst) not in block_set]
@@ -76,8 +78,8 @@ class RemoveCommand(Command):
             self._removed.extend(self.model.remove_block(b))
 
     def revert(self) -> None:
-        for b, pos in zip(self.blocks, self._positions, strict=True):
-            self.model.add_block(b, pos)
+        for b, pos, home in zip(self.blocks, self._positions, self._homes, strict=True):
+            self.model.add_block(b, pos, home)
         restored = []
         for c in self._removed:
             restored.append(self.model.restore_connection(c))
@@ -115,7 +117,7 @@ class SetParamsCommand(Command):
         b = self.block
         self._dropped = [
             c
-            for c in self.model.diagram.connections
+            for c in (b.diagram.connections if b.diagram is not None else [])
             if (c.dst is b and c.dst_port >= b.num_inputs()) or (c.src is b and c.src_port >= b.num_outputs())
         ]
         for c in self._dropped:
@@ -150,7 +152,8 @@ class ConnectCommand(Command):
 
     def do(self) -> None:
         src, sp, dst, dp = self.args
-        self._replaced = self.model.diagram.driver(dst, dp)
+        assert dst.diagram is not None
+        self._replaced = dst.diagram.driver(dst, dp)
         if self._replaced is not None:
             self.model.remove_connection(self._replaced)
         self._conn = self.model.add_connection(src, sp, dst, dp)
@@ -165,7 +168,7 @@ class ConnectCommand(Command):
 class SetSettingsCommand(Command):
     def __init__(self, model: DiagramModel, settings: SimulationSettings) -> None:
         super().__init__("Change simulation settings")
-        self.model, self.new, self.old = model, settings, model.diagram.settings
+        self.model, self.new, self.old = model, settings, model.root.settings
 
     def do(self) -> None:
         self.model.set_settings(self.new)
@@ -181,7 +184,7 @@ class SetVariableCommand(Command):
         verb = "Add" if old is None else "Delete" if new is None else "Change"
         super().__init__(f"{verb} variable {(new or old).name}")  # type: ignore[union-attr]
         self.model, self.old, self.new = model, old, new
-        names = list(model.diagram.workspace)
+        names = list(model.root.workspace)
         self._index = names.index(old.name) if old is not None else len(names)
 
     def do(self) -> None:
@@ -200,7 +203,7 @@ class ApplyValuesCommand(Command):
     def __init__(self, model: DiagramModel, values: dict[str, object], label: str) -> None:
         super().__init__(f"Load parameter set {label}")
         self.model, self.new = model, dict(values)
-        current = model.diagram.workspace.values()
+        current = model.root.workspace.values()
         self.old = {k: current[k] for k in values if k in current}
 
     def do(self) -> None:
@@ -208,3 +211,90 @@ class ApplyValuesCommand(Command):
 
     def revert(self) -> None:
         self.model.apply_values(self.old)
+
+
+class CreateSubsystemCommand(Command):
+    """Move the selected blocks into a new Subsystem; lines crossing the boundary become In/Out ports."""
+
+    def __init__(self, model: DiagramModel, blocks: list[Block]) -> None:
+        super().__init__(f"Create subsystem from {len(blocks)} blocks")
+        self.model = model
+        self.blocks = list(blocks)
+        self.outer = blocks[0].diagram
+        self.subsystem: Block | None = None
+        self._saved: list[tuple[Block, int, Block, int]] = []
+        self._positions: dict[int, list[float]] = {}
+
+    def do(self) -> None:
+        from nervus.blocks.ports import Inport, Outport, Subsystem
+        from nervus.core import Diagram
+
+        outer = self.outer
+        assert outer is not None
+        if any(b.diagram is not outer for b in self.blocks):
+            raise ValueError("all selected blocks must be in the same diagram")
+        sel = {id(b) for b in self.blocks}
+        conns = [c for c in outer.connections if id(c.src) in sel or id(c.dst) in sel]
+        self._saved = [(c.src, c.src_port, c.dst, c.dst_port) for c in conns]
+        self._positions = {id(b): list(b.meta.get("position", [0.0, 0.0])) for b in self.blocks}
+        xs = [p[0] for p in self._positions.values()]
+        ys = [p[1] for p in self._positions.values()]
+        x0, y0 = min(xs), min(ys)
+
+        for b in self.blocks:
+            self.model.remove_block(b)
+        inner = Diagram("system")
+        for b in self.blocks:
+            p = self._positions[id(b)]
+            b.meta["position"] = [p[0] - x0 + 160.0, p[1] - y0]
+            inner.add(b)
+
+        inputs: dict[tuple[int, int], int] = {}  # (id(src), port) -> subsystem input index
+        outputs: dict[tuple[int, int], int] = {}
+        outer_in: list[tuple[Block, int]] = []
+        outer_out: list[tuple[int, Block, int]] = []
+        for src, sp, dst, dp in self._saved:
+            if id(src) in sel and id(dst) in sel:
+                inner.connect((src, sp), (dst, dp))
+            elif id(dst) in sel:  # crosses inward
+                key = (id(src), sp)
+                if key not in inputs:
+                    inputs[key] = len(inputs)
+                    in_block = inner.add(Inport(port=len(inputs)), name=inner.unique_name(f"In{len(inputs)}"))
+                    in_block.meta["position"] = [0.0, 70.0 * (len(inputs) - 1)]
+                    outer_in.append((src, sp))
+                port_block = next(
+                    b for b in inner.blocks if isinstance(b, Inport) and b.params["port"] == inputs[key] + 1
+                )
+                inner.connect(port_block, (dst, dp))
+            else:  # crosses outward
+                key = (id(src), sp)
+                if key not in outputs:
+                    outputs[key] = len(outputs)
+                    out_block = inner.add(Outport(port=len(outputs)), name=inner.unique_name(f"Out{len(outputs)}"))
+                    out_block.meta["position"] = [max(xs) - x0 + 340.0, 70.0 * (len(outputs) - 1)]
+                    inner.connect((src, sp), out_block)
+                outer_out.append((outputs[key], dst, dp))
+
+        if self.subsystem is None:
+            self.subsystem = Subsystem(outer.unique_name("Subsystem"), system=inner)
+        else:  # redo: reuse the same block so later commands that refer to it keep working
+            self.subsystem.system = inner  # type: ignore[attr-defined]
+            inner.parent = self.subsystem
+        sub = self.subsystem
+        self.model.add_block(sub, QPointF(x0 + (max(xs) - x0) / 2, y0 + (max(ys) - y0) / 2), outer)
+        for k, (src, sp) in enumerate(outer_in):
+            self.model.add_connection(src, sp, sub, k)
+        for k, dst, dp in outer_out:
+            self.model.add_connection(sub, k, dst, dp)
+
+    def revert(self) -> None:
+        assert self.subsystem is not None and self.outer is not None
+        self.model.remove_block(self.subsystem)
+        inner = self.subsystem.system  # type: ignore[attr-defined]
+        for b in self.blocks:
+            inner.remove(b)
+            b.meta["position"] = self._positions[id(b)]
+            self.model.add_block(b, None, self.outer)
+        for src, sp, dst, dp in self._saved:
+            self.model.add_connection(src, sp, dst, dp)

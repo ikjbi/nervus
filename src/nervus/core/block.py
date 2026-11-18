@@ -15,6 +15,7 @@ Every signal is a 1-D float64 array. A scalar signal has width 1.
 
 from __future__ import annotations
 
+import contextlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, ClassVar
@@ -129,8 +130,11 @@ class Block:
         d = self.diagram
         if d is None:
             return None
+        root = d.root
+        if root.parent is not None:  # inside a subsystem that is not part of a model yet
+            return None
         try:
-            return d.workspace.namespace()
+            return root.workspace.namespace()
         except Exception:
             return None
 
@@ -140,13 +144,17 @@ class Block:
             try:
                 literal = parse_value(value)
             except UnknownNameError:
-                ns = namespace if namespace is not None else self._namespace()
-                if ns is not None:  # attached to a diagram: the variables must exist
+                if namespace is not None:  # strict: the variables must exist (used by the editor)
                     try:
-                        resolved = parse_value(value, ns)
+                        resolved = parse_value(value, namespace)
                     except ValueError as exc:
                         raise ParameterError(f"parameter '{p.name}': {exc}") from exc
                     self.params[p.name] = p.coerce(resolved)
+                else:  # lenient: resolve now if possible; unknown variables are reported by Diagram.check()
+                    ns = self._namespace()
+                    if ns is not None:
+                        with contextlib.suppress(ValueError):
+                            self.params[p.name] = p.coerce(parse_value(value, ns))
                 self.expressions[p.name] = value.strip()
                 return
             except ValueError as exc:

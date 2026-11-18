@@ -13,6 +13,7 @@ from nervus.help import block_doc
 CATEGORY_ORDER = [
     "Sources",
     "Sinks",
+    "Ports & Subsystems",
     "Math Operations",
     "Continuous",
     "Discrete",

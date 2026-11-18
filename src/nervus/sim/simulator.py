@@ -74,15 +74,15 @@ class _Logger:
     def result(self, stats: SimStats) -> SimResult:
         m = self.model
         signals: dict[str, Array] = {}
-        for i, b in enumerate(m.blocks):
+        for i, name in enumerate(m.names):
             for p, w in enumerate(m.out_widths[i]):
                 rows = self.data[i][p]
-                signals[f"{b.name}:{p}"] = np.vstack(rows) if rows else np.zeros((0, w))
-        input_keys = {b.name: [f"{m.blocks[s].name}:{p}" for s, p in m.inputs[i]] for i, b in enumerate(m.blocks)}
+                signals[f"{name}:{p}"] = np.vstack(rows) if rows else np.zeros((0, w))
+        input_keys = {name: [f"{m.names[s]}:{p}" for s, p in m.inputs[i]] for i, name in enumerate(m.names)}
         aliases: dict[str, str] = {}
-        for b in m.blocks:
+        for name, b in zip(m.names, m.blocks, strict=True):
             for alias, port in b.result_aliases().items():
-                aliases[alias] = input_keys[b.name][port]
+                aliases[alias] = input_keys[name][port]
         return SimResult(np.asarray(self.t), signals, input_keys, aliases, stats)
 
 

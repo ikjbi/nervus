@@ -6,9 +6,14 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- An empty diagram passed to the editor model or a Subsystem was replaced by a default one.
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Subsystems: Subsystem, In and Out blocks; hierarchies are flattened at compile time; results and errors use
+  path names (`ECU/throttle_pi`); model file schema version 3 stores nested systems.
+- Editor: open subsystems by double-click, breadcrumb navigation, Up to Parent, Create Subsystem from
+  Selection (Ctrl+G), Auto Layout (Ctrl+Shift+L); undo works across levels.
 - ECU block library: 1-D and 2-D Lookup Tables (linear/nearest/flat, clip/linear extrapolation), Relational
   Operator, Compare To Constant, Logical Operator, Dead Zone, Quantizer, Relay (hysteresis), Rate Limiter,
   Integer Delay, Counter, Edge Detect, Debounce, Discrete Filter (PT1), Moving Average, MinMax, Bias, Ground,

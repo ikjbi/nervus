@@ -101,6 +101,9 @@ class BlockItem(QGraphicsItem):
         text = glyph(self.block)
         lines = text.split("\n")
         n = max(self.block.num_inputs(), self.block.num_outputs(), 1)
+        if getattr(self.block, "system", None) is not None:
+            names = [b.name for b in self.block.inports() + self.block.outports()]  # type: ignore[attr-defined]
+            lines = [" " * (2 * max((len(x) for x in names), default=4))]
         self._w = max(MIN_W, snap(max(len(line) for line in lines) * 8 + 24))
         self._h = max(MIN_H, snap(max(n * 20 + 10, len(lines) * 16 + 16)))
         for p in self.in_ports + self.out_ports:
@@ -147,13 +150,39 @@ class BlockItem(QGraphicsItem):
         font.setPointSizeF(11)
         painter.setFont(font)
         painter.setPen(t.color("block_text"))
-        painter.drawText(rect.adjusted(6, 4, -6, -4), Qt.AlignmentFlag.AlignCenter, glyph(self.block))
+        system = getattr(self.block, "system", None)
+        if system is not None:
+            self._paint_subsystem(painter, rect)
+        else:
+            painter.drawText(rect.adjusted(6, 4, -6, -4), Qt.AlignmentFlag.AlignCenter, glyph(self.block))
 
         name_font = QFont(font)
         name_font.setPointSizeF(10)
         painter.setFont(name_font)
         painter.setPen(t.color("text_secondary"))
         painter.drawText(QRectF(-40, self._h + 2, self._w + 80, 18), Qt.AlignmentFlag.AlignHCenter, self.block.name)
+
+    def _paint_subsystem(self, painter: QPainter, rect: QRectF) -> None:
+        """Port names inside the block, like Simulink's subsystem icon."""
+        t = current_theme()
+        small = QFont(painter.font())
+        small.setPointSizeF(9)
+        painter.setFont(small)
+        painter.setPen(t.color("text_secondary"))
+        sub = self.block
+        for ports, items, align, dx in (
+            (sub.inports(), self.in_ports, Qt.AlignmentFlag.AlignLeft, 6),  # type: ignore[attr-defined]
+            (sub.outports(), self.out_ports, Qt.AlignmentFlag.AlignRight, -6),  # type: ignore[attr-defined]
+        ):
+            for port_block, item in zip(ports, items, strict=False):
+                y = item.pos().y()
+                box = QRectF(6 if dx > 0 else rect.width() / 2, y - 8, rect.width() / 2 - 8, 16)
+                painter.drawText(box, align | Qt.AlignmentFlag.AlignVCenter, port_block.name)
+        if not sub.inports() and not sub.outports():  # type: ignore[attr-defined]
+            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "subsystem")
+        # a small "open" hint in the corner
+        painter.setPen(QPen(t.color("text_muted"), 1))
+        painter.drawRect(QRectF(rect.right() - 13, rect.bottom() - 11, 8, 6))
 
     # ------------------------------------------------------------------ behaviour
 

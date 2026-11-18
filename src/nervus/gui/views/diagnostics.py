@@ -53,11 +53,12 @@ class DiagnosticsPanel(QWidget):
             msg, blocks = self._sim_error
             self._add("⛔", msg, blocks)
             error_blocks.extend(blocks)
-        for issue in self.model.diagram.check():
+        issues = self.model.root.check()
+        for issue in issues:
             if issue.severity is Severity.ERROR:
                 self._add("⛔", issue.message, issue.blocks)
                 error_blocks.extend(issue.blocks)
-        for issue in self.model.diagram.check():
+        for issue in issues:
             if issue.severity is Severity.WARNING:
                 self._add("⚠", issue.message, issue.blocks)
         if self.list.count() == 0:

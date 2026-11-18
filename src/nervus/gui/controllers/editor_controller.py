@@ -17,6 +17,7 @@ from nervus.gui.controllers.commands import (
     ApplyValuesCommand,
     Command,
     ConnectCommand,
+    CreateSubsystemCommand,
     MoveBlocksCommand,
     RemoveCommand,
     RenameCommand,
@@ -87,7 +88,7 @@ class EditorController(QObject):
             return True
         try:  # validate on a scratch copy first, so a bad value never reaches the undo stack
             probe = type(block)(**{k: block.param_source(k) for k in block.params})
-            ns = self.model.diagram.workspace.namespace()
+            ns = self.model.root.workspace.namespace()
             probe.resolve(ns)
             for k, v in changed.items():
                 probe._assign(probe.param_spec(k), v, ns)
@@ -104,7 +105,7 @@ class EditorController(QObject):
         if not new_name:
             self.errorOccurred.emit("Block names cannot be empty.")
             return False
-        if new_name in self.model.diagram:
+        if block.diagram is not None and new_name in block.diagram:
             self.errorOccurred.emit(f"A block named '{new_name}' already exists.")
             return False
         return self._push(RenameCommand(self.model, block, new_name))
@@ -122,6 +123,29 @@ class EditorController(QObject):
             return False
         return self._push(SetSettingsCommand(self.model, settings))
 
+    def auto_layout(self) -> None:
+        """Arrange all blocks of the shown diagram left to right (one undo step)."""
+        from nervus.core.layout import auto_layout
+
+        d = self.model.diagram
+        old = {id(b): block_position(b) for b in d.blocks}
+        saved = {id(b): b.meta.get("position") for b in d.blocks}
+        auto_layout(d, only_missing=False)
+        moves = [(b, old[id(b)], block_position(b)) for b in d.blocks]
+        for b in d.blocks:  # restore, then apply through an undoable command
+            if saved[id(b)] is None:
+                b.meta.pop("position", None)
+            else:
+                b.meta["position"] = saved[id(b)]
+        self.move_blocks(moves)
+
+    def create_subsystem(self, blocks: list[Block]) -> Block | None:
+        """Move ``blocks`` into a new Subsystem (one undo step)."""
+        if not blocks:
+            return None
+        cmd = CreateSubsystemCommand(self.model, blocks)
+        return cmd.subsystem if self._push(cmd) else None
+
     # ------------------------------------------------------------------ workspace
 
     @staticmethod
@@ -133,7 +157,7 @@ class EditorController(QObject):
             return text.strip()
 
     def add_variable(self, name: str | None = None, value: object = 0.0) -> Variable | None:
-        ws = self.model.diagram.workspace
+        ws = self.model.root.workspace
         if name is None:
             i = 1
             while f"var{i}" in ws:
@@ -151,7 +175,7 @@ class EditorController(QObject):
 
     def update_variable(self, name: str, /, **changes: object) -> bool:
         """Change fields of a variable (name, value, unit, description, min, max)."""
-        ws = self.model.diagram.workspace
+        ws = self.model.root.workspace
         old = ws.variable(name)
         fields = {**old.__dict__, **changes}
         if fields["name"] != name and fields["name"] in ws:
@@ -171,8 +195,10 @@ class EditorController(QObject):
         return self._push(SetVariableCommand(self.model, copy, new))
 
     def delete_variable(self, name: str) -> bool:
-        ws = self.model.diagram.workspace
-        users = [b.name for b in self.model.diagram.blocks if any(name in e for e in b.expressions.values())]
+        ws = self.model.root.workspace
+        from nervus.core.expressions import names_in
+
+        users = [p for p, b in self.model.root.walk() if any(name in names_in(e) for e in b.expressions.values())]
         if users:
             self.errorOccurred.emit(f"'{name}' is used by {', '.join(users)}; change those parameters first.")
             return False
@@ -181,7 +207,7 @@ class EditorController(QObject):
     def load_parameter_set(self, path: str | Path) -> bool:
         try:
             ps = ParameterSet.load(path)
-            known = {k: v for k, v in ps.values.items() if k in self.model.diagram.workspace}
+            known = {k: v for k, v in ps.values.items() if k in self.model.root.workspace}
             missing = sorted(set(ps.values) - set(known))
         except NervusError as exc:
             self.errorOccurred.emit(str(exc))
@@ -194,7 +220,7 @@ class EditorController(QObject):
     def save_parameter_set(self, path: str | Path, name: str | None = None) -> Path | None:
         p = Path(path)
         try:
-            return ParameterSet.from_workspace(self.model.diagram.workspace, name or p.stem).save(p)
+            return ParameterSet.from_workspace(self.model.root.workspace, name or p.stem).save(p)
         except OSError as exc:
             self.errorOccurred.emit(f"Could not save {p.name}: {exc}")
             return None

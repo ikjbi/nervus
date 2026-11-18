@@ -61,6 +61,7 @@ class DiagramScene(QGraphicsScene):
         model.connectionAdded.connect(self._on_connection_added)
         model.connectionRemoved.connect(self._on_connection_removed)
         model.diagramReset.connect(self.rebuild)
+        model.currentChanged.connect(self._on_current_changed)
         controller.editingEnabledChanged.connect(self._on_editing_enabled)
         self.selectionChanged.connect(self._emit_selection)
         ThemeManager.instance().themeChanged.connect(self._on_theme)
@@ -68,6 +69,9 @@ class DiagramScene(QGraphicsScene):
 
     def _on_theme(self, _theme: object) -> None:
         self.update()
+
+    def _on_current_changed(self, _diagram: object) -> None:
+        self.rebuild()
 
     # ------------------------------------------------------------------ model -> scene
 
@@ -85,6 +89,8 @@ class DiagramScene(QGraphicsScene):
         return self.blocks.get(id(block))
 
     def _on_block_added(self, block: Block) -> None:
+        if block.diagram is not self.model.diagram:
+            return
         item = BlockItem(block)
         item.setPos(block_position(block))
         item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, self.controller.editing_enabled)
@@ -119,6 +125,8 @@ class DiagramScene(QGraphicsScene):
             w.update_path()
 
     def _on_connection_added(self, conn: Connection) -> None:
+        if conn.dst.diagram is not self.model.diagram:
+            return
         src_item, dst_item = self._item(conn.src), self._item(conn.dst)
         if src_item is None or dst_item is None:
             return
@@ -168,14 +176,17 @@ class DiagramScene(QGraphicsScene):
             self.selectedBlocksChanged.emit(self.selected_blocks())
 
     def select_blocks(self, names: list[str] | tuple[str, ...]) -> None:
+        """Select blocks of the shown diagram by name or by full path."""
         self.clearSelection()
         for item in self.blocks.values():
-            if item.block.name in names:
+            if item.block.name in names or self.model.path_of(item.block) in names:
                 item.setSelected(True)
 
     def mark_errors(self, names: list[str] | tuple[str, ...]) -> None:
+        """Outline blocks with errors (full paths). A subsystem is outlined if a block inside it has an error."""
         for item in self.blocks.values():
-            err = item.block.name in names
+            path = self.model.path_of(item.block)
+            err = any(n == path or n.startswith(path + "/") for n in names)
             if item.error != err:
                 item.error = err
                 item.update()
