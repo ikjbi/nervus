@@ -144,4 +144,4 @@ class DiscretePID(_PIDBase):
 
     def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
         _, di, df = self._law(u[0], xd)
-        return xd + self.sample_time().period * np.concatenate([di, df])
+        return xd + self.period() * np.concatenate([di, df])

@@ -113,6 +113,8 @@ class Block:
         self.validate_params()
         self.in_widths: list[int] = []
         self.out_widths: list[int] = []
+        self.resolved_sample_time: SampleTime | None = None
+        """Set by the compiler: the sample time after inheritance is resolved."""
 
     # ------------------------------------------------------------------ parameters
 
@@ -213,9 +215,19 @@ class Block:
     # ------------------------------------------------------------------ compile-time hooks
 
     def sample_time(self) -> SampleTime:
+        """The sample time as declared (may be inherited, ``-1``)."""
         if "sample_time" in self.params:
             return SampleTime.from_value(self.params["sample_time"])
         return self.DEFAULT_SAMPLE_TIME
+
+    def period(self) -> float:
+        """The resolved sample period in seconds of a discrete block (valid during simulation).
+
+        Inherited sample times are resolved by the compiler, so use this instead of ``sample_time().period``
+        in ``outputs``/``update``.
+        """
+        st = self.resolved_sample_time or self.sample_time()
+        return st.period
 
     def output_widths(self, in_widths: list[Width]) -> list[Width]:
         """Return the width of each output given the (possibly unknown) input widths.

@@ -60,12 +60,13 @@ class Gain(_Math):
         g = np.asarray(self.params["gain"], dtype=np.float64)
         if self.params["multiplication"] == "matrix" and g.shape[1] != in_widths[0]:
             raise ValueError(f"gain matrix has {g.shape[1]} columns but the input has width {in_widths[0]}")
+        self._matrix = self.params["multiplication"] == "matrix"
+        self._g = g if self._matrix else as_signal(g)
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
-        g = self.params["gain"]
-        if self.params["multiplication"] == "matrix":
-            return [g @ u[0]]
-        return [as_signal(g) * u[0]]
+        if self._matrix:
+            return [self._g @ u[0]]
+        return [self._g * u[0]]
 
 
 @register
@@ -163,7 +164,7 @@ class Saturation(_Math):
             raise ParameterError("lower limit must be <= upper limit")
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
-        return [np.clip(u[0], self.params["lower"], self.params["upper"])]
+        return [np.minimum(np.maximum(u[0], self.params["lower"]), self.params["upper"])]
 
 
 _FUNCTIONS: dict[str, Callable[[Array], Array]] = {
@@ -199,3 +200,51 @@ class MathFunction(_Math):
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
         return [_FUNCTIONS[self.params["function"]](u[0])]
+
+
+@register
+class MinMax(_Math):
+    """Smallest or largest value.
+
+    With one input: the min/max over the elements of the input vector (scalar output). With several inputs:
+    elementwise min/max across the inputs.
+
+    $$ y = \\min(u_0, u_1, \\dots) \\quad \text{or} \\quad y = \\max(u_0, u_1, \\dots) $$
+    """
+
+    type_id = "math.minmax"
+    label = "MinMax"
+    PARAMS = (
+        Param("function", "min", ParamKind.CHOICE, "min or max", choices=("min", "max")),
+        Param("num_inputs", 2, ParamKind.INT, "Number of inputs", min=1),
+    )
+
+    def num_inputs(self) -> int:
+        return int(self.params["num_inputs"])
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        if self.num_inputs() == 1:
+            return [1]
+        return [broadcast_widths(in_widths)]
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        fn = np.min if self.params["function"] == "min" else np.max
+        if len(u) == 1:
+            return [np.array([fn(u[0])])]
+        w = self.out_widths[0]
+        return [fn(np.array([np.broadcast_to(x, (w,)) for x in u]), axis=0)]
+
+
+@register
+class Bias(_Math):
+    """Adds a constant: ``y = u + bias``."""
+
+    type_id = "math.bias"
+    label = "Bias"
+    PARAMS = (Param("bias", 0.0, ParamKind.ARRAY, "Value added to the input"),)
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [broadcast_widths([in_widths[0], as_signal(self.params["bias"]).size])]
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        return [u[0] + as_signal(self.params["bias"])]

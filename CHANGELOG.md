@@ -5,7 +5,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
+
 ### Added
+- ECU block library: 1-D and 2-D Lookup Tables (linear/nearest/flat, clip/linear extrapolation), Relational
+  Operator, Compare To Constant, Logical Operator, Dead Zone, Quantizer, Relay (hysteresis), Rate Limiter,
+  Integer Delay, Counter, Edge Detect, Debounce, Discrete Filter (PT1), Moving Average, MinMax, Bias, Ground,
+  each with equations, figures and help.
+- Example: radiator fan control with sensor filtering, hysteresis and a lookup table.
 - Model workspace: named variables (value, unit, min/max, description) stored in the model; block
   parameters can be expressions of them (`Gain(gain="Kp")`, `"1/tau"`, `sample_time="Ts"`).
 - Parameter sets (`.nervcal`): save, load and apply calibrations; `simulate(..., params={...})` overrides.

@@ -12,7 +12,7 @@ from nervus.blocks.registry import register
 from nervus.core.block import Block, Width
 from nervus.core.errors import ParameterError
 from nervus.core.params import Param, ParamKind
-from nervus.core.sample_time import CONTINUOUS
+from nervus.core.sample_time import CONSTANT, CONTINUOUS
 from nervus.core.types import Array, as_signal
 
 CATEGORY = "Sources"
@@ -258,3 +258,16 @@ class FromWorkspace(_Source):
         if self.params["interpolation"] == "hold":
             return [float(v) for v in self._table()[0]]
         return []
+
+
+@register
+class Ground(_Source):
+    """Outputs zero. Use it to connect an input you do not need, instead of leaving it unconnected."""
+
+    type_id = "sources.ground"
+    label = "Ground"
+    DEFAULT_SAMPLE_TIME = CONSTANT
+    PARAMS = ()
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        return [np.zeros(1)]

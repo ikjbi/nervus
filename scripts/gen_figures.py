@@ -25,8 +25,14 @@ from nervus import Diagram, simulate
 from nervus.blocks import (
     PID,
     Constant,
+    Debounce,
+    DiscreteFilter,
     DiscreteIntegrator,
+    EdgeDetect,
     Integrator,
+    Pulse,
+    RateLimiter,
+    Relay,
     Scope,
     Sine,
     Step,
@@ -482,6 +488,236 @@ def mux_demux() -> plt.Figure:
         y = 2.3 - i * 0.7
         arrow(ax, (7.0, y), (9.0, y), C3)
         ax.text(9.15, y, lab, color=C3, va="center", fontsize=10)
+    return fig
+
+
+# Sequential single-hue ramp (light -> dark blue) for magnitude, e.g. a calibration map.
+SEQ_BLUE = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
+
+
+@figure("lookup_1d")
+def lookup_1d() -> plt.Figure:
+    from nervus.blocks.lookup import locate
+
+    bp = np.array([0.0, 1.0, 2.0, 3.0])
+    tab = np.array([0.0, 2.0, 1.5, 3.0])
+    x = np.linspace(-0.7, 3.7, 900)
+
+    def lut(interp: str, extrap: str) -> np.ndarray:
+        i, f = locate(x, bp, interp, extrap)
+        return tab[i] + f * (tab[i + 1] - tab[i])
+
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(9.6, 3.0), sharey=True)
+    a1.plot(x, lut("linear", "clip"), color=C1, label="linear")
+    a1.plot(x, lut("nearest", "clip"), color=C2, label="nearest")
+    a1.plot(x, lut("flat", "clip"), color=C3, label="flat")
+    a1.set_title("interpolation (extrapolation = clip)", color=INK, fontsize=10)
+    a2.plot(x, lut("linear", "clip"), color=C1, label="clip")
+    a2.plot(x, lut("linear", "linear"), color=C2, ls="--", label="linear")
+    a2.set_title("extrapolation (interpolation = linear)", color=INK, fontsize=10)
+    for ax in (a1, a2):
+        ax.plot(bp, tab, "o", color=INK, ms=6, label="table points")
+        ax.axvspan(-0.7, 0, color=GRID, lw=0)
+        ax.axvspan(3, 3.7, color=GRID, lw=0)
+        ax.set_xlabel("input u")
+        ax.legend(loc="upper left", fontsize=9)
+    a1.set_ylabel("output y")
+    fig.tight_layout()
+    return fig
+
+
+@figure("lookup_2d")
+def lookup_2d() -> plt.Figure:
+    from matplotlib.colors import LinearSegmentedColormap
+
+    from nervus.blocks import Lookup2D
+
+    rpm = np.array([800, 1500, 2500, 3500, 4500, 6000.0])
+    load = np.array([10, 30, 50, 70, 90.0])
+    advance = np.array(
+        [
+            [12, 10, 8, 6, 4],
+            [20, 17, 14, 11, 8],
+            [28, 25, 21, 17, 13],
+            [33, 30, 26, 21, 16],
+            [36, 33, 28, 23, 18],
+            [38, 35, 30, 25, 20.0],
+        ]
+    )
+    blk = Lookup2D(row_breakpoints=rpm, column_breakpoints=load, table=advance)
+    blk.configure([1, 1], [1])
+    rr, ll = np.meshgrid(np.linspace(800, 6000, 160), np.linspace(10, 90, 120), indexing="ij")
+    zz = np.array(
+        [
+            [
+                blk.outputs(0, [np.array([r]), np.array([lv])], np.zeros(0), np.zeros(0))[0][0]
+                for r, lv in zip(rrow, lrow, strict=True)
+            ]
+            for rrow, lrow in zip(rr, ll, strict=True)
+        ]
+    )
+    cmap = LinearSegmentedColormap.from_list("seq", SEQ_BLUE)
+    fig, ax = plt.subplots(figsize=(6.6, 3.4))
+    mesh = ax.pcolormesh(ll, rr, zz, cmap=cmap, shading="auto")
+    lv, rv = np.meshgrid(load, rpm)
+    ax.plot(lv, rv, "o", color="#ffffff", ms=4, mec=INK, mew=0.6)
+    cb = fig.colorbar(mesh, ax=ax)
+    cb.set_label("ignition advance [°]", color=INK)
+    cb.outline.set_edgecolor(INK)
+    ax.set_xlabel("input 1: load [%]  (column_breakpoints)")
+    ax.set_ylabel("input 0: speed [rpm]\n(row_breakpoints)")
+    ax.set_title("Ignition map: bilinear between table points (dots)", color=INK, fontsize=10)
+    ax.grid(False)
+    fig.tight_layout()
+    return fig
+
+
+@figure("dead_zone")
+def dead_zone() -> plt.Figure:
+    u = np.linspace(-2, 2, 400)
+    y = np.where(u > 0.5, u - 0.5, np.where(u < -0.5, u + 0.5, 0.0))
+    fig, ax = plt.subplots(figsize=(4.4, 2.8))
+    ax.plot(u, y, color=C1)
+    ax.axvspan(-0.5, 0.5, color=C2 + "22", lw=0)
+    ax.text(0, 0.9, "dead zone\n[start, end]", ha="center", color=C2, fontsize=9)
+    ax.set_xlabel("input u")
+    ax.set_ylabel("output y")
+    fig.tight_layout()
+    return fig
+
+
+def _discrete_run(block, src, t_final: float, ts: float):  # type: ignore[no-untyped-def]
+    d = Diagram()
+    s = d.add(src, name="u")
+    z = d.add(ZeroOrderHold(sample_time=ts), name="zoh")
+    b = d.add(block, name="y")
+    d.chain(s, z, b, d.add(Scope()))
+    return run(d, t_final, solver="rk4", step=ts / 10)
+
+
+@figure("relay")
+def relay() -> plt.Figure:
+    r = _discrete_run(Relay(on_point=0.5, off_point=-0.5), Sine(amplitude=1.0, frequency=1.5), 8.0, 0.02)
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(9.6, 3.0), gridspec_kw={"width_ratios": [1, 1.6]})
+    a1.plot([-1.2, 0.5, 0.5, 1.2], [0, 0, 1, 1], color=C1)
+    a1.plot([1.2, -0.5, -0.5, -1.2], [1, 1, 0, 0], color=C2, ls="--")
+    a1.annotate("", (0.5, 0.6), (0.5, 0.35), arrowprops={"arrowstyle": "-|>", "color": C1})
+    a1.annotate("", (-0.5, 0.4), (-0.5, 0.65), arrowprops={"arrowstyle": "-|>", "color": C2})
+    a1.text(0.55, 0.15, "on_point", color=C1, fontsize=9)
+    a1.text(-1.15, 0.82, "off_point", color=C2, fontsize=9)
+    a1.set_xlabel("input u")
+    a1.set_ylabel("output")
+    a1.set_title("Hysteresis", color=INK, fontsize=10)
+    a2.plot(r.t, r["u"], color=INK, ls="--", lw=1.2, label="input")
+    a2.step(r.t, r["y"], where="post", color=C1, label="relay output")
+    a2.axhline(0.5, color=C1, ls=":", lw=1)
+    a2.axhline(-0.5, color=C2, ls=":", lw=1)
+    a2.set_xlabel("time [s]")
+    a2.legend(loc="lower left", fontsize=9, ncols=2)
+    a2.set_ylim(-1.5, 1.4)
+    fig.tight_layout()
+    return fig
+
+
+@figure("rate_limiter")
+def rate_limiter() -> plt.Figure:
+    d = Diagram()
+    s = d.add(Pulse(amplitude=1.0, period=4.0, duty=50.0, delay=0.5), name="u")
+    z = d.add(ZeroOrderHold(sample_time=0.01), name="zoh")
+    b = d.add(RateLimiter(rising_rate=1.0, falling_rate=-2.0), name="y")
+    d.chain(s, z, b, d.add(Scope()))
+    r = run(d, 6.0, solver="rk4", step=0.01)
+    fig, ax = plt.subplots(figsize=(6.4, 2.6))
+    ax.step(r.t, r["zoh"], where="post", color=INK, ls="--", lw=1.2, label="input")
+    ax.plot(r.t, r["y"], color=C1, label="rising_rate = 1/s, falling_rate = −2/s")
+    ax.set_xlabel("time [s]")
+    ax.legend(loc="upper right", fontsize=9)
+    fig.tight_layout()
+    return fig
+
+
+def _bool_figure(t: np.ndarray, rows: list[tuple[str, np.ndarray, str]], title: str) -> plt.Figure:
+    fig, axes = plt.subplots(len(rows), 1, figsize=(6.4, 0.9 + 0.75 * len(rows)), sharex=True)
+    for ax, (label, y, color) in zip(axes, rows, strict=True):
+        ax.step(t, y, where="post", color=color)
+        ax.set_ylim(-0.25, max(1.25, float(np.max(y)) + 0.25))
+        ax.set_ylabel(label, rotation=0, ha="right", va="center", fontsize=9)
+        ax.set_yticks([0, 1] if np.max(y) <= 1 else [0, int(np.max(y))])
+    axes[0].set_title(title, color=INK, fontsize=10)
+    axes[-1].set_xlabel("sample k")
+    fig.tight_layout()
+    return fig
+
+
+def _bool_input() -> np.ndarray:
+    return np.array([0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0], dtype=float)
+
+
+def _seq(block) -> tuple[np.ndarray, np.ndarray, np.ndarray]:  # type: ignore[no-untyped-def]
+    from nervus.blocks import FromWorkspace
+
+    u = _bool_input()
+    k = np.arange(u.size, dtype=float)
+    d = Diagram()
+    s = d.add(FromWorkspace(time=k, data=u, interpolation="hold"), name="u")
+    z = d.add(ZeroOrderHold(sample_time=1.0), name="zoh")
+    b = d.add(block, name="y")
+    d.chain(s, z, b, d.add(Scope()))
+    r = run(d, float(u.size - 1), solver="rk4", step=1.0)
+    return r.t, r["zoh"], r["y"]
+
+
+@figure("edge_detect")
+def edge_detect() -> plt.Figure:
+    t, u, rising = _seq(EdgeDetect(direction="rising"))
+    _, _, falling = _seq(EdgeDetect(direction="falling"))
+    return _bool_figure(
+        t,
+        [("input", u, INK), ("rising", rising, C1), ("falling", falling, C2)],
+        "Edge Detect: a one-sample pulse on each change",
+    )
+
+
+@figure("debounce")
+def debounce() -> plt.Figure:
+    t, u, y = _seq(Debounce(on_samples=3, off_samples=2))
+    return _bool_figure(
+        t, [("input", u, INK), ("output", y, C1)], "Debounce: on after 3 true samples, off after 2 false samples"
+    )
+
+
+@figure("counter")
+def counter() -> plt.Figure:
+    from nervus.blocks import Counter
+
+    t, u, y = _seq(Counter(limit=5, at_limit="wrap"))
+    return _bool_figure(
+        t,
+        [("count enable", u, INK), ("count", y, C1)],
+        "Counter (limit = 5, wrap): counts samples while the input is true",
+    )
+
+
+@figure("discrete_filter")
+def discrete_filter() -> plt.Figure:
+    rng = np.random.default_rng(3)
+    t = np.arange(0, 3, 0.01)
+    noisy = np.where(t >= 0.5, 1.0, 0.0) + 0.15 * rng.standard_normal(t.size)
+    from nervus.blocks import FromWorkspace
+
+    fig, ax = plt.subplots(figsize=(6.4, 2.6))
+    ax.plot(t, noisy, color=INK, lw=0.8, alpha=0.7, label="noisy sensor")
+    for tau, color in ((0.05, C1), (0.25, C2)):
+        d = Diagram()
+        s = d.add(FromWorkspace(time=t, data=noisy, interpolation="hold"), name="u")
+        z = d.add(ZeroOrderHold(sample_time=0.01), name="zoh")
+        b = d.add(DiscreteFilter(time_constant=tau), name="y")
+        d.chain(s, z, b, d.add(Scope()))
+        r = run(d, float(t[-1]), solver="rk4", step=0.01)
+        ax.plot(r.t, r["y"], color=color, label=f"τ = {tau} s")
+    ax.set_xlabel("time [s]  (T = 10 ms)")
+    ax.legend(loc="lower right", fontsize=9)
+    fig.tight_layout()
     return fig
 
 

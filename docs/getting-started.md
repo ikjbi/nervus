@@ -91,4 +91,6 @@ See [Concepts](concepts.md#solvers) for how to choose a solver.
 The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has complete models:
 
 - `mass_spring_damper_pid.py`: continuous PID position control with actuator limits.
-- `throttle_pi.py`: electronic throttle control with a 10 ms discrete PI controller, as on an ECU.
+- `throttle_pi.py`: electronic throttle control with a 10 ms discrete PI controller, as on an ECU, with its
+  gains as workspace variables and a second calibration file.
+- `coolant_fan.py`: radiator fan on/off control with a filtered sensor, a hysteresis relay and a lookup table.

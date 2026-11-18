@@ -136,15 +136,16 @@ tests/
 
 ## Phase 8 – ECU block library
 *The blocks that real engine/vehicle control software is built from.*
-- [ ] Lookup tables: 1-D and 2-D (n-D later) with linear / nearest / hold interpolation and clip/linear
+- [x] Lookup tables: 1-D and 2-D (n-D later) with linear / nearest / hold interpolation and clip/linear
       extrapolation. Calibration maps (fuel, ignition, boost) are 2-D tables
-- [ ] Relational Operator (`<`, `<=`, `==`, `!=`, `>=`, `>`), Logical Operator (AND, OR, NOT, XOR, NAND, NOR),
+- [x] Relational Operator (`<`, `<=`, `==`, `!=`, `>=`, `>`), Logical Operator (AND, OR, NOT, XOR, NAND, NOR),
       Compare To Constant
-- [ ] Relay (hysteresis), Dead Zone, Rate Limiter (discrete), Quantizer, Sign, MinMax, Bias
-- [ ] Integer Delay (z⁻ⁿ), Memory, Counter (free-running / limited), Edge Detect (rising/falling/either),
+- [x] Relay (hysteresis), Dead Zone, Rate Limiter (discrete), Quantizer, Sign, MinMax, Bias
+- [x] Integer Delay (z⁻ⁿ), Memory, Counter (free-running / limited), Edge Detect (rising/falling/either),
       Debounce (signal must hold for N samples), Discrete Filter (first-order low-pass), Moving Average
-- [ ] Ground, Initial Condition, Signal-specific Data Type Conversion (once Phase 13 lands)
-- [ ] Figures, equations and help for every new block
+- [x] Ground, MinMax, Bias
+- [ ] Initial Condition, Data Type Conversion (once Phase 13 lands), n-D lookup tables, Prelookup + Interpolation
+- [x] Figures, equations and help for every new block
 
 ## Phase 9 – Hierarchy: subsystems, masks, conditional execution, variants
 - [ ] Subsystem block with Inport/Outport blocks; flattened at compile time
@@ -187,6 +188,7 @@ tests/
 - [ ] Integrator external reset and saturation ports
 - [ ] Algebraic loop solver (optional), with warnings
 - [ ] Simulation stop block and assertions
+- [x] First performance pass: precomputed execution tables, scalar fast paths (~25 % faster)
 - [ ] Performance: avoid per-step Python overhead (vectorised execution, Numba, or simulate the generated C:
       "accelerator mode")
 

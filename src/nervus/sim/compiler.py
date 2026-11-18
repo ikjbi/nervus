@@ -78,6 +78,12 @@ class CompiledModel:
         self.xd = [x.copy() for x in self.xd0]
         self.y = [[np.zeros(w) for w in ws] for ws in self.out_widths]
         self._validated = False
+        # Precomputed execution tables for the hot loops (one tuple per block).
+        self._plan = [
+            (i, b, self.kinds[i], self.rate_index[i], self.xc_slices[i], self.inputs[i])
+            for i, b in enumerate(self.blocks)
+        ]
+        self._cont_states = [(i, b, sl, self.inputs[i]) for i, b, _k, _r, sl, _inp in self._plan if sl.stop > sl.start]
 
     def _u(self, i: int) -> list[Array]:
         y = self.y
@@ -89,20 +95,22 @@ class CompiledModel:
         ``hits`` is the set of discrete rates that have a sample hit now (``None`` during minor solver steps,
         when discrete outputs are held). ``init`` forces every block, including constant ones, to compute.
         """
-        for i, b in enumerate(self.blocks):
-            kind = self.kinds[i]
+        y, xd = self.y, self.xd
+        validated = self._validated
+        constant, discrete = Kind.CONSTANT, Kind.DISCRETE
+        for i, b, kind, rate, sl, inputs in self._plan:
             if not init:
-                if kind is Kind.CONSTANT:
+                if kind is constant:
                     continue
-                if kind is Kind.DISCRETE and (hits is None or self.rate_index[i] not in hits):
+                if kind is discrete and (hits is None or rate not in hits):
                     continue
             try:
-                out = b.outputs(t, self._u(i), xc[self.xc_slices[i]], self.xd[i])
+                out = b.outputs(t, [y[s][p] for s, p in inputs], xc[sl], xd[i])
             except Exception as exc:
                 raise SimulationError(f"{b.name}: error computing outputs at t={t:g}: {exc}", (b.name,)) from exc
-            if not self._validated:
+            if not validated:
                 out = self._check_outputs(i, out)
-            self.y[i] = out
+            y[i] = out
         self._validated = True
 
     def _check_outputs(self, i: int, out: Sequence[Array]) -> list[Array]:
@@ -124,15 +132,12 @@ class CompiledModel:
         """dxc/dt for the whole model. Evaluates outputs first (with discrete outputs held)."""
         self.eval_outputs(t, xc, None)
         dx = np.empty_like(xc)
-        for i, b in enumerate(self.blocks):
-            sl = self.xc_slices[i]
-            if sl.stop > sl.start:
-                try:
-                    dx[sl] = b.derivatives(t, self._u(i), xc[sl], self.xd[i])
-                except Exception as exc:
-                    raise SimulationError(
-                        f"{b.name}: error computing derivatives at t={t:g}: {exc}", (b.name,)
-                    ) from exc
+        y, xd = self.y, self.xd
+        for i, b, sl, inputs in self._cont_states:
+            try:
+                dx[sl] = b.derivatives(t, [y[s][p] for s, p in inputs], xc[sl], xd[i])
+            except Exception as exc:
+                raise SimulationError(f"{b.name}: error computing derivatives at t={t:g}: {exc}", (b.name,)) from exc
         return dx
 
     def update(self, t: float, xc: Array, hits: frozenset[int]) -> None:
@@ -210,6 +215,8 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
     feedthrough = [feedthrough[i] for i in order]
 
     sample_times = _resolve_sample_times(blocks, inputs)
+    for b, st in zip(blocks, sample_times, strict=True):
+        b.resolved_sample_time = st
 
     xc_parts: list[Array] = []
     xc_slices: list[slice] = []

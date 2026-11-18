@@ -40,6 +40,8 @@ nav:
       - Overview: blocks/index.md
       - Sources: blocks/sources.md
       - Math Operations: blocks/math-operations.md
+      - Lookup Tables: blocks/lookup-tables.md
+      - Logic and Bit Operations: blocks/logic-and-bit-operations.md
       - Discontinuities: blocks/discontinuities.md
       - Continuous: blocks/continuous.md
       - Discrete: blocks/discrete.md

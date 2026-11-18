@@ -1,0 +1,342 @@
+{
+  "format": "nervus-model",
+  "schema_version": 2,
+  "name": "coolant_fan",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 600.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08
+  },
+  "workspace": [
+    {
+      "name": "T_on",
+      "value": 98.0,
+      "description": "Fan switch-on temperature",
+      "unit": "°C"
+    },
+    {
+      "name": "T_off",
+      "value": 92.0,
+      "description": "Fan switch-off temperature",
+      "unit": "°C"
+    },
+    {
+      "name": "Ts",
+      "value": 0.01,
+      "description": "ECU task period",
+      "unit": "s"
+    },
+    {
+      "name": "tau_sensor",
+      "value": 2.0,
+      "description": "Sensor filter time constant",
+      "unit": "s"
+    },
+    {
+      "name": "C_th",
+      "value": 40.0,
+      "description": "Thermal capacity of the cooling circuit",
+      "unit": "kJ/K"
+    },
+    {
+      "name": "P_fan",
+      "value": 25.0,
+      "description": "Cooling power of the fan",
+      "unit": "kW"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "engine_load",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          120.0,
+          300.0,
+          420.0,
+          600.0
+        ],
+        "data": [
+          20.0,
+          80.0,
+          80.0,
+          30.0,
+          30.0
+        ],
+        "csv_file": "",
+        "interpolation": "linear",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "heat_kW",
+      "type": "lookup.table_1d",
+      "params": {
+        "breakpoints": [
+          0.0,
+          50.0,
+          100.0
+        ],
+        "table": [
+          5.0,
+          18.0,
+          40.0
+        ],
+        "interpolation": "linear",
+        "extrapolation": "clip"
+      },
+      "meta": {
+        "position": [
+          160.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "net_heat",
+      "type": "math.sum",
+      "params": {
+        "signs": "+--"
+      },
+      "meta": {
+        "position": [
+          320.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "natural_cooling",
+      "type": "math.gain",
+      "params": {
+        "gain": 0.2,
+        "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          960.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "1/C_th",
+      "type": "math.gain",
+      "params": {
+        "gain": "1/C_th",
+        "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          480.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "coolant_temp",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 85.0,
+        "upper": "inf",
+        "lower": "-inf"
+      },
+      "meta": {
+        "position": [
+          640.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "sensor",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": "Ts"
+      },
+      "meta": {
+        "position": [
+          800.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "temp_filtered",
+      "type": "discrete.filter",
+      "params": {
+        "time_constant": "tau_sensor",
+        "initial": 85.0,
+        "sample_time": -1.0
+      },
+      "meta": {
+        "position": [
+          960.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "fan_on",
+      "type": "discontinuities.relay",
+      "params": {
+        "on_point": "T_on",
+        "off_point": "T_off",
+        "on_value": 1.0,
+        "off_value": 0.0,
+        "initial_state": "off",
+        "sample_time": -1.0
+      },
+      "meta": {
+        "position": [
+          1120.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "fan_cooling",
+      "type": "math.gain",
+      "params": {
+        "gain": "P_fan",
+        "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          1280.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "above_ambient",
+      "type": "math.bias",
+      "params": {
+        "bias": -25.0
+      },
+      "meta": {
+        "position": [
+          800.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          1280.0,
+          110.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "engine_load",
+      "src_port": 0,
+      "dst": "heat_kW",
+      "dst_port": 0
+    },
+    {
+      "src": "heat_kW",
+      "src_port": 0,
+      "dst": "net_heat",
+      "dst_port": 0
+    },
+    {
+      "src": "fan_cooling",
+      "src_port": 0,
+      "dst": "net_heat",
+      "dst_port": 1
+    },
+    {
+      "src": "natural_cooling",
+      "src_port": 0,
+      "dst": "net_heat",
+      "dst_port": 2
+    },
+    {
+      "src": "net_heat",
+      "src_port": 0,
+      "dst": "1/C_th",
+      "dst_port": 0
+    },
+    {
+      "src": "1/C_th",
+      "src_port": 0,
+      "dst": "coolant_temp",
+      "dst_port": 0
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "above_ambient",
+      "dst_port": 0
+    },
+    {
+      "src": "above_ambient",
+      "src_port": 0,
+      "dst": "natural_cooling",
+      "dst_port": 0
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "sensor",
+      "dst_port": 0
+    },
+    {
+      "src": "sensor",
+      "src_port": 0,
+      "dst": "temp_filtered",
+      "dst_port": 0
+    },
+    {
+      "src": "temp_filtered",
+      "src_port": 0,
+      "dst": "fan_on",
+      "dst_port": 0
+    },
+    {
+      "src": "fan_on",
+      "src_port": 0,
+      "dst": "fan_cooling",
+      "dst_port": 0
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "temp_filtered",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "fan_on",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    }
+  ]
+}

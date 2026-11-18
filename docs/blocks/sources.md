@@ -156,3 +156,13 @@ Outside the time range the first/last value is held.
 *Direct feedthrough:* yes · no inputs
 
 ---
+
+## Ground
+
+`sources.ground` · Sources
+
+Outputs zero. Use it to connect an input you do not need, instead of leaving it unconnected.
+
+*Direct feedthrough:* yes · no inputs
+
+---

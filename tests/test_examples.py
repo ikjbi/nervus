@@ -67,3 +67,15 @@ def test_throttle_calibration_file() -> None:
     d.workspace.apply(ParameterSet.load(EXAMPLES / "throttle_tight.nervcal").values)
     tight = simulate(d)["plate_angle"].max()
     assert tight < base - 1.0  # less overshoot over the 60 degree target
+
+
+def test_coolant_fan_hysteresis() -> None:
+    mod = _import("coolant_fan")
+    res = simulate(mod.build(), 300.0, solver="rk4", step=0.01)
+    fan, temp = res["fan_on"], res["coolant_temp"]
+    switches = int((abs(np.diff(fan)) > 0.5).sum())
+    assert 2 <= switches <= 20  # switches, but does not chatter
+    assert temp.max() < 100.0
+    on_times = res.t[1:][np.diff(fan) > 0.5]
+    # The fan switches on only once the filtered temperature reaches T_on.
+    assert all(res["temp_filtered"][np.searchsorted(res.t, ton)] >= 97.9 for ton in on_times)

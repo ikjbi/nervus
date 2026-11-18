@@ -29,6 +29,13 @@ Nervus uses the same ideas as Simulink, and most defaults match, so moving betwe
 | PID Controller (continuous/discrete) | PID Controller, Discrete PID Controller | parallel form, filter coefficient N |
 | Scope, To Workspace, Terminator | same names | |
 | Mux, Demux, Switch | same names | Switch control input is the middle port |
+| 1-D / 2-D Lookup Table (n-D with 1 or 2 dims) | 1-D Lookup Table, 2-D Lookup Table | interpolation `linear`/`nearest`/`flat`; extrapolation `clip`/`linear` |
+| Relational Operator, Logical Operator, Compare To Constant | same names | booleans are 1.0 / 0.0 |
+| Relay, Dead Zone, Rate Limiter, Quantizer | same names | Relay and Rate Limiter run at a discrete rate |
+| Delay / Integer Delay, Counter Limited, Detect Rise/Fall | Integer Delay, Counter, Edge Detect | |
+| Discrete Filter / Transfer Fcn first order | Discrete Filter (PT1) | parameterised by time constant |
+| MinMax, Bias, Ground | same names | |
+| Model Workspace, `Simulink.Parameter` | Model Workspace variables | unit, min, max, description |
 
 ## Differences
 

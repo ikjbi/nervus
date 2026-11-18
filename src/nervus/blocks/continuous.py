@@ -56,19 +56,24 @@ class Integrator(_Continuous):
             return [n]
         return [in_widths[0] if in_widths[0] is not None else 1]
 
-    def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
-        super().configure(in_widths, out_widths)
-        if in_widths[0] not in (1, out_widths[0]):
-            raise ValueError(f"input width {in_widths[0]} does not match the initial condition width {out_widths[0]}")
-
     def initial_continuous_state(self) -> Array:
         x0 = np.broadcast_to(as_signal(self.params["initial"]), (self.out_widths[0],)).copy()
         return np.clip(x0, self.params["lower"], self.params["upper"])
 
+    def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
+        super().configure(in_widths, out_widths)
+        if in_widths[0] not in (1, out_widths[0]):
+            raise ValueError(f"input width {in_widths[0]} does not match the initial condition width {out_widths[0]}")
+        self._limited = bool(np.isfinite(self.params["lower"]) or np.isfinite(self.params["upper"]))
+
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
-        return [np.clip(xc, self.params["lower"], self.params["upper"])]
+        if not self._limited:
+            return [xc.copy()]
+        return [np.minimum(np.maximum(xc, self.params["lower"]), self.params["upper"])]
 
     def derivatives(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        if not self._limited:
+            return u[0] if u[0].shape == xc.shape else np.broadcast_to(u[0], xc.shape).copy()
         du = np.broadcast_to(u[0], xc.shape).copy()
         du[(xc >= self.params["upper"]) & (du > 0)] = 0.0
         du[(xc <= self.params["lower"]) & (du < 0)] = 0.0

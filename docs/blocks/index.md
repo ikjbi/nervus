@@ -16,6 +16,10 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 ## [Discontinuities](discontinuities.md)
 
+- **Dead Zone**: Zero output inside the dead zone [*start*, *end*]; outside, the input shifted by the zone edge.
+- **Quantizer**: Rounds the input to a multiple of *interval*, like an ADC or a fixed-resolution sensor.
+- **Relay**: Switch with hysteresis: turns **on** when the input rises to *on_point* and **off** when it falls to
+- **Rate Limiter**: Limits how fast the signal may change, e.g. torque or throttle ramps for drivability.
 - **Saturation**: Limits the input to the range [*lower*, *upper*]:
 
 ## [Discrete](discrete.md)
@@ -24,6 +28,23 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **Zero-Order Hold**: Samples its input every *sample_time* seconds and holds the value until the next sample:
 - **Discrete-Time Integrator**: Discrete-time integrator (accumulator).
 - **Discrete Transfer Fcn**: Discrete SISO transfer function
+- **Integer Delay**: Delays its input by *delay* samples: ``y[k] = u[k - N]``. The first N outputs are *initial*.
+- **Counter**: Counts samples while the input is non-zero (true).
+- **Edge Detect**: Outputs 1 for one sample when the (boolean) input changes, otherwise 0.
+- **Debounce**: Debounces a boolean input: the output turns on only after the input has been true for *on_samples*
+- **Discrete Filter (PT1)**: First-order low-pass filter, the workhorse for smoothing sensor signals in ECU software.
+- **Moving Average**: Average of the last *length* samples (including the current one).
+
+## [Logic and Bit Operations](logic-and-bit-operations.md)
+
+- **Relational Operator**: Compares input 0 with input 1: ``y = (u0 OP u1)``, giving 1 when true and 0 when false.
+- **Compare To Constant**: Compares the input with a constant: ``y = (u OP constant)``, 1 when true, 0 when false.
+- **Logical Operator**: Boolean logic. Inputs are true when non-zero. The output is 1 (true) or 0 (false).
+
+## [Lookup Tables](lookup-tables.md)
+
+- **1-D Lookup Table**: 1-D lookup table (a calibration *curve*): maps the input through a table of points.
+- **2-D Lookup Table**: 2-D lookup table (a calibration *map*), e.g. ignition advance over engine speed and load.
 
 ## [Math Operations](math-operations.md)
 
@@ -32,6 +53,8 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **Product**: Multiplies and divides its inputs elementwise.
 - **Abs**: Absolute value, ``|u|``.
 - **Math Function**: Applies a mathematical function elementwise: exp, log, sqrt, square, sin, cos, tanh, sign, ...
+- **MinMax**: Smallest or largest value.
+- **Bias**: Adds a constant: ``y = u + bias``.
 
 ## [Signal Routing](signal-routing.md)
 
@@ -54,6 +77,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **Pulse Generator**: Square pulse train. High (*amplitude*) for *duty* percent of each *period*, otherwise 0.
 - **Clock**: Outputs the simulation time *t*.
 - **From Workspace**: Plays back recorded data.
+- **Ground**: Outputs zero. Use it to connect an input you do not need, instead of leaving it unconnected.
 
 ## [User-Defined](user-defined.md)
 

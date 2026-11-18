@@ -17,6 +17,8 @@ CATEGORY_ORDER = [
     "Continuous",
     "Discrete",
     "Control",
+    "Lookup Tables",
+    "Logic and Bit Operations",
     "Discontinuities",
     "Signal Routing",
     "User-Defined",

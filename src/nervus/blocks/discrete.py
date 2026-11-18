@@ -118,7 +118,7 @@ class DiscreteIntegrator(_Discrete):
             raise ParameterError("lower limit must be <= upper limit")
 
     def _period(self) -> float:
-        return self.sample_time().period
+        return self.period()
 
     def direct_feedthrough(self) -> bool:
         return bool(self.params["method"] == "backward_euler")
@@ -175,3 +175,226 @@ class DiscreteTransferFunction(_StateSpaceBase, _Discrete):
 
     def matrices(self) -> tuple[Array, Array, Array, Array]:
         return _tf_to_ss(self.params["numerator"], self.params["denominator"])
+
+
+@register
+class IntegerDelay(_Discrete):
+    """Delays its input by *delay* samples: ``y[k] = u[k - N]``. The first N outputs are *initial*.
+
+    $$ y[k] = u[k-N] $$
+
+    Use it to model communication or processing delays, e.g. a CAN message that arrives one 10 ms frame late.
+    """
+
+    type_id = "discrete.integer_delay"
+    label = "Integer Delay"
+    DIRECT_FEEDTHROUGH = False
+    PARAMS = (
+        Param("delay", 2, ParamKind.INT, "Number of samples N", min=1),
+        Param("initial", 0.0, ParamKind.FLOAT, "Output during the first N samples"),
+        _st(-1.0),
+    )
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [in_widths[0] if in_widths[0] is not None else 1]
+
+    def initial_discrete_state(self) -> Array:
+        return np.full(int(self.params["delay"]) * self.out_widths[0], self.params["initial"])
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        return [xd[: self.out_widths[0]].copy()]  # oldest sample first
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        w = self.out_widths[0]
+        return np.concatenate([xd[w:], np.broadcast_to(u[0], (w,))])
+
+
+@register
+class Counter(_Discrete):
+    """Counts samples while the input is non-zero (true).
+
+    ![Counter](figures/counter.png)
+
+    $$ y[k] = c[k], \\qquad c[k+1] = \\begin{cases} c[k] + 1 & \\text{if } u[k] \\neq 0 \\\\ c[k] & \\text{otherwise} \\end{cases} $$
+
+    At *limit* the counter either ``wrap``s to 0 or ``saturate``s (stays at the limit). Connect a Constant 1
+    for a free-running counter, e.g. to schedule something every N task periods.
+    """
+
+    type_id = "discrete.counter"
+    label = "Counter"
+    DIRECT_FEEDTHROUGH = False
+    PARAMS = (
+        Param("limit", 255.0, ParamKind.FLOAT, "Largest value", min=1.0),
+        Param("at_limit", "wrap", ParamKind.CHOICE, "What happens at the limit", choices=("wrap", "saturate")),
+        Param("initial", 0.0, ParamKind.FLOAT, "Initial count"),
+        _st(-1.0),
+    )
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [in_widths[0] if in_widths[0] is not None else 1]
+
+    def initial_discrete_state(self) -> Array:
+        return np.full(self.out_widths[0], self.params["initial"])
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        return [xd.copy()]
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        lim = self.params["limit"]
+        nxt = xd + (np.broadcast_to(u[0], xd.shape) != 0)
+        if self.params["at_limit"] == "wrap":
+            return np.where(nxt > lim, 0.0, nxt)
+        return np.minimum(nxt, lim)
+
+
+@register
+class EdgeDetect(_Discrete):
+    """Outputs 1 for one sample when the (boolean) input changes, otherwise 0.
+
+    ![Edge detection](figures/edge_detect.png)
+
+    *direction*: ``rising`` (false → true), ``falling`` (true → false) or ``either``. The input counts as
+    true when it is non-zero. Typical use: react once when a switch is pressed or a fault appears.
+    """
+
+    type_id = "discrete.edge_detect"
+    label = "Edge Detect"
+    PARAMS = (
+        Param("direction", "rising", ParamKind.CHOICE, "Which edge", choices=("rising", "falling", "either")),
+        Param("initial", 0.0, ParamKind.FLOAT, "Previous input before the first sample (0 or 1)"),
+        _st(-1.0),
+    )
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [in_widths[0] if in_widths[0] is not None else 1]
+
+    def initial_discrete_state(self) -> Array:
+        return np.full(self.out_widths[0], 1.0 if self.params["initial"] else 0.0)
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        now = np.broadcast_to(u[0], xd.shape) != 0
+        before = xd != 0
+        d = self.params["direction"]
+        edge = (now & ~before) if d == "rising" else (~now & before) if d == "falling" else (now != before)
+        return [edge.astype(float)]
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        return (np.broadcast_to(u[0], xd.shape) != 0).astype(float)
+
+
+@register
+class Debounce(_Discrete):
+    """Debounces a boolean input: the output turns on only after the input has been true for *on_samples*
+    consecutive samples, and off after it has been false for *off_samples* samples.
+
+    ![Debounce](figures/debounce.png)
+
+    This is how ECUs filter switch bounce and confirm faults before setting a diagnostic trouble code.
+    """
+
+    type_id = "discrete.debounce"
+    label = "Debounce"
+    PARAMS = (
+        Param("on_samples", 3, ParamKind.INT, "Samples the input must be true to switch on", min=1),
+        Param("off_samples", 3, ParamKind.INT, "Samples the input must be false to switch off", min=1),
+        _st(-1.0),
+    )
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [1]
+
+    def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
+        super().configure(in_widths, out_widths)
+        if in_widths[0] != 1:
+            raise ValueError("Debounce needs a scalar input")
+
+    def initial_discrete_state(self) -> Array:
+        return np.zeros(2)  # [output state, consecutive samples disagreeing with the state]
+
+    def _next(self, u: Array, xd: Array) -> Array:
+        state, count = xd
+        now = float(u[0] != 0)
+        if now == state:
+            return np.array([state, 0.0])
+        count += 1
+        needed = self.params["on_samples"] if now else self.params["off_samples"]
+        return np.array([now, 0.0]) if count >= needed else np.array([state, count])
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        return [self._next(u[0], xd)[:1]]
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        return self._next(u[0], xd)
+
+
+@register
+class DiscreteFilter(_Discrete):
+    """First-order low-pass filter, the workhorse for smoothing sensor signals in ECU software.
+
+    ![Low-pass filter](figures/discrete_filter.png)
+
+    $$ y[k] = y[k-1] + \\alpha\\,(u[k] - y[k-1]), \\qquad \\alpha = \\frac{T}{\\tau + T} $$
+
+    with time constant τ and sample period T. Larger τ gives a smoother but slower signal.
+    """
+
+    type_id = "discrete.filter"
+    label = "Discrete Filter (PT1)"
+    PARAMS = (
+        Param("time_constant", 0.1, ParamKind.FLOAT, "Filter time constant τ", "s", min=0.0),
+        Param("initial", 0.0, ParamKind.ARRAY, "Initial output"),
+        _st(-1.0),
+    )
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        n = as_signal(self.params["initial"]).size
+        return [n if n > 1 else in_widths[0] if in_widths[0] is not None else 1]
+
+    def initial_discrete_state(self) -> Array:
+        return np.broadcast_to(as_signal(self.params["initial"]), (self.out_widths[0],)).copy()
+
+    def _alpha(self) -> float:
+        ts = self.period()
+        return float(ts / (self.params["time_constant"] + ts))
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        return [xd + self._alpha() * (np.broadcast_to(u[0], xd.shape) - xd)]
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        return self.outputs(t, u, xc, xd)[0]
+
+
+@register
+class MovingAverage(_Discrete):
+    """Average of the last *length* samples (including the current one).
+
+    $$ y[k] = \\frac{1}{N} \\sum_{i=0}^{N-1} u[k-i] $$
+
+    Before N samples exist, the missing ones count as *initial*.
+    """
+
+    type_id = "discrete.moving_average"
+    label = "Moving Average"
+    PARAMS = (
+        Param("length", 4, ParamKind.INT, "Number of samples N", min=1),
+        Param("initial", 0.0, ParamKind.FLOAT, "Value of samples before the start"),
+        _st(-1.0),
+    )
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [in_widths[0] if in_widths[0] is not None else 1]
+
+    def initial_discrete_state(self) -> Array:
+        return np.full((int(self.params["length"]) - 1) * self.out_widths[0], self.params["initial"])
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        w, n = self.out_widths[0], int(self.params["length"])
+        window = np.concatenate([xd, np.broadcast_to(u[0], (w,))]).reshape(n, w)
+        return [window.mean(axis=0)]
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        w = self.out_widths[0]
+        if xd.size == 0:
+            return xd
+        return np.concatenate([xd[w:], np.broadcast_to(u[0], (w,))])

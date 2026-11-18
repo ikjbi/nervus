@@ -93,3 +93,41 @@ Applies a mathematical function elementwise: exp, log, sqrt, square, sin, cos, t
 *Direct feedthrough:* yes
 
 ---
+
+## MinMax
+
+`math.minmax` · Math Operations
+
+Smallest or largest value.
+
+With one input: the min/max over the elements of the input vector (scalar output). With several inputs:
+elementwise min/max across the inputs.
+
+$$ y = \min(u_0, u_1, \dots) \quad  ext{or} \quad y = \max(u_0, u_1, \dots) $$
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `function` | `'min'` |  | min or max — one of `min`, `max` |
+| `num_inputs` | `2` |  | Number of inputs |
+
+*Direct feedthrough:* yes
+
+---
+
+## Bias
+
+`math.bias` · Math Operations
+
+Adds a constant: ``y = u + bias``.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `bias` | `0.0` |  | Value added to the input |
+
+*Direct feedthrough:* yes
+
+---
