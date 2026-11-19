@@ -269,6 +269,23 @@ def main() -> None:
             grab(win.view, "drive-cycle-vehicle.png")
             win.diagram_model.up()
 
+            # Gear-shift example: the model and the TCU.
+            win.files.open(ROOT / "examples" / "gear_shift.nervus")
+            win.view.fit()
+            grab(win.view, "gear-shift-model.png")
+            win.diagram_model.enter(win.diagram_model.root.block("tcu"))
+            win.view.fit()
+            grab(win.view, "gear-shift-tcu.png")
+            win.diagram_model.up()
+            win.diagram_model.enter(win.diagram_model.root.block("car"))
+            win.view.fit()
+            grab(win.view, "gear-shift-car.png")
+            win.diagram_model.enter(win.diagram_model.diagram.block("engine"))
+            win.view.fit()
+            grab(win.view, "gear-shift-engine.png")
+            win.diagram_model.up()
+            win.diagram_model.up()
+
             # Lambda control example: the plant and the fuel task.
             win.files.open(ROOT / "examples" / "lambda_control.nervus")
             win.view.fit()

@@ -19,7 +19,7 @@ Simulink. It is aimed at control engineering, and especially at engine and vehic
 | Testing | test cases stored with the model, Test Manager, Data Inspector, results files, model coverage, Model Advisor | [Testing](testing.md), [Verification](verification.md) |
 | Analysis | linearisation, trim, Bode, stability margins, step response | [Analysis](analysis.md) |
 | Vehicle networks | CAN Pack/Unpack with DBC files; OBD-II live data and trouble codes from a real car | [CAN](can.md), [OBD-II](obd.md) |
-| Learning | examples and tutorials: idle speed control, lambda control and fuel trims, a car on a drive cycle | [Tutorials](tutorials/idle-speed-control.md) |
+| Learning | examples and tutorials: idle speed control, lambda control and fuel trims, a car on a drive cycle, gear-shift logic | [Tutorials](tutorials/idle-speed-control.md) |
 
 ## Where to start
 

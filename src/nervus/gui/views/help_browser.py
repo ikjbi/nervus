@@ -63,6 +63,7 @@ HELP_PAGES = [
     ("tutorial_idle", "Tutorial: idle speed control"),
     ("tutorial_lambda", "Tutorial: lambda control"),
     ("tutorial_drive_cycle", "Tutorial: drive cycle"),
+    ("tutorial_gear_shift", "Tutorial: gear-shift logic"),
     ("coming_from_simulink", "Coming from Simulink"),
     ("model_files", "Model files"),
     ("shortcuts", "Keyboard shortcuts"),

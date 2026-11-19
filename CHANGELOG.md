@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Example `gear_shift.py` and tutorial: automatic-gearbox shift logic (shift maps, kickdown, hysteresis)
+  on a car with engine, gearbox and road grade; the TCU generates C code.
 - Initial Condition block (Signal Attributes): a defined output in the first step, then the input; in C too.
 - Interpolation using Prelookup handles 3-D and 4-D tables (n-D maps), in simulation and C.
 - Integrator: *initial_source* `external` adds an **x0** input (start and reset value from a signal);

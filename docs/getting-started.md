@@ -106,3 +106,5 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   [tutorial](tutorials/drive-cycle.md).
 - `engine_modes.py`: the operating modes of an engine ECU as a State Chart (crank, idle, run, overrun fuel
   cut-off, stall), with calibratable thresholds and scenario test cases. See [State machines](statecharts.md).
+- `gear_shift.py`: the shift logic of an automatic gearbox (shift maps, a gear chart, kickdown) on a car with
+  engine, gearbox and road grade. See the [tutorial](tutorials/gear-shift.md).

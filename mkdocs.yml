@@ -56,6 +56,7 @@ nav:
           - "Tutorial: idle speed control": app-help/tutorial_idle.md
           - "Tutorial: lambda control": app-help/tutorial_lambda.md
           - "Tutorial: drive cycle": app-help/tutorial_drive_cycle.md
+          - "Tutorial: gear-shift logic": app-help/tutorial_gear_shift.md
           - Coming from Simulink (app): app-help/coming_from_simulink.md
           - Model files (app): app-help/model_files.md
           - Keyboard shortcuts: app-help/shortcuts.md
@@ -66,6 +67,7 @@ nav:
       - Idle speed control: tutorials/idle-speed-control.md
       - Lambda control and fuel trims: tutorials/lambda-control.md
       - A car on a drive cycle: tutorials/drive-cycle.md
+      - Gear-shift logic: tutorials/gear-shift.md
   - Block reference:
       - Overview: blocks/index.md
       - CAN: blocks/can.md

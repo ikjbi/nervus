@@ -1,0 +1,1716 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "gear_shift",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 45.0,
+    "solver": "rk4",
+    "step": 0.01,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "mass",
+      "value": 1500.0,
+      "description": "Vehicle mass",
+      "unit": "kg"
+    },
+    {
+      "name": "r_wheel",
+      "value": 0.31,
+      "description": "Dynamic wheel radius",
+      "unit": "m"
+    },
+    {
+      "name": "i_final",
+      "value": 3.9,
+      "description": "Final drive ratio",
+      "unit": "-"
+    },
+    {
+      "name": "eta_driveline",
+      "value": 0.92,
+      "description": "Driveline efficiency",
+      "unit": "-"
+    },
+    {
+      "name": "idle_rpm",
+      "value": 800.0,
+      "description": "Engine idle speed (the clutch slips below it)",
+      "unit": "rpm"
+    },
+    {
+      "name": "min_gear_time",
+      "value": 100.0,
+      "description": "Shortest time in a gear: 100 × 10 ms = 1 s (no hunting)",
+      "unit": "samples"
+    },
+    {
+      "name": "shift_time",
+      "value": 0.3,
+      "description": "Torque cut while a shift is in progress",
+      "unit": "s"
+    },
+    {
+      "name": "gear_ratios",
+      "value": [
+        3.5,
+        2.1,
+        1.4,
+        1.0,
+        0.8
+      ],
+      "description": "Gearbox ratio per gear",
+      "unit": "-"
+    },
+    {
+      "name": "torque_rpm",
+      "value": [
+        800.0,
+        1500.0,
+        3000.0,
+        4500.0,
+        6000.0,
+        6500.0
+      ],
+      "description": "Full-load curve speeds",
+      "unit": "rpm"
+    },
+    {
+      "name": "torque_max",
+      "value": [
+        110.0,
+        170.0,
+        200.0,
+        190.0,
+        150.0,
+        0.0
+      ],
+      "description": "Full-load torque",
+      "unit": "Nm"
+    },
+    {
+      "name": "friction_rpm",
+      "value": [
+        800.0,
+        6000.0
+      ],
+      "description": "Friction torque speeds",
+      "unit": "rpm"
+    },
+    {
+      "name": "torque_friction",
+      "value": [
+        8.0,
+        30.0
+      ],
+      "description": "Engine friction (engine braking) torque",
+      "unit": "Nm"
+    },
+    {
+      "name": "cd_area",
+      "value": 0.65,
+      "description": "Drag coefficient × frontal area",
+      "unit": "m2"
+    },
+    {
+      "name": "c_rr",
+      "value": 0.012,
+      "description": "Rolling resistance coefficient",
+      "unit": "-"
+    },
+    {
+      "name": "upshift_map",
+      "value": [
+        [
+          15.0,
+          25.0,
+          40.0
+        ],
+        [
+          30.0,
+          45.0,
+          70.0
+        ],
+        [
+          45.0,
+          65.0,
+          100.0
+        ],
+        [
+          60.0,
+          85.0,
+          130.0
+        ],
+        [
+          999.0,
+          999.0,
+          999.0
+        ]
+      ],
+      "description": "Upshift speed per gear (rows) and pedal 0/50/100 % (columns)",
+      "unit": "km/h"
+    },
+    {
+      "name": "downshift_map",
+      "value": [
+        [
+          -1.0,
+          -1.0,
+          -1.0
+        ],
+        [
+          10.0,
+          15.0,
+          30.0
+        ],
+        [
+          22.0,
+          32.0,
+          55.0
+        ],
+        [
+          35.0,
+          50.0,
+          85.0
+        ],
+        [
+          50.0,
+          68.0,
+          110.0
+        ]
+      ],
+      "description": "Downshift speed per gear and pedal",
+      "unit": "km/h"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "pedal",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          0.5,
+          0.6,
+          9.0,
+          9.5,
+          22.0,
+          22.2,
+          26.0,
+          26.5,
+          45.0
+        ],
+        "data": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            100.0
+          ],
+          [
+            100.0
+          ],
+          [
+            20.0
+          ],
+          [
+            20.0
+          ],
+          [
+            100.0
+          ],
+          [
+            100.0
+          ],
+          [
+            60.0
+          ],
+          [
+            60.0
+          ]
+        ],
+        "csv_file": "",
+        "interpolation": "linear",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "grade",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          28.0,
+          30.0,
+          45.0
+        ],
+        "data": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            10.0
+          ],
+          [
+            10.0
+          ]
+        ],
+        "csv_file": "",
+        "interpolation": "linear",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "tcu",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": 0.01,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          180.0,
+          40.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "speed",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "pedal",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                160.0
+              ]
+            }
+          },
+          {
+            "name": "shift_logic",
+            "type": "charts.state_chart",
+            "params": {
+              "definition": "\ninput speed, up_speed, down_speed\noutput gear = 1, shifting = 0\nparam min_gear_time, shift_time\n\nstate g1\n  entry: gear = 1; shifting = 0\nstate g2\n  entry: gear = 2; shifting = 1\n  during: shifting = 1 if t_in_state < shift_time else 0\nstate g3\n  entry: gear = 3; shifting = 1\n  during: shifting = 1 if t_in_state < shift_time else 0\nstate g4\n  entry: gear = 4; shifting = 1\n  during: shifting = 1 if t_in_state < shift_time else 0\nstate g5\n  entry: gear = 5; shifting = 1\n  during: shifting = 1 if t_in_state < shift_time else 0\n\ntransition g1 -> g2: speed > up_speed and after(min_gear_time)\ntransition g2 -> g3: speed > up_speed and after(min_gear_time)\ntransition g2 -> g1: speed < down_speed and after(min_gear_time)\ntransition g3 -> g4: speed > up_speed and after(min_gear_time)\ntransition g3 -> g2: speed < down_speed and after(min_gear_time)\ntransition g4 -> g5: speed > up_speed and after(min_gear_time)\ntransition g4 -> g3: speed < down_speed and after(min_gear_time)\ntransition g5 -> g4: speed < down_speed and after(min_gear_time)\n",
+              "state_output": true,
+              "sample_time": -1.0
+            },
+            "meta": {
+              "position": [
+                340.0,
+                60.0
+              ]
+            }
+          },
+          {
+            "name": "last_gear",
+            "type": "discrete.unit_delay",
+            "params": {
+              "initial": 1.0,
+              "sample_time": -1.0
+            },
+            "meta": {
+              "position": [
+                120.0,
+                260.0
+              ]
+            }
+          },
+          {
+            "name": "up_map",
+            "type": "lookup.table_2d",
+            "params": {
+              "row_breakpoints": [
+                1.0,
+                2.0,
+                3.0,
+                4.0,
+                5.0
+              ],
+              "column_breakpoints": [
+                0.0,
+                50.0,
+                100.0
+              ],
+              "table": "upshift_map",
+              "interpolation": "linear",
+              "extrapolation": "clip",
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                150.0,
+                80.0
+              ]
+            }
+          },
+          {
+            "name": "down_map",
+            "type": "lookup.table_2d",
+            "params": {
+              "row_breakpoints": [
+                1.0,
+                2.0,
+                3.0,
+                4.0,
+                5.0
+              ],
+              "column_breakpoints": [
+                0.0,
+                50.0,
+                100.0
+              ],
+              "table": "downshift_map",
+              "interpolation": "linear",
+              "extrapolation": "clip",
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                150.0,
+                180.0
+              ]
+            }
+          },
+          {
+            "name": "gear",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                560.0,
+                40.0
+              ]
+            }
+          },
+          {
+            "name": "shifting",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            },
+            "meta": {
+              "position": [
+                560.0,
+                140.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "last_gear",
+            "src_port": 0,
+            "dst": "up_map",
+            "dst_port": 0
+          },
+          {
+            "src": "pedal",
+            "src_port": 0,
+            "dst": "up_map",
+            "dst_port": 1
+          },
+          {
+            "src": "last_gear",
+            "src_port": 0,
+            "dst": "down_map",
+            "dst_port": 0
+          },
+          {
+            "src": "pedal",
+            "src_port": 0,
+            "dst": "down_map",
+            "dst_port": 1
+          },
+          {
+            "src": "speed",
+            "src_port": 0,
+            "dst": "shift_logic",
+            "dst_port": 0
+          },
+          {
+            "src": "up_map",
+            "src_port": 0,
+            "dst": "shift_logic",
+            "dst_port": 1
+          },
+          {
+            "src": "down_map",
+            "src_port": 0,
+            "dst": "shift_logic",
+            "dst_port": 2
+          },
+          {
+            "src": "shift_logic",
+            "src_port": 0,
+            "dst": "last_gear",
+            "dst_port": 0
+          },
+          {
+            "src": "shift_logic",
+            "src_port": 0,
+            "dst": "gear",
+            "dst_port": 0
+          },
+          {
+            "src": "shift_logic",
+            "src_port": 1,
+            "dst": "shifting",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "car",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": -1.0,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          400.0,
+          120.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "gear",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "shifting",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                280.0
+              ]
+            }
+          },
+          {
+            "name": "pedal",
+            "type": "ports.inport",
+            "params": {
+              "port": 3,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "grade",
+            "type": "ports.inport",
+            "params": {
+              "port": 4,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                400.0,
+                100.0
+              ]
+            }
+          },
+          {
+            "name": "gearbox",
+            "type": "ports.subsystem",
+            "params": {
+              "sample_time": -1.0,
+              "enable_port": false,
+              "when_enabled": "held",
+              "trigger": "none"
+            },
+            "meta": {
+              "position": [
+                150.0,
+                10.0
+              ]
+            },
+            "system": {
+              "blocks": [
+                {
+                  "name": "gear",
+                  "type": "ports.inport",
+                  "params": {
+                    "port": 1,
+                    "value": 0.0,
+                    "sample_time": -1.0,
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      0.0,
+                      0.0
+                    ]
+                  }
+                },
+                {
+                  "name": "v",
+                  "type": "ports.inport",
+                  "params": {
+                    "port": 2,
+                    "value": 0.0,
+                    "sample_time": -1.0,
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      0.0,
+                      110.0
+                    ]
+                  }
+                },
+                {
+                  "name": "gear_ratio",
+                  "type": "lookup.table_1d",
+                  "params": {
+                    "breakpoints": [
+                      1.0,
+                      2.0,
+                      3.0,
+                      4.0,
+                      5.0
+                    ],
+                    "table": "gear_ratios",
+                    "interpolation": "nearest",
+                    "extrapolation": "clip",
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      120.0,
+                      0.0
+                    ]
+                  }
+                },
+                {
+                  "name": "overall_ratio",
+                  "type": "math.gain",
+                  "params": {
+                    "gain": "i_final",
+                    "multiplication": "elementwise",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      240.0,
+                      0.0
+                    ]
+                  }
+                },
+                {
+                  "name": "wheel_speed",
+                  "type": "math.gain",
+                  "params": {
+                    "gain": "1 / r_wheel",
+                    "multiplication": "elementwise",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      240.0,
+                      110.0
+                    ]
+                  }
+                },
+                {
+                  "name": "engine_rad_s",
+                  "type": "math.product",
+                  "params": {
+                    "ops": "**",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      370.0,
+                      60.0
+                    ]
+                  }
+                },
+                {
+                  "name": "to_rpm",
+                  "type": "math.gain",
+                  "params": {
+                    "gain": 9.549296585513721,
+                    "multiplication": "elementwise",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      490.0,
+                      60.0
+                    ]
+                  }
+                },
+                {
+                  "name": "clutch_slip",
+                  "type": "math.minmax",
+                  "params": {
+                    "function": "max",
+                    "num_inputs": 2
+                  },
+                  "meta": {
+                    "position": [
+                      610.0,
+                      80.0
+                    ]
+                  }
+                },
+                {
+                  "name": "idle",
+                  "type": "sources.constant",
+                  "params": {
+                    "value": "idle_rpm",
+                    "sample_time": "inf",
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      490.0,
+                      150.0
+                    ]
+                  }
+                },
+                {
+                  "name": "ratio",
+                  "type": "ports.outport",
+                  "params": {
+                    "port": 1
+                  },
+                  "meta": {
+                    "position": [
+                      730.0,
+                      0.0
+                    ]
+                  }
+                },
+                {
+                  "name": "rpm",
+                  "type": "ports.outport",
+                  "params": {
+                    "port": 2
+                  },
+                  "meta": {
+                    "position": [
+                      730.0,
+                      80.0
+                    ]
+                  }
+                }
+              ],
+              "connections": [
+                {
+                  "src": "gear",
+                  "src_port": 0,
+                  "dst": "gear_ratio",
+                  "dst_port": 0
+                },
+                {
+                  "src": "gear_ratio",
+                  "src_port": 0,
+                  "dst": "overall_ratio",
+                  "dst_port": 0
+                },
+                {
+                  "src": "v",
+                  "src_port": 0,
+                  "dst": "wheel_speed",
+                  "dst_port": 0
+                },
+                {
+                  "src": "wheel_speed",
+                  "src_port": 0,
+                  "dst": "engine_rad_s",
+                  "dst_port": 0
+                },
+                {
+                  "src": "overall_ratio",
+                  "src_port": 0,
+                  "dst": "engine_rad_s",
+                  "dst_port": 1
+                },
+                {
+                  "src": "engine_rad_s",
+                  "src_port": 0,
+                  "dst": "to_rpm",
+                  "dst_port": 0
+                },
+                {
+                  "src": "to_rpm",
+                  "src_port": 0,
+                  "dst": "clutch_slip",
+                  "dst_port": 0
+                },
+                {
+                  "src": "idle",
+                  "src_port": 0,
+                  "dst": "clutch_slip",
+                  "dst_port": 1
+                },
+                {
+                  "src": "overall_ratio",
+                  "src_port": 0,
+                  "dst": "ratio",
+                  "dst_port": 0
+                },
+                {
+                  "src": "clutch_slip",
+                  "src_port": 0,
+                  "dst": "rpm",
+                  "dst_port": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "engine",
+            "type": "ports.subsystem",
+            "params": {
+              "sample_time": -1.0,
+              "enable_port": false,
+              "when_enabled": "held",
+              "trigger": "none"
+            },
+            "meta": {
+              "position": [
+                330.0,
+                190.0
+              ]
+            },
+            "system": {
+              "blocks": [
+                {
+                  "name": "rpm",
+                  "type": "ports.inport",
+                  "params": {
+                    "port": 1,
+                    "value": 0.0,
+                    "sample_time": -1.0,
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      0.0,
+                      60.0
+                    ]
+                  }
+                },
+                {
+                  "name": "pedal",
+                  "type": "ports.inport",
+                  "params": {
+                    "port": 2,
+                    "value": 0.0,
+                    "sample_time": -1.0,
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      0.0,
+                      190.0
+                    ]
+                  }
+                },
+                {
+                  "name": "shifting",
+                  "type": "ports.inport",
+                  "params": {
+                    "port": 3,
+                    "value": 0.0,
+                    "sample_time": -1.0,
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      0.0,
+                      350.0
+                    ]
+                  }
+                },
+                {
+                  "name": "full_load",
+                  "type": "lookup.table_1d",
+                  "params": {
+                    "breakpoints": "torque_rpm",
+                    "table": "torque_max",
+                    "interpolation": "linear",
+                    "extrapolation": "clip",
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      130.0,
+                      0.0
+                    ]
+                  }
+                },
+                {
+                  "name": "friction",
+                  "type": "lookup.table_1d",
+                  "params": {
+                    "breakpoints": "friction_rpm",
+                    "table": "torque_friction",
+                    "interpolation": "linear",
+                    "extrapolation": "clip",
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      130.0,
+                      100.0
+                    ]
+                  }
+                },
+                {
+                  "name": "pedal_fraction",
+                  "type": "math.gain",
+                  "params": {
+                    "gain": 0.01,
+                    "multiplication": "elementwise",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      130.0,
+                      190.0
+                    ]
+                  }
+                },
+                {
+                  "name": "driver_torque",
+                  "type": "math.product",
+                  "params": {
+                    "ops": "**",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      260.0,
+                      30.0
+                    ]
+                  }
+                },
+                {
+                  "name": "minus_friction",
+                  "type": "math.sum",
+                  "params": {
+                    "signs": "+-",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      380.0,
+                      70.0
+                    ]
+                  }
+                },
+                {
+                  "name": "one",
+                  "type": "sources.constant",
+                  "params": {
+                    "value": 1.0,
+                    "sample_time": "inf",
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      0.0,
+                      280.0
+                    ]
+                  }
+                },
+                {
+                  "name": "torque_cut",
+                  "type": "math.sum",
+                  "params": {
+                    "signs": "+-",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      260.0,
+                      300.0
+                    ]
+                  }
+                },
+                {
+                  "name": "engine_torque",
+                  "type": "math.product",
+                  "params": {
+                    "ops": "**",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      500.0,
+                      120.0
+                    ]
+                  }
+                },
+                {
+                  "name": "torque",
+                  "type": "ports.outport",
+                  "params": {
+                    "port": 1
+                  },
+                  "meta": {
+                    "position": [
+                      620.0,
+                      120.0
+                    ]
+                  }
+                }
+              ],
+              "connections": [
+                {
+                  "src": "rpm",
+                  "src_port": 0,
+                  "dst": "full_load",
+                  "dst_port": 0
+                },
+                {
+                  "src": "rpm",
+                  "src_port": 0,
+                  "dst": "friction",
+                  "dst_port": 0
+                },
+                {
+                  "src": "pedal",
+                  "src_port": 0,
+                  "dst": "pedal_fraction",
+                  "dst_port": 0
+                },
+                {
+                  "src": "pedal_fraction",
+                  "src_port": 0,
+                  "dst": "driver_torque",
+                  "dst_port": 0
+                },
+                {
+                  "src": "full_load",
+                  "src_port": 0,
+                  "dst": "driver_torque",
+                  "dst_port": 1
+                },
+                {
+                  "src": "driver_torque",
+                  "src_port": 0,
+                  "dst": "minus_friction",
+                  "dst_port": 0
+                },
+                {
+                  "src": "friction",
+                  "src_port": 0,
+                  "dst": "minus_friction",
+                  "dst_port": 1
+                },
+                {
+                  "src": "one",
+                  "src_port": 0,
+                  "dst": "torque_cut",
+                  "dst_port": 0
+                },
+                {
+                  "src": "shifting",
+                  "src_port": 0,
+                  "dst": "torque_cut",
+                  "dst_port": 1
+                },
+                {
+                  "src": "minus_friction",
+                  "src_port": 0,
+                  "dst": "engine_torque",
+                  "dst_port": 0
+                },
+                {
+                  "src": "torque_cut",
+                  "src_port": 0,
+                  "dst": "engine_torque",
+                  "dst_port": 1
+                },
+                {
+                  "src": "engine_torque",
+                  "src_port": 0,
+                  "dst": "torque",
+                  "dst_port": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "body",
+            "type": "ports.subsystem",
+            "params": {
+              "sample_time": -1.0,
+              "enable_port": false,
+              "when_enabled": "held",
+              "trigger": "none"
+            },
+            "meta": {
+              "position": [
+                560.0,
+                60.0
+              ]
+            },
+            "system": {
+              "blocks": [
+                {
+                  "name": "torque",
+                  "type": "ports.inport",
+                  "params": {
+                    "port": 1,
+                    "value": 0.0,
+                    "sample_time": -1.0,
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      0.0,
+                      0.0
+                    ]
+                  }
+                },
+                {
+                  "name": "ratio",
+                  "type": "ports.inport",
+                  "params": {
+                    "port": 2,
+                    "value": 0.0,
+                    "sample_time": -1.0,
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      0.0,
+                      80.0
+                    ]
+                  }
+                },
+                {
+                  "name": "grade",
+                  "type": "ports.inport",
+                  "params": {
+                    "port": 3,
+                    "value": 0.0,
+                    "sample_time": -1.0,
+                    "output_type": "double"
+                  },
+                  "meta": {
+                    "position": [
+                      0.0,
+                      220.0
+                    ]
+                  }
+                },
+                {
+                  "name": "wheel_torque",
+                  "type": "math.product",
+                  "params": {
+                    "ops": "**",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      130.0,
+                      30.0
+                    ]
+                  }
+                },
+                {
+                  "name": "tractive_force",
+                  "type": "math.gain",
+                  "params": {
+                    "gain": "eta_driveline / r_wheel",
+                    "multiplication": "elementwise",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      250.0,
+                      30.0
+                    ]
+                  }
+                },
+                {
+                  "name": "road_loads",
+                  "type": "user.python_function",
+                  "params": {
+                    "code": "def f(t, v, grade):\n    \"\"\"Road loads [N] at speed v [m/s] on a grade [%]. p = [m kg, c_d*A m2, c_rr]\"\"\"\n    m, cda, crr = p[0], p[1], p[2]\n    slope = np.arctan(grade / 100.0)\n    roll = m * 9.81 * crr * np.cos(slope) * min(1.0, v / 0.1)  # no rolling resistance at standstill\n    return 0.5 * 1.2 * cda * v * v + roll + m * 9.81 * np.sin(slope)\n",
+                    "num_inputs": 2,
+                    "num_outputs": 1,
+                    "output_width": -1,
+                    "parameters": "[mass, cd_area, c_rr]"
+                  },
+                  "meta": {
+                    "position": [
+                      250.0,
+                      170.0
+                    ]
+                  }
+                },
+                {
+                  "name": "net_force",
+                  "type": "math.sum",
+                  "params": {
+                    "signs": "+-",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      380.0,
+                      50.0
+                    ]
+                  }
+                },
+                {
+                  "name": "accel",
+                  "type": "math.gain",
+                  "params": {
+                    "gain": "1 / mass",
+                    "multiplication": "elementwise",
+                    "output_type": "inherit"
+                  },
+                  "meta": {
+                    "position": [
+                      490.0,
+                      50.0
+                    ]
+                  }
+                },
+                {
+                  "name": "v",
+                  "type": "continuous.integrator",
+                  "params": {
+                    "initial": 0.0,
+                    "upper": "inf",
+                    "lower": 0.0,
+                    "external_reset": "none",
+                    "initial_source": "internal",
+                    "saturation_port": false
+                  },
+                  "meta": {
+                    "position": [
+                      600.0,
+                      50.0
+                    ]
+                  }
+                },
+                {
+                  "name": "v_out",
+                  "type": "ports.outport",
+                  "params": {
+                    "port": 1
+                  },
+                  "meta": {
+                    "position": [
+                      720.0,
+                      50.0
+                    ]
+                  }
+                }
+              ],
+              "connections": [
+                {
+                  "src": "torque",
+                  "src_port": 0,
+                  "dst": "wheel_torque",
+                  "dst_port": 0
+                },
+                {
+                  "src": "ratio",
+                  "src_port": 0,
+                  "dst": "wheel_torque",
+                  "dst_port": 1
+                },
+                {
+                  "src": "wheel_torque",
+                  "src_port": 0,
+                  "dst": "tractive_force",
+                  "dst_port": 0
+                },
+                {
+                  "src": "tractive_force",
+                  "src_port": 0,
+                  "dst": "net_force",
+                  "dst_port": 0
+                },
+                {
+                  "src": "road_loads",
+                  "src_port": 0,
+                  "dst": "net_force",
+                  "dst_port": 1
+                },
+                {
+                  "src": "net_force",
+                  "src_port": 0,
+                  "dst": "accel",
+                  "dst_port": 0
+                },
+                {
+                  "src": "accel",
+                  "src_port": 0,
+                  "dst": "v",
+                  "dst_port": 0
+                },
+                {
+                  "src": "v",
+                  "src_port": 0,
+                  "dst": "road_loads",
+                  "dst_port": 0
+                },
+                {
+                  "src": "grade",
+                  "src_port": 0,
+                  "dst": "road_loads",
+                  "dst_port": 1
+                },
+                {
+                  "src": "v",
+                  "src_port": 0,
+                  "dst": "v_out",
+                  "dst_port": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "kmh",
+            "type": "math.gain",
+            "params": {
+              "gain": 3.6,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                740.0,
+                60.0
+              ]
+            }
+          },
+          {
+            "name": "speed_kmh",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                870.0,
+                60.0
+              ]
+            }
+          },
+          {
+            "name": "engine_rpm",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            },
+            "meta": {
+              "position": [
+                870.0,
+                -40.0
+              ]
+            }
+          },
+          {
+            "name": "torque",
+            "type": "ports.outport",
+            "params": {
+              "port": 3
+            },
+            "meta": {
+              "position": [
+                870.0,
+                200.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "gear",
+            "src_port": 0,
+            "dst": "gearbox",
+            "dst_port": 0
+          },
+          {
+            "src": "body",
+            "src_port": 0,
+            "dst": "gearbox",
+            "dst_port": 1
+          },
+          {
+            "src": "gearbox",
+            "src_port": 1,
+            "dst": "engine",
+            "dst_port": 0
+          },
+          {
+            "src": "pedal",
+            "src_port": 0,
+            "dst": "engine",
+            "dst_port": 1
+          },
+          {
+            "src": "shifting",
+            "src_port": 0,
+            "dst": "engine",
+            "dst_port": 2
+          },
+          {
+            "src": "engine",
+            "src_port": 0,
+            "dst": "body",
+            "dst_port": 0
+          },
+          {
+            "src": "gearbox",
+            "src_port": 0,
+            "dst": "body",
+            "dst_port": 1
+          },
+          {
+            "src": "grade",
+            "src_port": 0,
+            "dst": "body",
+            "dst_port": 2
+          },
+          {
+            "src": "body",
+            "src_port": 0,
+            "dst": "kmh",
+            "dst_port": 0
+          },
+          {
+            "src": "kmh",
+            "src_port": 0,
+            "dst": "speed_kmh",
+            "dst_port": 0
+          },
+          {
+            "src": "gearbox",
+            "src_port": 1,
+            "dst": "engine_rpm",
+            "dst_port": 0
+          },
+          {
+            "src": "engine",
+            "src_port": 0,
+            "dst": "torque",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          640.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "speed",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          640.0,
+          100.0
+        ]
+      }
+    },
+    {
+      "name": "rpm",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          640.0,
+          170.0
+        ]
+      }
+    },
+    {
+      "name": "gear",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          640.0,
+          240.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "car",
+      "src_port": 0,
+      "dst": "tcu",
+      "dst_port": 0
+    },
+    {
+      "src": "pedal",
+      "src_port": 0,
+      "dst": "tcu",
+      "dst_port": 1
+    },
+    {
+      "src": "tcu",
+      "src_port": 0,
+      "dst": "car",
+      "dst_port": 0
+    },
+    {
+      "src": "tcu",
+      "src_port": 1,
+      "dst": "car",
+      "dst_port": 1
+    },
+    {
+      "src": "pedal",
+      "src_port": 0,
+      "dst": "car",
+      "dst_port": 2
+    },
+    {
+      "src": "grade",
+      "src_port": 0,
+      "dst": "car",
+      "dst_port": 3
+    },
+    {
+      "src": "car",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "car",
+      "src_port": 1,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "tcu",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    },
+    {
+      "src": "car",
+      "src_port": 0,
+      "dst": "speed",
+      "dst_port": 0
+    },
+    {
+      "src": "car",
+      "src_port": 1,
+      "dst": "rpm",
+      "dst_port": 0
+    },
+    {
+      "src": "tcu",
+      "src_port": 0,
+      "dst": "gear",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "full-throttle launch shifts late",
+      "description": "With the pedal at 100 % the engine revs high before each upshift: 1 -> 2 at 40 km/h, 2 -> 3 at 70",
+      "stop_time": 9.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "gear",
+          "lower": 1.0,
+          "upper": 1.0,
+          "t_from": 0.0,
+          "t_to": 3.4
+        },
+        {
+          "kind": "bounds",
+          "signal": "speed",
+          "lower": 38.0,
+          "upper": 200.0,
+          "t_from": 3.5,
+          "t_to": 9.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "rpm",
+          "lower": 800.0,
+          "upper": 6000.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "gear",
+          "value": 3.0
+        }
+      ]
+    },
+    {
+      "name": "light pedal cruises in top gear",
+      "description": "At 20 % pedal the thresholds are low: the gearbox shifts up to 5th and the engine speed drops",
+      "stop_time": 20.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "final_value",
+          "signal": "gear",
+          "value": 5.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "rpm",
+          "lower": 1500.0,
+          "upper": 2500.0,
+          "t_from": 12.0,
+          "t_to": 20.0
+        }
+      ]
+    },
+    {
+      "name": "kickdown",
+      "description": "Pressing the pedal fully at cruising speed drops two gears (one per second) for acceleration",
+      "stop_time": 25.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "gear",
+          "lower": 4.0,
+          "upper": 4.0,
+          "t_from": 22.2,
+          "t_to": 23.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "gear",
+          "lower": 3.0,
+          "upper": 3.0,
+          "t_from": 23.2,
+          "t_to": 25.0
+        }
+      ]
+    },
+    {
+      "name": "downshift on a hill",
+      "description": "A 10 % hill at a steady 60 % pedal: the car slows and the gearbox drops to 4th",
+      "stop_time": 45.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "gear",
+          "lower": 5.0,
+          "upper": 5.0,
+          "t_from": 28.0,
+          "t_to": 37.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "gear",
+          "value": 4.0
+        }
+      ]
+    }
+  ]
+}

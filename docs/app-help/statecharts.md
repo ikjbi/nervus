@@ -100,6 +100,13 @@ drive the key, engine speed and pedal with scenarios: a normal start, a failed s
 Coasting from 3000 rpm with the pedal released, the chart switches the fuel off (no fuel is needed: the car's
 momentum turns the engine) and back on at 1100 rpm, before the engine could stall, and goes to idle control.
 
+## Example: gear-shift logic
+
+`examples/gear_shift.py` has one state per gear. Each transition compares the vehicle speed with the shift
+speed read from a map for the current gear and pedal, `speed > up_speed and after(min_gear_time)`; the minimum
+time in a gear and the hysteresis between the up- and downshift maps keep it from hunting. See
+**Tutorial: gear-shift logic** in the help contents.
+
 ## C code
 
 Charts are generated as a `switch` over the states, so they can be part of the ECU code. A back-to-back test

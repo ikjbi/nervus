@@ -217,3 +217,32 @@ def test_engine_modes_example(tmp_path) -> None:  # type: ignore[no-untyped-def]
         inputs = {"key": (k > 20).astype(float), "rpm": np.minimum(250 + 8.0 * k, 3000.0), "pedal": 30.0 * (k > 200)}
         res = back_to_back(d, inputs, 600, tolerance=0.0, folder=tmp_path)
         assert res.passed, res.summary()
+
+
+def test_gear_shift_example(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from nervus.codegen import generate_c
+    from nervus.codegen.sil import back_to_back, find_compiler
+    from nervus.testing import run_tests
+
+    mod = _import("gear_shift")
+    d = mod.build()
+    results = run_tests(d)
+    assert all(r.passed for r in results), [r.summary() for r in results]
+    assert [t.name for t in load(EXAMPLES / "gear_shift.nervus").tests] == [t.name for t in d.tests]
+    res = simulate(d)
+    times = [t for t, _, _ in mod.shifts(res)]
+    assert len(times) >= 8
+    assert min(np.diff(times)) >= 1.0 - 1e-9  # no hunting: at least min_gear_time in every gear
+    # The hysteresis: every downshift speed is below the upshift speed of the gear below.
+    up, down = np.array(mod.UPSHIFT), np.array(mod.DOWNSHIFT)
+    assert np.all(down[1:] < up[:-1])
+    code = generate_c(d.block("tcu"))
+    assert "upshift_map" in code.files["tcu.h"]
+    if find_compiler() is not None:
+        k = np.arange(800)
+        inputs = {
+            "speed": np.minimum(0.15 * k, 100.0) - 0.08 * np.maximum(k - 600, 0),
+            "pedal": 50 + 50 * np.sin(k / 90),
+        }
+        sil = back_to_back(d.block("tcu"), inputs, 800, tolerance=0.0, folder=tmp_path)
+        assert sil.passed, sil.summary()

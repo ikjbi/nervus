@@ -10,6 +10,7 @@ Figures have a transparent background and neutral grey text so they read well in
 from __future__ import annotations
 
 import shutil
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
@@ -1024,10 +1025,42 @@ def engine_modes() -> plt.Figure:
     return fig
 
 
+@figure("gear_shift")
+def gear_shift() -> plt.Figure:
+    from nervus import load
+
+    d = load(Path(__file__).parent.parent / "examples" / "gear_shift.nervus")
+    res = simulate(d)
+    fig, (a0, a1, a2, a3) = plt.subplots(4, 1, figsize=(6.4, 6.0), sharex=True, height_ratios=[0.8, 1, 1, 1])
+    a0.plot(res.t, res["pedal"], color=C1, lw=2)
+    a0.plot(res.t, res["grade"], color=C2, lw=2)
+    a0.text(12, 30, "pedal", color=INK, fontsize=8)
+    a0.text(31, 20, "road grade", color=INK, fontsize=8)
+    a0.set_ylabel("%")
+    a0.set_title("Launch, cruise, kickdown, hill", color=INK, fontsize=10)
+    a1.plot(res.t, res["speed"], color=C1, lw=2)
+    a1.set_ylabel("speed [km/h]")
+    a2.plot(res.t, res["rpm"], color=C3, lw=2)
+    a2.set_ylabel("engine [rpm]")
+    a3.step(res.t, res["gear"], where="post", color=C4, lw=2)
+    a3.set_yticks(range(1, 6))
+    a3.set_ylabel("gear")
+    for t, y, text in ((0.5, 4.2, "full throttle:\nlate upshifts"), (13, 4.2, "20 %: up to 5th"),
+                       (22.5, 1.6, "kickdown"), (38.5, 3.0, "hill")):  # fmt: skip
+        a3.text(t, y, text, color=INK, fontsize=8)
+    a3.set_xlabel("time [s]")
+    a3.set_xlim(0, 45)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    only = set(sys.argv[1:])  # optional: names of the figures to regenerate
     for name, fn in FIGURES.items():
+        if only and name not in only:
+            continue
         fig = fn()
         out = APP_DIR / f"{name}.png"
         fig.savefig(out, dpi=160, bbox_inches="tight")

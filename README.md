@@ -33,7 +33,7 @@ tool for designing, simulating and eventually generating C code for that kind of
 | Testing | test cases stored with the model, Test Manager, Data Inspector, results files, model coverage, Model Advisor | [Testing](docs/testing.md), [Verification](docs/verification.md) |
 | Analysis | linearisation, trim, Bode, stability margins, step response | [Analysis](docs/analysis.md) |
 | Vehicle networks | CAN Pack/Unpack with DBC files; OBD-II live data and trouble codes from a real car | [CAN](docs/can.md), [OBD-II](docs/obd.md) |
-| Learning | examples and tutorials: idle speed control, lambda control and fuel trims, a car on a drive cycle | [Tutorials](docs/tutorials/idle-speed-control.md) |
+| Learning | examples and tutorials: idle speed control, lambda control and fuel trims, a car on a drive cycle, gear-shift logic | [Tutorials](docs/tutorials/idle-speed-control.md) |
 
 ## Installation (development)
 
