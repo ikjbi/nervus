@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Tools → Record from OBD-II…: record PIDs from an ELM327, a CAN interface or a simulated ECU with live
+  plots; save the drive or open it in the Data Inspector.
 - A simulated OBD-II ECU (`nervus.obd_sim`) answering the ELM327 protocol (also on a pseudo-terminal) and
   CAN; the OBD Responder block feeds it from a model; `python -m nervus.obd simulate`; example `obd_ecu.py`.
 - OBD over CAN without an ELM327 (`nervus.obd_can`, ISO 15765-4 with ISO-TP); `--can-interface` in the CLI.

@@ -46,6 +46,7 @@ from nervus.gui.views.diagnostics import DiagnosticsPanel
 from nervus.gui.views.help_browser import HelpBrowser
 from nervus.gui.views.icons import icon
 from nervus.gui.views.library import LibraryBrowser
+from nervus.gui.views.obd_dialog import ObdRecordDialog
 from nervus.gui.views.properties import PropertyPanel
 from nervus.gui.views.scope_window import ScopeWindow
 from nervus.gui.views.settings_dialog import SettingsDialog
@@ -248,6 +249,9 @@ class MainWindow(QMainWindow):
             "Ctrl+B",
             "Generate C code for the selected subsystem, or for the whole model",
         )
+        self.act_obd = self._action(
+            "Record from &OBD-II…", self.show_obd, None, "Read live data from a car through its OBD-II port"
+        )
         self.act_sweep = self._action(
             "Parameter &Sweep / Monte Carlo…",
             self.show_sweep,
@@ -322,6 +326,8 @@ class MainWindow(QMainWindow):
         m.addAction(self.act_analysis)
         m.addAction(self.act_sweep)
         m.addAction(self.act_advisor)
+        m = mb.addMenu("&Tools")
+        m.addAction(self.act_obd)
         m = mb.addMenu("&Code")
         m.addAction(self.act_codegen)
         m = mb.addMenu("&Help")
@@ -425,6 +431,11 @@ class MainWindow(QMainWindow):
     def show_advisor(self) -> AdvisorDialog:
         dlg = AdvisorDialog(self.diagram_model.root, self)
         dlg.blocksActivated.connect(self._highlight)
+        dlg.show()
+        return dlg
+
+    def show_obd(self) -> ObdRecordDialog:
+        dlg = ObdRecordDialog(self.sim_model, self)
         dlg.show()
         return dlg
 

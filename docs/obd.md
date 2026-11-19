@@ -31,6 +31,17 @@ Turn the ignition on (or start the engine) before connecting.
 Open `drive.nervres` with **File → Open Result** in the Data Inspector, or save it as CSV with
 `--out drive.csv`.
 
+## Recording in the editor
+
+**Tools → Record from OBD-II…** does the same as `record` with live plots. Choose the source: an **ELM327**
+adapter (its serial port), a **CAN interface** (python-can: SocketCAN, PEAK, Kvaser, Vector, ...) or a
+**simulated ECU** (a model with an OBD Responder running in Nervus, see below). Press **Connect**: PIDs that
+the car does not report are greyed out. Tick the PIDs, set a duration (or record until **Stop**) and an
+interval, and press **Record**. Each PID gets its own plot while it records. Afterwards, **Save…** writes a
+`.nervres` or `.csv` file and **Open in Data Inspector** adds the drive as a run, to compare with a simulation.
+
+![Recording from the simulated engine ECU of examples/obd_ecu.py](images/obd-record.png)
+
 ## Trouble codes, freeze frame and VIN
 
 ```bash

@@ -322,11 +322,12 @@ def record(
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
     on_sample: Callable[[float, dict[str, float]], None] | None = None,
+    should_stop: Callable[[], bool] | None = None,
 ) -> SimResult:
     """Poll ``pids`` (names from :data:`PIDS`) for ``duration`` seconds into a result.
 
     Each signal is named after its PID (``rpm``, ``speed``, ...). Missing answers are stored as NaN. The time
-    axis is the time each sweep over all PIDs started.
+    axis is the time each sweep over all PIDs started. ``duration`` 0 records until ``should_stop()`` is true.
     """
     chosen = [PIDS[p] for p in pids]
     unsupported = [p.name for p in chosen if elm.supported and p.pid not in elm.supported]
@@ -337,7 +338,7 @@ def record(
     rows: list[list[float]] = []
     while True:
         now = clock() - t0
-        if now > duration:
+        if (duration > 0 and now > duration) or (should_stop is not None and should_stop()):
             break
         values = {}
         for p in chosen:
