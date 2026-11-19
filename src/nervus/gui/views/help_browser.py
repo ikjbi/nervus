@@ -50,6 +50,7 @@ HELP_PAGES = [
     ("simulation", "Running simulations"),
     ("workspace", "Workspace and calibrations"),
     ("subsystems", "Subsystems"),
+    ("statecharts", "State machines"),
     ("codegen", "C code generation"),
     ("testing", "Test cases and the Data Inspector"),
     ("shortcuts", "Keyboard shortcuts"),

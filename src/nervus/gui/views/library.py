@@ -20,6 +20,7 @@ CATEGORY_ORDER = [
     "Control",
     "Lookup Tables",
     "Logic and Bit Operations",
+    "State Machines",
     "Discontinuities",
     "Signal Routing",
     "User-Defined",

@@ -7,6 +7,8 @@ is the element index (``"0"`` for scalars, ``"i"`` inside a loop).
 
 from __future__ import annotations
 
+import ast
+
 import numpy as np
 
 from nervus.codegen.generator import BlockCode, CodegenError, Emitter, c_float, template
@@ -479,9 +481,10 @@ def _discrete_pid(e: Emitter) -> BlockCode:
 
 def _locate_c(x: str, bp: str, n: int, interp: str, extrap: str, i_var: str, f_var: str) -> list[str]:
     """C statements computing interval index ``i_var`` and fraction ``f_var``, matching lookup.locate()."""
-    lines = [
-        f"{i_var} = 0u;",
-        f"while (({i_var} < {n - 2}u) && ({x} >= {bp}[{i_var} + 1u])) {{ {i_var}++; }}",
+    lines = [f"{i_var} = 0u;"]
+    if n > 2:  # with two breakpoints there is only one interval
+        lines.append(f"while (({i_var} < {n - 2}u) && ({x} >= {bp}[{i_var} + 1u])) {{ {i_var}++; }}")
+    lines += [
         f"{f_var} = ({x} - {bp}[{i_var}]) / ({bp}[{i_var} + 1u] - {bp}[{i_var}]);",
     ]
     if extrap == "clip":
@@ -537,6 +540,160 @@ def _lookup2d(e: Emitter) -> BlockCode:
         ]
 
     return BlockCode(e.each(e.w(), body))
+
+
+# ---------------------------------------------------------------------------- state charts
+
+_C_CALLS = {
+    "abs": "fabs",
+    "min": "fmin",
+    "max": "fmax",
+    "sqrt": "sqrt",
+    "exp": "exp",
+    "log": "log",
+    "sin": "sin",
+    "cos": "cos",
+    "floor": "floor",
+    "ceil": "ceil",
+}
+_C_BINOPS = {ast.Add: "+", ast.Sub: "-", ast.Mult: "*", ast.Div: "/"}
+_C_CMPS = {ast.Eq: "==", ast.NotEq: "!=", ast.Lt: "<", ast.LtE: "<=", ast.Gt: ">", ast.GtE: ">="}
+
+
+class _ChartC:
+    """Translates the (whitelisted) chart AST into C expressions and statements."""
+
+    def __init__(self, names: dict[str, str], ticks: str, period: str) -> None:
+        self.names, self.ticks, self.period = names, ticks, period
+
+    def expr(self, n: ast.AST) -> str:
+        if isinstance(n, ast.Constant):
+            if not isinstance(n.value, int | float):
+                raise CodegenError(f"chart constant {n.value!r} is not a number")
+            return c_float(float(n.value))
+        if isinstance(n, ast.Name):
+            if n.id == "t_in_state":
+                return f"(({self.ticks} + 1.0) * {self.period})"
+            consts = {
+                "pi": "3.141592653589793",
+                "e": "2.718281828459045",
+                "true": "1.0",
+                "True": "1.0",
+                "false": "0.0",
+                "False": "0.0",
+            }
+            return self.names.get(n.id, consts.get(n.id, n.id))
+        if isinstance(n, ast.BinOp):
+            a, b = self.expr(n.left), self.expr(n.right)
+            if isinstance(n.op, ast.Pow):
+                return f"pow({a}, {b})"
+            if isinstance(n.op, ast.Mod):
+                return f"fmod({a}, {b})"
+            return f"({a} {_C_BINOPS[type(n.op)]} {b})"
+        if isinstance(n, ast.UnaryOp):
+            v = self.expr(n.operand)
+            return f"(!{v})" if isinstance(n.op, ast.Not) else f"(-{v})" if isinstance(n.op, ast.USub) else v
+        if isinstance(n, ast.BoolOp):
+            op = " && " if isinstance(n.op, ast.And) else " || "
+            return (
+                "(" + op.join(f"({self.expr(v)} != 0.0)" if not _is_bool(v) else self.expr(v) for v in n.values) + ")"
+            )
+        if isinstance(n, ast.Compare):
+            parts, left = [], n.left
+            for cmp_op, right in zip(n.ops, n.comparators, strict=True):
+                parts.append(f"({self.expr(left)} {_C_CMPS[type(cmp_op)]} {self.expr(right)})")
+                left = right
+            return "(" + " && ".join(parts) + ")"
+        if isinstance(n, ast.IfExp):
+            return f"(({self.expr(n.test)}) ? {self.expr(n.body)} : {self.expr(n.orelse)})"
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name):
+            if n.func.id == "after":
+                return f"(({self.ticks} + 1.0) >= {self.expr(n.args[0])})"
+            fn = _C_CALLS[n.func.id]
+            args = [self.expr(a) for a in n.args]
+            if fn in ("fmin", "fmax") and len(args) > 2:
+                out = args[0]
+                for a in args[1:]:
+                    out = f"{fn}({out}, {a})"
+                return out
+            return f"{fn}({', '.join(args)})"
+        raise CodegenError(f"chart construct not supported in C: {ast.dump(n)}")
+
+    def stmts(self, body: list[ast.stmt]) -> list[str]:
+        lines = []
+        for st in body:
+            if isinstance(st, ast.Assign):
+                target = st.targets[0]
+                assert isinstance(target, ast.Name)
+                lines.append(f"{self.names[target.id]} = {self.cond_value(st.value)};")
+            elif isinstance(st, ast.AugAssign):
+                assert isinstance(st.target, ast.Name)
+                var = self.names[st.target.id]
+                rhs = ast.BinOp(left=ast.Name(st.target.id, ast.Load()), op=st.op, right=st.value)
+                lines.append(f"{var} = {self.expr(rhs)};")
+        return lines
+
+    def cond_value(self, n: ast.AST) -> str:
+        """A boolean expression used as a value becomes 1.0/0.0."""
+        return f"(({self.expr(n)}) ? 1.0 : 0.0)" if _is_bool(n) else self.expr(n)
+
+
+def _is_bool(n: ast.AST) -> bool:
+    return isinstance(n, ast.Compare | ast.BoolOp) or (isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.Not))
+
+
+@template("charts.state_chart")
+def _state_chart(e: Emitter) -> BlockCode:
+    blk = e.block
+    spec = blk.spec  # type: ignore[attr-defined]
+    s = e.state("chart", blk.initial_discrete_state(), "[0] active state, [1] samples in state, then variables")
+    names = {n: e.u(k, "0") for k, n in enumerate(spec.inputs)}
+    for k, n in enumerate(spec.variables):
+        names[n] = f"{s}[{2 + k}]"
+    cg = _ChartC(names, "ticks", c_float(e.period))
+    lines = [
+        "{",
+        f"    int st = (int){s}[0];",
+        f"    real_T ticks = {s}[1];",
+        "    int fired = 0;",
+        "    switch (st) {",
+    ]
+    by_source: dict[int, list[int]] = {}
+    for k, tr in enumerate(spec.transitions):
+        by_source.setdefault(tr.source, []).append(k)
+    for si, state in enumerate(spec.states):
+        lines.append(f"    case {si}: /* {state.name} */")
+        for n, k in enumerate(by_source.get(si, [])):
+            tr = spec.transitions[k]
+            target = spec.states[tr.target]
+            body = cg.stmts(state.exit) + cg.stmts(tr.action) + cg.stmts(target.entry)
+            kw = "if" if n == 0 else "else if"
+            lines.append(f"        {kw} ({cg.expr(tr.guard)}) {{ /* -> {target.name} */")
+            lines += [f"            {x}" for x in body]
+            lines.append(f"            st = {tr.target}; ticks = 0.0; fired = 1;")
+            lines.append("        }")
+        lines.append("        break;")
+    lines += ["    default: break;", "    }", "    if (!fired) {", "        switch (st) {"]
+    for si, state in enumerate(spec.states):
+        during = cg.stmts(state.during)
+        if during:
+            lines.append(f"        case {si}:")
+            lines += [f"            {x}" for x in during]
+            lines.append("            break;")
+    lines += [
+        "        default: break;",
+        "        }",
+        "        ticks += 1.0;",
+        "    }",
+        f"    {s}[0] = (real_T)st;",
+        f"    {s}[1] = ticks;",
+    ]
+    for k, (name, _init) in enumerate(spec.outputs):
+        lines.append(f"    {e.y(k, '0')} = {names[name]};")
+    if blk.params["state_output"]:
+        lines.append(f"    {e.y(len(spec.outputs), '0')} = (real_T)st;")
+    lines.append("}")
+    return BlockCode(lines)
 
 
 __all__ = ["as_signal"]

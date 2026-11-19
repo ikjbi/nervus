@@ -62,6 +62,7 @@ _GLYPHS: dict[str, Callable[[Block], str]] = {
     "sinks.to_workspace": lambda b: b.params["variable"],
     "sinks.terminator": lambda b: "⊣",
     "sinks.stop": lambda b: "■ stop",
+    "charts.state_chart": lambda b: f"chart\n{len(b.spec.states)} states",  # type: ignore[attr-defined]
     "sinks.assertion": lambda b: "assert",
     "routing.mux": lambda b: "mux",
     "routing.demux": lambda b: "demux",

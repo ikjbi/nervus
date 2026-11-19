@@ -6,12 +6,16 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- Generated C for 2-point lookup axes compared an unsigned value with 0 (rejected by GCC with -Werror).
 - A Transfer Fcn without dynamics (e.g. `3/2`) failed to build its state-space form.
 - 1-D lookup with `nearest` interpolation and linear extrapolation rounded halves to even.
 - An empty diagram passed to the editor model or a Subsystem was replaced by a default one.
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- State Chart block: state machines with entry/during/exit actions, prioritised transitions with guards and
+  actions, local variables, `after(n)` and `t_in_state`; written in a small text language, evaluated safely,
+  and generated as C.
 - Zero-crossing detection for variable-step solvers: discontinuous blocks freeze their mode during
   integration and events are located exactly; a chattering guard reports a warning. A clamped continuous PID
   that took 33 s now takes 0.1 s. Toggle with `settings.zero_crossing`.

@@ -87,6 +87,10 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **From Workspace**: Plays back recorded data.
 - **Ground**: Outputs zero. Use it to connect an input you do not need, instead of leaving it unconnected.
 
+## [State Machines](state-machines.md)
+
+- **State Chart**: A state machine (chart) for operating modes, sequences and fault handling, like Simulink's Stateflow.
+
 ## [User-Defined](user-defined.md)
 
 - **Python Function**: Runs your own Python function, the equivalent of Simulink's MATLAB Function block.

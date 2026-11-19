@@ -721,6 +721,55 @@ def discrete_filter() -> plt.Figure:
     return fig
 
 
+@figure("chart_engine_modes")
+def chart_engine_modes() -> plt.Figure:
+    from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
+
+    fig, ax = plt.subplots(figsize=(8.6, 3.6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0.2, 4.0)
+    ax.axis("off")
+    states = {"off": (1.0, 2.0), "cranking": (5.0, 2.0), "running": (9.0, 2.0)}
+    notes = {
+        "off": "entry: mode = 0; fuel = 0",
+        "cranking": "entry: mode = 1\nduring: fuel = 1",
+        "running": "entry: mode = 2",
+    }
+    colors = {"off": INK, "cranking": C2, "running": C3}
+    for name, (x, y) in states.items():
+        ax.add_patch(
+            FancyBboxPatch(
+                (x, y),
+                2.2,
+                1.3,
+                boxstyle="round,pad=0.05,rounding_size=0.3",
+                ec=colors[name],
+                fc=colors[name] + "18",
+                lw=1.8,
+            )
+        )
+        ax.text(x + 1.1, y + 0.95, name, ha="center", va="center", fontsize=12, color=colors[name], weight="bold")
+        ax.text(x + 1.1, y + 0.4, notes[name], ha="center", va="center", fontsize=8, color=INK)
+
+    def arrow(a: tuple[float, float], b: tuple[float, float], label: str, rad: float, ly: float) -> None:
+        ax.add_patch(
+            FancyArrowPatch(
+                a, b, connectionstyle=f"arc3,rad={rad}", arrowstyle="-|>", mutation_scale=13, lw=1.4, color=INK
+            )
+        )
+        ax.text((a[0] + b[0]) / 2, ly, label, ha="center", fontsize=8.5, color=C1)
+
+    arrow((3.2, 2.95), (5.0, 2.95), "key > 0.5", -0.35, 3.45)
+    arrow((7.2, 2.95), (9.0, 2.95), "rpm > 600", -0.35, 3.45)
+    arrow((5.0, 2.15), (3.2, 2.15), "after(300) / fuel = 0", -0.35, 1.72)
+    arrow((10.1, 2.0), (2.1, 2.0), "key < 0.5 or rpm < 300", -0.28, 0.42)
+    ax.plot([0.55], [2.65], "o", color=INK, ms=7)
+    ax.annotate("", (1.0, 2.65), (0.6, 2.65), arrowprops={"arrowstyle": "-|>", "color": INK})
+    ax.text(0.35, 3.0, "initial", fontsize=8, color=INK)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

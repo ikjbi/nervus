@@ -209,9 +209,11 @@ tests/
 - [ ] Data dictionary: signal and parameter objects with type, unit, range, description
 
 ## Phase 14 – State machines
-- [ ] State chart block (a Stateflow-like subset): states, transitions, guards, entry/during/exit actions
+- [x] State chart block (a Stateflow-like subset): states, transitions, guards, entry/during/exit actions,
+      locals, `after(n)`, `t_in_state`, defined in a small text language
+- [ ] Hierarchical (nested) and parallel states, events, history junctions
 - [ ] Graphical state-chart editor
-- [ ] C code generation for charts
+- [x] C code generation for charts (back-to-back tested with zero tolerance)
 - [ ] Example: gear-shift logic, engine operating modes (crank, idle, run, fuel cut-off)
 
 ## Phase 15 – Automotive and ECU learning library

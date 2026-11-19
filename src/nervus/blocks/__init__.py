@@ -3,6 +3,7 @@
 Importing this package registers every block, so they can be created by ``type_id`` from model files.
 """
 
+from nervus.blocks.chart import StateChart
 from nervus.blocks.continuous import Derivative, Integrator, StateSpace, TransferFunction
 from nervus.blocks.control import PID, DiscretePID
 from nervus.blocks.discontinuities import DeadZone, Quantizer, RateLimiter, Relay
@@ -71,6 +72,7 @@ __all__ = [
     "Saturation",
     "Scope",
     "Sine",
+    "StateChart",
     "StateSpace",
     "Step",
     "StopSimulation",
