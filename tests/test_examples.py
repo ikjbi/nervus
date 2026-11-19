@@ -168,3 +168,17 @@ def test_lambda_control_example() -> None:
     assert [t.name for t in stored.tests] == [t.name for t in d.tests]
     code = generate_c(d.block("ECU"))  # the fuel task is ECU code
     assert "stft" in code.files["ECU.c"] and code.rates == [0.01]
+
+
+def test_drive_cycle_example() -> None:
+    from nervus.testing import run_tests
+
+    mod = _import("drive_cycle")
+    d = mod.build()
+    results = run_tests(d)
+    assert all(r.passed for r in results), [r.summary() for r in results]
+    assert [t.name for t in load(EXAMPLES / "drive_cycle.nervus").tests] == [t.name for t in d.tests]
+    # The cycle definition: 195 s and 994 m (the published ECE-15 values).
+    t = np.array([p[0] for p in mod.ECE15], dtype=float)
+    v = np.array([p[1] for p in mod.ECE15], dtype=float) / 3.6
+    assert t[-1] == 195.0 and np.trapezoid(v, t) == pytest.approx(994.0, abs=0.5)

@@ -918,6 +918,29 @@ def lambda_trims() -> plt.Figure:
     return fig
 
 
+@figure("drive_cycle")
+def drive_cycle() -> plt.Figure:
+    from nervus import load
+
+    d = load(Path(__file__).parent.parent / "examples" / "drive_cycle.nervus")
+    res = simulate(d)
+    fig, (top, bottom) = plt.subplots(2, 1, figsize=(6.4, 4.2), sharex=True, height_ratios=[1.4, 1])
+    top.plot(res.t, res["cycle_kmh"], color=INK, ls=":", lw=1.5, label="ECE-15 cycle")
+    top.plot(res.t, res["speed_kmh"], color=C1, lw=2, label="car (driver model)")
+    top.set_ylabel("speed [km/h]")
+    top.set_ylim(0, 58)
+    top.legend(loc="upper left", fontsize=9)
+    top.set_title("Following the urban drive cycle: 994 m in 195 s", color=INK, fontsize=10)
+    bottom.plot(res.t, res["vehicle/wheel_power"] / 1000, color=C2, lw=1.5)
+    bottom.axhline(0, color=INK, lw=0.8)
+    bottom.text(150, -9, "braking", color=INK, fontsize=9)
+    bottom.set_ylabel("wheel power [kW]")
+    bottom.set_xlabel("time [s]")
+    bottom.set_xlim(0, 195)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

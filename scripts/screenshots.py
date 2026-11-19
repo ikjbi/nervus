@@ -260,6 +260,15 @@ def main() -> None:
             grab(win, "library-linked.png")
             win.library.remove_library(lib_path.resolve())
 
+            # Drive cycle example.
+            win.files.open(ROOT / "examples" / "drive_cycle.nervus")
+            win.view.fit()
+            grab(win.view, "drive-cycle-model.png")
+            win.diagram_model.enter(win.diagram_model.root.block("vehicle"))
+            win.view.fit()
+            grab(win.view, "drive-cycle-vehicle.png")
+            win.diagram_model.up()
+
             # Lambda control example: the plant and the fuel task.
             win.files.open(ROOT / "examples" / "lambda_control.nervus")
             win.view.fit()

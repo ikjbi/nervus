@@ -54,6 +54,7 @@ nav:
           - Coverage and Model Advisor: app-help/verification.md
           - "Tutorial: idle speed control": app-help/tutorial_idle.md
           - "Tutorial: lambda control": app-help/tutorial_lambda.md
+          - "Tutorial: drive cycle": app-help/tutorial_drive_cycle.md
           - Keyboard shortcuts: app-help/shortcuts.md
       - Concepts: concepts.md
       - Coming from Simulink: coming-from-simulink.md
@@ -61,6 +62,7 @@ nav:
   - Tutorials:
       - Idle speed control: tutorials/idle-speed-control.md
       - Lambda control and fuel trims: tutorials/lambda-control.md
+      - A car on a drive cycle: tutorials/drive-cycle.md
   - Block reference:
       - Overview: blocks/index.md
       - CAN: blocks/can.md

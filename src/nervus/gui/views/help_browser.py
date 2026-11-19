@@ -61,6 +61,7 @@ HELP_PAGES = [
     ("verification", "Coverage and Model Advisor"),
     ("tutorial_idle", "Tutorial: idle speed control"),
     ("tutorial_lambda", "Tutorial: lambda control"),
+    ("tutorial_drive_cycle", "Tutorial: drive cycle"),
     ("shortcuts", "Keyboard shortcuts"),
 ]
 

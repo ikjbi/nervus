@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Example and tutorial: a car with a driver model on the ECE-15 urban drive cycle (driver and vehicle
+  subsystems, road loads, wheel energy, effect of mass).
 - Right-click menus on blocks, subsystems, wires and the canvas (rename, open, mask, variants, library, code,
   delete wire, layout, ...).
 - Example and tutorial: lambda closed-loop control with short- and long-term fuel trims (vacuum leak, clogged

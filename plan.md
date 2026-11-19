@@ -232,8 +232,11 @@ tests/
 - [ ] Ignition timing from speed/load maps, knock retard
 - [x] Idle speed control (PI + base opening + AC feed-forward), with tutorial
 - [ ] Electronic throttle control (DC motor, return spring, PID)
-- [ ] Vehicle longitudinal dynamics: driveline, gearbox, tire slip, aero and rolling resistance
-- [ ] Driver model and drive cycles (WLTP, NEDC, FTP-75)
+- [x] Vehicle longitudinal dynamics: aero and rolling resistance, force and power limits, brakes
+      (`examples/drive_cycle.py`)
+- [ ] Vehicle dynamics, more: driveline with gearbox and shift logic, tire slip, road grade, engine efficiency map
+- [x] Driver model and the ECE-15 drive cycle (tutorial); other cycles from CSV files
+- [ ] Bundled WLTP / FTP-75 tables (from the official sources) and a drive-cycle block
 - [ ] Sensor and actuator models: quantisation, noise, delay, faults
 - [ ] Truck-specific models: heavy-duty diesel, exhaust brake, AMT gearbox
 - [ ] Tutorial series: "Learn engine control with Nervus" (first: idle speed control)
