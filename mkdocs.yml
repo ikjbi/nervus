@@ -31,6 +31,7 @@ nav:
       - Data types and fixed point: datatypes.md
       - State machines: statecharts.md
       - CAN communication: can.md
+      - OBD-II live data: obd.md
       - Linear analysis: analysis.md
       - C code generation: codegen.md
       - Test cases and results: testing.md
@@ -44,6 +45,7 @@ nav:
           - Data types and fixed point: app-help/datatypes.md
           - State machines: app-help/statecharts.md
           - CAN communication: app-help/can.md
+          - OBD-II live data: app-help/obd.md
           - Linear analysis: app-help/analysis.md
           - C code generation: app-help/codegen.md
           - Test cases and the Data Inspector: app-help/testing.md

@@ -14,6 +14,9 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- OBD-II (read-only): decoding of 21 standard mode 01 PIDs, an ELM327 client and `python -m nervus.obd record`
+  to record a drive into a `.nervres`/CSV file for the Data Inspector and test inputs (optional extra `obd`).
+- Roadmap: OBD-II diagnostics (Phase 22).
 - Enabled subsystems: an enable input gates every block inside (outputs and states held, optional reset when
   enabled again), decided at major steps; gated C code.
 - Roadmap: electrical/physical modelling (Phase 20) and CAN bus networks (Phase 21).
