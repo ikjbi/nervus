@@ -326,6 +326,7 @@ class MainWindow(QMainWindow):
         self.library.addRequested.connect(self._add_from_library)
         self.library.helpRequested.connect(self.show_help_for_type)
         self.properties.helpRequested.connect(self.show_help_for_type)
+        self.properties.editMaskRequested.connect(self.edit_mask)
         self.scene.selectedBlocksChanged.connect(self.properties.show_blocks)
         self.scene.blockActivated.connect(self._block_activated)
         self.diagnostics.blocksActivated.connect(self._highlight)
@@ -607,6 +608,13 @@ class MainWindow(QMainWindow):
                 return None
             d = system
         return d
+
+    def edit_mask(self, subsystem: Block) -> None:
+        from nervus.gui.views.mask_dialog import MaskDialog
+
+        dlg = MaskDialog(subsystem, self)
+        if dlg.exec():
+            self.editor.set_mask(subsystem, dlg.variables(), dlg.icon.text(), dlg.description.text())
 
     def auto_layout(self) -> None:
         self.editor.auto_layout()

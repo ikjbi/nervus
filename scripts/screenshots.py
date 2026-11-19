@@ -16,6 +16,26 @@ ROOT = Path(__file__).parent.parent
 OUT = ROOT / "docs" / "images"
 
 
+def masked_example():  # type: ignore[no-untyped-def]
+    """A small model with a masked combustion-torque subsystem (for the mask screenshots)."""
+    from nervus.blocks import Constant, Gain, Inport, Outport, Scope, Subsystem
+    from nervus.core import Diagram, Variable
+
+    md = Diagram("masked_example")
+    inner = Diagram()
+    air = inner.add(Inport(port=1), name="air_flow")
+    gain = inner.add(Gain(gain="eta * Q_lhv / afr"), name="torque_gain")
+    inner.chain(air, gain, inner.add(Outport(port=1), name="torque"))
+    sub = Subsystem(system=inner)
+    sub.mask.add(Variable("eta", 0.3, "Thermal efficiency", "-"))
+    sub.mask.add(Variable("Q_lhv", 44e6, "Fuel heating value", "J/kg"))
+    sub.mask.add(Variable("afr", 14.7, "Air-fuel ratio", "-"))
+    sub.mask_icon = "Combustion\\ntorque"
+    md.add(sub, name="combustion")
+    md.chain(md.add(Constant(value=0.003), name="air"), sub, md.add(Scope(), name="scope"))
+    return md, sub
+
+
 def grab(widget: QWidget, name: str) -> None:
     QApplication.processEvents()
     widget.grab().save(str(OUT / name))
@@ -103,6 +123,19 @@ def main() -> None:
             grab(inspector, "data-inspector.png")
             inspector.close()
             win.diagnostics_dock.raise_()
+
+            # A masked subsystem: parameters in the Properties panel, and the Edit Mask dialog.
+            md, sub = masked_example()
+            win.diagram_model.set_diagram(md)
+            win.scene.select_blocks(["combustion"])
+            win.view.fit()
+            grab(win, "mask-properties.png")
+            from nervus.gui.views.mask_dialog import MaskDialog
+
+            mdlg = MaskDialog(sub, win)
+            mdlg.show()
+            grab(mdlg, "mask-dialog.png")
+            mdlg.close()
 
             # Data types shown on the wires.
             win.files.open(ROOT / "examples" / "fixed_point_sensor.nervus")

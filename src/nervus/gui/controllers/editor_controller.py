@@ -21,6 +21,7 @@ from nervus.gui.controllers.commands import (
     MoveBlocksCommand,
     RemoveCommand,
     RenameCommand,
+    SetMaskCommand,
     SetParamsCommand,
     SetSettingsCommand,
     SetTestsCommand,
@@ -89,7 +90,7 @@ class EditorController(QObject):
             return True
         try:  # validate on a scratch copy first, so a bad value never reaches the undo stack
             probe = type(block)(**{k: block.param_source(k) for k in block.params})
-            ns = self.model.root.workspace.namespace()
+            ns = block.diagram.namespace() if block.diagram is not None else self.model.root.workspace.namespace()
             probe.resolve(ns)
             for k, v in changed.items():
                 probe._assign(probe.param_spec(k), v, ns)
@@ -139,6 +140,30 @@ class EditorController(QObject):
             else:
                 b.meta["position"] = saved[id(b)]
         self.move_blocks(moves)
+
+    def set_mask(self, subsystem: Block, variables: list[dict[str, Any]], icon: str, description: str) -> bool:
+        """Replace a subsystem's mask. Validates that the mask variables evaluate in their context."""
+        from nervus.core.workspace import Workspace
+
+        try:
+            ws = Workspace.from_list(variables)
+            outer = subsystem.diagram.namespace() if subsystem.diagram is not None else {}
+            ws.namespace(base=outer)
+        except (NervusError, KeyError, TypeError, ValueError) as exc:
+            self.errorOccurred.emit(f"{subsystem.name}: invalid mask: {exc}")
+            return False
+        state: dict[str, Any] = {"variables": variables, "icon": icon, "description": description}
+        return self._push(SetMaskCommand(self.model, subsystem, state))
+
+    def set_mask_value(self, subsystem: Block, name: str, value: object) -> bool:
+        from nervus.gui.controllers.commands import mask_state
+
+        state = mask_state(subsystem)
+        variables = [dict(v) for v in state["variables"]]
+        for v in variables:
+            if v["name"] == name:
+                v["value"] = value
+        return self.set_mask(subsystem, variables, str(state["icon"]), str(state["description"]))
 
     def set_tests(self, tests: list[object], text: str = "Edit test cases") -> bool:
         return self._push(SetTestsCommand(self.model, tests, text))

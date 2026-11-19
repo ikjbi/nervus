@@ -103,7 +103,9 @@ class BlockItem(QGraphicsItem):
         n = max(self.block.num_inputs(), self.block.num_outputs(), 1)
         if getattr(self.block, "system", None) is not None:
             names = [b.name for b in self.block.inports() + self.block.outports()]  # type: ignore[attr-defined]
-            lines = [" " * (2 * max((len(x) for x in names), default=4))]
+            icon_lines = str(getattr(self.block, "mask_icon", "")).replace("\\n", "\n").split("\n")
+            width = 2 * max((len(x) for x in names), default=4) + max((len(x) for x in icon_lines), default=0)
+            lines = [" " * width] * max(1, len(icon_lines))
         self._w = max(MIN_W, snap(max(len(line) for line in lines) * 8 + 24))
         self._h = max(MIN_H, snap(max(n * 20 + 10, len(lines) * 16 + 16)))
         for p in self.in_ports + self.out_ports:
@@ -178,7 +180,15 @@ class BlockItem(QGraphicsItem):
                 y = item.pos().y()
                 box = QRectF(6 if dx > 0 else rect.width() / 2, y - 8, rect.width() / 2 - 8, 16)
                 painter.drawText(box, align | Qt.AlignmentFlag.AlignVCenter, port_block.name)
-        if not sub.inports() and not sub.outports():  # type: ignore[attr-defined]
+        icon = getattr(sub, "mask_icon", "")
+        if icon:
+            big = QFont(painter.font())
+            big.setPointSizeF(11)
+            big.setBold(True)
+            painter.setFont(big)
+            painter.setPen(t.color("block_text"))
+            painter.drawText(rect.adjusted(4, 4, -4, -4), Qt.AlignmentFlag.AlignCenter, icon.replace("\\n", "\n"))
+        elif not sub.inports() and not sub.outports():  # type: ignore[attr-defined]
             painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "subsystem")
         # a small "open" hint in the corner
         painter.setPen(QPen(t.color("text_muted"), 1))

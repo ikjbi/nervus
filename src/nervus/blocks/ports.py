@@ -99,6 +99,9 @@ def _ports(diagram: Diagram, cls: type[Block]) -> list[Block]:
 class Subsystem(Block):
     """A block that contains its own diagram. Double-click it in the editor to open it.
 
+    A subsystem can be **masked**: it then has its own parameters (e.g. ``displacement``) that the blocks inside
+    use in their expressions, so several copies of the same component can have different values.
+
     Its inputs and outputs are the In and Out blocks inside, in the order of their *port* numbers. Subsystems
     structure a model the way functions structure code: one subsystem per ECU function (e.g. "idle control",
     "fuel", "ignition"). Parameters inside can use the model workspace.
@@ -110,9 +113,21 @@ class Subsystem(Block):
     PARAMS = ()
 
     def __init__(self, name: str = "", system: Diagram | None = None, **params: Any) -> None:
+        from nervus.core.workspace import Workspace
+
         super().__init__(name, **params)
         self.system = system if system is not None else self._default_system()
         self.system.parent = self
+        self.mask = Workspace()
+        """Mask parameters: variables that blocks inside the subsystem can use. Each instance of a reusable
+        component gets its own values (like a Simulink mask). Empty means the subsystem is not masked."""
+        self.mask_icon = ""
+        """Text shown on the block when it is masked (e.g. "Engine\\n1.6 l")."""
+        self.mask_description = ""
+
+    @property
+    def is_masked(self) -> bool:
+        return len(self.mask) > 0 or bool(self.mask_icon)
 
     @staticmethod
     def _default_system() -> Diagram:

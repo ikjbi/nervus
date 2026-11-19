@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Masked subsystems: mask parameters (values or expressions of workspace variables, nested masks), icon text
+  and description; Edit Mask dialog and mask parameters in the Properties panel; per-instance values in C.
 - Model coverage (`nervus.coverage`): decision outcomes of switches, comparisons, saturations, limits, relays,
   rate limiters, lookups and charts; `simulate(coverage=...)`, `run_tests(coverage=...)`, HTML report; the Test
   Manager shows coverage and opens the report.

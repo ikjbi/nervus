@@ -25,6 +25,37 @@ Double-click it to open it. The breadcrumb bar shows the path back to the model:
 Lines crossing the selection boundary become **In**/**Out** ports. Undo works across levels and opens the
 subsystem where the change is undone.
 
+## Masks: reusable components with parameters
+
+A **masked** subsystem has its own parameters, like a function's arguments. The blocks inside use them in
+their expressions, and each copy of the subsystem can have different values. This is how you build
+reusable components such as an engine model with a `displacement` parameter.
+
+Select a subsystem and press **Create Mask…** (or **Edit Mask…**) in the Properties panel:
+
+![The Edit Mask dialog](images/mask-dialog.png)
+
+- **Mask parameters**: name, value, unit and description. Values can be numbers, vectors, or expressions of
+  model workspace variables (`3 * base`).
+- **Icon text**: shown on the block; `\n` starts a new line.
+- **Description**: shown in the Properties panel.
+
+The parameters then appear in the Properties panel of the subsystem, like the parameters of any block:
+
+![A masked subsystem and its parameters](images/mask-properties.png)
+
+Names are looked up from the inside out: a block sees the parameters of the nearest mask first, then those
+of outer masks, then the model workspace. In generated C, mask parameters are per-instance values. Only bare
+**model workspace** variables become shared calibration parameters.
+
+```python
+from nervus.core import Variable
+
+engine = Subsystem(system=engine_diagram)
+engine.mask.add(Variable("displacement", 1.6e-3, "Swept volume", "m³"))
+engine.mask_icon = "Engine\\n1.6 l"
+```
+
 ## In Python
 
 ```python

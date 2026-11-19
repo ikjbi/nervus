@@ -76,6 +76,13 @@ def _block_dict(b: Block) -> dict[str, Any]:
     system = getattr(b, "system", None)
     if isinstance(system, Diagram):
         d["system"] = system_to_dict(system)
+        mask = getattr(b, "mask", None)
+        if mask is not None and (len(mask) > 0 or bool(getattr(b, "mask_icon", ""))):
+            d["mask"] = {
+                "variables": mask.to_list(),
+                "icon": getattr(b, "mask_icon", ""),
+                "description": getattr(b, "mask_description", ""),
+            }
     return d
 
 
@@ -170,6 +177,10 @@ def _fill_system(d: Diagram, data: dict[str, Any], prefix: str) -> None:
                 inner = Diagram(name)
                 inner.meta = dict(entry["system"].get("meta", {}))
                 block = cls(name, system=inner, **entry.get("params", {}))
+                if "mask" in entry:
+                    block.mask = Workspace.from_list(list(entry["mask"].get("variables", [])))  # type: ignore[attr-defined]
+                    block.mask_icon = str(entry["mask"].get("icon", ""))  # type: ignore[attr-defined]
+                    block.mask_description = str(entry["mask"].get("description", ""))  # type: ignore[attr-defined]
                 _fill_system(inner, entry["system"], path + "/")
             else:
                 block = cls(name, **entry.get("params", {}))

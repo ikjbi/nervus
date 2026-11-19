@@ -144,14 +144,38 @@ class Diagram:
         block.diagram = self
         if block.expressions:
             with contextlib.suppress(Exception):  # unresolved variables are reported by check()
-                block.resolve(self.root.workspace.namespace())
+                block.resolve(self.namespace())
         return block
 
+    def namespace(self, overrides: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Variables visible to blocks in this diagram: the model workspace, plus the mask parameters of every
+        enclosing masked subsystem (inner masks shadow outer names)."""
+        if self.parent is None or self.parent.diagram is None:
+            return self.root.workspace.namespace(overrides)
+        outer = self.parent.diagram.namespace(overrides)
+        mask = getattr(self.parent, "mask", None)
+        if mask is None or len(mask) == 0:
+            return outer
+        try:
+            return mask.namespace(base=outer)
+        except ModelError as exc:
+            raise ModelError(f"mask of {self.parent.name!r}: {exc}", (self.parent.name,)) from exc
+
+    def walk_namespaces(
+        self, overrides: dict[str, Any] | None = None, prefix: str = ""
+    ) -> Iterator[tuple[str, Block, dict[str, Any]]]:
+        """Every block (with path) together with the namespace its parameters are evaluated in."""
+        ns = self.namespace(overrides)
+        for b in self._blocks.values():
+            yield prefix + b.name, b, ns
+            system = getattr(b, "system", None)
+            if isinstance(system, Diagram):
+                yield from system.walk_namespaces(overrides, prefix + b.name + "/")
+
     def resolve_parameters(self, overrides: dict[str, Any] | None = None) -> None:
-        """Evaluate every block's parameter expressions with the workspace (plus ``overrides``).
+        """Evaluate every block's parameter expressions with the workspace and masks (plus ``overrides``).
         Raises :class:`ModelError` naming the block on failure."""
-        ns = self.root.workspace.namespace(overrides)
-        for name, b in self.walk():
+        for name, b, ns in self.walk_namespaces(overrides):
             try:
                 b.resolve(ns)
             except ParameterError as exc:
@@ -255,11 +279,14 @@ class Diagram:
             issues.append(Issue(Severity.ERROR, str(exc)))
             ns = None
         if ns is not None and self.parent is None:
-            for name, b in self.walk():
-                try:
-                    b.resolve(ns)
-                except ParameterError as exc:
-                    issues.append(Issue(Severity.ERROR, f"{name}: {exc}", (name,)))
+            try:
+                for name, b, block_ns in self.walk_namespaces():
+                    try:
+                        b.resolve(block_ns)
+                    except ParameterError as exc:
+                        issues.append(Issue(Severity.ERROR, f"{name}: {exc}", (name,)))
+            except ModelError as exc:
+                issues.append(Issue(Severity.ERROR, str(exc), exc.blocks))
             for msg in self.workspace.check_ranges(ns):
                 issues.append(Issue(Severity.WARNING, f"workspace: {msg}"))
         issues.extend(self._check_structure(""))

@@ -46,6 +46,9 @@ external output of the model (logged in the results, and a field of the outputs 
 
 A block that contains its own diagram. Double-click it in the editor to open it.
 
+A subsystem can be **masked**: it then has its own parameters (e.g. ``displacement``) that the blocks inside
+use in their expressions, so several copies of the same component can have different values.
+
 Its inputs and outputs are the In and Out blocks inside, in the order of their *port* numbers. Subsystems
 structure a model the way functions structure code: one subsystem per ECU function (e.g. "idle control",
 "fuel", "ignition"). Parameters inside can use the model workspace.

@@ -81,3 +81,24 @@ def test_save_and_reopen_subsystem(window, tmp_path) -> None:  # type: ignore[no
     assert window.files.open(tmp_path / "m.nervus")
     sub = window.diagram_model.root.block("Subsystem")
     assert isinstance(sub, Subsystem) and len(sub.system) == 4
+
+
+def test_mask_editing_with_undo(window) -> None:  # type: ignore[no-untyped-def]
+    ed = window.editor
+    c = ed.add_block("sources.constant", QPointF(0, 0), value=1.0)
+    g = ed.add_block("math.gain", QPointF(150, 0))
+    sc = ed.add_block("sinks.scope", QPointF(300, 0))
+    ed.connect_ports(c, 0, g, 0)
+    ed.connect_ports(g, 0, sc, 0)
+    sub = ed.create_subsystem([g])
+    assert ed.set_mask(sub, [{"name": "K", "value": 4.0, "unit": "-", "description": "gain"}], "×K", "scales")
+    window.diagram_model.enter(sub)
+    assert ed.set_params(g, {"gain": "K"})  # validated against the mask's namespace
+    window.diagram_model.up()
+    window.scene.select_blocks([sub.name])
+    assert "mask:K" in window.properties._editors
+    assert ed.set_mask_value(sub, "K", 7.0)
+    assert float(g.params["gain"]) == 7.0
+    ed.undo_stack.undo()
+    assert float(g.params["gain"]) == 4.0
+    assert not ed.set_mask(sub, [{"name": "K", "value": "undefined_thing"}], "", "")

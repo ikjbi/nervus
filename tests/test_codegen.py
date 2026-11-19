@@ -317,3 +317,33 @@ def test_data_types_bit_true(tmp_path) -> None:  # type: ignore[no-untyped-def]
     # Saturation really happened, and the fixed-point temperature has 0.5 resolution with -40 offset.
     assert res.python["y_acc"].max() == 127.0 and res.python["y_acc"].min() == -128.0
     assert np.all(np.mod(res.python["y_temp"] + 40, 0.5) == 0)
+
+
+def test_masked_subsystems_codegen(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from nervus.core import Variable
+
+    def component() -> Subsystem:
+        inner = Diagram()
+        u = inner.add(Inport(port=1), name="u")
+        g = inner.add(Gain(gain="K"), name="gain")
+        inner.chain(u, g, inner.add(Outport(port=1), name="y"))
+        sub = Subsystem(system=inner)
+        sub.mask.add(Variable("K", 2.0))
+        return sub
+
+    d = Diagram("masked")
+    d.workspace["K"] = 100.0  # shadowed inside the masks; must not become the shared field for them
+    d.workspace["Kg"] = 3.0
+    u = d.add(Inport(port=1), name="u")
+    z = d.add(ZeroOrderHold(sample_time=0.01), name="z")
+    a = d.add(component(), name="a")
+    b = d.add(component(), name="b")
+    b.mask["K"] = "Kg * 2"
+    d.chain(u, z, a)
+    d.connect(z, b)
+    d.connect(a, d.add(Outport(port=1), name="ya"))
+    d.connect(b, d.add(Outport(port=2), name="yb"))
+    res = back_to_back(d, {"u": np.arange(20.0)}, 20, tolerance=0.0, folder=tmp_path)
+    assert res.passed, res.summary()
+    assert res.c["yb"][5, 0] == 30.0 and res.c["ya"][5, 0] == 10.0
+    assert "K" not in generate_c(d).params  # the masked K is per-block, not the workspace K

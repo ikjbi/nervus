@@ -105,7 +105,7 @@ class Emitter:
         value = self.block.params[pname] if value is None else value
         arr = np.atleast_1d(np.asarray(value, dtype=float)).ravel()
         expr = self.block.expressions.get(pname, "").strip()
-        if expr.isidentifier() and expr in self.gen.namespace:
+        if expr.isidentifier() and expr in self.gen.namespace and not self._masked(expr):
             fname = c_identifier(expr)  # shared calibration parameter named after the variable
             comment = f"workspace variable {expr}"
         else:
@@ -113,6 +113,16 @@ class Emitter:
             comment = f"{self.path}: {pname}" + (f" = {expr}" if expr else "")
         self.gen.add_param(fname, arr, comment)
         return f"{self.gen.prefix}_P.{fname}"
+
+    def _masked(self, name: str) -> bool:
+        """Whether ``name`` is a mask parameter of a subsystem around this block (then it is not shared)."""
+        d = self.gen.model.origin[self.i].diagram
+        while d is not None and d.parent is not None:
+            mask = getattr(d.parent, "mask", None)
+            if mask is not None and name in mask:
+                return True
+            d = d.parent.diagram
+        return False
 
     def p(self, pname: str, ix: str = "i", value: Any = None) -> str:
         """Element ``ix`` of a parameter (or the scalar), with scalar expansion."""
@@ -186,7 +196,7 @@ class CGenerator:
     def __init__(self, model: CompiledModel, name: str) -> None:
         self.model = model
         self.prefix = c_identifier(name)
-        self.namespace = model.diagram.root.workspace.namespace()
+        self.namespace = model.diagram.root.workspace.namespace()  # shared calibration parameters
         self.cnames = self._unique_cnames(model.names)
         self.params: dict[str, _Field] = {}
         self.states: dict[str, _Field] = {}

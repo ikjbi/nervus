@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import math
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -156,17 +156,20 @@ class Workspace:
 
     # ------------------------------------------------------------------ evaluation
 
-    def namespace(self, overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    def namespace(
+        self, overrides: Mapping[str, Any] | None = None, base: Mapping[str, Any] | None = None, strict: bool = True
+    ) -> dict[str, Any]:
         """Evaluate all variables (expressions may use variables defined before them).
 
-        ``overrides`` replaces values by name (e.g. for a parameter sweep). Raises :class:`ModelError` if a
-        variable cannot be evaluated.
+        ``overrides`` replaces values by name (e.g. for a parameter sweep). ``base`` provides outer variables
+        (a subsystem mask sees the model workspace); the result contains ``base`` plus these variables.
+        Raises :class:`ModelError` if a variable cannot be evaluated.
         """
         overrides = dict(overrides or {})
         unknown = set(overrides) - set(self._vars)
-        if unknown:
+        if unknown and strict:
             raise ModelError(f"unknown workspace variable(s) in overrides: {', '.join(sorted(unknown))}")
-        ns: dict[str, Any] = {}
+        ns: dict[str, Any] = dict(base or {})
         for name, var in self._vars.items():
             value = _normalize(overrides[name]) if name in overrides else var.value
             if isinstance(value, str):
@@ -212,7 +215,7 @@ class Workspace:
         return [v.to_dict() for v in self._vars.values()]
 
     @classmethod
-    def from_list(cls, items: list[Mapping[str, Any]]) -> Workspace:
+    def from_list(cls, items: Sequence[Mapping[str, Any]]) -> Workspace:
         ws = cls()
         for d in items:
             ws.add(Variable.from_dict(d))

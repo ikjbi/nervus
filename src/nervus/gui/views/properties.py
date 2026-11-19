@@ -40,6 +40,7 @@ def _parse(p: Param, text: str) -> Any:
 
 class PropertyPanel(QWidget):
     helpRequested = Signal(str)  # type_id
+    editMaskRequested = Signal(object)  # Subsystem
 
     def __init__(self, model: DiagramModel, controller: EditorController, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -141,13 +142,29 @@ class PropertyPanel(QWidget):
             return
         self.title.setText(b.name)
         self.subtitle.setText(f"{b.label} · {b.category}")
-        self.description.setText(block_doc(type(b)).split("\n\n")[0].replace("``", "").replace("*", ""))
+        self.description.setText(
+            getattr(b, "mask_description", "") or block_doc(type(b)).split("\n\n")[0].replace("``", "").replace("*", "")
+        )
 
         name_edit = QLineEdit(b.name)
         name_edit.editingFinished.connect(lambda: self._rename(name_edit))
         self.form.addRow("Name", name_edit)
         self._editors["__name__"] = name_edit
 
+        mask = getattr(b, "mask", None)
+        if mask is not None:
+            for v in mask.variables:
+                edit = QLineEdit(v.display_value)
+                edit.setToolTip(v.description or v.name)
+                edit.editingFinished.connect(lambda name=v.name, le=edit: self._apply_mask(name, le))
+                label = QLabel(v.name + (f" [{v.unit}]" if v.unit else ""))
+                label.setToolTip(v.description)
+                self.form.addRow(label, edit)
+                self._editors[f"mask:{v.name}"] = edit
+            masked = len(mask) > 0 or bool(getattr(b, "mask_icon", ""))
+            button = QPushButton("Edit Mask…" if masked else "Create Mask…")
+            button.clicked.connect(lambda _c=False: self.editMaskRequested.emit(b))
+            self.form.addRow("", button)
         for p in b.PARAMS:
             editor = self._editor_for(p, b.param_source(p.name))
             label = QLabel(p.name + (f" [{p.unit}]" if p.unit else ""))
@@ -275,6 +292,17 @@ class PropertyPanel(QWidget):
         if self._updating or self.block is None:
             return
         self.controller.set_params(self.block, {name: value})
+
+    def _apply_mask(self, name: str, edit: QLineEdit) -> None:
+        if self._updating or self.block is None:
+            return
+        text = edit.text().strip()
+        try:
+            value: Any = parse_value(text)
+        except ValueError:
+            value = text
+        if not self.controller.set_mask_value(self.block, name, value):
+            self._show_error(edit, f"{name}: invalid value")
 
     def _browse(self, name: str, edit: QLineEdit) -> None:
         from PySide6.QtWidgets import QFileDialog

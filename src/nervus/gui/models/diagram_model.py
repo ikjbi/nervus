@@ -241,6 +241,14 @@ class DiagramModel(QObject):
                 self.paramsChanged.emit(b)
         self.workspaceChanged.emit()
 
+    def mask_changed(self, subsystem: Block) -> None:
+        """A subsystem's mask changed: re-resolve parameters inside it and refresh the views."""
+        with contextlib.suppress(Exception):
+            for _name, b, ns in subsystem.system.walk_namespaces():  # type: ignore[attr-defined]
+                if b.expressions:
+                    b.resolve(ns)
+        self.paramsChanged.emit(subsystem)
+
     def set_tests(self, tests: list[Any]) -> None:
         self._root.tests = list(tests)
         self.testsChanged.emit()

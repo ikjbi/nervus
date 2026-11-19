@@ -142,7 +142,7 @@ class Block:
         if root.parent is not None:  # inside a subsystem that is not part of a model yet
             return None
         try:
-            return root.workspace.namespace()
+            return d.namespace()
         except Exception:
             return None
 

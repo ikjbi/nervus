@@ -319,3 +319,36 @@ class SetTestsCommand(Command):
 
     def revert(self) -> None:
         self._apply(self.old)
+
+
+class SetMaskCommand(Command):
+    """Change a subsystem's mask (parameters, icon text, description)."""
+
+    def __init__(self, model: DiagramModel, subsystem: Block, new: dict[str, Any]) -> None:
+        super().__init__(f"Edit mask of {subsystem.name}")
+        self.model, self.subsystem = model, subsystem
+        self.old = mask_state(subsystem)
+        self.new = new
+
+    def _apply(self, state: dict[str, Any]) -> None:
+        from nervus.core.workspace import Workspace
+
+        sub = self.subsystem
+        sub.mask = Workspace.from_list(list(state["variables"]))  # type: ignore[attr-defined]
+        sub.mask_icon = str(state["icon"])  # type: ignore[attr-defined]
+        sub.mask_description = str(state["description"])  # type: ignore[attr-defined]
+        self.model.mask_changed(sub)
+
+    def do(self) -> None:
+        self._apply(self.new)
+
+    def revert(self) -> None:
+        self._apply(self.old)
+
+
+def mask_state(subsystem: Block) -> dict[str, Any]:
+    return {
+        "variables": subsystem.mask.to_list(),  # type: ignore[attr-defined]
+        "icon": subsystem.mask_icon,  # type: ignore[attr-defined]
+        "description": subsystem.mask_description,  # type: ignore[attr-defined]
+    }
