@@ -59,17 +59,54 @@ class _RateScheduler:
             self.counts[k] += 1
 
 
+LIVE_INTERVAL = 0.2
+"""Seconds (wall clock) between live snapshots of the Scope signals."""
+
+
 class _Logger:
-    def __init__(self, model: CompiledModel) -> None:
+    def __init__(
+        self, model: CompiledModel, live: Callable[[SimResult], None] | None = None, live_interval: float | None = None
+    ) -> None:
         self.model = model
         self.t: list[float] = []
         self.data: list[list[list[Array]]] = [[[] for _ in ws] for ws in model.out_widths]
+        self.live = live
+        self.live_interval = LIVE_INTERVAL if live_interval is None else live_interval
+        self._last_live = time.monotonic()
+        self.pacing = 0.0  # simulated seconds per wall-clock second (0: no pacing)
+        self._t0 = 0.0
+        self._wall0 = time.monotonic()
+
+    def start_pacing(self, pacing: float, t0: float) -> None:
+        self.pacing, self._t0, self._wall0 = pacing, t0, time.monotonic()
 
     def record(self, t: float) -> None:
+        if self.pacing > 0:  # wait until the wall clock catches up with the simulation
+            ahead = (t - self._t0) / self.pacing - (time.monotonic() - self._wall0)
+            if ahead > 0:
+                time.sleep(ahead)
         self.t.append(t)
         for i, outs in enumerate(self.model.y):
             for p, y in enumerate(outs):
                 self.data[i][p].append(y.copy())
+        if self.live is not None and time.monotonic() - self._last_live >= self.live_interval:
+            self._last_live = time.monotonic()
+            self.live(self.scope_snapshot())
+
+    def scope_snapshot(self) -> SimResult:
+        """The signals logged so far that feed Scope blocks (for live plots while the simulation runs)."""
+        m = self.model
+        input_keys: dict[str, list[str]] = {}
+        signals: dict[str, Array] = {}
+        for i, (name, b) in enumerate(zip(m.names, m.blocks, strict=True)):
+            if b.type_id != "sinks.scope":
+                continue
+            keys = [f"{m.names[s]}:{p}" for s, p in m.inputs[i]]
+            input_keys[name] = keys
+            for (s, p), key in zip(m.inputs[i], keys, strict=True):
+                rows = self.data[s][p]
+                signals[key] = np.vstack(rows) if rows else np.zeros((0, m.out_widths[s][p]))
+        return SimResult(np.asarray(self.t), signals, input_keys, {}, None)
 
     def result(self, stats: SimStats) -> SimResult:
         m = self.model
@@ -240,6 +277,7 @@ def simulate(
     coverage: Any = None,
     progress: Callable[[float], None] | None = None,
     should_stop: Callable[[], bool] | None = None,
+    live: Callable[[SimResult], None] | None = None,
 ) -> SimResult:
     """Simulate ``diagram`` and return the logged signals.
 
@@ -249,19 +287,32 @@ def simulate(
     ``inputs`` drives the model's top-level In blocks, by name: a :class:`~nervus.core.signals.Signal`, a
     number/vector (constant) or a ``(time, values)`` pair.
     ``progress(t)`` is called after each major step; if ``should_stop()`` returns true the run ends early (used
-    by the GUI's Stop button).
+    by the GUI's Stop button). ``live(partial)`` is called a few times per second with the Scope signals logged so
+    far (for live plots).
     """
     if isinstance(diagram, CompiledModel):
         if params or inputs:
             raise ValueError("params/inputs cannot be used with an already compiled model; pass the Diagram")
         return _simulate_compiled(
-            diagram, t_final, t_start, solver, step, max_step, rtol, atol, settings, progress, should_stop, coverage
+            diagram,
+            t_final,
+            t_start,
+            solver,
+            step,
+            max_step,
+            rtol,
+            atol,
+            settings,
+            progress,
+            should_stop,
+            coverage,
+            live,
         )
     attached = _attach_inputs(diagram, inputs or {})
     try:
         model = compile_diagram(diagram, params)
         return _simulate_compiled(
-            model, t_final, t_start, solver, step, max_step, rtol, atol, settings, progress, should_stop, coverage
+            model, t_final, t_start, solver, step, max_step, rtol, atol, settings, progress, should_stop, coverage, live
         )
     finally:
         for block in attached:
@@ -298,6 +349,7 @@ def _simulate_compiled(
     progress: Callable[[float], None] | None,
     should_stop: Callable[[], bool] | None,
     coverage: Any = None,
+    live: Callable[[SimResult], None] | None = None,
 ) -> SimResult:
     base = settings or model.diagram.settings
     overrides: dict[str, Any] = {
@@ -319,7 +371,8 @@ def _simulate_compiled(
         model.start_coverage(coverage)
         coverage.runs += 1
     wall0 = time.perf_counter()
-    log = _Logger(model)
+    log = _Logger(model, live)
+    log.start_pacing(opts.pacing, opts.t_start)
     t0, tf = opts.t_start, opts.t_final
     zc_info: dict[str, Any] = {"count": 0, "warnings": []}
     if opts.is_fixed_step:

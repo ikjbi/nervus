@@ -808,6 +808,7 @@ class MainWindow(QMainWindow):
         self.stop_time.setEnabled(not running)
         if running:
             self.status_label.setText("Simulating…")
+            self._open_scopes()  # at the start, so they plot live
         elif state in (SimulationState.FINISHED, SimulationState.STOPPED):
             res = self.sim_model.result
             info = ""
@@ -819,12 +820,12 @@ class MainWindow(QMainWindow):
             if res is not None and res.stats is not None and res.stats.warnings:
                 self.sim_model.set_error("Warning: " + "; ".join(res.stats.warnings), ())
                 self.diagnostics_dock.show()
-            self._open_scopes_after_run()
+            self._open_scopes()
         elif state is SimulationState.FAILED:
             self.status_label.setText("Simulation failed — see Diagnostics.")
             self.diagnostics_dock.show()
 
-    def _open_scopes_after_run(self) -> None:
+    def _open_scopes(self) -> None:
         """Open every scope the first time a model runs, like Simulink's 'open at simulation start'."""
         if self.scopes:
             return

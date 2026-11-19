@@ -26,6 +26,13 @@ When a Saturation hits its limit, a Switch changes input or a comparison flips, 
 were found. If a block chatters back and forth along a limit, detection is turned off for it and a warning
 appears in Diagnostics. You can switch the feature off in Simulation Settings.
 
+## Pacing
+
+A simple model simulates much faster than real time, so a live scope only shows the end. Set **Pacing** in
+Simulation Settings to run no faster than that multiple of real time: 1 = real time, 0.5 = half speed, 10 =
+ten times faster. Leave it empty to run as fast as possible (the default). In Python:
+`d.settings.pacing = 1.0`.
+
 Use **Stop Simulation** to end a run when a condition becomes true, and **Assertion** to fail the run when a
 condition that must always hold becomes false.
 
@@ -37,7 +44,7 @@ compute a new output every *T* seconds and hold it in between, just like a task 
 
 ## Scopes
 
-Every Scope opens after the first run. Each input gets its own colour, always in the same order. Hover over
+Every Scope opens when the first run starts and **plots live** while the simulation runs. Each input gets its own colour, always in the same order. Hover over
 the plot to read values at that time. Drag to pan, scroll to zoom, and press *Autoscale* to reset.
 *Show samples* marks the computed points, which is useful for discrete signals.
 

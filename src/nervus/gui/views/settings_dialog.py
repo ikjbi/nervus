@@ -52,6 +52,9 @@ class SettingsDialog(QDialog):
         self.atol = QLineEdit(format_value(settings.atol))
         self.zero_crossing = QCheckBox("Locate discontinuities exactly (zero-crossing detection)")
         self.zero_crossing.setChecked(settings.zero_crossing)
+        self.pacing = QLineEdit(format_value(settings.pacing) if settings.pacing else "")
+        self.pacing.setPlaceholderText("off (as fast as possible)")
+        self.pacing.setToolTip("1 = real time, 0.5 = half speed; to watch live scopes or to run against hardware")
         self.error = QLabel()
         self.error.setObjectName("error")
         self.error.setWordWrap(True)
@@ -66,6 +69,7 @@ class SettingsDialog(QDialog):
         form.addRow("Relative tolerance", self.rtol)
         form.addRow("Absolute tolerance", self.atol)
         form.addRow("", self.zero_crossing)
+        form.addRow("Pacing (× real time)", self.pacing)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self._accept)
         buttons.rejected.connect(self.reject)
@@ -104,6 +108,7 @@ class SettingsDialog(QDialog):
                 rtol=self._num(self.rtol) or 0.0,
                 atol=self._num(self.atol) or 0.0,
                 zero_crossing=self.zero_crossing.isChecked(),
+                pacing=self._num(self.pacing, optional=True) or 0.0,
             )
             s.validate()
         except ValueError as exc:

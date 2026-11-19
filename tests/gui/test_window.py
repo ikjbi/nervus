@@ -75,3 +75,20 @@ def test_help_browser_has_every_block(window) -> None:  # type: ignore[no-untype
     for type_id in block_types():
         assert f"block:{type_id}" in help_._pages
     assert "Gain" in help_.text.toPlainText()
+
+
+def test_scopes_update_live(window, qtbot, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    import nervus.sim.simulator as simulator
+
+    monkeypatch.setattr(simulator, "LIVE_INTERVAL", 0.0)
+    window.files.open(EXAMPLES / "mass_spring_damper_pid.nervus")
+    seen: list[int] = []
+    window.sim_model.liveResult.connect(lambda r: seen.append(r.t.size))
+    with qtbot.waitSignal(
+        window.sim_model.stateChanged, timeout=20000, check_params_cb=lambda s: s is SimulationState.FINISHED
+    ):
+        assert window.simulation.run()
+        assert window.scopes, "scopes open when the simulation starts"
+    assert len(seen) > 5 and seen == sorted(seen)  # growing partial results arrived before the end
+    scope = next(iter(window.scopes.values()))
+    assert len(scope._t) == len(window.sim_model.result.t)  # then the full result

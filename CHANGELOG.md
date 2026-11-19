@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Scopes open when a simulation starts and plot live while it runs; simulation pacing (Simulation Settings)
+  runs a model no faster than a multiple of real time.
 - Wires are routed around blocks; wire segments can be dragged (manual corners, saved with the model, moving
   a branch point moves all its wires), and right-click → Reset Route returns to automatic routing.
 - Editor: rotate blocks (Ctrl+Shift+R, vertical signal flow), resize them with a corner grip, and move them

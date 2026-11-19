@@ -30,6 +30,9 @@ class SimulationSettings:
     atol: float = 1e-8
     zero_crossing: bool = True
     """Locate discontinuities (saturation limits, switches, ...) exactly with variable-step solvers."""
+    pacing: float = 0.0
+    """Run no faster than ``pacing`` × real time (1 = real time, 0.5 = half speed), e.g. to watch live scopes or
+    to run a plant against real hardware. 0: as fast as possible."""
 
     @property
     def method(self) -> str:
@@ -52,9 +55,14 @@ class SimulationSettings:
             raise ValueError("max_step must be > 0")
         if self.rtol <= 0 or self.atol <= 0:
             raise ValueError("tolerances must be > 0")
+        if not (self.pacing >= 0 and math.isfinite(self.pacing)):
+            raise ValueError("pacing must be >= 0 (0 = as fast as possible)")
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        d = asdict(self)
+        if not self.pacing:
+            del d["pacing"]  # the default; keeps older model files unchanged
+        return d
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SimulationSettings:

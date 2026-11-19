@@ -32,6 +32,7 @@ class SimulationModel(QObject):
     runsChanged = Signal()
     progressChanged = Signal(float)  # fraction 0..1
     resultChanged = Signal(object)  # SimResult | None
+    liveResult = Signal(object)  # SimResult: the Scope signals so far, while a simulation runs
     errorOccurred = Signal(str, tuple)  # message, block names
 
     def __init__(self, parent: QObject | None = None) -> None:
@@ -70,6 +71,11 @@ class SimulationModel(QObject):
     def set_result(self, result: SimResult | None) -> None:
         self._result = result
         self.resultChanged.emit(result)
+
+    def set_live_result(self, partial: SimResult) -> None:
+        """Scope signals logged so far by a running simulation (not stored; the final result follows)."""
+        if self.is_running:
+            self.liveResult.emit(partial)
 
     def add_run(self, result: SimResult, label: str | None = None) -> Run:
         self._counter += 1

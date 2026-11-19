@@ -105,7 +105,7 @@ tests/
 - [x] Undo and redo for every edit (`QUndoStack` commands in controllers); copy / cut / paste
 - [x] Run, stop and solver settings dialog; simulation runs off the UI thread
 - [x] Scope windows with post-run plots (pyqtgraph), hover readout
-- [ ] Live scope updates while the simulation runs
+- [x] Live scope updates while the simulation runs (and simulation pacing: real time or a multiple of it)
 - [x] File: new, open, save, save as, recent files
 - [x] Error and diagnostics panel (algebraic loops, unconnected ports), with click to highlight the block
 - [x] Manual wire routing (drag segments, waypoints) and draggable branch points

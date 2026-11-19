@@ -17,6 +17,7 @@ from nervus.sim import CompiledModel, SimResult, compile_diagram, simulate
 
 class _Worker(QObject):
     progress = Signal(float)
+    partial = Signal(object)  # SimResult with the Scope signals so far
     finished = Signal(object)  # SimResult
     failed = Signal(str, tuple)
 
@@ -36,7 +37,11 @@ class _Worker(QObject):
     def run(self) -> None:
         try:
             result = simulate(
-                self.model, settings=self.settings, progress=self._on_progress, should_stop=self.stop.is_set
+                self.model,
+                settings=self.settings,
+                progress=self._on_progress,
+                should_stop=self.stop.is_set,
+                live=self.partial.emit,
             )
         except (NervusError, ValueError) as exc:
             blocks = getattr(exc, "blocks", ())
@@ -91,6 +96,7 @@ class SimulationController(QObject):
         worker.moveToThread(thread)
         thread.started.connect(worker.run)
         worker.progress.connect(self.sim_model.set_progress)
+        worker.partial.connect(self.sim_model.set_live_result)
         worker.finished.connect(self._on_finished)
         worker.failed.connect(self._on_failed)
         worker.finished.connect(thread.quit)

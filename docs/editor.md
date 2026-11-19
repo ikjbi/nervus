@@ -144,14 +144,17 @@ In Python: `block.meta["vertical"] = True` (with `flipped` for upwards), `block.
 ## Running a simulation
 
 Press **▶ Run** (⌘R / Ctrl+R / F5). The simulation runs in the background, so the window stays responsive,
-and **■ Stop** ends it early. Every Scope opens after the first run. Hover over a plot to read the values
-at that time:
+and **■ Stop** ends it early. Every Scope opens when the first run starts and plots live while the simulation
+runs. Hover over a plot to read the values at that time:
 
 ![A scope window showing the throttle-control response](images/scope.png)
 
 Solver, step size and tolerances are under **Simulation → Simulation Settings…** (⌘E):
 
 ![The simulation settings dialog](images/settings.png)
+
+**Pacing** runs the simulation no faster than a multiple of real time (1 = real time), so live scopes of a
+fast model can be watched; leave it empty to run as fast as possible.
 
 ## Built-in help
 

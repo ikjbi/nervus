@@ -22,6 +22,7 @@ from nervus.blocks import (
     UnitDelay,
     ZeroOrderHold,
 )
+from nervus.core import SimulationSettings
 
 
 @pytest.mark.parametrize("solver", ["auto", "RK23", "DOP853", "LSODA", "BDF", "rk4"])
@@ -250,3 +251,35 @@ def test_result_access(first_order: Diagram, tmp_path) -> None:  # type: ignore[
     assert header.startswith("t,")
     with pytest.raises(KeyError):
         res["missing"]
+
+
+def test_live_scope_snapshots(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    import nervus.sim.simulator as simulator
+    from nervus.blocks import Gain, Scope, Sine
+
+    monkeypatch.setattr(simulator, "LIVE_INTERVAL", 0.0)  # a snapshot after every step
+    d = Diagram()
+    d.chain(d.add(Sine(), name="s"), d.add(Gain(gain=2.0), name="g"), d.add(Scope(), name="scope"))
+    snaps = []
+    res = simulate(d, 1.0, solver="rk4", step=0.1, live=snaps.append)
+    assert len(snaps) == len(res.t)
+    assert list(snaps[3].input_keys) == ["scope"]  # only the Scope signals
+    assert snaps[3].t.size == 4 and np.array_equal(snaps[-1].inputs("scope")[0], res.inputs("scope")[0])
+
+
+def test_pacing_runs_in_real_time() -> None:
+    import time
+
+    from nervus.blocks import Scope, Sine
+
+    d = Diagram()
+    d.chain(d.add(Sine()), d.add(Scope()))
+    d.settings.pacing = 2.0  # twice real time: 0.6 s of simulation takes 0.3 s
+    t0 = time.monotonic()
+    simulate(d, 0.6, solver="rk4", step=0.05)
+    assert 0.28 <= time.monotonic() - t0 < 2.0
+    assert "pacing" in d.settings.to_dict()
+    d.settings.pacing = 0.0
+    assert "pacing" not in d.settings.to_dict()
+    with pytest.raises(ValueError, match="pacing"):
+        SimulationSettings(pacing=-1.0).validate()

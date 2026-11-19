@@ -14,7 +14,7 @@ from nervus.sim import SimResult
 
 
 class ScopeWindow(QWidget):
-    """One window per Scope block. Updates automatically after each run.
+    """One window per Scope block. Updates live while the simulation runs, and with the result of each run.
 
     Series colours come from the theme's categorical palette in a fixed order: input 1 is always the first
     colour. A legend is shown when there is more than one series.
@@ -56,6 +56,7 @@ class ScopeWindow(QWidget):
         self._t = np.zeros(0)
 
         sim.resultChanged.connect(self._on_result)
+        sim.liveResult.connect(self._on_result)  # live while the simulation runs
         ThemeManager.instance().themeChanged.connect(self._apply_theme)
         self._apply_theme(current_theme())
         self._on_result(sim.result)
