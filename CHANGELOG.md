@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Linear Analysis: Nyquist and root-locus tabs (with poles and zeros), the closed-loop step response, and PID
+  Tuning: the plant seen by a PID block (`plant_at`) and loop-shaping gains (`tune_pid`) with Apply to Block.
 - Analysis → Parameter Sweep / Monte Carlo: vary workspace variables, overlay a signal of every run, plot a
   metric against the parameters or as a histogram, export the table; `nervus.sweep.metric()` and `run_points()`.
 - Parameter fields complete workspace and mask variable names; Model Workspace → Find Usages lists where a

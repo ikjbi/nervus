@@ -88,3 +88,69 @@ def test_mass_spring_damper_poles() -> None:
     lin = linearize(d)
     poles = sorted(lin.poles(), key=lambda z: z.imag)
     np.testing.assert_allclose(poles, np.roots([1, 0.4, 4.0])[np.argsort(np.roots([1, 0.4, 4.0]).imag)], rtol=1e-5)
+
+
+def _third_order():  # type: ignore[no-untyped-def]
+    from scipy import signal as sps
+
+    from nervus.analysis import LinearModel
+
+    a, b, c, d = sps.tf2ss([1.0], [1.0, 3.0, 3.0, 1.0])  # 1 / (s + 1)^3
+    return LinearModel(a, b, c, d, ["u"], ["y"])
+
+
+def test_root_locus_and_nyquist() -> None:
+    from scipy import signal as sps
+
+    from nervus.analysis import LinearModel
+
+    a, b, c, d = sps.tf2ss([1.0], [1.0, 2.0, 0.0])  # 1 / (s (s + 2))
+    g = LinearModel(a, b, c, d, ["u"], ["y"])
+    _gains, poles = g.root_locus(np.array([0.0, 1.0, 5.0]))
+    np.testing.assert_allclose(sorted(poles[0].real), [-2.0, 0.0], atol=1e-9)  # open-loop poles at k = 0
+    np.testing.assert_allclose(poles[1], [-1.0, -1.0], atol=1e-6)  # s^2 + 2s + 1: double pole
+    np.testing.assert_allclose(sorted(poles[2].imag), [-2.0, 2.0], atol=1e-9)  # s^2 + 2s + 5 = (s+1)^2 + 4
+    re, im = g.nyquist(np.array([0.5, 1.0, 2.0]))
+    assert re.size == 6 and np.allclose(im[:3], -im[3:][::-1])  # mirrored at negative frequencies
+    _num, den = g.closed_loop()
+    np.testing.assert_allclose(np.roots(den), [-1.0, -1.0], atol=1e-6)
+
+
+def test_plant_seen_by_a_controller() -> None:
+    from nervus.analysis import plant_at
+    from nervus.blocks import PID, Constant, Gain, Scope, Sum, TransferFunction
+
+    d = Diagram()
+    err = d.add(Sum(signs="+-"), name="error")
+    pid = d.add(PID(P=1.0, I=0.5), name="pid")
+    plant = d.add(TransferFunction(numerator=[1.0], denominator=[1.0, 1.0]), name="plant")
+    d.connect(d.add(Constant(value=1.0), name="ref"), (err, 0))
+    d.chain(err, pid, d.add(Gain(gain=2.0), name="actuator"), plant)
+    d.connect(plant, (err, 1))
+    d.connect(plant, d.add(Scope()))
+    g = plant_at(d, "pid")
+    num, den = g.transfer_function()
+    assert np.polyval(num, 0.0) / np.polyval(den, 0.0) == pytest.approx(2.0, rel=1e-6)  # 2 / (s + 1)
+    np.testing.assert_allclose(g.poles(), [-1.0], atol=1e-6)
+    assert "pid" not in " ".join(g.states)  # the controller's own states are not part of the plant
+
+
+def test_tune_pid_meets_the_margins() -> None:
+    from scipy import signal as sps
+
+    from nervus.analysis import feedback, pid_transfer, tf_margins, tune_pid
+
+    g = _third_order()
+    for form in ("PI", "PID"):
+        gains = tune_pid(g, form, phase_margin=60.0)
+        cnum, cden = pid_transfer(gains.P, gains.I, gains.D, gains.N)
+        lnum, lden = np.polymul(cnum, [1.0]), np.polymul(cden, [1.0, 3.0, 3.0, 1.0])
+        m = tf_margins(lnum, lden)
+        assert m.phase_margin_deg >= 59.9 and m.gain_margin_db >= 6.0
+        assert 0.1 * gains.P * gains.crossover < gains.I  # real integral action (Ti = 4/wc)
+        _t, y = sps.step(feedback(lnum, lden), T=np.linspace(0, 40, 4000))
+        assert y[-1] == pytest.approx(1.0, abs=0.01) and y.max() < 1.1
+    pid, pi = tune_pid(g, "PID"), tune_pid(g, "PI")
+    assert pid.crossover > pi.crossover  # the derivative's phase lead allows a faster loop
+    with pytest.raises(ValueError, match="phase margin"):
+        tune_pid(g, "PI", phase_margin=170.0)  # a PI always lags 14° at crossover

@@ -434,7 +434,7 @@ class MainWindow(QMainWindow):
         return dlg
 
     def show_analysis(self) -> AnalysisDialog:
-        dlg = AnalysisDialog(self.diagram_model.root, self)
+        dlg = AnalysisDialog(self.diagram_model.root, self, self.editor)
         dlg.show()
         return dlg
 

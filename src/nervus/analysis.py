@@ -106,33 +106,98 @@ class LinearModel:
 
     def margins(self, input: int = 0, output: int = 0) -> Margins:
         """Stability margins of this model used as an **open loop** L(s) in a unity negative feedback loop."""
-        w = np.logspace(-4, 5, 20000)
-        _, mag, phase = self.bode(w, input, output)
-        gm, pm, wgc, wpc = np.inf, np.inf, np.nan, np.nan
-        cross = np.nonzero(np.diff(np.sign(mag)) != 0)[0]
-        if cross.size:
-            k = cross[0]
-            wgc = float(np.interp(0.0, [mag[k + 1], mag[k]], [w[k + 1], w[k]]))
-            ph = float(np.interp(wgc, w, phase))
-            pm = 180.0 + ph
-        shifted = phase + 180.0
-        pc = np.nonzero(np.diff(np.sign(shifted)) != 0)[0]
-        if pc.size:
-            k = pc[0]
-            wpc = float(
-                np.interp(
-                    0.0,
-                    sorted([shifted[k], shifted[k + 1]]),
-                    [w[k], w[k + 1]] if shifted[k] < shifted[k + 1] else [w[k + 1], w[k]],
-                )
-            )
-            gm = -float(np.interp(wpc, w, mag))
-        return Margins(gm, pm, wgc, wpc)
+        return tf_margins(*self.transfer_function(input, output))
+
+    def nyquist(self, w: Array | None = None, input: int = 0, output: int = 0) -> tuple[Array, Array]:
+        """Real and imaginary part of G(jω) for ω from -∞ to ∞ (the negative frequencies mirror the positive)."""
+        if w is None:
+            w = self.default_frequencies()
+        h = self.frequency_response(w, input, output)
+        h = np.concatenate([np.conj(h[::-1]), h])
+        return h.real, h.imag
+
+    def root_locus(
+        self, gains: Array | None = None, input: int = 0, output: int = 0
+    ) -> tuple[Array, npt.NDArray[np.complex128]]:
+        """Closed-loop poles of the loop k·G(s) in negative feedback for each gain k: ``(gains, poles)`` with
+        one row of poles per gain."""
+        return root_locus(*self.transfer_function(input, output), gains)
+
+    def closed_loop(self, input: int = 0, output: int = 0) -> tuple[Array, Array]:
+        """T(s) = G / (1 + G): this model as the open loop of a unity negative feedback loop."""
+        return feedback(*self.transfer_function(input, output))
 
     def step_response(self, t: Array | None = None, input: int = 0, output: int = 0) -> tuple[Array, Array]:
         num, den = self.transfer_function(input, output)
         tt, y = sps.step((num, den), T=t)
         return np.asarray(tt), np.asarray(y)
+
+
+def _pad(a: Array, n: int) -> Array:
+    return np.concatenate([np.zeros(n - a.size), a])
+
+
+def feedback(num: Array, den: Array) -> tuple[Array, Array]:
+    """Closed loop L / (1 + L) of an open loop L = num/den in unity negative feedback."""
+    n = max(num.size, den.size)
+    return np.asarray(num, dtype=float), _pad(np.asarray(den, dtype=float), n) + _pad(np.asarray(num, dtype=float), n)
+
+
+def root_locus(num: Array, den: Array, gains: Array | None = None) -> tuple[Array, npt.NDArray[np.complex128]]:
+    """Roots of den(s) + k·num(s) for each gain k (sorted so each pole follows a continuous branch)."""
+    if gains is None:  # around the gain that makes |k·G(0)| = 1 (or k = 1 for integrating plants)
+        g0 = abs(np.polyval(num, 0.0)) / abs(np.polyval(den, 0.0)) if np.polyval(den, 0.0) != 0 else np.inf
+        scale = 1.0 / g0 if 0 < g0 < np.inf else 1.0
+        gains = np.concatenate([[0.0], scale * np.logspace(-3, 3, 400)])
+    n = max(num.size, den.size)
+    pn, pd = _pad(np.asarray(num, float), n), _pad(np.asarray(den, float), n)
+    order = np.trim_zeros(pd, "f").size - 1
+    rows = []
+    prev: npt.NDArray[np.complex128] | None = None
+    for k in gains:
+        r = np.roots(np.trim_zeros(pd + k * pn, "f"))
+        r = np.concatenate([r, np.full(max(0, order - r.size), np.nan)])[:order].astype(np.complex128)
+        if prev is not None and r.size == prev.size:  # match each root to the nearest of the previous gain
+            left = list(range(r.size))
+            matched = np.empty_like(r)
+            for j, p in enumerate(prev):
+                if not left:
+                    break
+                d = [abs(r[q] - p) if np.isfinite(r[q]) and np.isfinite(p) else np.inf for q in left]
+                q = left.pop(int(np.argmin(d)))
+                matched[j] = r[q]
+            r = matched
+        rows.append(r)
+        prev = r
+    return np.asarray(gains, dtype=float), np.asarray(rows, dtype=np.complex128)
+
+
+def tf_margins(num: Array, den: Array) -> Margins:
+    """Gain and phase margins of the open loop num/den in unity negative feedback."""
+    w = np.logspace(-4, 5, 20000)
+    h = np.polyval(num, 1j * w) / np.polyval(den, 1j * w)
+    mag = 20 * np.log10(np.maximum(np.abs(h), 1e-300))
+    phase = np.degrees(np.unwrap(np.angle(h)))
+    gm, pm, wgc, wpc = np.inf, np.inf, np.nan, np.nan
+    cross = np.nonzero(np.diff(np.sign(mag)) != 0)[0]
+    if cross.size:
+        k = cross[0]
+        wgc = float(np.interp(0.0, [mag[k + 1], mag[k]], [w[k + 1], w[k]]))
+        ph = float(np.interp(wgc, w, phase))
+        pm = 180.0 + ph
+    shifted = phase + 180.0
+    pc = np.nonzero(np.diff(np.sign(shifted)) != 0)[0]
+    if pc.size:
+        k = pc[0]
+        wpc = float(
+            np.interp(
+                0.0,
+                sorted([shifted[k], shifted[k + 1]]),
+                [w[k], w[k + 1]] if shifted[k] < shifted[k + 1] else [w[k + 1], w[k]],
+            )
+        )
+        gm = -float(np.interp(wpc, w, mag))
+    return Margins(gm, pm, wgc, wpc)
 
 
 @dataclass
@@ -244,3 +309,192 @@ def trim(
         return OperatingPoint(sol.x, {b.name: float(v) for b, v in zip(ev.ins, u, strict=True)}, res)
     finally:
         ev.close()
+
+
+class _LoopEvaluator:
+    """Evaluates a model with the loop opened at one block: its output is replaced by an injected value."""
+
+    def __init__(self, diagram: Diagram, path: str, t: float) -> None:
+        self.ins = sorted((b for b in diagram.blocks if isinstance(b, Inport)), key=lambda b: b.params["port"])
+        for b in self.ins:
+            b.signal = Signal.constant(np.atleast_1d(np.asarray(b.params["value"], dtype=float)).tolist())
+        try:
+            self.model: CompiledModel = compile_diagram(diagram)
+        except Exception:
+            self.close()
+            raise
+        m = self.model
+        if path not in m.names:
+            self.close()
+            raise ModelError(f"no block {path!r} in the model")
+        self.i = m.names.index(path)
+        self.block = m.blocks[self.i]
+        if m.out_widths[self.i] != [1] or len(m.inputs[self.i]) < 1:
+            self.close()
+            raise ModelError(f"{path}: the loop can only be opened at a block with one scalar output and an input")
+        self.t = t
+        self.all_hits = frozenset(range(len(m.rates)))
+        self.u = 0.0
+        m.reset()
+        m.eval_outputs(t, m.xc0, self.all_hits, init=True)
+        self.u = float(m.y[self.i][0][0])  # the operating point: the controller output at the start
+        self.block.outputs = lambda t, u, xc, xd: [np.array([self.u])]  # type: ignore[method-assign]
+        own = m.xc_slices[self.i]
+        self.keep = np.array([k for k in range(m.xc0.size) if not own.start <= k < own.stop], dtype=int)
+        self.x_full = m.xc0.copy()
+
+    def close(self) -> None:
+        for b in self.ins:
+            b.signal = None
+        block = getattr(self, "block", None)
+        if block is not None and "outputs" in vars(block):
+            del block.outputs
+
+    def _eval(self, x: Array, u: float) -> None:
+        self.u = u
+        full = self.x_full.copy()
+        full[self.keep] = x
+        self.x_full_now = full
+        # Discrete blocks without state (sampling, gains) pass signals on, so a sampled sensor does not cut the loop.
+        self.model.eval_outputs(self.t, full, self.all_hits)
+
+    def f(self, x: Array, u: float) -> Array:
+        self._eval(x, u)
+        m = self.model
+        dx = np.zeros(m.xc0.size)
+        for i, b, sl, inputs in m._cont_states:
+            if i != self.i:
+                dx[sl] = b.derivatives(self.t, [m.y[s][p] for s, p in inputs], self.x_full_now[sl], m.xd[i])
+        return dx[self.keep]
+
+    def y(self, x: Array, u: float) -> float:
+        self._eval(x, u)
+        s, p = self.model.inputs[self.i][0]
+        return float(self.model.y[s][p][0])
+
+
+def plant_at(diagram: Diagram, block: str, t: float = 0.0, eps: float = 1e-6) -> LinearModel:
+    """The plant a controller block sees: the loop is opened at the block's output, and the result is the
+    transfer function G(s) from the controller output to the *negated* controller input, so that the loop is
+    C(s)·G(s) in negative feedback (the input of a controller is usually the error r - y).
+
+    ``block`` is the block's path, e.g. ``"ECU/idle_pi"``. Discrete blocks without state (sampling, gains) pass the
+    signal on; discrete blocks with state (delays, filters) are held at their initial output.
+    """
+    ev = _LoopEvaluator(diagram, block, t)
+    try:
+        m = ev.model
+        x = m.xc0[ev.keep].copy()
+        u0 = ev.u
+        n = x.size
+        a, b = np.zeros((n, n)), np.zeros((n, 1))
+        c, d = np.zeros((1, n)), np.zeros((1, 1))
+        for j in range(n):
+            h = eps * max(1.0, abs(x[j]))
+            xp, xm = x.copy(), x.copy()
+            xp[j] += h
+            xm[j] -= h
+            a[:, j] = (ev.f(xp, u0) - ev.f(xm, u0)) / (2 * h)
+            c[0, j] = -(ev.y(xp, u0) - ev.y(xm, u0)) / (2 * h)
+        h = eps * max(1.0, abs(u0))
+        b[:, 0] = (ev.f(x, u0 + h) - ev.f(x, u0 - h)) / (2 * h)
+        d[0, 0] = -(ev.y(x, u0 + h) - ev.y(x, u0 - h)) / (2 * h)
+        states = []
+        for i, sl in enumerate(m.xc_slices):
+            if i != ev.i:
+                states += [m.names[i] + (f"[{q}]" if sl.stop - sl.start > 1 else "") for q in range(sl.stop - sl.start)]
+        return LinearModel(a, b, c, d, [f"{block} (output)"], [f"-{block} (input)"], states)
+    finally:
+        ev.close()
+
+
+@dataclass
+class PIDGains:
+    """Gains for a PID Controller block (parallel form), and what they achieve with the plant."""
+
+    P: float
+    I: float  # noqa: E741
+    D: float
+    N: float
+    crossover: float
+    """Gain crossover frequency [rad/s]: roughly the closed-loop bandwidth."""
+    phase_margin: float
+    gain_margin_db: float
+
+    def as_params(self) -> dict[str, float]:
+        return {"P": self.P, "I": self.I, "D": self.D, "N": self.N}
+
+
+def pid_transfer(kp: float, ki: float, kd: float = 0.0, n: float = 100.0) -> tuple[Array, Array]:
+    """C(s) = P + I/s + D·N·s/(s + N) (``kp``, ``ki``, ``kd``, ``n``), as numerator and denominator."""
+    if kd == 0:
+        return np.array([kp, ki], dtype=float), np.array([1.0, 0.0])
+    num = np.polyadd(np.polyadd(np.polymul([kp], [1.0, n, 0.0]), np.polymul([ki], [1.0, n])), [kd * n, 0.0, 0.0])
+    return np.asarray(num, dtype=float), np.array([1.0, n, 0.0])
+
+
+def _pid_candidate(
+    gnum: Array, gden: Array, form: str, wc: float, ratio: float, phase_margin: float, min_gm: float
+) -> PIDGains | None:
+    """The controller with Ti = ratio/ωc (and Td = Ti/4 for a PID) and |C·G(jωc)| = 1, if it meets the targets."""
+    g = np.polyval(gnum, 1j * wc) / np.polyval(gden, 1j * wc)
+    if not np.isfinite(g) or abs(g) < 1e-14:
+        return None
+    ti = ratio / wc
+    td = ti / 4.0 if form == "PID" else 0.0
+    n = 10.0 * wc
+    shape = pid_transfer(1.0, 1.0 / ti, td, n)  # the controller with Kp = 1
+    c1 = np.polyval(shape[0], 1j * wc) / np.polyval(shape[1], 1j * wc)
+    kp = float(1.0 / abs(c1 * g))
+    cnum, cden = pid_transfer(kp, kp / ti, kp * td, n)
+    lnum = np.asarray(np.polymul(cnum, gnum), dtype=float)
+    lden = np.asarray(np.polymul(cden, gden), dtype=float)
+    cl = np.roots(np.trim_zeros(feedback(lnum, lden)[1], "f"))
+    if cl.size and np.max(cl.real) >= -1e-9:
+        return None
+    m = tf_margins(lnum, lden)
+    if m.phase_margin_deg < phase_margin or m.gain_margin_db < min_gm:
+        return None
+    return PIDGains(kp, kp / ti, kp * td, n, wc, m.phase_margin_deg, m.gain_margin_db)
+
+
+def tune_pid(
+    plant: LinearModel,
+    form: str = "PI",
+    phase_margin: float = 60.0,
+    max_crossover: float | None = None,
+    min_gain_margin_db: float = 6.0,
+) -> PIDGains:
+    """Tune a PI or PID controller for ``plant`` (as from :func:`plant_at`) by loop shaping.
+
+    The controller shape is set relative to the crossover frequency ωc: a PI has its zero at ωc/4
+    (Ti = 4/ωc); a PID has Ti = 4·Td = 4/ωc and its derivative filter at 10·ωc. The proportional gain makes
+    |C·G| = 1 at ωc. The result is the fastest ωc that still gives ``phase_margin`` degrees, at least
+    ``min_gain_margin_db`` and a stable closed loop. If that leaves phase margin to spare (because ωc reached
+    its limit), the integral action is made faster (smaller Ti) until the margin is used.
+
+    ``max_crossover`` [rad/s] limits the speed (default: ten times the fastest pole or zero of the plant); for
+    a discrete controller use about a twentieth of the sample rate, 2π/(20·Ts)."""
+    if form not in ("PI", "PID"):
+        raise ValueError("form must be 'PI' or 'PID'")
+    gnum, gden = plant.transfer_function()
+    corners = np.abs(np.concatenate([plant.poles(), plant.zeros()]))
+    corners = corners[corners > 1e-9]
+    cap = max_crossover if max_crossover is not None else (10.0 * float(np.max(corners)) if corners.size else 10.0)
+    lo = float(np.min(corners)) / 100 if corners.size else 1e-3
+    best: PIDGains | None = None
+    for wc in (float(w) for w in np.logspace(np.log10(min(lo, cap / 1e4)), np.log10(cap), 300)):
+        found = _pid_candidate(gnum, gden, form, wc, 4.0, phase_margin, min_gain_margin_db)
+        if found is not None:
+            best = found
+    if best is None:
+        raise ValueError(
+            f"no {form} gains give {phase_margin:g}° phase margin and a stable loop; try a smaller phase margin, "
+            "the other controller form, or check the plant (is the sign of the feedback right?)"
+        )
+    for ratio in np.linspace(3.5, 0.5, 13):  # use spare phase margin for faster integral action
+        faster = _pid_candidate(gnum, gden, form, best.crossover, float(ratio), phase_margin, min_gain_margin_db)
+        if faster is None:
+            break
+        best = faster
+    return best
