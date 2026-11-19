@@ -58,6 +58,39 @@ ign = d.add(Interpolation(dimensions=2, table="ign_map"))  # inputs: k1, f1, k2,
 The result is identical to a 2-D Lookup Table with linear interpolation, in the simulation and in the
 generated C. Hover over the Interpolation block's ports to see which input is which.
 
+## Data types and constants for the ECU
+
+Two columns of the Model Workspace control how a variable ends up in generated C code:
+
+| Column | Meaning | Example |
+|---|---|---|
+| **Type** | the storage type in C: `double` (default), `single`, `int8` … `uint32`, `boolean`, or fixed point `fixdt(signed, bits, fraction_bits)` | an ignition map as `fixdt(1,16,7)`: 2 bytes per value, steps of 1/128 ° |
+| **Cal.** | ticked: calibratable, in RAM and in the A2L file. Unticked: a constant in ROM (flash), not in the A2L file | a sensor's fixed conversion factor |
+
+Smaller types matter on an ECU: a 16 × 16 map takes 2 KB as `double` but 512 bytes as `int16`. The
+simulation uses exactly the value the type can hold (hover over the value to see it), so the model and the
+generated C stay bit-true. In C, the parameter is stored as integers and scaled where a block reads it:
+
+```c
+/* ign_map: fixdt(1,16,7): value = 0.0078125 * stored + 0 */
+int16_T ign_map[12];
+...
+y = ((real_T)ign_P.ign_map[(r) * 3u + (c)] * 0.0078125 + 0.0) ...
+```
+
+The A2L file describes the stored type (e.g. `SWORD`) and the scaling (`COEFFS_LINEAR`), so a calibration
+tool such as INCA or CANape shows and edits physical values. Typed parameters work for scalar parameters
+(gains, limits, thresholds) and for lookup tables and their breakpoints. Matrix parameters (matrix gains,
+state-space matrices) must stay `double`.
+
+```python
+from nervus.core import Variable
+
+ws.add(Variable("ign_map", ign, "Ignition advance", "°", data_type="fixdt(1,16,7)"))
+ws.add(Variable("speed_axis", [800, 1500, 3000, 6000], unit="rpm", data_type="uint16"))
+ws.add(Variable("k_sensor", 0.0125, "ADC to volts", "V", calibratable=False))  # const, in ROM
+```
+
 ## Parameter sets (calibrations)
 
 A **parameter set** is a file (`.nervcal`) with values for some or all of the variables:

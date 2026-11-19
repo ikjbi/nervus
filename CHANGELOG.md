@@ -19,6 +19,10 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Workspace variables have a data type (`int16`, `fixdt(1,16,7)`, ...) and a calibratable flag (Type and Cal.
+  columns). Typed parameters are stored as integers in C and scaled where they are read (scalars, lookup
+  tables, breakpoints); the simulation uses the stored values (bit-true); the A2L file has the matching record
+  layouts and linear conversions. Non-calibratable variables become constants in ROM (`const <name>_C`).
 - C code with one function per task for an RTOS (`generate_c(..., tasks=True)`, a checkbox in the Generate C
   dialog), an RTOS `main_example.c`, and the Rate Transition block (fast_to_slow, slow_to_fast) that makes data
   transfer between tasks deterministic; missing transitions are reported. Blocks can declare the rate their

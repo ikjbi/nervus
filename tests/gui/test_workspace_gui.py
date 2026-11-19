@@ -70,3 +70,20 @@ def test_property_panel_shows_expression(window) -> None:  # type: ignore[no-unt
     ed.set_params(g, {"gain": "Kp*2"})
     window.scene.select_blocks([g.name])
     assert window.properties._editors["gain"].text() == "Kp*2"
+
+
+def test_type_and_calibratable_columns(window) -> None:  # type: ignore[no-untyped-def]
+    from PySide6.QtCore import Qt
+
+    from nervus.gui.views.workspace_panel import CAL_COL, TYPE_COL
+
+    ed = window.editor
+    var = ed.add_variable()
+    panel = window.workspace_panel
+    row = 0
+    panel.table.item(row, TYPE_COL).setText("int16")
+    assert window.diagram_model.root.workspace.variable(var.name).data_type == "int16"
+    panel.table.item(row, CAL_COL).setCheckState(Qt.CheckState.Unchecked)
+    assert window.diagram_model.root.workspace.variable(var.name).calibratable is False
+    panel.table.item(row, TYPE_COL).setText("int17")  # invalid: rejected, the old type stays
+    assert window.diagram_model.root.workspace.variable(var.name).data_type == "int16"

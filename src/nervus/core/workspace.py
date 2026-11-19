@@ -53,11 +53,33 @@ class Variable:
     unit: str = ""
     min: float | None = None
     max: float | None = None
+    data_type: str = "double"
+    """How the value is stored in generated C, e.g. ``int16`` or ``fixdt(1,16,7)``. The simulation uses the
+    value the type can hold, so it stays bit-true with the C code."""
+    calibratable: bool = True
+    """``False``: a constant in ROM (flash) in generated C, not in the calibration (A2L) file."""
 
     def __post_init__(self) -> None:
         if not self.name.isidentifier():
             raise ParameterError(f"invalid variable name {self.name!r}: use letters, digits and _")
         self.value = _normalize(self.value)
+        self.data_type = (self.data_type or "double").strip()
+        from nervus.core.datatypes import parse_datatype
+
+        if parse_datatype(self.data_type) is None:  # raises ParameterError for an unknown type
+            raise ParameterError(f"variable {self.name!r}: 'inherit' is not a data type for a variable")
+
+    def quantize(self, value: Any) -> Any:
+        """``value`` as the variable's data type can hold it (unchanged for ``double``)."""
+        if self.data_type == "double":
+            return value
+        from nervus.core.datatypes import parse_datatype
+
+        dtype = parse_datatype(self.data_type)
+        if dtype is None:
+            return value
+        q = dtype.quantize(np.asarray(value, dtype=float))
+        return q.tolist() if np.ndim(q) else float(q)
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {"name": self.name, "value": _jsonable(self.value)}
@@ -67,6 +89,10 @@ class Variable:
         for k in ("min", "max"):
             if getattr(self, k) is not None:
                 d[k] = getattr(self, k)
+        if self.data_type != "double":
+            d["data_type"] = self.data_type
+        if not self.calibratable:
+            d["calibratable"] = False
         return d
 
     @classmethod
@@ -81,6 +107,8 @@ class Variable:
             unit=str(d.get("unit", "")),
             min=d.get("min"),
             max=d.get("max"),
+            data_type=str(d.get("data_type", "double")),
+            calibratable=bool(d.get("calibratable", True)),
         )
 
     @property
@@ -181,7 +209,7 @@ class Workspace:
                     raise ModelError(f"workspace variable {name!r}: {exc}") from exc
             if isinstance(value, np.ndarray):
                 value = value.tolist()
-            ns[name] = value
+            ns[name] = var.quantize(value)
         return ns
 
     def check_ranges(self, ns: Mapping[str, Any] | None = None) -> list[str]:

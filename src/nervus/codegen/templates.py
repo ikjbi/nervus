@@ -8,6 +8,7 @@ is the element index (``"0"`` for scalars, ``"i"`` inside a loop).
 from __future__ import annotations
 
 import ast
+from collections.abc import Callable
 
 import numpy as np
 
@@ -526,20 +527,21 @@ def _discrete_pid(e: Emitter) -> BlockCode:
 # ---------------------------------------------------------------------------- lookup tables
 
 
-def _locate_c(x: str, bp: str, n: int, interp: str, extrap: str, i_var: str, f_var: str) -> list[str]:
-    """C statements computing interval index ``i_var`` and fraction ``f_var``, matching lookup.locate()."""
+def _locate_c(x: str, bp: Callable[[str], str], n: int, interp: str, extrap: str, i_var: str, f_var: str) -> list[str]:
+    """C statements computing interval index ``i_var`` and fraction ``f_var``, matching lookup.locate().
+    ``bp(ix)`` is the C expression of breakpoint ``ix`` (scaled if the breakpoints are stored as integers)."""
     lines = [f"{i_var} = 0u;"]
     if n > 2:  # with two breakpoints there is only one interval
-        lines.append(f"while (({i_var} < {n - 2}u) && ({x} >= {bp}[{i_var} + 1u])) {{ {i_var}++; }}")
+        lines.append(f"while (({i_var} < {n - 2}u) && ({x} >= {bp(f'{i_var} + 1u')})) {{ {i_var}++; }}")
     lines += [
-        f"{f_var} = ({x} - {bp}[{i_var}]) / ({bp}[{i_var} + 1u] - {bp}[{i_var}]);",
+        f"{f_var} = ({x} - {bp(i_var)}) / ({bp(f'{i_var} + 1u')} - {bp(i_var)});",
     ]
     if extrap == "clip":
         lines.append(f"{f_var} = fmin(fmax({f_var}, 0.0), 1.0);")
     if interp == "nearest":
         lines.append(f"{f_var} = (fmin(fmax({f_var}, 0.0), 1.0) >= 0.5) ? 1.0 : 0.0;")
     elif interp == "flat":
-        lines.append(f"{f_var} = ({x} >= {bp}[{n - 1}]) ? 1.0 : ((({f_var}) >= 1.0) ? 1.0 : 0.0);")
+        lines.append(f"{f_var} = ({x} >= {bp(str(n - 1))}) ? 1.0 : ((({f_var}) >= 1.0) ? 1.0 : 0.0);")
     return lines
 
 
@@ -547,16 +549,19 @@ def _locate_c(x: str, bp: str, n: int, interp: str, extrap: str, i_var: str, f_v
 def _lookup1d(e: Emitter) -> BlockCode:
     bp_arr, tab_arr = e.block._data()  # type: ignore[attr-defined]
     n = bp_arr.size
-    bp, tab = e.param("breakpoints", bp_arr), e.param("table", tab_arr)
+    bp, tab = e.param("breakpoints", bp_arr, typed=True), e.param("table", tab_arr, typed=True)
     interp, extrap = e.block.params["interpolation"], e.block.params["extrapolation"]
+
+    def t(ix: str) -> str:
+        return e.at(tab, ix)
 
     def body(ix: str) -> list[str]:
         return [
             "{",
             "    uint32_T k;",
             "    real_T f;",
-            *[f"    {x}" for x in _locate_c(e.u(0, ix), bp, n, interp, extrap, "k", "f")],
-            f"    {e.y(0, ix)} = {tab}[k] + f * ({tab}[k + 1u] - {tab}[k]);",
+            *[f"    {x}" for x in _locate_c(e.u(0, ix), lambda j: e.at(bp, j), n, interp, extrap, "k", "f")],
+            f"    {e.y(0, ix)} = {t('k')} + f * ({t('k + 1u')} - {t('k')});",
             "}",
         ]
 
@@ -566,7 +571,8 @@ def _lookup1d(e: Emitter) -> BlockCode:
 @template("lookup.prelookup")
 def _prelookup(e: Emitter) -> BlockCode:
     bp_arr = e.block._bp()  # type: ignore[attr-defined]
-    bp = e.param("breakpoints", bp_arr)
+    bp = e.param("breakpoints", bp_arr, typed=True)
+    extrap = e.block.params["extrapolation"]
 
     def body(ix: str) -> list[str]:
         return [
@@ -575,7 +581,7 @@ def _prelookup(e: Emitter) -> BlockCode:
             "    real_T f;",
             *[
                 f"    {x}"
-                for x in _locate_c(e.u(0, ix), bp, bp_arr.size, "linear", e.block.params["extrapolation"], "k", "f")
+                for x in _locate_c(e.u(0, ix), lambda j: e.at(bp, j), bp_arr.size, "linear", extrap, "k", "f")
             ],
             f"    {e.y(0, ix)} = (real_T)k;",
             f"    {e.y(1, ix)} = f;",
@@ -588,7 +594,7 @@ def _prelookup(e: Emitter) -> BlockCode:
 @template("lookup.interpolation")
 def _interpolation(e: Emitter) -> BlockCode:
     tab_arr = e.block._table()  # type: ignore[attr-defined]
-    tab = e.param("table", tab_arr.ravel())  # row-major
+    tab = e.param("table", tab_arr.ravel(), typed=True)  # row-major
 
     def index(port: int, ix: str, n: int) -> str:
         # The index comes from a Prelookup (an integer stored as real_T); clamp it like the simulation does.
@@ -602,7 +608,7 @@ def _interpolation(e: Emitter) -> BlockCode:
                 "{",
                 f"    uint32_T k = {index(0, ix, n)};",
                 f"    real_T f = {e.u(1, ix)};",
-                f"    {e.y(0, ix)} = {tab}[k] + f * ({tab}[k + 1u] - {tab}[k]);",
+                f"    {e.y(0, ix)} = {e.at(tab, 'k')} + f * ({e.at(tab, 'k + 1u')} - {e.at(tab, 'k')});",
                 "}",
             ]
 
@@ -610,7 +616,7 @@ def _interpolation(e: Emitter) -> BlockCode:
     nr, nc = tab_arr.shape
 
     def t(i: str, j: str) -> str:
-        return f"{tab}[({i}) * {nc}u + ({j})]"
+        return e.at(tab, f"({i}) * {nc}u + ({j})")
 
     def body2(ix: str) -> list[str]:
         return [
@@ -631,20 +637,21 @@ def _interpolation(e: Emitter) -> BlockCode:
 def _lookup2d(e: Emitter) -> BlockCode:
     r_arr, c_arr, t_arr = e.block._data()  # type: ignore[attr-defined]
     nr, nc = r_arr.size, c_arr.size
-    rb, cb = e.param("row_breakpoints", r_arr), e.param("column_breakpoints", c_arr)
-    tab = e.param("table", t_arr.ravel())  # row-major
+    rb = e.param("row_breakpoints", r_arr, typed=True)
+    cb = e.param("column_breakpoints", c_arr, typed=True)
+    tab = e.param("table", t_arr.ravel(), typed=True)  # row-major
     interp, extrap = e.block.params["interpolation"], e.block.params["extrapolation"]
 
     def t(i: str, j: str) -> str:
-        return f"{tab}[({i}) * {nc}u + ({j})]"
+        return e.at(tab, f"({i}) * {nc}u + ({j})")
 
     def body(ix: str) -> list[str]:
         return [
             "{",
             "    uint32_T r, c;",
             "    real_T fr, fc;",
-            *[f"    {x}" for x in _locate_c(e.u(0, ix), rb, nr, interp, extrap, "r", "fr")],
-            *[f"    {x}" for x in _locate_c(e.u(1, ix), cb, nc, interp, extrap, "c", "fc")],
+            *[f"    {x}" for x in _locate_c(e.u(0, ix), lambda j: e.at(rb, j), nr, interp, extrap, "r", "fr")],
+            *[f"    {x}" for x in _locate_c(e.u(1, ix), lambda j: e.at(cb, j), nc, interp, extrap, "c", "fc")],
             f"    {e.y(0, ix)} = (1.0 - fr) * (1.0 - fc) * {t('r', 'c')} + (1.0 - fr) * fc * {t('r', 'c + 1u')}",
             f"        + fr * (1.0 - fc) * {t('r + 1u', 'c')} + fr * fc * {t('r + 1u', 'c + 1u')};",
             "}",

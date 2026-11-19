@@ -27,6 +27,13 @@ Call `<name>_initialize()` once, then every `<NAME>_BASE_PERIOD` seconds:
 Parameters are in the struct `<name>_P`. A parameter written as a workspace variable (`Kp`) becomes one
 shared field `<name>_P.Kp` that a calibration tool can change while the code runs.
 
+## Typed parameters and constants
+
+Workspace variables can be stored as integer or fixed-point types and as constants in ROM (the **Type** and
+**Cal.** columns of the Model Workspace, see *Workspace and calibrations*). Calibratable parameters are in
+`<name>_P`, ordered by size (8, 4, 2, 1 bytes) so the struct has no padding and the A2L offsets are exact.
+Constants are in `const <name>_C`, which the linker puts in flash, and they are not in the A2L file.
+
 ## Calibration file (A2L)
 
 The code generator also writes `<name>.a2l`, the file calibration tools such as INCA or CANape read. It

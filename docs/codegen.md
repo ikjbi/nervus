@@ -135,6 +135,13 @@ a2l = code.files["ECU.a2l"]
 a2l = fill_addresses(a2l, symbol_addresses("build/ecu.elf"))  # uses `nm`
 ```
 
+### Typed parameters and constants
+
+Workspace variables can be stored as integer or fixed-point types and as constants in ROM (the **Type** and
+**Cal.** columns of the Model Workspace, see *Workspace and calibrations*). Calibratable parameters are in
+`<name>_P`, ordered by size (8, 4, 2, 1 bytes) so the struct has no padding and the A2L offsets are exact.
+Constants are in `const <name>_C`, which the linker puts in flash, and they are not in the A2L file.
+
 ## Multi-rate models
 
 When blocks run at different rates (e.g. 10 ms and 50 ms), `<name>_step()` is called at the **base rate**

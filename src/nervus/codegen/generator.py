@@ -28,7 +28,7 @@ from nervus import __version__
 from nervus.blocks.ports import Inport, Outport, PortProxy
 from nervus.codegen.a2l import generate_a2l
 from nervus.core.block import Block
-from nervus.core.datatypes import DOUBLE, DataType
+from nervus.core.datatypes import DOUBLE, DataType, parse_datatype
 from nervus.core.diagram import Diagram
 from nervus.core.errors import ModelError
 from nervus.sim.compiler import CompiledModel, Kind, compile_diagram
@@ -61,6 +61,27 @@ class _Field:
     size: int
     init: list[float]
     comment: str = ""
+    dtype: DataType = DOUBLE
+    """Storage type of a parameter (scaled to physical values where it is read)."""
+    const: bool = False
+    """A constant in ROM (not calibratable)."""
+
+    @property
+    def nbytes(self) -> int:
+        return _C_SIZES.get(self.dtype.c_type, 8)
+
+    def stored(self) -> list[str]:
+        """The C initialiser values: stored integers for fixed point, physical values otherwise."""
+        d = self.dtype
+        if d.kind == "fixed":
+            return [str(round((v - d.bias) / d.slope)) for v in self.init]
+        if d.kind == "boolean":
+            return ["1" if v else "0" for v in self.init]
+        return [c_float(v) for v in self.init]
+
+
+_C_SIZES = {"real_T": 8, "real32_T": 4, "boolean_T": 1, "int8_T": 1, "uint8_T": 1, "int16_T": 2, "uint16_T": 2,
+            "int32_T": 4, "uint32_T": 4}  # fmt: skip
 
 
 @dataclass
@@ -100,19 +121,44 @@ class Emitter:
 
     # parameters and states --------------------------------------------------
 
-    def param(self, pname: str, value: Any = None) -> str:
-        """A tunable parameter field; returns the C expression of the field (an array name or scalar)."""
+    def param(self, pname: str, value: Any = None, typed: bool = False) -> str:
+        """A parameter field; returns the C expression of the array. Read its elements with :meth:`at`.
+
+        Parameters that are bare workspace variables become shared fields named after the variable, with the
+        variable's data type and calibratable flag. ``typed=False``: the template reads the array directly, so
+        the variable must be ``double``.
+        """
         value = self.block.params[pname] if value is None else value
         arr = np.atleast_1d(np.asarray(value, dtype=float)).ravel()
         expr = self.block.expressions.get(pname, "").strip()
+        dtype, const = DOUBLE, False
         if expr.isidentifier() and expr in self.gen.namespace and not self._masked(expr):
             fname = c_identifier(expr)  # shared calibration parameter named after the variable
             comment = f"workspace variable {expr}"
+            var = self.gen.model.diagram.root.workspace.variable(expr)
+            dtype, const = parse_datatype(var.data_type) or DOUBLE, not var.calibratable
+            if not dtype.is_double and not typed:
+                raise CodegenError(
+                    f"{self.path}: parameter {pname!r} uses {expr} stored as {var.data_type}; this block needs a "
+                    "double parameter here (use data type double for this variable)",
+                    (self.path,),
+                )
         else:
             fname = f"{self.cname}_{pname}"
             comment = f"{self.path}: {pname}" + (f" = {expr}" if expr else "")
-        self.gen.add_param(fname, arr, comment)
-        return f"{self.gen.prefix}_P.{fname}"
+        self.gen.add_param(fname, arr, comment, dtype, const)
+        return f"{self.gen.prefix}_{'C' if const else 'P'}.{fname}"
+
+    def at(self, field_expr: str, ix: str) -> str:
+        """Element ``ix`` of a parameter array as a physical real_T value (scaled for fixed-point storage)."""
+        f = self.gen.params[field_expr.split(".", 1)[1]]
+        raw = f"{field_expr}[{ix}]"
+        d = f.dtype
+        if d.is_double:
+            return raw
+        if d.kind != "fixed" or d.is_integer:
+            return f"((real_T){raw})"
+        return f"((real_T){raw} * {c_float(d.slope)} + {c_float(d.bias)})"
 
     def _masked(self, name: str) -> bool:
         """Whether ``name`` is a mask parameter of a subsystem around this block (then it is not shared)."""
@@ -126,9 +172,9 @@ class Emitter:
 
     def p(self, pname: str, ix: str = "i", value: Any = None) -> str:
         """Element ``ix`` of a parameter (or the scalar), with scalar expansion."""
-        field_expr = self.param(pname, value)
+        field_expr = self.param(pname, value, typed=True)
         size = self.gen.params[field_expr.split(".", 1)[1]].size
-        return f"{field_expr}[0]" if size == 1 else f"{field_expr}[{ix}]"
+        return self.at(field_expr, "0" if size == 1 else ix)
 
     def state(self, sname: str, init: Iterable[float], comment: str = "") -> str:
         values = [float(v) for v in np.atleast_1d(np.asarray(list(init), dtype=float))]
@@ -297,12 +343,18 @@ class CGenerator:
     def signal_var(self, block: int, port: int) -> str:
         return f"{self.prefix}_B.{self.cnames[block]}" + (f"_o{port}" if len(self.model.out_widths[block]) > 1 else "")
 
-    def add_param(self, fname: str, values: np.ndarray, comment: str) -> None:
+    def add_param(
+        self, fname: str, values: np.ndarray, comment: str, dtype: DataType = DOUBLE, const: bool = False
+    ) -> None:
         existing = self.params.get(fname)
         vals = [float(v) for v in values]
         if existing is not None and existing.init != vals:
             raise CodegenError(f"parameter {fname} has conflicting values ({existing.init} vs {vals})")
-        self.params[fname] = _Field(fname, len(vals), vals, comment)
+        self.params[fname] = _Field(fname, len(vals), vals, comment, dtype, const)
+
+    def param_fields(self, const: bool = False) -> list[_Field]:
+        """Calibratable (or constant) parameters, largest types first so the struct has no padding."""
+        return sorted((f for f in self.params.values() if f.const == const), key=lambda f: -f.nbytes)
 
     # ------------------------------------------------------------------ checks
 
@@ -403,12 +455,16 @@ class CGenerator:
             " */",
         ]
 
-    def _struct(self, name: str, fields: list[tuple[str, int, str]]) -> list[str]:
+    def _struct(
+        self, name: str, fields: list[tuple[str, int, str]], types: dict[str, DataType] | None = None
+    ) -> list[str]:
         lines = ["typedef struct {"]
         if not fields:
             lines.append("    real_T dummy[1]; /* (empty) */")
         for fname, size, comment in fields:
             dtype = getattr(self, "io_types", {}).get(fname) if name.endswith(("_U_t", "_Y_t")) else None
+            if types is not None:
+                dtype = types.get(fname)
             ctype = dtype.c_type if dtype is not None else "real_T"
             note = comment or (dtype.name if dtype is not None and not dtype.is_double else "")
             if dtype is not None and dtype.is_fixed and not dtype.is_integer:
@@ -455,7 +511,24 @@ class CGenerator:
             *self._struct(f"{pfx}_Y_t", [(n, w, "") for n, w in outs]),
             "",
             "/* Tunable parameters (calibration) */",
-            *self._struct(f"{pfx}_P_t", [(f.name, f.size, f.comment) for f in self.params.values()]),
+            *self._struct(
+                f"{pfx}_P_t",
+                [(f.name, f.size, f.comment) for f in self.param_fields()],
+                {f.name: f.dtype for f in self.params.values()},
+            ),
+            *(
+                [
+                    "",
+                    "/* Constant parameters (in ROM, not calibratable) */",
+                    *self._struct(
+                        f"{pfx}_C_t",
+                        [(f.name, f.size, f.comment) for f in self.param_fields(const=True)],
+                        {f.name: f.dtype for f in self.params.values()},
+                    ),
+                ]
+                if self.param_fields(const=True)
+                else []
+            ),
             "",
             "/* Block signals */",
             *self._struct(f"{pfx}_B_t", signals),
@@ -466,6 +539,7 @@ class CGenerator:
             f"extern {pfx}_U_t {pfx}_U;",
             f"extern {pfx}_Y_t {pfx}_Y;",
             f"extern {pfx}_P_t {pfx}_P;",
+            *([f"extern const {pfx}_C_t {pfx}_C;"] if self.param_fields(const=True) else []),
             f"extern {pfx}_B_t {pfx}_B;",
             f"extern {pfx}_DW_t {pfx}_DW;",
             "",
@@ -483,9 +557,11 @@ class CGenerator:
         m = self.model
 
         def init_values(f: _Field) -> str:
-            return "{" + ", ".join(c_float(v) for v in f.init) + "}"
+            return "{" + ", ".join(f.stored()) + "}"
 
-        param_init = ",\n".join(f"    {init_values(f)} /* {f.name} */" for f in self.params.values()) or "    {0.0}"
+        param_init = ",\n".join(f"    {init_values(f)} /* {f.name} */" for f in self.param_fields()) or "    {0.0}"
+        consts = self.param_fields(const=True)
+        const_init = ",\n".join(f"    {init_values(f)} /* {f.name} */" for f in consts)
         multirate = len(steps) > 1 or any(n > 1 or off for n, off in steps)
 
         body_out: list[str] = []
@@ -520,6 +596,7 @@ class CGenerator:
             f"{pfx}_P_t {pfx}_P = {{",
             param_init,
             "};",
+            *([f"const {pfx}_C_t {pfx}_C = {{", const_init, "};"] if consts else []),
             f"{pfx}_B_t {pfx}_B;",
             f"{pfx}_DW_t {pfx}_DW;",
             "",

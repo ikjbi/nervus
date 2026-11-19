@@ -192,7 +192,7 @@ tests/
 - [ ] Generated code follows MISRA C guidelines (checked with cppcheck's MISRA addon); compiles with
       `-Wall -Wextra -Werror -pedantic` already
 - [ ] Generate code for blocks with offsets exactly like the simulation's first step
-- [ ] Optional `const` parameters (ROM) instead of calibratable RAM
+- [x] Optional `const` parameters (ROM) instead of calibratable RAM (variable not calibratable)
 - [ ] Reusable functions for subsystems instead of inlining
 - [x] GUI: Code → Generate C Code, with a report and "run SIL comparison"
 - [x] Example: an ECU-style project folder with a `main.c` that calls `model_step()` every 10 ms
@@ -218,7 +218,7 @@ tests/
 - [ ] Data dictionary: signal and parameter objects with type, unit, range, description
 - [ ] Integer-only arithmetic in generated code (no floating point between conversions), for targets without
       an FPU
-- [ ] Typed parameters (e.g. int16 calibration maps) and typed A2L characteristics
+- [x] Typed parameters (e.g. int16 calibration maps) and typed A2L characteristics
 
 ## Phase 14 – State machines
 - [x] State chart block (a Stateflow-like subset): states, transitions, guards, entry/during/exit actions,

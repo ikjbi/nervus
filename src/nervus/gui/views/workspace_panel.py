@@ -22,7 +22,8 @@ from nervus.core.workspace import PARAMETER_SET_EXTENSION
 from nervus.gui.controllers.editor_controller import EditorController
 from nervus.gui.models.diagram_model import DiagramModel
 
-COLUMNS = ("Name", "Value", "Unit", "Min", "Max", "Description")
+COLUMNS = ("Name", "Value", "Unit", "Min", "Max", "Type", "Cal.", "Description")
+TYPE_COL, CAL_COL, DESC_COL = 5, 6, 7
 CAL_FILTER = f"Parameter sets (*{PARAMETER_SET_EXTENSION});;All files (*)"
 
 
@@ -44,6 +45,14 @@ class WorkspacePanel(QWidget):
         self.table.setColumnWidth(1, 150)
         for c in (2, 3, 4):
             self.table.setColumnWidth(c, 60)
+        self.table.setColumnWidth(TYPE_COL, 100)
+        self.table.setColumnWidth(CAL_COL, 40)
+        header_item = self.table.horizontalHeaderItem(TYPE_COL)
+        if header_item is not None:
+            header_item.setToolTip("Storage type in generated C: double, single, int16, uint8, fixdt(1,16,7), ...")
+        cal_item = self.table.horizontalHeaderItem(CAL_COL)
+        if cal_item is not None:
+            cal_item.setToolTip("Calibratable (in RAM and the A2L file). Untick for a constant in ROM.")
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.add_button = QPushButton("Add")
         self.delete_button = QPushButton("Delete")
@@ -88,13 +97,21 @@ class WorkspacePanel(QWidget):
                 var.unit,
                 "" if var.min is None else format_value(var.min),
                 "" if var.max is None else format_value(var.max),
+                var.data_type,
+                "",
                 var.description,
             )
             for col, text in enumerate(cells):
                 item = QTableWidgetItem(text)
                 item.setData(Qt.ItemDataRole.UserRole, var.name)
-                if col == 1 and isinstance(var.value, str) and ns is not None:
-                    item.setToolTip(f"= {format_value(ns[var.name])}")
+                if col == 1 and ns is not None and (isinstance(var.value, str) or var.data_type != "double"):
+                    item.setToolTip(
+                        f"= {format_value(ns[var.name])}"
+                        + (f" (as {var.data_type})" if var.data_type != "double" else "")
+                    )
+                if col == CAL_COL:
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsUserCheckable)
+                    item.setCheckState(Qt.CheckState.Checked if var.calibratable else Qt.CheckState.Unchecked)
                 self.table.setItem(row, col, item)
         self._updating = False
 
@@ -111,6 +128,10 @@ class WorkspacePanel(QWidget):
             changes = {"value": self.controller.parse_variable_value(text)}
         elif col == 2:
             changes = {"unit": text}
+        elif col == TYPE_COL:
+            changes = {"data_type": text or "double"}
+        elif col == CAL_COL:
+            changes = {"calibratable": item.checkState() == Qt.CheckState.Checked}
         elif col in (3, 4):
             key = "min" if col == 3 else "max"
             try:
