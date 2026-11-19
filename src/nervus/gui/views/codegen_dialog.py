@@ -52,7 +52,7 @@ class CodegenDialog(QDialog):
 
         mono = monospace_font()
         self.tabs = QTabWidget()
-        for fname in (f"{code.name}.h", f"{code.name}.c", "main_example.c"):
+        for fname in (f"{code.name}.h", f"{code.name}.c", "main_example.c", f"{code.name}.a2l"):
             edit = QPlainTextEdit(code.files[fname])
             edit.setReadOnly(True)
             edit.setFont(mono)

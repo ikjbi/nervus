@@ -32,6 +32,7 @@ does all of this from Python. Its generated code is committed in
 | `main_example.c` | a template showing how to call the code from a periodic task |
 | `<name>_sil.c` | accessors used only by the software-in-the-loop test |
 | `<name>_report.html` | the code generation report |
+| `<name>.a2l` | ASAM MCD-2 MC description for calibration tools (INCA, CANape, ...) |
 
 Only `<name>.h` and `<name>.c` belong in the ECU project.
 
@@ -117,6 +118,23 @@ void ECU_step(void)
 }
 ```
 
+## Calibration with A2L
+
+`<name>.a2l` describes every tunable parameter as a `CHARACTERISTIC` and every block signal as a
+`MEASUREMENT`, all `FLOAT64_IEEE`. Units, limits and descriptions come from the
+[workspace variables](workspace.md), so `Kp` with unit `%/°` and range 0–10 appears exactly like that in the
+calibration tool.
+
+Memory addresses are only known after linking. The file contains placeholders, and these lines fill them in
+from the built ECU binary:
+
+```python
+from nervus.codegen.a2l import fill_addresses, symbol_addresses
+
+a2l = code.files["ECU.a2l"]
+a2l = fill_addresses(a2l, symbol_addresses("build/ecu.elf"))  # uses `nm`
+```
+
 ## Multi-rate models
 
 When blocks run at different rates (e.g. 10 ms and 50 ms), `<name>_step()` is called at the **base rate**
@@ -147,7 +165,7 @@ Custom blocks can provide their own C template with `@nervus.codegen.template("m
   ([roadmap](https://github.com/ikjbi/nervus/blob/main/plan.md)).
 - Discrete blocks with a sample-time **offset** start in their first hit; their output before the
   first hit is 0 in the generated code.
-- MISRA C checking (cppcheck) and A2L generation for calibration tools are planned.
+- MISRA C checking (cppcheck) and XCP (live measurement and calibration over CAN) are planned.
 
 ## From Python
 

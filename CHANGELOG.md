@@ -13,6 +13,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- A2L (ASAM MCD-2 MC) file with every C code generation: parameters as CHARACTERISTICs with units/limits from
+  the workspace, signals as MEASUREMENTs; `fill_addresses()` resolves addresses from the built binary.
 - State Chart block: state machines with entry/during/exit actions, prioritised transitions with guards and
   actions, local variables, `after(n)` and `t_in_state`; written in a small text language, evaluated safely,
   and generated as C.

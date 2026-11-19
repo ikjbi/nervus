@@ -26,6 +26,7 @@ import numpy as np
 
 from nervus import __version__
 from nervus.blocks.ports import Inport, Outport, PortProxy
+from nervus.codegen.a2l import generate_a2l
 from nervus.core.block import Block
 from nervus.core.diagram import Diagram
 from nervus.core.errors import ModelError
@@ -270,6 +271,7 @@ class CGenerator:
             f"{self.prefix}_sil.c": self._sil(in_fields, out_fields),
             "main_example.c": self._main_example(in_fields, out_fields, base_period),
             f"{self.prefix}_report.html": self._report(source, in_fields, out_fields, base_period, steps),
+            f"{self.prefix}.a2l": generate_a2l(self),
         }
         return GeneratedCode(
             name=self.prefix,

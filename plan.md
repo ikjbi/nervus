@@ -237,7 +237,7 @@ tests/
 
 ## Phase 17 – ECU integration and calibration
 - [ ] CAN: import DBC files (`cantools`), CAN receive and transmit blocks, signal packing
-- [ ] A2L file generation for calibration tools (measurements and characteristics)
+- [x] A2L file generation for calibration tools (measurements and characteristics), addresses from `nm`
 - [ ] XCP-on-CAN basics for live measurement and calibration
 - [ ] Target: a development board (e.g. STM32 or ESP32 with CAN), as a scheduler template and HAL stubs
 - [ ] Processor-in-the-loop (PIL) testing

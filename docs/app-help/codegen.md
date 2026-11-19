@@ -27,6 +27,12 @@ Call `<name>_initialize()` once, then every `<NAME>_BASE_PERIOD` seconds:
 Parameters are in the struct `<name>_P`. A parameter written as a workspace variable (`Kp`) becomes one
 shared field `<name>_P.Kp` that a calibration tool can change while the code runs.
 
+## Calibration file (A2L)
+
+The code generator also writes `<name>.a2l`, the file calibration tools such as INCA or CANape read. It
+lists the tunable parameters, with units and limits from the model workspace, and the block signals for
+measurement.
+
 ## What can be generated
 
 Everything that is discrete-time or has no state: gains, sums, lookup tables, logic, relays, filters,

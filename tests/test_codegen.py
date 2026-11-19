@@ -250,3 +250,21 @@ def test_main_example_and_report_compile(tmp_path) -> None:  # type: ignore[no-u
     report = (tmp_path / "dut_report.html").read_text()
     assert "Code generation report" in report and "dut" in report and 'href="#L' in report
     assert set(code.c_files) == {"dut.h", "dut.c"}
+
+
+def test_a2l_file(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from nervus.codegen.a2l import fill_addresses, symbol_addresses
+    from nervus.codegen.sil import build_shared_library
+    from nervus.core import Variable
+
+    d = harness(DiscretePID(P="Kp", I=2.0), 1)
+    d.workspace.add(Variable("Kp", 1.5, "Proportional gain", "%/deg", min=0.0, max=10.0))
+    code = generate_c(d)
+    a2l = code.files["dut.a2l"]
+    assert a2l.count("/begin") == a2l.count("/end")
+    assert '/begin CHARACTERISTIC dut_P.Kp "Proportional gain"' in a2l
+    assert "RL_FLOAT64 0 CM___deg 0.0 10.0" in a2l
+    assert "MEASUREMENT dut_B.dut" in a2l
+    lib = build_shared_library(code, tmp_path)
+    filled = fill_addresses(a2l, symbol_addresses(lib))
+    assert "@dut_P" not in filled and "@dut_B" not in filled

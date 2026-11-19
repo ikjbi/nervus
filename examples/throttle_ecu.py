@@ -125,6 +125,7 @@ def generate(d: Diagram, folder: Path = HERE / "generated" / "ECU") -> Generated
     for name, text in code.c_files.items():
         (folder / name).write_text(text, encoding="utf-8")
     (folder / "main_example.c").write_text(code.files["main_example.c"], encoding="utf-8")
+    (folder / f"{code.name}.a2l").write_text(code.files[f"{code.name}.a2l"], encoding="utf-8")
     return code
 
 

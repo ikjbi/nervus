@@ -22,7 +22,7 @@ def test_generate_for_model(window, tmp_path) -> None:  # type: ignore[no-untype
     _controller(window)
     dlg = window.generate_code()
     assert dlg is not None
-    assert dlg.tabs.count() == 3
+    assert dlg.tabs.count() == 4
     assert "untitled_step" in dlg.code.files["untitled.c"]
     dlg.save_to(tmp_path)
     assert (tmp_path / "untitled.h").exists() and (tmp_path / "untitled_report.html").exists()
