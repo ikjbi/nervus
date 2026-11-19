@@ -201,6 +201,15 @@ class BlockItem(QGraphicsItem):
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRoundedRect(rect.adjusted(3, 3, -3, -3), 4, 4)
             painter.setPen(t.color("block_text"))
+        st = sub.params.get("sample_time", -1.0)
+        if isinstance(st, int | float) and st > 0:
+            period = f"{st * 1000:g} ms" if st < 1 else f"{st:g} s"
+            small = QFont(painter.font())
+            small.setPointSizeF(max(6.0, small.pointSizeF() - 1))
+            painter.setFont(small)
+            painter.drawText(
+                rect.adjusted(6, 0, -18, -2), Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight, f"⏱ {period}"
+            )
         if getattr(sub, "variants", None):
             small = QFont(painter.font())
             small.setPointSizeF(max(6.0, small.pointSizeF() - 1))

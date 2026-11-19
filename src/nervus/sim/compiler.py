@@ -362,7 +362,8 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
     trigger = [[(pos[s], p, e) for s, p, e in graph.trigger[i]] for i in order]
     feedthrough = [feedthrough[i] for i in order]
 
-    sample_times = _resolve_sample_times(blocks, inputs)
+    task_rate = [graph.task_rate[i] for i in order]
+    sample_times = _resolve_sample_times(blocks, inputs, task_rate)
     for b, st in zip(blocks, sample_times, strict=True):
         b.resolved_sample_time = st
 
@@ -370,9 +371,15 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
     xc_slices: list[slice] = []
     xd0: list[Array] = []
     n = 0
-    for b, name, st, triggered in zip(blocks, names, sample_times, trigger, strict=True):
+    for b, name, st, triggered, rate in zip(blocks, names, sample_times, trigger, task_rate, strict=True):
         xc = as_signal(b.initial_continuous_state())
         xd = as_signal(b.initial_discrete_state())
+        if xc.size and rate is not None and rate.is_discrete:
+            raise ModelError(
+                f"{name}: blocks with continuous states cannot be inside a subsystem with a discrete sample time "
+                f"({rate}); use a discrete equivalent (e.g. Discrete-Time Integrator)",
+                (name,),
+            )
         if xc.size and triggered:
             raise ModelError(
                 f"{name}: blocks with continuous states cannot be inside a triggered subsystem "
@@ -536,18 +543,25 @@ def _find_cycle(candidates: list[int], deps: list[set[int]]) -> list[int]:
     return cycle
 
 
-def _resolve_sample_times(blocks: list[Block], inputs: list[list[tuple[int, int]]]) -> list[SampleTime]:
+def _resolve_sample_times(
+    blocks: list[Block], inputs: list[list[tuple[int, int]]], task_rate: list[SampleTime | None] | None = None
+) -> list[SampleTime]:
+    """Resolve inherited sample times. Blocks inside an atomic subsystem with its own sample time
+    (``task_rate``) take that rate; other inherited blocks take the rate of their inputs."""
+    forced = task_rate or [None] * len(blocks)
     sts: list[SampleTime | None] = []
-    for b in blocks:
+    for b, rate in zip(blocks, forced, strict=True):
         st = b.sample_time()
-        if st.is_inherited:
+        if st.is_inherited and rate is not None:
+            sts.append(rate)
+        elif st.is_inherited:
             sts.append(CONTINUOUS if b.num_inputs() == 0 else None)
         else:
             sts.append(st)
     for _ in range(2 * len(blocks) + 5):
         changed = False
         for i, b in enumerate(blocks):
-            if not b.sample_time().is_inherited or b.num_inputs() == 0:
+            if not b.sample_time().is_inherited or b.num_inputs() == 0 or forced[i] is not None:
                 continue
             known = {sts[s] for s, _ in inputs[i] if sts[s] is not None}
             if not known:

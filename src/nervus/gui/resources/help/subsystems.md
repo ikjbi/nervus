@@ -34,6 +34,25 @@ Blocks inside subsystems are named by their path: `ECU/throttle_pi`, `ECU/fuel/m
 read results (`res["ECU/throttle_pi"]`). Clicking a diagnostic opens the subsystem and selects the block. A
 subsystem that contains an error is outlined in red.
 
+## Atomic subsystems: one ECU task
+
+An ECU's operating system runs its software in **tasks** with fixed periods, such as a 10 ms task for idle
+speed and throttle control and a 100 ms task for temperatures. In Nervus, a subsystem with a *sample_time*
+is such a task:
+
+- Every block inside that **inherits** its sample time (`-1`, e.g. Gain, Sum, Counter, Discrete PID with
+  `sample_time = -1`) runs at the task period. Blocks with their own sample time keep it, and an inner task
+  keeps its own period.
+- The inputs are **sampled** at the start of each period and the outputs **held** until the next one, as if
+  the task read its inputs from RAM when it starts.
+- Blocks with continuous states (Integrator, Transfer Function) are not allowed inside. Use their discrete
+  versions.
+- The block shows its period (⏱ 10 ms). In generated C the multirate scheduler runs each task's blocks at
+  its rate.
+
+So you set the period in one place, and every block in the task follows it: change `sample_time` to
+`"Ts_fast"` and the whole task moves with the workspace variable.
+
 ## Enabled subsystems
 
 Tick *enable_port* in a subsystem's Properties to give it an extra last input, **⏻ enable**. While the

@@ -8,6 +8,7 @@ they are the model's external inputs and outputs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from nervus.blocks.ports import Inport, Outport, PortProxy, Subsystem
 from nervus.core.block import Block
@@ -28,6 +29,8 @@ class FlatGraph:
     """For each node, the enable signals (source node, port) of enclosing enabled subsystems (all must be > 0)."""
     reset_on_enable: list[bool] = field(default_factory=list)
     """For each node: reset its discrete state when an enclosing subsystem is enabled again."""
+    task_rate: list[Any] = field(default_factory=list)
+    """For each node, the sample time of the innermost enclosing subsystem that has one (or None)."""
     trigger: list[list[tuple[int, int, str]]] = field(default_factory=list)
     """For each node, the trigger signals (source node, port, edge) of enclosing triggered subsystems."""
 
@@ -53,6 +56,11 @@ def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, in
             first = len(g.blocks)
             subs[id(b)] = (b, _add(b.system, name + "/", g, top=False))
             spans[id(b)] = range(first, len(g.blocks))
+            rate = b.sample_time()
+            if not rate.is_inherited:
+                for k in spans[id(b)]:
+                    if g.task_rate[k] is None:  # an inner subsystem's own rate wins
+                        g.task_rate[k] = rate
             continue
         if not top and isinstance(b, Inport | Outport):
             proxy = PortProxy(name)
@@ -66,6 +74,7 @@ def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, in
         g.enable.append([])
         g.reset_on_enable.append(False)
         g.trigger.append([])
+        g.task_rate.append(None)
         node[id(b)] = len(g.blocks) - 1
 
     def source(b: Block, port: int) -> tuple[int, int]:

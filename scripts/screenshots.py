@@ -55,6 +55,50 @@ def gated_example():  # type: ignore[no-untyped-def]
     return d
 
 
+def tasks_example():  # type: ignore[no-untyped-def]
+    """An ECU with a 10 ms and a 100 ms task (atomic subsystems with their own sample time)."""
+    from nervus.blocks import DiscretePID, Inport, MovingAverage, Outport, Scope, Sine, Subsystem, Sum
+    from nervus.core import Diagram
+
+    d = Diagram("tasks_example")
+    fast = Diagram()
+    rpm = fast.add(Inport(port=1), name="rpm")
+    target = fast.add(Inport(port=2), name="target")
+    err = fast.add(Sum(signs="-+"), name="error")
+    fast.connect(rpm, err.in_port(0))
+    fast.connect(target, err.in_port(1))
+    fast.chain(
+        err,
+        fast.add(DiscretePID(P=0.04, I=0.03, sample_time=-1), name="idle_pi"),
+        fast.add(Outport(port=1), name="throttle"),
+    )
+    slow = Diagram()
+    temp = slow.add(Inport(port=1), name="coolant_temp")
+    slow.chain(
+        temp,
+        slow.add(MovingAverage(length=10, sample_time=-1), name="filter"),
+        slow.add(Outport(port=1), name="temp_filtered"),
+    )
+    t10 = d.add(Subsystem(system=fast, sample_time=0.01), name="task_10ms")
+    t100 = d.add(Subsystem(system=slow, sample_time=0.1), name="task_100ms")
+    d.connect(d.add(Sine(amplitude=20.0, bias=800.0), name="engine_rpm"), (t10, 0))
+    d.connect(d.add(Sine(amplitude=0.0, bias=800.0), name="target_rpm"), (t10, 1))
+    d.chain(d.add(Sine(amplitude=2.0, bias=90.0), name="coolant_sensor"), t100)
+    d.connect(t10, d.add(Scope(), name="throttle_cmd"))
+    d.connect(t100, d.add(Scope(), name="coolant"))
+    for name, (x, y) in {
+        "engine_rpm": (0, 0),
+        "target_rpm": (0, 110),
+        "task_10ms": (200, 40),
+        "throttle_cmd": (520, 40),
+        "coolant_sensor": (0, 260),
+        "task_100ms": (200, 260),
+        "coolant": (520, 260),
+    }.items():
+        d.block(name).meta["position"] = [float(x), float(y)]
+    return d
+
+
 def grab(widget: QWidget, name: str) -> None:
     QApplication.processEvents()
     widget.grab().save(str(OUT / name))
@@ -155,6 +199,11 @@ def main() -> None:
             mdlg.show()
             grab(mdlg, "mask-dialog.png")
             mdlg.close()
+
+            # Atomic subsystems with their own task period.
+            win.diagram_model.set_diagram(tasks_example())
+            win.view.fit()
+            grab(win.view, "subsystem-tasks.png")
 
             # Enabled and triggered subsystem.
             gd = gated_example()

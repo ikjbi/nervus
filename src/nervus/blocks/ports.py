@@ -159,6 +159,10 @@ class Subsystem(Block):
     petrol and a diesel engine model. Each variant can have a condition such as ``ENGINE == 2`` on workspace
     variables; the one whose condition is true is simulated and turned into C code.
 
+    With a *sample_time* the subsystem is an **atomic task**, like one task of an ECU's operating system: every
+    block inside that inherits its sample time runs at that period. Its inputs are sampled at the start of each
+    period and its outputs held until the next one. Blocks with continuous states are not allowed inside.
+
     With *enable_port* the subsystem gets an extra last input, **enable**. While it is ≤ 0 nothing inside
     runs: outputs and discrete states are held and continuous states stop. With *when_enabled* = ``reset``
     the discrete states return to their initial values each time the subsystem is enabled again.
@@ -177,6 +181,13 @@ class Subsystem(Block):
     label = "Subsystem"
     category = CATEGORY
     PARAMS = (
+        Param(
+            "sample_time",
+            -1.0,
+            ParamKind.SAMPLE_TIME,
+            "Task period for the blocks inside that inherit theirs (-1 = no own rate)",
+            "s",
+        ),
         Param("enable_port", False, ParamKind.BOOL, "Add an enable input: the subsystem only runs while it is > 0"),
         Param(
             "when_enabled",

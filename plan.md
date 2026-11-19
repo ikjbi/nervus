@@ -153,7 +153,7 @@ tests/
 ## Phase 9 – Hierarchy: subsystems, masks, conditional execution, variants
 - [x] Subsystem block with Inport/Outport blocks; flattened at compile time
 - [x] GUI: double-click to open a subsystem, breadcrumb navigation, "Create Subsystem from Selection"
-- [ ] Atomic subsystems with their own sample time (one ECU task = one atomic subsystem)
+- [x] Atomic subsystems with their own sample time (one ECU task = one atomic subsystem)
 - [x] Masks: parameter dialog and icon text for a subsystem; mask parameters as local workspace (nested, C code)
 - [x] Enabled subsystems (held or reset states; C code)
 - [x] Triggered subsystems (rising/falling/either edge, combined with enable; C code)

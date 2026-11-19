@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Atomic subsystems: a subsystem *sample_time* makes it a task; inherited blocks inside run at that period,
+  inputs are sampled and outputs held; the period is shown on the block; multirate C code.
 - OBD-II: read stored, pending and permanent trouble codes (with descriptions of common codes), freeze frame
   values and the VIN; `python -m nervus.obd dtc`. Clearing codes is deliberately not supported.
 - Example `engine_library.py`: a mean-value engine and a throttle actuator as masked library components,
