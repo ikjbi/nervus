@@ -53,3 +53,37 @@ the input that causes them. Runs at its sample time.
 *Direct feedthrough:* no
 
 ---
+
+## OBD Responder
+
+`diagnostics.obd_responder` · Diagnostics
+
+Makes the model answer OBD-II requests like a car's engine ECU, while the simulation runs.
+
+Its inputs are the values of the PIDs in *pids* (e.g. ``rpm, speed, coolant_temp``; see
+``python -m nervus.obd pids``), then the status bytes of the trouble codes in *dtcs* (wire the **status**
+output of a Diagnostic Monitor to each). Every sample they are published to the simulated ECU named
+*ecu*, which answers requests from a diagnostic tool:
+
+- mode 01: the PIDs, and PID 01 with the MIL and the number of confirmed codes;
+- modes 03 / 07 / 0A: confirmed, pending and permanent codes;
+- mode 04 (clear codes): the output **clear** is 1 for one sample; wire it to the *clear* input of the
+  Diagnostic Monitors so the model really clears them;
+- mode 09: the VIN.
+
+Run the model with ``python -m nervus.obd simulate model.nervus``: it runs in real time and offers the ECU
+as an ELM327 adapter on a serial port (a pseudo-terminal) for any OBD program, or on a CAN bus. This block is
+part of the test setup: it has no C code.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `ecu` | `'ecu'` |  | Name of the simulated ECU |
+| `pids` | `'rpm, speed, coolant_temp'` |  | PIDs to report, one input each |
+| `dtcs` | `''` |  | Trouble codes, one status input each (from Diagnostic Monitors) |
+| `sample_time` | `0.1` | s | How often the ECU's values are updated |
+
+*Direct feedthrough:* no
+
+---

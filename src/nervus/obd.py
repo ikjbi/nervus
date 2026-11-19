@@ -24,7 +24,7 @@ import argparse
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
 import numpy as np
 
@@ -39,10 +39,19 @@ class Pid:
     unit: str
     n_bytes: int
     decode: Callable[[bytes], float]
+    scale: float = 1.0
+    """Physical value = raw · scale + offset (raw: the data bytes as one unsigned number); used to encode."""
+    offset: float = 0.0
 
     @property
     def request(self) -> str:
         return f"01{self.pid:02X}"
+
+    def encode(self, value: float) -> bytes:
+        """The data bytes for ``value`` (rounded, limited to what the bytes can hold): for a simulated ECU."""
+        top = 256**self.n_bytes - 1
+        raw = round((float(value) - self.offset) / self.scale) if np.isfinite(value) else 0
+        return int(min(max(raw, 0), top)).to_bytes(self.n_bytes, "big")
 
 
 def _a(d: bytes) -> int:
@@ -53,30 +62,39 @@ def _ab(d: bytes) -> int:
     return 256 * d[0] + d[1]
 
 
+def _linear(pid: int, name: str, description: str, unit: str, n: int, scale: float, offset: float = 0.0) -> Pid:
+    """A PID whose value is (raw · scale + offset), raw being its ``n`` data bytes."""
+
+    def decode(d: bytes) -> float:
+        return int.from_bytes(d[:n], "big") * scale + offset
+
+    return Pid(pid, name, description, unit, n, decode, scale, offset)
+
+
 PIDS: dict[str, Pid] = {
     p.name: p
     for p in (
-        Pid(0x04, "engine_load", "Calculated engine load", "%", 1, lambda d: _a(d) * 100 / 255),
-        Pid(0x05, "coolant_temp", "Engine coolant temperature", "°C", 1, lambda d: _a(d) - 40),
-        Pid(0x06, "stft_b1", "Short-term fuel trim, bank 1", "%", 1, lambda d: (_a(d) - 128) * 100 / 128),
-        Pid(0x07, "ltft_b1", "Long-term fuel trim, bank 1", "%", 1, lambda d: (_a(d) - 128) * 100 / 128),
-        Pid(0x0B, "map", "Intake manifold absolute pressure", "kPa", 1, lambda d: float(_a(d))),
-        Pid(0x0C, "rpm", "Engine speed", "rpm", 2, lambda d: _ab(d) / 4),
-        Pid(0x0D, "speed", "Vehicle speed", "km/h", 1, lambda d: float(_a(d))),
-        Pid(0x0E, "timing_advance", "Ignition timing advance before TDC", "°", 1, lambda d: _a(d) / 2 - 64),
-        Pid(0x0F, "intake_temp", "Intake air temperature", "°C", 1, lambda d: _a(d) - 40),
-        Pid(0x10, "maf", "Mass air flow", "g/s", 2, lambda d: _ab(d) / 100),
-        Pid(0x11, "throttle", "Throttle position", "%", 1, lambda d: _a(d) * 100 / 255),
-        Pid(0x14, "o2_b1s1", "Oxygen sensor voltage, bank 1 sensor 1", "V", 2, lambda d: _a(d) / 200),
-        Pid(0x1F, "run_time", "Time since engine start", "s", 2, lambda d: float(_ab(d))),
-        Pid(0x2F, "fuel_level", "Fuel tank level", "%", 1, lambda d: _a(d) * 100 / 255),
-        Pid(0x33, "baro", "Barometric pressure", "kPa", 1, lambda d: float(_a(d))),
-        Pid(0x42, "module_voltage", "Control module voltage", "V", 2, lambda d: _ab(d) / 1000),
-        Pid(0x44, "lambda_cmd", "Commanded air-fuel equivalence ratio (lambda)", "-", 2, lambda d: _ab(d) * 2 / 65536),
-        Pid(0x46, "ambient_temp", "Ambient air temperature", "°C", 1, lambda d: _a(d) - 40),
-        Pid(0x49, "pedal_d", "Accelerator pedal position D", "%", 1, lambda d: _a(d) * 100 / 255),
-        Pid(0x5C, "oil_temp", "Engine oil temperature", "°C", 1, lambda d: _a(d) - 40),
-        Pid(0x5E, "fuel_rate", "Engine fuel rate", "L/h", 2, lambda d: _ab(d) / 20),
+        _linear(0x04, "engine_load", "Calculated engine load", "%", 1, 100 / 255),
+        _linear(0x05, "coolant_temp", "Engine coolant temperature", "°C", 1, 1.0, -40.0),
+        _linear(0x06, "stft_b1", "Short-term fuel trim, bank 1", "%", 1, 100 / 128, -100.0),
+        _linear(0x07, "ltft_b1", "Long-term fuel trim, bank 1", "%", 1, 100 / 128, -100.0),
+        _linear(0x0B, "map", "Intake manifold absolute pressure", "kPa", 1, 1.0),
+        _linear(0x0C, "rpm", "Engine speed", "rpm", 2, 0.25),
+        _linear(0x0D, "speed", "Vehicle speed", "km/h", 1, 1.0),
+        _linear(0x0E, "timing_advance", "Ignition timing advance before TDC", "°", 1, 0.5, -64.0),
+        _linear(0x0F, "intake_temp", "Intake air temperature", "°C", 1, 1.0, -40.0),
+        _linear(0x10, "maf", "Mass air flow", "g/s", 2, 0.01),
+        _linear(0x11, "throttle", "Throttle position", "%", 1, 100 / 255),
+        Pid(0x14, "o2_b1s1", "Oxygen sensor voltage, bank 1 sensor 1", "V", 2, lambda d: _a(d) / 200, 1 / 200 / 256),
+        _linear(0x1F, "run_time", "Time since engine start", "s", 2, 1.0),
+        _linear(0x2F, "fuel_level", "Fuel tank level", "%", 1, 100 / 255),
+        _linear(0x33, "baro", "Barometric pressure", "kPa", 1, 1.0),
+        _linear(0x42, "module_voltage", "Control module voltage", "V", 2, 0.001),
+        _linear(0x44, "lambda_cmd", "Commanded air-fuel equivalence ratio (lambda)", "-", 2, 2 / 65536),
+        _linear(0x46, "ambient_temp", "Ambient air temperature", "°C", 1, 1.0, -40.0),
+        _linear(0x49, "pedal_d", "Accelerator pedal position D", "%", 1, 100 / 255),
+        _linear(0x5C, "oil_temp", "Engine oil temperature", "°C", 1, 1.0, -40.0),
+        _linear(0x5E, "fuel_rate", "Engine fuel rate", "L/h", 2, 0.05),
     )
 }
 BY_NUMBER = {p.pid: p for p in PIDS.values()}
@@ -288,8 +306,16 @@ class Elm327:
         return parse_vin(self.command("0902"))
 
 
+class ObdClient(Protocol):
+    """What :func:`record` needs: :class:`Elm327` or :class:`nervus.obd_can.CanObd`."""
+
+    supported: set[int]
+
+    def read(self, pid: Pid) -> float | None: ...
+
+
 def record(
-    elm: Elm327,
+    elm: ObdClient,
     pids: Sequence[str],
     duration: float,
     interval: float = 0.0,
@@ -329,26 +355,76 @@ def record(
     return SimResult(np.array(times), signals, {}, {}, stats)
 
 
+def _simulate(args: argparse.Namespace) -> int:
+    """``python -m nervus.obd simulate``: the model's OBD Responder answers on a pty (and optionally CAN)."""
+    from nervus import load, simulate
+    from nervus.obd_sim import ecu, serve_pty
+
+    model = load(args.model)
+    names = sorted({str(b.params["ecu"]) for _p, b in model.walk() if b.type_id == "diagnostics.obd_responder"})
+    if not names:
+        raise ObdError(f"{args.model} has no OBD Responder block")
+    stops = []
+    for name in names:
+        sim = ecu(name)
+        if not args.no_pty:
+            path, _thread = serve_pty(sim)
+            print(f"ECU {name!r}: ELM327 on {path}  (e.g. python -m nervus.obd dtc --port {path})")
+        if args.can_interface:
+            from nervus.obd_can import serve_can
+
+            stops.append(serve_can(sim, args.can_interface, args.can_channel))
+            print(f"ECU {name!r}: answering OBD requests on CAN ({args.can_interface} {args.can_channel or ''})")
+    if not args.fast:
+        model.settings.pacing = 1.0
+    print(f"simulating {args.duration or model.settings.t_final:g} s{'' if args.fast else ' in real time'} ...")
+    try:
+        simulate(model, args.duration)
+    finally:
+        for stop in stops:
+            stop()
+    print("done")
+    return 0
+
+
 def _main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m nervus.obd", description="Read live data from a car (read-only).")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("pids", help="list the PIDs Nervus can decode")
     sp = sub.add_parser("supported", help="ask the car which PIDs it supports")
-    sp.add_argument("--port", required=True)
     dp = sub.add_parser("dtc", help="read trouble codes (stored, pending, permanent), freeze frame and VIN")
-    dp.add_argument("--port", required=True)
     rp = sub.add_parser("record", help="record PIDs to a .nervres or .csv file")
-    rp.add_argument("--port", required=True)
+    for reader in (sp, dp, rp):
+        reader.add_argument("--port", help="serial port of an ELM327 adapter")
+        reader.add_argument("--can-interface", help="use a CAN interface instead (socketcan, pcan, kvaser, ...)")
+        reader.add_argument("--can-channel", help="CAN channel, e.g. can0 or PCAN_USBBUS1")
     rp.add_argument("--pids", default="rpm,speed,coolant_temp,throttle,engine_load")
     rp.add_argument("--duration", type=float, default=60.0)
     rp.add_argument("--interval", type=float, default=0.0, help="seconds between sweeps (0 = as fast as possible)")
     rp.add_argument("--out", default="drive.nervres")
+    sp = sub.add_parser("simulate", help="run a model with an OBD Responder as a simulated car (ELM327 on a pty)")
+    sp.add_argument("model", help="a .nervus model with an OBD Responder block")
+    sp.add_argument("--duration", type=float, default=None, help="seconds to simulate (default: the stop time)")
+    sp.add_argument("--fast", action="store_true", help="as fast as possible instead of in real time")
+    sp.add_argument("--no-pty", action="store_true", help="do not open a serial port (e.g. only CAN)")
+    sp.add_argument("--can-interface", default=None, help="also answer on a CAN bus: socketcan, pcan, virtual, ...")
+    sp.add_argument("--can-channel", default=None, help="CAN channel, e.g. can0")
     args = ap.parse_args(argv)
+    if args.cmd == "simulate":
+        return _simulate(args)
     if args.cmd == "pids":
         for p in PIDS.values():
             print(f"{p.name:16s} 01{p.pid:02X}  {p.unit:6s} {p.description}")
         return 0
-    elm = Elm327(SerialTransport(args.port))
+    elm: Any
+    if args.can_interface:
+        from nervus.obd_can import CanObd
+
+        elm = CanObd(interface=args.can_interface, channel=args.can_channel)
+    elif args.port:
+        elm = Elm327(SerialTransport(args.port))
+    else:
+        ap.error("give --port (ELM327) or --can-interface")
     supported = elm.initialize()
     if args.cmd == "dtc":
         print(f"VIN: {elm.vin() or 'not reported'}")

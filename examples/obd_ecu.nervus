@@ -1,0 +1,690 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "obd_ecu",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 90.0,
+    "solver": "rk4",
+    "step": 0.1,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "coolant_tau",
+      "value": 25.0,
+      "description": "Warm-up time constant of the coolant",
+      "unit": "s"
+    },
+    {
+      "name": "misfire_limit",
+      "value": 0.5,
+      "description": "Misfire test threshold (fraction of a counting window)",
+      "unit": "-"
+    },
+    {
+      "name": "ltft_limit",
+      "value": 20.0,
+      "description": "Lean limit for the long-term fuel trim",
+      "unit": "%"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "rpm",
+      "type": "math.sum",
+      "params": {
+        "signs": "++",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          130.0,
+          30.0
+        ]
+      }
+    },
+    {
+      "name": "rpm_base",
+      "type": "sources.constant",
+      "params": {
+        "value": 1500.0,
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "rpm_drive",
+      "type": "sources.sine",
+      "params": {
+        "amplitude": 700.0,
+        "frequency": 0.3,
+        "phase": 0.0,
+        "bias": 0.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          70.0
+        ]
+      }
+    },
+    {
+      "name": "speed",
+      "type": "math.gain",
+      "params": {
+        "gain": 0.03,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          260.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "engine_load",
+      "type": "sources.sine",
+      "params": {
+        "amplitude": 15.0,
+        "frequency": 0.3,
+        "phase": 0.0,
+        "bias": 35.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          130.0,
+          150.0
+        ]
+      }
+    },
+    {
+      "name": "thermostat",
+      "type": "sources.constant",
+      "params": {
+        "value": 90.0,
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          240.0
+        ]
+      }
+    },
+    {
+      "name": "warm_error",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          130.0,
+          250.0
+        ]
+      }
+    },
+    {
+      "name": "coolant_temp",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 20.0,
+        "upper": "inf",
+        "lower": "-inf",
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          350.0,
+          250.0
+        ]
+      }
+    },
+    {
+      "name": "warm_rate",
+      "type": "math.gain",
+      "params": {
+        "gain": "1 / coolant_tau",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          240.0,
+          250.0
+        ]
+      }
+    },
+    {
+      "name": "cyl2_misfire",
+      "type": "sources.step",
+      "params": {
+        "time": 20.0,
+        "initial": 0.0,
+        "final": 1.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          420.0
+        ]
+      }
+    },
+    {
+      "name": "misfire_windows",
+      "type": "sources.pulse",
+      "params": {
+        "amplitude": 1.0,
+        "period": 0.4,
+        "duty": 75.0,
+        "delay": 0.0,
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          0.0,
+          500.0
+        ]
+      }
+    },
+    {
+      "name": "misfire_rate",
+      "type": "math.product",
+      "params": {
+        "ops": "**",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          130.0,
+          450.0
+        ]
+      }
+    },
+    {
+      "name": "misfire_test",
+      "type": "logic.compare_to_constant",
+      "params": {
+        "operator": ">=",
+        "constant": "misfire_limit"
+      },
+      "meta": {
+        "position": [
+          260.0,
+          450.0
+        ]
+      }
+    },
+    {
+      "name": "engine_warm",
+      "type": "logic.compare_to_constant",
+      "params": {
+        "operator": ">=",
+        "constant": 40.0
+      },
+      "meta": {
+        "position": [
+          480.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "ltft_pct",
+      "type": "sources.constant",
+      "params": {
+        "value": 4.0,
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          620.0
+        ]
+      }
+    },
+    {
+      "name": "lean_test",
+      "type": "logic.compare_to_constant",
+      "params": {
+        "operator": ">=",
+        "constant": "ltft_limit"
+      },
+      "meta": {
+        "position": [
+          130.0,
+          620.0
+        ]
+      }
+    },
+    {
+      "name": "key_cycle",
+      "type": "sources.pulse",
+      "params": {
+        "amplitude": 1.0,
+        "period": 30.0,
+        "duty": 1.0,
+        "delay": 29.5,
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          260.0,
+          540.0
+        ]
+      }
+    },
+    {
+      "name": "P0302_monitor",
+      "type": "diagnostics.monitor",
+      "params": {
+        "dtc": "P0302",
+        "threshold": 10.0,
+        "fail_step": 1.0,
+        "pass_step": 1.0,
+        "jump_down": true,
+        "confirm_cycles": 2,
+        "heal_cycles": 3,
+        "mil": true,
+        "enable_input": true,
+        "cycle_input": true,
+        "clear_input": true,
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          640.0,
+          420.0
+        ]
+      }
+    },
+    {
+      "name": "P0171_monitor",
+      "type": "diagnostics.monitor",
+      "params": {
+        "dtc": "P0171",
+        "threshold": 20.0,
+        "fail_step": 1.0,
+        "pass_step": 1.0,
+        "jump_down": true,
+        "confirm_cycles": 2,
+        "heal_cycles": 3,
+        "mil": true,
+        "enable_input": false,
+        "cycle_input": true,
+        "clear_input": true,
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          640.0,
+          620.0
+        ]
+      }
+    },
+    {
+      "name": "obd",
+      "type": "diagnostics.obd_responder",
+      "params": {
+        "ecu": "ecu",
+        "pids": "rpm, speed, coolant_temp, engine_load",
+        "dtcs": "P0302, P0171",
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          880.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "mil",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          380.0
+        ]
+      }
+    },
+    {
+      "name": "pending",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          440.0
+        ]
+      }
+    },
+    {
+      "name": "confirmed",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          500.0
+        ]
+      }
+    },
+    {
+      "name": "misfire_ready",
+      "type": "ports.outport",
+      "params": {
+        "port": 4
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          560.0
+        ]
+      }
+    },
+    {
+      "name": "lean_ready",
+      "type": "ports.outport",
+      "params": {
+        "port": 5
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          640.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          880.0,
+          40.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "rpm_base",
+      "src_port": 0,
+      "dst": "rpm",
+      "dst_port": 0
+    },
+    {
+      "src": "rpm_drive",
+      "src_port": 0,
+      "dst": "rpm",
+      "dst_port": 1
+    },
+    {
+      "src": "rpm",
+      "src_port": 0,
+      "dst": "speed",
+      "dst_port": 0
+    },
+    {
+      "src": "thermostat",
+      "src_port": 0,
+      "dst": "warm_error",
+      "dst_port": 0
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "warm_error",
+      "dst_port": 1
+    },
+    {
+      "src": "warm_error",
+      "src_port": 0,
+      "dst": "warm_rate",
+      "dst_port": 0
+    },
+    {
+      "src": "warm_rate",
+      "src_port": 0,
+      "dst": "coolant_temp",
+      "dst_port": 0
+    },
+    {
+      "src": "cyl2_misfire",
+      "src_port": 0,
+      "dst": "misfire_rate",
+      "dst_port": 0
+    },
+    {
+      "src": "misfire_windows",
+      "src_port": 0,
+      "dst": "misfire_rate",
+      "dst_port": 1
+    },
+    {
+      "src": "misfire_rate",
+      "src_port": 0,
+      "dst": "misfire_test",
+      "dst_port": 0
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "engine_warm",
+      "dst_port": 0
+    },
+    {
+      "src": "ltft_pct",
+      "src_port": 0,
+      "dst": "lean_test",
+      "dst_port": 0
+    },
+    {
+      "src": "misfire_test",
+      "src_port": 0,
+      "dst": "P0302_monitor",
+      "dst_port": 0
+    },
+    {
+      "src": "engine_warm",
+      "src_port": 0,
+      "dst": "P0302_monitor",
+      "dst_port": 1
+    },
+    {
+      "src": "key_cycle",
+      "src_port": 0,
+      "dst": "P0302_monitor",
+      "dst_port": 2
+    },
+    {
+      "src": "obd",
+      "src_port": 0,
+      "dst": "P0302_monitor",
+      "dst_port": 3
+    },
+    {
+      "src": "lean_test",
+      "src_port": 0,
+      "dst": "P0171_monitor",
+      "dst_port": 0
+    },
+    {
+      "src": "key_cycle",
+      "src_port": 0,
+      "dst": "P0171_monitor",
+      "dst_port": 1
+    },
+    {
+      "src": "obd",
+      "src_port": 0,
+      "dst": "P0171_monitor",
+      "dst_port": 2
+    },
+    {
+      "src": "rpm",
+      "src_port": 0,
+      "dst": "obd",
+      "dst_port": 0
+    },
+    {
+      "src": "speed",
+      "src_port": 0,
+      "dst": "obd",
+      "dst_port": 1
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "obd",
+      "dst_port": 2
+    },
+    {
+      "src": "engine_load",
+      "src_port": 0,
+      "dst": "obd",
+      "dst_port": 3
+    },
+    {
+      "src": "P0302_monitor",
+      "src_port": 4,
+      "dst": "obd",
+      "dst_port": 4
+    },
+    {
+      "src": "P0171_monitor",
+      "src_port": 4,
+      "dst": "obd",
+      "dst_port": 5
+    },
+    {
+      "src": "P0302_monitor",
+      "src_port": 0,
+      "dst": "mil",
+      "dst_port": 0
+    },
+    {
+      "src": "P0302_monitor",
+      "src_port": 1,
+      "dst": "pending",
+      "dst_port": 0
+    },
+    {
+      "src": "P0302_monitor",
+      "src_port": 2,
+      "dst": "confirmed",
+      "dst_port": 0
+    },
+    {
+      "src": "P0302_monitor",
+      "src_port": 3,
+      "dst": "misfire_ready",
+      "dst_port": 0
+    },
+    {
+      "src": "P0171_monitor",
+      "src_port": 3,
+      "dst": "lean_ready",
+      "dst_port": 0
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "P0302_monitor",
+      "src_port": 1,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "P0302_monitor",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    }
+  ],
+  "tests": [
+    {
+      "name": "misfire: pending in the first cycle, MIL in the second",
+      "description": "Cylinder 2 misfires from 20 s: pending at once, confirmed with the MIL after the second key cycle",
+      "stop_time": 45.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "mil",
+          "lower": 0.0,
+          "upper": 0.0,
+          "t_from": 0.0,
+          "t_to": 29.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "pending",
+          "lower": 1.0,
+          "upper": 1.0,
+          "t_from": 22.0,
+          "t_to": 29.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "mil",
+          "value": 1.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "confirmed",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "name": "lean monitor passes",
+      "description": "The fuel trim is normal: P0171 completes (ready) and sets nothing",
+      "stop_time": 10.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "final_value",
+          "signal": "lean_ready",
+          "value": 1.0
+        }
+      ]
+    }
+  ]
+}

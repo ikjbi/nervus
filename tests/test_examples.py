@@ -246,3 +246,13 @@ def test_gear_shift_example(tmp_path) -> None:  # type: ignore[no-untyped-def]
         }
         sil = back_to_back(d.block("tcu"), inputs, 800, tolerance=0.0, folder=tmp_path)
         assert sil.passed, sil.summary()
+
+
+def test_obd_ecu_example() -> None:
+    from nervus.testing import run_tests
+
+    mod = _import("obd_ecu")
+    d = mod.build()
+    results = run_tests(d)
+    assert all(r.passed for r in results), [r.summary() for r in results]
+    assert [t.name for t in load(EXAMPLES / "obd_ecu.nervus").tests] == [t.name for t in d.tests]

@@ -57,3 +57,4 @@ The `examples` folder in the repository has complete models you can open with **
 | `drive_cycle.nervus` | a car with a driver model on the ECE-15 drive cycle (tutorial) |
 | `engine_modes.nervus` | engine operating modes as a State Chart: crank, idle, run, fuel cut-off, stall |
 | `gear_shift.nervus` | gear-shift logic of an automatic gearbox on a car with a hill (tutorial) |
+| `obd_ecu.nervus` | an engine ECU with trouble codes that answers OBD-II tools (`python -m nervus.obd simulate`) |

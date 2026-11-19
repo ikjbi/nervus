@@ -23,6 +23,9 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- A simulated OBD-II ECU (`nervus.obd_sim`) answering the ELM327 protocol (also on a pseudo-terminal) and
+  CAN; the OBD Responder block feeds it from a model; `python -m nervus.obd simulate`; example `obd_ecu.py`.
+- OBD over CAN without an ELM327 (`nervus.obd_can`, ISO 15765-4 with ISO-TP); `--can-interface` in the CLI.
 - Diagnostic Monitor block: debounced trouble codes with pending/confirmed (two-trip) status, MIL and
   healing over operation cycles, readiness, clear, and the UDS status byte; generates C code.
 - Linear Analysis: Nyquist and root-locus tabs (with poles and zeros), the closed-loop step response, and PID

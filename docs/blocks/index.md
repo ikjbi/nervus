@@ -22,6 +22,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 ## [Diagnostics](diagnostics.md)
 
 - **Diagnostic Monitor**: A diagnostic monitor with a trouble code (DTC), like the diagnostic event manager of an engine ECU.
+- **OBD Responder**: Makes the model answer OBD-II requests like a car's engine ECU, while the simulation runs.
 
 ## [Discontinuities](discontinuities.md)
 

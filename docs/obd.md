@@ -87,6 +87,61 @@ and a rising edge on the optional *cycle* input starts a new operation cycle (ke
 the UDS DTC status byte (ISO 14229), the same bits a scan tool shows. The block generates C code, so the
 diagnostic logic can run in the ECU code and be tested back to back like the rest of the model.
 
+## A simulated car: test diagnostic tools without a vehicle
+
+`nervus.obd_sim.SimulatedEcu` answers OBD requests like a car's engine ECU: live data (mode 01, including
+PID 01 with the MIL and the number of codes), stored, pending and permanent codes (03, 07, 0A), clearing
+(04) and the VIN (09). It speaks the **ELM327** text protocol, so the Nervus client works with it directly:
+
+```python
+from nervus.obd import PIDS, Elm327
+from nervus.obd_sim import SimulatedEcu
+
+car = SimulatedEcu({"rpm": 2175, "coolant_temp": 88}, {"P0302": 0x8C}, vin="WVWZZZ1KZAW123456")
+elm = Elm327(car)  # instead of a serial port
+elm.initialize()
+elm.read(PIDS["rpm"])
+elm.trouble_codes()
+elm.vin()
+```
+
+In a model, the **OBD Responder** block (Library → Diagnostics) publishes model signals as PIDs and the status
+of Diagnostic Monitors as trouble codes while the simulation runs. When a tool clears the codes, its *clear*
+output resets the monitors in the model. `examples/obd_ecu.py` is an engine ECU with a misfire monitor
+(P0302: pending in the first key cycle, MIL in the second) and a lean monitor. Run it in real time, and
+connect any OBD program to the serial port it prints (a pseudo-terminal, on macOS and Linux):
+
+```bash
+uv run python -m nervus.obd simulate examples/obd_ecu.nervus
+#   ECU 'ecu': ELM327 on /dev/ttys007
+uv run python -m nervus.obd dtc --port /dev/ttys007        # in another terminal
+```
+
+## OBD over CAN, without an ELM327
+
+Cars since about 2008 use CAN for OBD-II (ISO 15765-4: 11-bit identifiers, 500 kbit/s). A request goes to the
+functional address 0x7DF and the engine ECU answers from 0x7E8. Answers longer than 7 bytes (the VIN, many
+codes) are split by **ISO-TP**: a first frame, a flow-control frame from the tool, then consecutive frames.
+With a CAN interface supported by `python-can` (PEAK, Kvaser, Vector, SocketCAN on Linux) Nervus talks to the
+car directly:
+
+```bash
+uv run python -m nervus.obd dtc --can-interface socketcan --can-channel can0
+uv run python -m nervus.obd record --can-interface pcan --can-channel PCAN_USBBUS1 --pids rpm,speed
+```
+
+```python
+from nervus.obd_can import CanObd
+
+obd = CanObd(interface="socketcan", channel="can0")
+obd.initialize()
+obd.read(PIDS["rpm"])
+obd.vin()
+```
+
+The simulated ECU answers on CAN too (`--can-interface virtual --can-channel test` with `simulate`, or
+`nervus.obd_can.serve_can`), which is how the CAN client is tested without hardware.
+
 ## How a PID is decoded
 
 The adapter sends a request such as `010C` (mode 01, PID 0x0C = engine speed). The car answers with

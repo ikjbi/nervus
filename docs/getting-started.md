@@ -108,3 +108,5 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   cut-off, stall), with calibratable thresholds and scenario test cases. See [State machines](statecharts.md).
 - `gear_shift.py`: the shift logic of an automatic gearbox (shift maps, a gear chart, kickdown) on a car with
   engine, gearbox and road grade. See the [tutorial](tutorials/gear-shift.md).
+- `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
+  runs. See [OBD-II](obd.md).

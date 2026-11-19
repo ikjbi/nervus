@@ -315,9 +315,10 @@ tests/
       Data Inspector
 - [x] Read diagnostic trouble codes (stored 03, pending 07, permanent 0A), freeze frame (02), VIN (09);
       clearing (04) deliberately left out: it resets the emissions readiness monitors
-- [ ] OBD over a CAN interface (`python-can`, ISO-TP / ISO 15765-4) without an ELM327
+- [x] OBD over a CAN interface (`python-can`, ISO-TP / ISO 15765-4) without an ELM327
 - [ ] Editor: Tools → Record from OBD-II… with live plots
-- [ ] OBD responder in models: a simulated ECU that answers OBD requests (to test diagnostic tools)
+- [x] OBD responder in models: a simulated ECU that answers OBD requests (to test diagnostic tools): ELM327
+      on a pseudo-terminal, or CAN
 - [x] Diagnostic logic in models: DTC setting/debouncing, MIL lamp, readiness monitors (Diagnostic Monitor block, with C code)
 
 ## Safety note

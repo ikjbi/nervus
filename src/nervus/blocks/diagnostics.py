@@ -173,3 +173,78 @@ def step_monitor(x: Array, fault: bool, enable: bool, cycle: bool, clear: bool, 
         elif counter <= -threshold:
             status &= ~(TEST_FAILED | NOT_COMPLETED_THIS_CYCLE | NOT_COMPLETED_SINCE_CLEAR)
     return np.array([counter, float(status), float(failed_cycles), float(passed_cycles), float(cycle), float(clear)])
+
+
+def _names(text: str) -> list[str]:
+    return [x.strip() for x in str(text).replace(";", ",").split(",") if x.strip()]
+
+
+@register
+class ObdResponder(Block):
+    """Makes the model answer OBD-II requests like a car's engine ECU, while the simulation runs.
+
+    Its inputs are the values of the PIDs in *pids* (e.g. ``rpm, speed, coolant_temp``; see
+    ``python -m nervus.obd pids``), then the status bytes of the trouble codes in *dtcs* (wire the **status**
+    output of a Diagnostic Monitor to each). Every sample they are published to the simulated ECU named
+    *ecu*, which answers requests from a diagnostic tool:
+
+    - mode 01: the PIDs, and PID 01 with the MIL and the number of confirmed codes;
+    - modes 03 / 07 / 0A: confirmed, pending and permanent codes;
+    - mode 04 (clear codes): the output **clear** is 1 for one sample; wire it to the *clear* input of the
+      Diagnostic Monitors so the model really clears them;
+    - mode 09: the VIN.
+
+    Run the model with ``python -m nervus.obd simulate model.nervus``: it runs in real time and offers the ECU
+    as an ELM327 adapter on a serial port (a pseudo-terminal) for any OBD program, or on a CAN bus. This block is
+    part of the test setup: it has no C code.
+    """
+
+    type_id = "diagnostics.obd_responder"
+    label = "OBD Responder"
+    category = CATEGORY
+    DIRECT_FEEDTHROUGH = False
+    NUM_OUTPUTS = 1
+    PARAMS = (
+        Param("ecu", "ecu", ParamKind.STR, "Name of the simulated ECU"),
+        Param("pids", "rpm, speed, coolant_temp", ParamKind.STR, "PIDs to report, one input each"),
+        Param("dtcs", "", ParamKind.STR, "Trouble codes, one status input each (from Diagnostic Monitors)"),
+        Param("sample_time", 0.1, ParamKind.SAMPLE_TIME, "How often the ECU's values are updated", "s"),
+    )
+
+    def validate_params(self) -> None:
+        from nervus.obd import PIDS
+
+        unknown = [n for n in _names(self.params["pids"]) if n not in PIDS]
+        if unknown:
+            raise ParameterError(f"unknown PID(s): {', '.join(unknown)}; known: {', '.join(PIDS)}")
+        bad = [c for c in _names(self.params["dtcs"]) if not _DTC.match(c.upper())]
+        if bad:
+            raise ParameterError(f"not trouble codes: {', '.join(bad)}")
+
+    def num_inputs(self) -> int:
+        return len(_names(self.params["pids"])) + len(_names(self.params["dtcs"]))
+
+    def input_names(self) -> list[str]:
+        return _names(self.params["pids"]) + [f"{c.upper()} status" for c in _names(self.params["dtcs"])]
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [1]
+
+    def initial_discrete_state(self) -> Array:
+        from nervus.obd_sim import ecu
+
+        return np.array([float(ecu(str(self.params["ecu"])).clear_requests), 0.0])
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        return [np.array([xd[1]])]
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        from nervus.obd_sim import ecu
+
+        pids, codes = _names(self.params["pids"]), [c.upper() for c in _names(self.params["dtcs"])]
+        values = [float(np.ravel(v)[0]) for v in u]
+        sim = ecu(str(self.params["ecu"]))
+        sim.update(dict(zip(pids, values[: len(pids)], strict=True)),
+                   {c: int(v) for c, v in zip(codes, values[len(pids) :], strict=True)})  # fmt: skip
+        count = float(sim.clear_requests)
+        return np.array([count, 1.0 if count > xd[0] else 0.0])
