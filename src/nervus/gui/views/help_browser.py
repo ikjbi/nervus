@@ -54,6 +54,7 @@ HELP_PAGES = [
     ("libraries", "Component libraries"),
     ("datatypes", "Data types and fixed point"),
     ("statecharts", "State machines"),
+    ("physical", "Physical modelling"),
     ("can", "CAN communication"),
     ("obd", "OBD-II live data"),
     ("analysis", "Linear analysis"),

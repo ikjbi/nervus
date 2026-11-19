@@ -23,6 +23,10 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Physical modelling: electrical, rotational and thermal components with physical ports joined by links
+  (`Diagram.link`), solved by modified nodal analysis together with the block diagram: R, C, L, sources,
+  switch, diode, battery, DC motor, H-bridge, inertia, spring, damper, gear, thermal mass and resistance,
+  sensors.
 - Tools → Record from OBD-II…: record PIDs from an ELM327, a CAN interface or a simulated ECU with live
   plots; save the drive or open it in the Data Inspector.
 - A simulated OBD-II ECU (`nervus.obd_sim`) answering the ELM327 protocol (also on a pseudo-terminal) and

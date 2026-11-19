@@ -45,6 +45,22 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **Discrete Filter (PT1)**: First-order low-pass filter, the workhorse for smoothing sensor signals in ECU software.
 - **Moving Average**: Average of the last *length* samples (including the current one).
 
+## [Electrical](electrical.md)
+
+- **Electrical Reference**: Ground: the node it is linked to is at 0 V. Every circuit needs one.
+- **Resistor**: An ideal resistor (Ohm's law):
+- **Capacitor**: An ideal capacitor; its voltage is a state:
+- **Inductor**: An ideal inductor; its current is a state:
+- **Voltage Source**: An ideal voltage source: $v_p - v_n = V$. With *controlled* on, the voltage is the input signal (e.g. from
+- **Current Source**: An ideal current source: the current *I* flows out of its ``p`` port into the circuit (and back in at
+- **Voltage Sensor**: Measures the voltage $v_p - v_n$ as a signal (ideal: no current flows into it).
+- **Current Sensor**: Measures the current flowing through it from ``p`` to ``n`` as a signal. Put it in series, like an
+- **Switch**: A switch controlled by a signal: closed (resistance *R_on*) while the input is ≥ 0.5, open (conductance
+- **Diode**: A piecewise-linear diode: conducts from ``p`` (anode) to ``n`` (cathode) when the voltage exceeds the
+- **Battery**: A battery: open-circuit voltage from its state of charge, and an internal resistance:
+- **H-Bridge (PWM)**: An H-bridge driving a motor with PWM, as an average model: the output voltage is the duty cycle times
+- **DC Motor**: A permanent-magnet DC motor: electrical port ``p``/``n``, mechanical port ``shaft``:
+
 ## [Logic and Bit Operations](logic-and-bit-operations.md)
 
 - **Relational Operator**: Compares input 0 with input 1: ``y = (u0 OP u1)``, giving 1 when true and 0 when false.
@@ -73,6 +89,19 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **In**: An input port.
 - **Out**: An output port. Inside a subsystem it is the subsystem's output number *port*; at the top level it is an
 - **Subsystem**: A block that contains its own diagram. Double-click it in the editor to open it.
+
+## [Rotational](rotational.md)
+
+- **Rotational Reference**: A fixed point: the port linked to it does not rotate (ω = 0), e.g. a housing.
+- **Inertia**: A rotating mass; its speed is a state:
+- **Rotational Spring**: A torsion spring between two flanges; its torque is a state:
+- **Rotational Damper**: Viscous friction between two flanges: $\tau = d\,(\omega_a - \omega_b)$. Link ``b`` to a Rotational
+- **Torque Source**: A torque on a flange, against the reference: the parameter *tau*, or the input signal when
+- **Speed Source**: Drives a flange at a given speed, whatever the torque: the parameter *w* or the input signal.
+- **Ideal Gear**: A gear without losses or backlash, ratio *n* = ω_a / ω_b:
+- **Speed Sensor**: Measures the angular velocity of a flange (against the reference) as a signal, in rad/s.
+- **Angle Sensor**: Measures the angle of a flange (the integral of its speed) as a signal, in rad. *phi0*: the angle at
+- **Torque Sensor**: Measures the torque transmitted through it from ``a`` to ``b`` (a stiff shaft between the two).
 
 ## [Signal Attributes](signal-attributes.md)
 
@@ -108,6 +137,15 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 ## [State Machines](state-machines.md)
 
 - **State Chart**: A state machine (chart) for operating modes, sequences and fault handling, like Simulink's Stateflow.
+
+## [Thermal](thermal.md)
+
+- **Thermal Mass**: A body that stores heat; its temperature is a state:
+- **Thermal Resistance**: Heat conduction or convection between two ports: $Q = (T_a - T_b) / R$, with $R = 1/(h A)$ for convection
+- **Heat Source**: Heat flowing into a port: the parameter *Q* or the input signal (e.g. a heater, or the losses of a
+- **Temperature Source**: Holds a port at a temperature, whatever the heat flow: the ambient air, a coolant at a fixed
+- **Temperature Sensor**: Measures the temperature of a port as a signal, in °C.
+- **Heat Flow Sensor**: Measures the heat flowing through it from ``a`` to ``b`` as a signal, in W.
 
 ## [User-Defined](user-defined.md)
 

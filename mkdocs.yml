@@ -31,6 +31,7 @@ nav:
       - Component libraries: libraries.md
       - Data types and fixed point: datatypes.md
       - State machines: statecharts.md
+      - Physical modelling: physical.md
       - CAN communication: can.md
       - OBD-II live data: obd.md
       - Linear analysis: analysis.md
@@ -47,6 +48,7 @@ nav:
           - Component libraries: app-help/libraries.md
           - Data types and fixed point: app-help/datatypes.md
           - State machines: app-help/statecharts.md
+          - Physical modelling: app-help/physical.md
           - CAN communication: app-help/can.md
           - OBD-II live data: app-help/obd.md
           - Linear analysis: app-help/analysis.md

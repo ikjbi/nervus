@@ -282,11 +282,11 @@ tests/
 
 ## Phase 20 – Electrical and physical modelling
 *Acausal (equation-based) components connected by physical wires, like Simscape Electrical.*
-- [ ] Electrical network solver: components with pins, Kirchhoff's laws assembled automatically (modified nodal
+- [x] Electrical network solver: components with pins, Kirchhoff's laws assembled automatically (modified nodal
       analysis), solved together with the block diagram (DAE)
-- [ ] Basic components: resistor, capacitor, inductor, voltage and current sources (controlled by signals),
+- [x] Basic components: resistor, capacitor, inductor, voltage and current sources (controlled by signals),
       ground, ideal switch, diode
-- [ ] Sensors: voltage and current measurement as signals
+- [x] Sensors: voltage and current measurement as signals
 - [ ] Automotive electrics: battery (open-circuit voltage map + internal resistance), DC motor, H-bridge with PWM
       (averaged), solenoid / injector, relay coil, glow plug, alternator
 - [ ] Throttle body and electronic throttle with a real DC motor and H-bridge instead of a first-order lag

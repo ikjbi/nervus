@@ -1,7 +1,7 @@
 """Core data model: blocks, ports, parameters, sample times and diagrams. Pure Python, no Qt."""
 
 from nervus.core.block import Block, InPort, OutPort
-from nervus.core.diagram import Connection, Diagram, Issue, Severity
+from nervus.core.diagram import Connection, Diagram, Issue, Link, Severity
 from nervus.core.errors import (
     AlgebraicLoopError,
     ModelError,
@@ -27,6 +27,7 @@ __all__ = [
     "Diagram",
     "InPort",
     "Issue",
+    "Link",
     "ModelError",
     "NervusError",
     "OutPort",

@@ -146,6 +146,7 @@ SHARED_PAGES = {
     "concepts.md": "concepts.md",
     "coming-from-simulink.md": "coming_from_simulink.md",
     "model-files.md": "model_files.md",
+    "physical.md": "physical.md",
 }
 
 

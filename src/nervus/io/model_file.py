@@ -110,6 +110,12 @@ def system_to_dict(diagram: Diagram) -> dict[str, Any]:
         | ({"meta": c.meta} if c.meta else {})
         for c in diagram.connections
     ]
+    if diagram.links:
+        out["links"] = [
+            {"a": k.a.name, "a_port": k.a_port, "b": k.b.name, "b_port": k.b_port}
+            | ({"meta": k.meta} if k.meta else {})
+            for k in diagram.links
+        ]
     return out
 
 
@@ -230,6 +236,12 @@ def _fill_system(d: Diagram, data: dict[str, Any], prefix: str) -> None:
             conn.meta.update(c.get("meta", {}))
         except (KeyError, IndexError) as exc:
             raise ModelError(f"invalid connection {prefix}{c}: {exc}") from exc
+    for k in data.get("links", []):
+        try:
+            link = d.link((d.block(k["a"]), str(k["a_port"])), (d.block(k["b"]), str(k["b_port"])))
+            link.meta.update(k.get("meta", {}))
+        except KeyError as exc:
+            raise ModelError(f"invalid physical link {prefix}{k}: {exc}") from exc
 
 
 def dumps(diagram: Diagram) -> str:

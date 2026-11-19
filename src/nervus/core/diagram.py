@@ -37,6 +37,22 @@ class Connection:
         return f"<Connection {self.src.name}[{self.src_port}] -> {self.dst.name}[{self.dst_port}]>"
 
 
+@dataclass(frozen=True, eq=False)
+class Link:
+    """A physical connection between two ports of physical blocks (an electrical wire, a shaft, a heat path).
+
+    Unlike a signal connection it has no direction: the ports share one node of the physical network."""
+
+    a: Block
+    a_port: str
+    b: Block
+    b_port: str
+    meta: dict[str, Any] = field(default_factory=dict)
+
+    def __repr__(self) -> str:
+        return f"<Link {self.a.name}.{self.a_port} — {self.b.name}.{self.b_port}>"
+
+
 class Severity(StrEnum):
     ERROR = "error"
     WARNING = "warning"
@@ -77,6 +93,7 @@ class Diagram:
         """The Subsystem block that contains this diagram (``None`` for a model)."""
         self._blocks: dict[str, Block] = {}
         self._connections: list[Connection] = []
+        self._links: list[Link] = []
 
     # ------------------------------------------------------------------ hierarchy
 
@@ -242,6 +259,7 @@ class Diagram:
         b = self._resolve(block)
         removed = [c for c in self._connections if c.src is b or c.dst is b]
         self._connections = [c for c in self._connections if c.src is not b and c.dst is not b]
+        self._links = [k for k in self._links if k.a is not b and k.b is not b]
         del self._blocks[b.name]
         b.diagram = None
         return removed
@@ -303,6 +321,38 @@ class Diagram:
 
     def disconnect(self, conn: Connection) -> None:
         self._connections.remove(conn)
+
+    # ------------------------------------------------------------------ physical links
+
+    @property
+    def links(self) -> list[Link]:
+        return list(self._links)
+
+    def link(self, a: tuple[Block, str], b: tuple[Block, str]) -> Link:
+        """Join two physical ports, e.g. ``d.link((battery, "p"), (resistor, "p"))``. A port may be linked to
+        several others: they all share one node."""
+        for block, port in (a, b):
+            if block not in self:
+                raise ModelError(f"block {block.name!r} is not part of diagram {self.name!r}", (block.name,))
+            names = [n for n, _dom in getattr(block, "physical_ports", lambda: [])()]
+            if port not in names:
+                raise ModelError(
+                    f"{block.name!r} has no physical port {port!r}"
+                    + (f" (ports: {', '.join(names)})" if names else ""),
+                    (block.name,),
+                )
+        doms = [dict(blk.physical_ports())[port] for blk, port in (a, b)]
+        if doms[0] != doms[1]:
+            raise ModelError(
+                f"cannot link a {doms[0]} port ({a[0].name}.{a[1]}) to a {doms[1]} port ({b[0].name}.{b[1]})",
+                (a[0].name, b[0].name),
+            )
+        link = Link(a[0], a[1], b[0], b[1])
+        self._links.append(link)
+        return link
+
+    def unlink(self, link: Link) -> None:
+        self._links.remove(link)
 
     def driver(self, block: Block, in_port: int) -> Connection | None:
         """The connection driving ``block``'s input ``in_port``, if any."""

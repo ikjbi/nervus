@@ -35,6 +35,7 @@ maps Simulink names to Nervus names.
 | Library (`.slx` library), library links | Component libraries (`.nervlib`), linked subsystems (*Libraries*) |
 | Flip block (Ctrl+I), rotate block (Ctrl+R) | Flip Block (Ctrl+Shift+F), Rotate Block (Ctrl+Shift+R) |
 | Stateflow chart | State Chart block with a text definition (*State machines*) |
+| Simscape (Electrical, rotational mechanics, thermal) | physical blocks joined by links (*Physical modelling*) |
 | MATLAB Function block | Python Function block (with a *parameters* vector) |
 | S-Function | a Python `Block` subclass (*Writing blocks*) |
 

@@ -333,6 +333,11 @@ class Block:
         """Whether outputs depend directly on inputs. Called after :meth:`configure`."""
         return self.DIRECT_FEEDTHROUGH
 
+    def physical_ports(self) -> list[tuple[str, str]]:
+        """Physical ports as ``(name, domain)``, e.g. ``[("p", "electrical"), ("n", "electrical")]``. They are
+        joined by links (:meth:`Diagram.link`) into physical networks; ordinary blocks have none."""
+        return []
+
     def feedthrough_ports(self) -> list[int]:
         """The input ports that ``outputs`` reads directly (all of them for a direct-feedthrough block). Override
         when only some ports feed through, e.g. an Integrator's initial-condition input but not its input."""

@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+import numpy as np
+
 from nervus.blocks.ports import Inport, Outport, PortProxy, Subsystem
 from nervus.core.block import Block
 from nervus.core.diagram import Diagram
@@ -33,12 +35,60 @@ class FlatGraph:
     """For each node, the sample time of the innermost enclosing subsystem that has one (or None)."""
     trigger: list[list[tuple[int, int, str]]] = field(default_factory=list)
     """For each node, the trigger signals (source node, port, edge) of enclosing triggered subsystems."""
+    links: list[tuple[int, str, int, str]] = field(default_factory=list)
+    """Physical links between ports of physical blocks: (node, port, node, port)."""
 
 
 def flatten(diagram: Diagram) -> FlatGraph:
     g = FlatGraph()
     _add(diagram, "", g, top=True)
+    _physical_networks(g)
     return g
+
+
+def _new_node(g: FlatGraph, block: Block, name: str, inputs: list[tuple[int, int] | None], like: int) -> int:
+    g.blocks.append(block)
+    g.inputs.append(inputs)
+    g.names.append(name)
+    g.origin.append(block)
+    g.enable.append(list(g.enable[like]))
+    g.reset_on_enable.append(g.reset_on_enable[like])
+    g.trigger.append(list(g.trigger[like]))
+    g.task_rate.append(g.task_rate[like])
+    return len(g.blocks) - 1
+
+
+def _physical_networks(g: FlatGraph) -> None:
+    """Replace the physical blocks by one core node (the states) and one algebraic node per network; each
+    physical block becomes a tap that passes on its sensor outputs under its own name."""
+    from nervus.physical.network import NetworkAlgebraic, NetworkCore, NetworkTap, PhysicalBlock, build_networks
+
+    if not any(isinstance(b, PhysicalBlock) for b in g.blocks):
+        return
+    for net, members in build_networks(g.blocks, g.names, g.links):
+        try:
+            net.derivatives(net.x0, np.zeros(net.n_inputs))  # a trial solve: is the network well posed?
+            net.classify_outputs()
+        except Exception as exc:  # e.g. a singular network
+            raise ModelError(str(exc), tuple(g.names[i] for i in members)) from exc
+        instant = set(net.instant_outputs)
+        state_outputs = [k for k in range(net.n_outputs) if k not in instant]
+        sig_inputs: list[tuple[int, int] | None] = [src for i in members for src in g.inputs[i]]
+        prefix = g.names[members[0]].rpartition("/")[0]
+        base = f"{prefix}/{net.name}" if prefix else net.name
+        core = _new_node(g, NetworkCore(net, state_outputs), base, list(sig_inputs), members[0])
+        alg = None
+        if net.instant_outputs:
+            alg = _new_node(g, NetworkAlgebraic(net), base + ":instant", [(core, 0), *sig_inputs], members[0])
+        where = {k: (core, 1 + j) for j, k in enumerate(state_outputs)}
+        if alg is not None:
+            where.update({k: (alg, j) for j, k in enumerate(net.instant_outputs)})
+        for m in net.members:
+            i = next(i for i in members if g.names[i] == m.path)
+            n_out = m.outputs.stop - m.outputs.start
+            g.blocks[i] = NetworkTap(m.path, n_out)
+            taps: list[tuple[int, int] | None] = [where[k] for k in range(m.outputs.start, m.outputs.stop)]
+            g.inputs[i] = taps
 
 
 def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, int]:
@@ -104,7 +154,6 @@ def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, in
             continue
         d_node, d_port = dest(c.dst, c.dst_port)
         g.inputs[d_node][d_port] = source(c.src, c.src_port)
-    if not top:
-        # A subsystem's Out block drives the outside; its In blocks are driven from outside (set by the parent).
-        pass
+    for link in diagram.links:
+        g.links.append((node[id(link.a)], link.a_port, node[id(link.b)], link.b_port))
     return node
