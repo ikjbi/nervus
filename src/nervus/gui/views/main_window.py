@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from nervus import __version__
-from nervus.core import Block, Diagram, NervusError
+from nervus.core import Block, Connection, Diagram, NervusError
 from nervus.core.expressions import format_value, parse_value
 from nervus.gui.controllers import (
     CLIPBOARD_MIME,
@@ -876,8 +876,14 @@ class MainWindow(QMainWindow):
             if any("size" in b.meta for b in self.scene.selected_blocks()):
                 menu.addAction(self.act_reset_size)
             menu.addAction(self.act_create_subsystem)
-        elif target is not None:  # a wire
-            menu.addAction("Delete Wire", lambda: self.editor.delete([], [target]))  # type: ignore[list-item]
+        elif isinstance(target, Connection):  # a wire
+            wire = target
+            menu.addAction("Delete Wire", lambda: self.editor.delete([], [wire]))
+            if wire.meta.get("points"):
+                menu.addAction(
+                    "Reset Route",
+                    lambda: self.editor.set_wire_points([(wire, wire.meta.get("points"), None)], "Reset route"),
+                )
         else:
             menu.addAction(self.act_paste)
             menu.addAction(self.act_select_all)

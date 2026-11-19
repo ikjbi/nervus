@@ -29,6 +29,7 @@ class DiagramModel(QObject):
     paramsChanged = Signal(object)  # Block (parameters changed; ports may have changed too)
     connectionAdded = Signal(object)  # Connection
     connectionRemoved = Signal(object)  # Connection
+    connectionChanged = Signal(object)  # Connection (its drawn route changed)
     settingsChanged = Signal()
     workspaceChanged = Signal()
     testsChanged = Signal()
@@ -157,6 +158,15 @@ class DiagramModel(QObject):
         self._focus(block.diagram)
         block.meta["position"] = [round(position.x(), 1), round(position.y(), 1)]
         self.blockMoved.emit(block)
+
+    def set_wire_points(self, conn: Connection, points: list[list[float]] | None) -> None:
+        """Manually placed corners of a wire (``None``: route it automatically)."""
+        self._focus(conn.dst.diagram)
+        if points:
+            conn.meta["points"] = [[float(x), float(y)] for x, y in points]
+        else:
+            conn.meta.pop("points", None)
+        self.connectionChanged.emit(conn)
 
     def rename_block(self, block: Block, new_name: str) -> None:
         self._focus(block.diagram)

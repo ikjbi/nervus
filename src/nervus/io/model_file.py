@@ -107,6 +107,7 @@ def system_to_dict(diagram: Diagram) -> dict[str, Any]:
     out["blocks"] = [_block_dict(b) for b in diagram.blocks]
     out["connections"] = [
         {"src": c.src.name, "src_port": c.src_port, "dst": c.dst.name, "dst_port": c.dst_port}
+        | ({"meta": c.meta} if c.meta else {})
         for c in diagram.connections
     ]
     return out
@@ -225,7 +226,8 @@ def _fill_system(d: Diagram, data: dict[str, Any], prefix: str) -> None:
     for c in data.get("connections", []):
         try:
             src, dst = d.block(c["src"]), d.block(c["dst"])
-            d.connect((src, int(c["src_port"])), (dst, int(c["dst_port"])))
+            conn = d.connect((src, int(c["src_port"])), (dst, int(c["dst_port"])))
+            conn.meta.update(c.get("meta", {}))
         except (KeyError, IndexError) as exc:
             raise ModelError(f"invalid connection {prefix}{c}: {exc}") from exc
 

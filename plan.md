@@ -108,8 +108,8 @@ tests/
 - [ ] Live scope updates while the simulation runs
 - [x] File: new, open, save, save as, recent files
 - [x] Error and diagnostics panel (algebraic loops, unconnected ports), with click to highlight the block
-- [ ] Manual wire routing (drag segments, waypoints) and draggable branch points
-- [ ] Obstacle-avoiding automatic wire routing (wires currently may pass behind blocks)
+- [x] Manual wire routing (drag segments, waypoints) and draggable branch points
+- [x] Obstacle-avoiding automatic wire routing (A* around the blocks when the direct route is blocked)
 - [x] Auto Layout command (left-to-right by signal flow), undoable
 - [x] Flip blocks (Ctrl+Shift+F) for feedback paths; the wire router handles flipped ports
 - [x] Rotate blocks (vertical signal flow), resize blocks, nudge with arrow keys

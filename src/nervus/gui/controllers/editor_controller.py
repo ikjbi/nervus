@@ -32,6 +32,7 @@ from nervus.gui.controllers.commands import (
     SetTestsCommand,
     SetVariableCommand,
     SetVariantsCommand,
+    SetWirePointsCommand,
 )
 from nervus.gui.models.diagram_model import DiagramModel, block_position
 
@@ -137,6 +138,11 @@ class EditorController(QObject):
         cmd = SetMetaCommand(self.model, f"Resize {block.name}", [(block, {"size": new})])
         cmd.old = [(block, {"size": old})]
         return self._push(cmd)
+
+    def set_wire_points(self, changes: list[tuple[Connection, Any, Any]], text: str = "Route wire") -> bool:
+        """Set the manual corners of wires (``None``: automatic routing), undoable."""
+        changes = [(c, o, n) for c, o, n in changes if o != n]
+        return bool(changes) and self._push(SetWirePointsCommand(self.model, changes, text))
 
     def move_blocks(self, moves: list[tuple[Block, QPointF, QPointF]]) -> None:
         moves = [(b, o, n) for b, o, n in moves if o != n]

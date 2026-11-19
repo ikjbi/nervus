@@ -30,6 +30,13 @@ Panels can be moved, closed and reopened from the **View** menu.
 - An output can feed many inputs (a dot marks the branch). An input has exactly one source. Connecting a
   new line to an input that is already used replaces the old line.
 - Click a line to select it; Delete (or right-click → *Delete Wire*) removes it.
+- Lines are routed automatically with right angles. When the direct route would pass through a block, the
+  line goes **around the blocks** (the shortest route with the fewest bends).
+- **Drag a line segment** to place it yourself: the middle segments move sideways; the short segments at the
+  ports follow the blocks. Lines from the same output move together at a shared segment, so dragging the
+  segment at a branch moves the **branch point**. Manually placed lines keep their corners when blocks move
+  (the ends follow the ports) and are saved with the model. Right-click → *Reset Route* returns to automatic
+  routing.
 - **Hover over a port** to see which input it is, e.g. *input 2: reset (rising)* on a Discrete-Time
   Integrator with an external reset, or *k1*, *f1* on an Interpolation block.
 

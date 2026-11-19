@@ -28,6 +28,7 @@ from nervus.gui.controllers.editor_controller import EditorController
 from nervus.gui.models.diagram_model import DiagramModel, block_position
 from nervus.gui.theme import ThemeManager, current_theme
 from nervus.gui.views.items import GRID, BlockItem, PortItem, WireItem, route, snap
+from nervus.gui.views.routing import Point, Rect
 
 BLOCK_MIME = "application/x-nervus-block-type"
 
@@ -54,6 +55,8 @@ class DiagramScene(QGraphicsScene):
         self._wire_from: PortItem | None = None
         self._press_positions: dict[int, QPointF] = {}
         self._resizing: tuple[BlockItem, list[float] | None] | None = None  # item, size before the drag
+        # Wire segment drag: (wires with their corners before the drag and the dragged segment), press position
+        self._segment_drag: tuple[list[tuple[WireItem, list[Point], int]], QPointF] | None = None
         self.setSceneRect(QRectF(-5000, -5000, 10000, 10000))
 
         model.blockAdded.connect(self._on_block_added)
@@ -63,6 +66,7 @@ class DiagramScene(QGraphicsScene):
         model.paramsChanged.connect(self._on_params_changed)
         model.connectionAdded.connect(self._on_connection_added)
         model.connectionRemoved.connect(self._on_connection_removed)
+        model.connectionChanged.connect(self._on_connection_changed)
         model.diagramReset.connect(self.rebuild)
         model.currentChanged.connect(self._on_current_changed)
         controller.editingEnabledChanged.connect(self._on_editing_enabled)
@@ -138,6 +142,7 @@ class DiagramScene(QGraphicsScene):
             return
         wire = WireItem(conn, sp, dp)
         self.addItem(wire)
+        wire.update_path()  # now with the blocks of the scene as obstacles
         self.wires[id(conn)] = wire
         self._refresh_fanout(conn)
 
@@ -250,6 +255,15 @@ class DiagramScene(QGraphicsScene):
                 event.accept()
                 return
             port = self._port_at(event.scenePos())
+            wire = self._wire_at(event.scenePos()) if port is None else None
+            if wire is not None:
+                k = wire.segment_at(event.scenePos())
+                if k is not None:
+                    self.clearSelection()
+                    wire.setSelected(True)
+                    self._segment_drag = (self._segment_group(wire, k), event.scenePos())
+                    event.accept()
+                    return
             if port is not None:
                 self._wire_from = port
                 self._temp_wire = QGraphicsPathItem()
@@ -263,6 +277,13 @@ class DiagramScene(QGraphicsScene):
         self._press_positions = {id(i.block): i.pos() for i in self.selectedItems() if isinstance(i, BlockItem)}
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if self._segment_drag is not None:
+            group, pressed_at = self._segment_drag
+            d = event.scenePos() - pressed_at
+            for w, pts, k in group:
+                w.setPath(_path(_moved(pts, k, snap(d.x()), snap(d.y()))))
+            event.accept()
+            return
         if self._resizing is not None:
             item = self._resizing[0]
             corner = item.mapFromScene(event.scenePos())
@@ -274,14 +295,27 @@ class DiagramScene(QGraphicsScene):
         if self._temp_wire is not None and self._wire_from is not None:
             a = self._wire_from.scene_anchor()
             b = event.scenePos()
-            d = self._wire_from.direction
-            path = route(a, b, d, 1) if not self._wire_from.is_input else route(b, a, 1, d)
+            way = self._wire_from.direction
+            path = route(a, b, way, 1) if not self._wire_from.is_input else route(b, a, 1, way)
             self._temp_wire.setPath(path)
             event.accept()
             return
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if self._segment_drag is not None:
+            group, pressed_at = self._segment_drag
+            self._segment_drag = None
+            d = event.scenePos() - pressed_at
+            changes = []
+            for w, pts, k in group:
+                moved = _moved(pts, k, snap(d.x()), snap(d.y()))
+                changes.append((w.connection, w.connection.meta.get("points"), [list(p) for p in moved[1:-1]]))
+            if not (snap(d.x()) or snap(d.y())) or not self.controller.set_wire_points(changes):
+                for w, _pts, _k in group:
+                    w.update_path()
+            event.accept()
+            return
         if self._resizing is not None:
             item, old = self._resizing
             self._resizing = None
@@ -311,6 +345,52 @@ class DiagramScene(QGraphicsScene):
         self._press_positions = {}
         if moves:
             self.controller.move_blocks(moves)
+            self.reroute_all()
+
+    def _wire_at(self, pos: QPointF) -> WireItem | None:
+        for item in self.items(pos):
+            if isinstance(item, WireItem):
+                return item
+        return None
+
+    def _segment_group(self, wire: WireItem, k: int) -> list[tuple[WireItem, list[Point], int]]:
+        """The dragged segment of ``wire``, and the same segment of other wires from the same output (the
+        shared trunk of a branch), so a branch point moves as one."""
+        pts = wire.corners()
+        seg = (pts[k], pts[k + 1])
+        group = [(wire, pts, k)]
+        c = wire.connection
+        for other in self.wires.values():
+            oc = other.connection
+            if other is wire or oc.src is not c.src or oc.src_port != c.src_port:
+                continue
+            opts = other.corners()
+            for j in range(1, len(opts) - 2):
+                if _same_line(seg, (opts[j], opts[j + 1])):
+                    group.append((other, opts, j))
+                    break
+        return group
+
+    def obstacles_near(self, a: QPointF, b: QPointF, margin: float = 200.0) -> list[Rect]:
+        """Block rectangles near a wire from ``a`` to ``b``, for routing around them."""
+        left, right = min(a.x(), b.x()) - margin, max(a.x(), b.x()) + margin
+        top, bottom = min(a.y(), b.y()) - margin, max(a.y(), b.y()) + margin
+        out = []
+        for item in self.blocks.values():
+            r = item.mapRectToScene(item.body_rect())
+            if r.right() >= left and r.left() <= right and r.bottom() >= top and r.top() <= bottom:
+                out.append((r.left(), r.top(), r.right(), r.bottom()))
+        return out
+
+    def _on_connection_changed(self, conn: Connection) -> None:
+        wire = self.wires.get(id(conn))
+        if wire is not None:
+            wire.update_path()
+
+    def reroute_all(self) -> None:
+        """Route every wire again (after blocks moved, a route that was clear may now pass through a block)."""
+        for w in self.wires.values():
+            w.update_path()
 
     def _update_wires_of(self, item: BlockItem) -> None:
         for w in self.wires.values():
@@ -540,3 +620,32 @@ class DiagramView(QGraphicsView):
 
     def view_center_scene(self) -> QPointF:
         return self.mapToScene(self.viewport().rect().center())
+
+
+def _moved(pts: list[Point], k: int, dx: float, dy: float) -> list[Point]:
+    """``pts`` with segment k (points k and k+1) shifted across its direction."""
+    out = list(pts)
+    (x0, y0), (x1, y1) = pts[k], pts[k + 1]
+    if x0 == x1:  # vertical segment: moves sideways
+        out[k], out[k + 1] = (x0 + dx, y0), (x1 + dx, y1)
+    else:
+        out[k], out[k + 1] = (x0, y0 + dy), (x1, y1 + dy)
+    return out
+
+
+def _same_line(s1: tuple[Point, Point], s2: tuple[Point, Point]) -> bool:
+    """Two segments on the same vertical or horizontal line that overlap or touch (a shared trunk, or the two
+    arms of a branch point)."""
+    (a0, a1), (b0, b1) = s1, s2
+    if a0[0] == a1[0] == b0[0] == b1[0]:
+        return min(a0[1], a1[1]) <= max(b0[1], b1[1]) and min(b0[1], b1[1]) <= max(a0[1], a1[1])
+    if a0[1] == a1[1] == b0[1] == b1[1]:
+        return min(a0[0], a1[0]) <= max(b0[0], b1[0]) and min(b0[0], b1[0]) <= max(a0[0], a1[0])
+    return False
+
+
+def _path(pts: list[Point]) -> QPainterPath:
+    path = QPainterPath(QPointF(*pts[0]))
+    for x, y in pts[1:]:
+        path.lineTo(x, y)
+    return path

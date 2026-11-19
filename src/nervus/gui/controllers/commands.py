@@ -440,6 +440,24 @@ class SetMetaCommand(Command):
         self._apply(self.model, self.old)
 
 
+class SetWirePointsCommand(Command):
+    """Change the manually placed corners of wires: ``changes = [(connection, old points, new points)]``."""
+
+    def __init__(
+        self, model: DiagramModel, changes: list[tuple[Connection, Any, Any]], text: str = "Route wire"
+    ) -> None:
+        super().__init__(text)
+        self.model, self.changes = model, changes
+
+    def do(self) -> None:
+        for conn, _old, new in self.changes:
+            self.model.set_wire_points(conn, new)
+
+    def revert(self) -> None:
+        for conn, old, _new in self.changes:
+            self.model.set_wire_points(conn, old)
+
+
 class FlipBlocksCommand(Command):
     """Flip blocks left-right (inputs on the right, outputs on the left), e.g. for feedback paths."""
 

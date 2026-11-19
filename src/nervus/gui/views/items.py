@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QPointF, QRectF, Qt
@@ -12,6 +11,7 @@ from PySide6.QtWidgets import QGraphicsItem, QGraphicsPathItem, QStyleOptionGrap
 from nervus.core import Block, Connection
 from nervus.core.layout import ORIENTATIONS, Direction, orientation_of
 from nervus.gui.theme import current_theme
+from nervus.gui.views import routing
 from nervus.gui.views.glyphs import glyph
 
 if TYPE_CHECKING:
@@ -350,7 +350,36 @@ class WireItem(QGraphicsPathItem):
         self.update_path()
 
     def update_path(self) -> None:
-        self.setPath(route(self.src.scene_anchor(), self.dst.scene_anchor(), self.src.direction, self.dst.direction))
+        a, b = self.src.scene_anchor(), self.dst.scene_anchor()
+        corners = self.connection.meta.get("points")
+        scene: DiagramScene | None = self.scene()  # type: ignore[assignment]
+        obstacles = scene.obstacles_near(a, b) if scene is not None and not corners else None
+        self.setPath(route(a, b, self.src.direction, self.dst.direction, obstacles, corners))
+
+    def corners(self) -> list[routing.Point]:
+        """The points of the drawn route, ends included."""
+        path = self.path()
+        return [(path.elementAt(k).x, path.elementAt(k).y) for k in range(path.elementCount())]
+
+    def segment_at(self, pos: QPointF, tolerance: float = 6.0) -> int | None:
+        """Index k of the draggable segment (points k to k+1) near ``pos``. The segments at the ports cannot be
+        dragged; they follow the blocks."""
+        pts = self.corners()
+        for k in range(1, len(pts) - 2):
+            (x0, y0), (x1, y1) = pts[k], pts[k + 1]
+            if (
+                x0 == x1
+                and abs(pos.x() - x0) <= tolerance
+                and min(y0, y1) - tolerance <= pos.y() <= max(y0, y1) + tolerance
+            ):
+                return k
+            if (
+                y0 == y1
+                and abs(pos.y() - y0) <= tolerance
+                and min(x0, x1) - tolerance <= pos.x() <= max(x0, x1) + tolerance
+            ):
+                return k
+        return None
 
     def boundingRect(self) -> QRectF:
         r = super().boundingRect()
@@ -410,71 +439,23 @@ def _vec(d: int | Direction) -> Direction:
     return (d, 0) if isinstance(d, int) else d
 
 
-def route(a: QPointF, b: QPointF, a_dir: int | Direction = 1, b_dir: int | Direction = 1) -> QPainterPath:
+def route(
+    a: QPointF,
+    b: QPointF,
+    a_dir: int | Direction = 1,
+    b_dir: int | Direction = 1,
+    obstacles: list[routing.Rect] | None = None,
+    corners: list[routing.Point] | None = None,
+) -> QPainterPath:
     """Orthogonal route from an output anchor ``a`` to an input anchor ``b``.
 
     ``a_dir``/``b_dir`` are the signal directions at the ports: (1, 0) to the right, (-1, 0) to the left (flipped
     block), (0, 1) down and (0, -1) up (rotated blocks). An int means a horizontal direction (+1 or -1).
+    ``obstacles`` (block rectangles) are avoided if possible; ``corners`` are manually placed corners.
     """
-    da, db = _vec(a_dir), _vec(b_dir)
-    # Route in a frame where the signal leaves ``a`` to the right, then map the corners back.
-    fwd, back = _FRAMES[da]
-    pa, pb = fwd(a.x(), a.y()), fwd(b.x(), b.y())
-    db_local = fwd(*db)
-    pts = _route_right(pa, pb, (round(db_local[0]), round(db_local[1])))
+    pa, pb, da, db = (a.x(), a.y()), (b.x(), b.y()), _vec(a_dir), _vec(b_dir)
+    pts = routing.through(pa, pb, da, db, corners) if corners else routing.route(pa, pb, da, db, obstacles or ())
     path = QPainterPath(a)
     for x, y in pts[1:]:
-        path.lineTo(*back(x, y))
+        path.lineTo(x, y)
     return path
-
-
-Point = tuple[float, float]
-
-
-def _identity(x: float, y: float) -> Point:
-    return (x, y)
-
-
-def _mirror(x: float, y: float) -> Point:
-    return (-x, y)
-
-
-def _quarter_ccw(x: float, y: float) -> Point:
-    return (y, -x)
-
-
-def _quarter_cw(x: float, y: float) -> Point:
-    return (-y, x)
-
-
-_FRAMES: dict[Direction, tuple[Callable[[float, float], Point], Callable[[float, float], Point]]] = {
-    (1, 0): (_identity, _identity),
-    (-1, 0): (_mirror, _mirror),
-    (0, 1): (_quarter_ccw, _quarter_cw),  # (0, 1) -> (1, 0) and back
-    (0, -1): (_quarter_cw, _quarter_ccw),
-}
-
-
-def _route_right(a: Point, b: Point, db: Direction) -> list[Point]:
-    """Corner points from ``a`` (signal leaving to the right) to ``b``, entering ``b`` in direction ``db``."""
-    stub = 10.0
-    (ax, ay), (bx, by) = a, b
-    if db == (1, 0):
-        if bx - ax >= 2 * stub:
-            mx = snap((ax + bx) / 2)
-            return [a, (mx, ay), (mx, by), b]
-        # Backwards (feedback) wire: go out, loop below/above, come back in.
-        out_x, in_x = ax + 2 * stub, bx - 2 * stub
-        detour_y = max(ay, by) + 40 if abs(ay - by) < 30 else (ay + by) / 2
-        return [a, (out_x, ay), (out_x, detour_y), (in_x, detour_y), (in_x, by), b]
-    if db == (-1, 0):
-        # Out of one side and into the same side of the other block (typical for a flipped feedback block):
-        # go past both, then turn back.
-        x = max(ax, bx) + 2 * stub
-        return [a, (x, ay), (x, by), b]
-    # Into a port on the top (db = down) or bottom (db = up) of a rotated block.
-    sy = db[1]
-    if bx - ax >= stub and (by - ay) * sy >= stub:
-        return [a, (bx, ay), b]  # one corner
-    out_x, in_y = ax + 2 * stub, by - sy * 2 * stub
-    return [a, (out_x, ay), (out_x, in_y), (bx, in_y), b]

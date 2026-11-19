@@ -147,7 +147,7 @@ def build_tcu() -> Subsystem:
     for name, pos in {
         "speed": (0, 0),
         "pedal": (0, 160),
-        "last_gear": (120, 260),
+        "last_gear": (340, 280),
         "up_map": (150, 80),
         "down_map": (150, 180),
         "shift_logic": (340, 60),
@@ -155,6 +155,7 @@ def build_tcu() -> Subsystem:
         "shifting": (560, 140),
     }.items():
         s.block(name).meta["position"] = [float(pos[0]), float(pos[1])]
+    s.block("last_gear").meta["flipped"] = True  # the gear feeds back right to left
     return Subsystem(system=s, sample_time=0.01)
 
 

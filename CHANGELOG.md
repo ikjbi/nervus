@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Wires are routed around blocks; wire segments can be dragged (manual corners, saved with the model, moving
+  a branch point moves all its wires), and right-click → Reset Route returns to automatic routing.
 - Editor: rotate blocks (Ctrl+Shift+R, vertical signal flow), resize them with a corner grip, and move them
   with the arrow keys; wires route into ports on the top and bottom of rotated blocks.
 - View → Show Signal Widths and Sample Time Colours: vector wires labelled and drawn thicker; blocks and

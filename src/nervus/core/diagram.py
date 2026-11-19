@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import re
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from itertools import pairwise
 from pathlib import Path
@@ -30,6 +30,8 @@ class Connection:
     src_port: int
     dst: Block
     dst_port: int
+    meta: dict[str, Any] = field(default_factory=dict)
+    """Drawing data, e.g. ``points``: manually placed corners of the wire."""
 
     def __repr__(self) -> str:
         return f"<Connection {self.src.name}[{self.src_port}] -> {self.dst.name}[{self.dst_port}]>"
