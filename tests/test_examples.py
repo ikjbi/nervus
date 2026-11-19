@@ -194,3 +194,26 @@ def test_drive_cycle_example() -> None:
     t = np.array([p[0] for p in mod.ECE15], dtype=float)
     v = np.array([p[1] for p in mod.ECE15], dtype=float) / 3.6
     assert t[-1] == 195.0 and np.trapezoid(v, t) == pytest.approx(994.0, abs=0.5)
+
+
+def test_engine_modes_example(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from nervus.codegen import generate_c
+    from nervus.codegen.sil import back_to_back, find_compiler
+    from nervus.testing import run_tests
+
+    mod = _import("engine_modes")
+    d = mod.build()
+    results = run_tests(d)
+    assert all(r.passed for r in results), [r.summary() for r in results]
+    assert [t.name for t in load(EXAMPLES / "engine_modes.nervus").tests] == [t.name for t in d.tests]
+    # A shorter fuel cut-off threshold changes the behaviour: the thresholds really are calibration parameters.
+    case = d.tests[2]
+    early = simulate(d, case.stop_time, inputs=case.inputs, params={"rpm_cut_off": 2500.0})
+    assert early["fuel"][int(len(early.t) * 0.55)] == 1.0
+    code = generate_c(d)
+    assert "rpm_cut_on" in code.files["engine_modes.h"]
+    if find_compiler() is not None:
+        k = np.arange(600)
+        inputs = {"key": (k > 20).astype(float), "rpm": np.minimum(250 + 8.0 * k, 3000.0), "pedal": 30.0 * (k > 200)}
+        res = back_to_back(d, inputs, 600, tolerance=0.0, folder=tmp_path)
+        assert res.passed, res.summary()

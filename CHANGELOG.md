@@ -23,6 +23,10 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- State charts: `param` declarations read calibration parameters from the workspace or a mask; in C they are
+  calibration parameters (typed, in the A2L file).
+- Example `engine_modes.py`: engine operating modes with scenario test cases and C code.
+- Model outputs are available in results under the name of their Out block (`res["fuel"]`).
 - Function-call subsystems: *trigger* = `function_call` runs the subsystem once per change of the trigger
   value, e.g. a call counter incremented by a State Chart; identical C code.
 - Continuous Integrator: *external_reset* input (rising, falling, either, level). Variable-step solvers stop

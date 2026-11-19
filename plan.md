@@ -227,7 +227,8 @@ tests/
 - [ ] Hierarchical (nested) and parallel states, events, history junctions
 - [ ] Graphical state-chart editor
 - [x] C code generation for charts (back-to-back tested with zero tolerance)
-- [ ] Example: gear-shift logic, engine operating modes (crank, idle, run, fuel cut-off)
+- [x] Example: engine operating modes (crank, idle, run, fuel cut-off, stall) with chart `param`s
+- [ ] Example: gear-shift logic
 
 ## Phase 15 – Automotive and ECU learning library
 - [x] Mean-value engine model: throttle and intake manifold, air mass flow, torque production, crank dynamics

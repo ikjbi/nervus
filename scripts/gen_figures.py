@@ -996,6 +996,34 @@ def drive_cycle() -> plt.Figure:
     return fig
 
 
+@figure("engine_modes")
+def engine_modes() -> plt.Figure:
+    from nervus import load
+
+    d = load(Path(__file__).parent.parent / "examples" / "engine_modes.nervus")
+    case = next(c for c in d.tests if c.name == "overrun fuel cut-off")
+    res = simulate(d, case.stop_time, inputs=case.inputs)
+    fig, (a1, a2, a3) = plt.subplots(3, 1, figsize=(6.4, 4.8), sharex=True, height_ratios=[1.2, 0.8, 1.2])
+    a1.plot(res.t, res["rpm_10ms"], color=C1, lw=2)
+    for y, text in ((1500, "fuel cut-off above"), (1100, "fuel back below")):
+        a1.axhline(y, color=INK, ls=":", lw=1)
+        a1.text(1.6, y + 60, f"{text} {y} rpm", color=INK, fontsize=8, ha="left")
+    a1.set_ylabel("rpm")
+    a1.set_title("Overrun fuel cut-off: no fuel while coasting", color=INK, fontsize=10)
+    a2.plot(res.t, res["pedal_10ms"], color=C2, lw=2)
+    a2.set_ylabel("pedal [%]")
+    names = ["off", "crank", "crank_fail", "idle", "run", "fuel_cut", "stalled"]
+    a3.step(res.t, res["mode"], where="post", color=C3, lw=2, label="mode")
+    a3.step(res.t, res["fuel"] * 5.4, where="post", color=C4, lw=1.5, ls="--", label="fuel on")
+    a3.set_yticks(range(6), names[:6])
+    a3.set_ylim(-0.4, 5.8)
+    a3.legend(loc="lower right", fontsize=8)
+    a3.set_xlabel("time [s]")
+    a3.set_xlim(0, 10)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

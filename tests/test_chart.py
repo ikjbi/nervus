@@ -132,3 +132,34 @@ def test_chart_codegen_back_to_back(tmp_path) -> None:  # type: ignore[no-untype
     res = back_to_back(d, {"rpm": rpm_sig, "key": key_sig}, steps, tolerance=0.0, folder=tmp_path)
     assert res.passed, res.summary()
     assert len(set(res.c["state"][:, 0])) >= 2  # the test actually visits several states
+
+
+def test_chart_params_from_workspace_and_c(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    import numpy as np
+
+    from nervus import Diagram, simulate
+    from nervus.blocks import Inport, Outport, StateChart, ZeroOrderHold
+    from nervus.codegen import generate_c
+    from nervus.core import Variable
+
+    text = "input u\noutput y = 0\nparam thr_on, thr_off\nstate a\nstate b\n  entry: y = 1\ntransition a -> b: u > thr_on\ntransition b -> a: u < thr_off\n"
+    d = Diagram("cp")
+    d.workspace.add(Variable("thr_on", 0.8, data_type="fixdt(1,16,8)"))
+    d.workspace["thr_off"] = 0.2
+    u = d.add(Inport(port=1), name="u")
+    c = d.add(StateChart(definition=text, state_output=False, sample_time=0.01), name="c")
+    d.chain(u, d.add(ZeroOrderHold(sample_time=0.01)), c, d.add(Outport(port=1), name="y"))
+    assert simulate(d, 0.05, inputs={"u": 0.9})["y"][-1] == 1.0
+    assert simulate(d, 0.05, inputs={"u": 0.9}, params={"thr_on": 0.95})["y"][-1] == 0.0  # calibratable
+    code = generate_c(d)
+    assert "int16_T thr_on[1];" in code.files["cp.h"] and "real_T thr_off[1];" in code.files["cp.h"]
+    from nervus.codegen.sil import back_to_back, find_compiler
+
+    if find_compiler() is not None:
+        k = np.arange(100)
+        res = back_to_back(d, {"u": np.sin(0.1 * k)}, 100, tolerance=0.0, folder=tmp_path)
+        assert res.passed, res.summary()
+    bad = Diagram()
+    bad.add(StateChart(definition=text.replace("thr_off", "missing_thr")), name="c2")
+    with pytest.raises(Exception, match="not a workspace or mask variable"):
+        simulate(bad, 0.1)

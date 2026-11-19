@@ -55,3 +55,4 @@ The `examples` folder in the repository has complete models you can open with **
 | `engine_comparison.nervus` | two engines from one library component |
 | `lambda_control.nervus` | lambda control with short- and long-term fuel trims (tutorial) |
 | `drive_cycle.nervus` | a car with a driver model on the ECE-15 drive cycle (tutorial) |
+| `engine_modes.nervus` | engine operating modes as a State Chart: crank, idle, run, fuel cut-off, stall |

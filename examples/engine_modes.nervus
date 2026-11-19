@@ -1,0 +1,652 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "engine_modes",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 10.0,
+    "solver": "rk4",
+    "step": 0.01,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "rpm_started",
+      "value": 600.0,
+      "description": "The engine runs on its own above this speed",
+      "unit": "rpm"
+    },
+    {
+      "name": "rpm_stalled",
+      "value": 300.0,
+      "description": "Below this speed the engine has stalled",
+      "unit": "rpm"
+    },
+    {
+      "name": "crank_limit",
+      "value": 300.0,
+      "description": "Longest crank before giving up: 300 × 10 ms = 3 s (starter protection)",
+      "unit": "samples"
+    },
+    {
+      "name": "pedal_on",
+      "value": 2.0,
+      "description": "The pedal counts as pressed above this",
+      "unit": "%"
+    },
+    {
+      "name": "pedal_off",
+      "value": 1.0,
+      "description": "The pedal counts as released below this",
+      "unit": "%"
+    },
+    {
+      "name": "rpm_cut_on",
+      "value": 1500.0,
+      "description": "Fuel cut-off when coasting above this speed",
+      "unit": "rpm"
+    },
+    {
+      "name": "rpm_cut_off",
+      "value": 1100.0,
+      "description": "Fuel comes back below this speed (before the engine could stall)",
+      "unit": "rpm"
+    },
+    {
+      "name": "rpm_idle_max",
+      "value": 1200.0,
+      "description": "Pedal released below this speed: idle control",
+      "unit": "rpm"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "key",
+      "type": "ports.inport",
+      "params": {
+        "port": 1,
+        "value": 0.0,
+        "sample_time": -1.0,
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "rpm",
+      "type": "ports.inport",
+      "params": {
+        "port": 2,
+        "value": 0.0,
+        "sample_time": -1.0,
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          100.0
+        ]
+      }
+    },
+    {
+      "name": "pedal",
+      "type": "ports.inport",
+      "params": {
+        "port": 3,
+        "value": 0.0,
+        "sample_time": -1.0,
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "modes",
+      "type": "charts.state_chart",
+      "params": {
+        "definition": "\ninput key, rpm, pedal\noutput fuel = 0, starter = 0, idle_ctrl = 0\nparam rpm_started, rpm_stalled, crank_limit, pedal_on, pedal_off, rpm_cut_on, rpm_cut_off, rpm_idle_max\n\nstate off\n  entry: fuel = 0; starter = 0; idle_ctrl = 0\n\nstate crank\n  entry: starter = 1; fuel = 1\n\nstate crank_fail\n  entry: starter = 0; fuel = 0\n\nstate idle\n  entry: starter = 0; fuel = 1; idle_ctrl = 1\n\nstate run\n  entry: fuel = 1; idle_ctrl = 0\n\nstate fuel_cut\n  entry: fuel = 0; idle_ctrl = 0\n\nstate stalled\n  entry: fuel = 0; idle_ctrl = 0\n\ntransition off -> crank: key > 0.5\ntransition crank -> idle: rpm > rpm_started\ntransition crank -> crank_fail: after(crank_limit)\ntransition crank -> off: key < 0.5\ntransition crank_fail -> off: key < 0.5\ntransition idle -> off: key < 0.5\ntransition idle -> stalled: rpm < rpm_stalled\ntransition idle -> run: pedal > pedal_on\ntransition run -> off: key < 0.5\ntransition run -> stalled: rpm < rpm_stalled\ntransition run -> fuel_cut: pedal < pedal_off and rpm > rpm_cut_on\ntransition run -> idle: pedal < pedal_off and rpm < rpm_idle_max\ntransition fuel_cut -> off: key < 0.5\ntransition fuel_cut -> run: pedal > pedal_on\ntransition fuel_cut -> idle: rpm < rpm_cut_off\ntransition stalled -> off: key < 0.5\n",
+        "state_output": true,
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          330.0,
+          70.0
+        ]
+      }
+    },
+    {
+      "name": "key_10ms",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          150.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "rpm_10ms",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          150.0,
+          100.0
+        ]
+      }
+    },
+    {
+      "name": "pedal_10ms",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          150.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "fuel",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          560.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "starter",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          560.0,
+          70.0
+        ]
+      }
+    },
+    {
+      "name": "idle_ctrl",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          560.0,
+          140.0
+        ]
+      }
+    },
+    {
+      "name": "mode",
+      "type": "ports.outport",
+      "params": {
+        "port": 4
+      },
+      "meta": {
+        "position": [
+          560.0,
+          210.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "key",
+      "src_port": 0,
+      "dst": "key_10ms",
+      "dst_port": 0
+    },
+    {
+      "src": "key_10ms",
+      "src_port": 0,
+      "dst": "modes",
+      "dst_port": 0
+    },
+    {
+      "src": "rpm",
+      "src_port": 0,
+      "dst": "rpm_10ms",
+      "dst_port": 0
+    },
+    {
+      "src": "rpm_10ms",
+      "src_port": 0,
+      "dst": "modes",
+      "dst_port": 1
+    },
+    {
+      "src": "pedal",
+      "src_port": 0,
+      "dst": "pedal_10ms",
+      "dst_port": 0
+    },
+    {
+      "src": "pedal_10ms",
+      "src_port": 0,
+      "dst": "modes",
+      "dst_port": 2
+    },
+    {
+      "src": "modes",
+      "src_port": 0,
+      "dst": "fuel",
+      "dst_port": 0
+    },
+    {
+      "src": "modes",
+      "src_port": 1,
+      "dst": "starter",
+      "dst_port": 0
+    },
+    {
+      "src": "modes",
+      "src_port": 2,
+      "dst": "idle_ctrl",
+      "dst_port": 0
+    },
+    {
+      "src": "modes",
+      "src_port": 3,
+      "dst": "mode",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "normal start",
+      "description": "Key on at 0.5 s: crank with the starter, then idle once the engine runs on its own",
+      "stop_time": 4.0,
+      "inputs": {
+        "key": {
+          "time": [
+            0.0,
+            0.49,
+            0.5,
+            10.0
+          ],
+          "values": [
+            [
+              0.0
+            ],
+            [
+              0.0
+            ],
+            [
+              1.0
+            ],
+            [
+              1.0
+            ]
+          ],
+          "interpolation": "linear"
+        },
+        "rpm": {
+          "time": [
+            0.0,
+            0.5,
+            0.6,
+            1.5,
+            2.0,
+            10.0
+          ],
+          "values": [
+            [
+              0.0
+            ],
+            [
+              0.0
+            ],
+            [
+              250.0
+            ],
+            [
+              250.0
+            ],
+            [
+              850.0
+            ],
+            [
+              850.0
+            ]
+          ],
+          "interpolation": "linear"
+        },
+        "pedal": {
+          "time": [
+            0.0,
+            10.0
+          ],
+          "values": [
+            [
+              0.0
+            ],
+            [
+              0.0
+            ]
+          ],
+          "interpolation": "linear"
+        }
+      },
+      "checks": [
+        {
+          "kind": "final_value",
+          "signal": "mode",
+          "value": 3
+        },
+        {
+          "kind": "bounds",
+          "signal": "starter",
+          "lower": 1.0,
+          "upper": 1.0,
+          "t_from": 0.6,
+          "t_to": 1.7
+        },
+        {
+          "kind": "final_value",
+          "signal": "starter",
+          "value": 0.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "idle_ctrl",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "name": "failed start protects the starter",
+      "description": "The engine does not start: after 3 s of cranking the starter is switched off",
+      "stop_time": 5.0,
+      "inputs": {
+        "key": {
+          "time": [
+            0.0,
+            10.0
+          ],
+          "values": [
+            [
+              1.0
+            ],
+            [
+              1.0
+            ]
+          ],
+          "interpolation": "linear"
+        },
+        "rpm": {
+          "time": [
+            0.0,
+            10.0
+          ],
+          "values": [
+            [
+              250.0
+            ],
+            [
+              250.0
+            ]
+          ],
+          "interpolation": "linear"
+        },
+        "pedal": {
+          "time": [
+            0.0,
+            10.0
+          ],
+          "values": [
+            [
+              0.0
+            ],
+            [
+              0.0
+            ]
+          ],
+          "interpolation": "linear"
+        }
+      },
+      "checks": [
+        {
+          "kind": "final_value",
+          "signal": "mode",
+          "value": 2
+        },
+        {
+          "kind": "final_value",
+          "signal": "starter",
+          "value": 0.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "starter",
+          "lower": 1.0,
+          "upper": 1.0,
+          "t_from": 0.1,
+          "t_to": 2.9
+        }
+      ]
+    },
+    {
+      "name": "overrun fuel cut-off",
+      "description": "Driving at 3000 rpm, then pedal released: no fuel while coasting, fuel back before stalling",
+      "stop_time": 10.0,
+      "inputs": {
+        "key": {
+          "time": [
+            0.0,
+            10.0
+          ],
+          "values": [
+            [
+              1.0
+            ],
+            [
+              1.0
+            ]
+          ],
+          "interpolation": "linear"
+        },
+        "rpm": {
+          "time": [
+            0.0,
+            0.3,
+            1.0,
+            4.0,
+            8.0,
+            10.0
+          ],
+          "values": [
+            [
+              250.0
+            ],
+            [
+              900.0
+            ],
+            [
+              3000.0
+            ],
+            [
+              3000.0
+            ],
+            [
+              900.0
+            ],
+            [
+              850.0
+            ]
+          ],
+          "interpolation": "linear"
+        },
+        "pedal": {
+          "time": [
+            0.0,
+            0.5,
+            0.6,
+            3.9,
+            4.0,
+            10.0
+          ],
+          "values": [
+            [
+              0.0
+            ],
+            [
+              0.0
+            ],
+            [
+              30.0
+            ],
+            [
+              30.0
+            ],
+            [
+              0.0
+            ],
+            [
+              0.0
+            ]
+          ],
+          "interpolation": "linear"
+        }
+      },
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "mode",
+          "lower": 4,
+          "upper": 4,
+          "t_from": 1.0,
+          "t_to": 3.9
+        },
+        {
+          "kind": "bounds",
+          "signal": "fuel",
+          "lower": 0.0,
+          "upper": 0.0,
+          "t_from": 4.1,
+          "t_to": 6.5
+        },
+        {
+          "kind": "final_value",
+          "signal": "mode",
+          "value": 3
+        },
+        {
+          "kind": "final_value",
+          "signal": "fuel",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "name": "stall: no fuel and no automatic restart",
+      "description": "The engine stalls at idle with the key on: fuel off, and it waits for the driver to turn the key",
+      "stop_time": 4.0,
+      "inputs": {
+        "key": {
+          "time": [
+            0.0,
+            10.0
+          ],
+          "values": [
+            [
+              1.0
+            ],
+            [
+              1.0
+            ]
+          ],
+          "interpolation": "linear"
+        },
+        "rpm": {
+          "time": [
+            0.0,
+            0.3,
+            2.0,
+            2.5,
+            10.0
+          ],
+          "values": [
+            [
+              250.0
+            ],
+            [
+              800.0
+            ],
+            [
+              800.0
+            ],
+            [
+              100.0
+            ],
+            [
+              0.0
+            ]
+          ],
+          "interpolation": "linear"
+        },
+        "pedal": {
+          "time": [
+            0.0,
+            10.0
+          ],
+          "values": [
+            [
+              0.0
+            ],
+            [
+              0.0
+            ]
+          ],
+          "interpolation": "linear"
+        }
+      },
+      "checks": [
+        {
+          "kind": "final_value",
+          "signal": "fuel",
+          "value": 0.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "starter",
+          "value": 0.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "mode",
+          "value": 6
+        }
+      ]
+    }
+  ]
+}

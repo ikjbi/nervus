@@ -766,6 +766,8 @@ def _state_chart(e: Emitter) -> BlockCode:
     spec = blk.spec  # type: ignore[attr-defined]
     s = e.state("chart", blk.initial_discrete_state(), "[0] active state, [1] samples in state, then variables")
     names = {n: e.u(k, "0") for k, n in enumerate(spec.inputs)}
+    for n in spec.params:  # calibration parameters
+        names[n] = e.named_param(n, blk.param_values[n])  # type: ignore[attr-defined]
     for k, n in enumerate(spec.variables):
         names[n] = f"{s}[{2 + k}]"
     cg = _ChartC(names, "ticks", c_float(e.period))

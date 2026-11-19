@@ -104,3 +104,5 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   [tutorial](tutorials/lambda-control.md).
 - `drive_cycle.py`: a car with a driver model on the ECE-15 urban drive cycle. See the
   [tutorial](tutorials/drive-cycle.md).
+- `engine_modes.py`: the operating modes of an engine ECU as a State Chart (crank, idle, run, overrun fuel
+  cut-off, stall), with calibratable thresholds and scenario test cases. See [State machines](statecharts.md).

@@ -21,7 +21,8 @@ A chart is written in a short text language::
     transition cranking -> off: after(300) / fuel = 0
     transition running -> off: key < 0.5 or rpm < 300
 
-The first state is the initial one (or write ``initial NAME``). Every sample period the chart:
+``param NAME, ...`` declares read-only calibration parameters whose values come from the model workspace
+(or a mask). The first state is the initial one (or write ``initial NAME``). Every sample period the chart:
 
 1. checks the transitions leaving the active state, **in the order they are written**. The first whose guard
    is true fires: the source's ``exit`` actions run, then the transition's action (after ``/``), then the
@@ -143,6 +144,8 @@ class ChartSpec:
     states: list[ChartState]
     transitions: list[ChartTransition]
     initial: int
+    params: list[str] = field(default_factory=list)
+    """Read-only names whose values come from the model workspace or a mask (calibration parameters)."""
 
     @property
     def variables(self) -> list[str]:
@@ -207,6 +210,7 @@ def _parse_vars(text: str, where: str, with_init: bool) -> list[tuple[str, float
 def parse_chart(text: str) -> ChartSpec:
     """Parse the chart language (see the module docstring). Raises :class:`ParameterError` with the line."""
     inputs: list[str] = []
+    params: list[str] = []
     outputs: list[tuple[str, float]] = []
     locals_: list[tuple[str, float]] = []
     states: list[ChartState] = []
@@ -233,6 +237,8 @@ def parse_chart(text: str) -> ChartSpec:
             outputs += _parse_vars(rest, where, with_init=True)
         elif keyword == "local":
             locals_ += _parse_vars(rest, where, with_init=True)
+        elif keyword == "param":
+            params += [n for n, _ in _parse_vars(rest, where, with_init=False)]
         elif keyword == "state":
             name = rest.strip()
             if not name.isidentifier():
@@ -250,12 +256,13 @@ def parse_chart(text: str) -> ChartSpec:
             guard, _, action = m.group(3).partition("/")
             raw_transitions.append((lineno, m.group(1), m.group(2), guard.strip(), action.strip()))
         else:
-            raise ParameterError(f"{where}: expected input, output, local, state, initial or transition")
+            raise ParameterError(f"{where}: expected input, output, local, param, state, initial or transition")
     if not states:
         raise ParameterError("a chart needs at least one state")
-    names = set(inputs) | {n for n, _ in outputs} | {n for n, _ in locals_} | {"t_in_state"}
+    names = set(inputs) | {n for n, _ in outputs} | {n for n, _ in locals_} | set(params) | {"t_in_state"}
     assignable = {n for n, _ in outputs} | {n for n, _ in locals_}
-    dupes = [n for n in names if [*inputs, *(o for o, _ in outputs), *(v for v, _ in locals_)].count(n) > 1]
+    declared = [*inputs, *(o for o, _ in outputs), *(v for v, _ in locals_), *params]
+    dupes = [n for n in names if declared.count(n) > 1]
     if dupes:
         raise ParameterError(f"names used twice: {', '.join(sorted(set(dupes)))}")
     for state, kind, actions, lineno in pending:
@@ -284,7 +291,7 @@ def parse_chart(text: str) -> ChartSpec:
         )
     if initial_name is not None and initial_name not in index:
         raise ParameterError(f"initial state '{initial_name}' does not exist")
-    return ChartSpec(inputs, outputs, locals_, states, transitions, index[initial_name] if initial_name else 0)
+    return ChartSpec(inputs, outputs, locals_, states, transitions, index[initial_name] if initial_name else 0, params)
 
 
 class _Interpreter:
@@ -381,6 +388,20 @@ class StateChart(Block):
     def validate_params(self) -> None:
         self.spec = parse_chart(self.params["definition"])
         self._interp = _Interpreter(self.spec)
+        self.param_values: dict[str, float] = getattr(self, "param_values", {})
+
+    def resolve(self, namespace: dict[str, Any]) -> None:
+        """Take the values of the chart's ``param`` names from the workspace (or an enclosing mask)."""
+        super().resolve(namespace)
+        values = {}
+        for name in self.spec.params:
+            if name not in namespace:
+                raise ParameterError(f"chart parameter {name!r} is not a workspace or mask variable")
+            try:
+                values[name] = float(np.ravel(np.asarray(namespace[name], dtype=float))[0])
+            except (TypeError, ValueError) as exc:
+                raise ParameterError(f"chart parameter {name!r} must be a number") from exc
+        self.param_values = values
 
     def num_inputs(self) -> int:
         return len(self.spec.inputs)
@@ -403,6 +424,7 @@ class StateChart(Block):
         env: dict[str, Any] = {n: float(u[k][0]) for k, n in enumerate(self.spec.inputs)}
         env.update(_FUNCS)
         env.update(_CONSTS)
+        env.update(self._params())
         for k, name in enumerate(self.spec.variables):
             env[name] = float(xd[2 + k])
         return env
@@ -411,10 +433,17 @@ class StateChart(Block):
         env: dict[str, Any] = dict(_FUNCS)
         env.update(_CONSTS)
         env.update({n: 0.0 for n in self.spec.inputs})
+        env.update(self._params())
         for name, init in self.spec.outputs + self.spec.locals:
             env[name] = init
         self._interp.enter_initial(env)
         return np.array([float(self.spec.initial), 0.0, *[float(env[n]) for n in self.spec.variables]])
+
+    def _params(self) -> dict[str, float]:
+        missing = [n for n in self.spec.params if n not in self.param_values]
+        if missing:
+            raise ParameterError(f"chart parameter(s) {', '.join(missing)} not resolved (add them to the workspace)")
+        return dict(self.param_values)
 
     def _step(self, u: Sequence[Array], xd: Array) -> Array:
         env = self._env(u, xd)

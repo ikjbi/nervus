@@ -90,6 +90,10 @@ class Outport(Block):
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
         return []
 
+    def result_aliases(self) -> dict[str, int]:
+        """A model output is available in the result under the name of its Out block (e.g. ``res["fuel"]``)."""
+        return {self.name: 0} if self.name else {}
+
 
 def _ports(diagram: Diagram, cls: type[Block]) -> list[Block]:
     ports = sorted((b for b in diagram.blocks if isinstance(b, cls)), key=lambda b: b.params["port"])

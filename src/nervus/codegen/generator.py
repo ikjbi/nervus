@@ -149,6 +149,19 @@ class Emitter:
         self.gen.add_param(fname, arr, comment, dtype, const)
         return f"{self.gen.prefix}_{'C' if const else 'P'}.{fname}"
 
+    def named_param(self, name: str, value: float) -> str:
+        """A workspace (or mask) variable used by name inside a block (e.g. a chart ``param``): a shared
+        calibration field named after the variable, or a per-instance field for a mask parameter. Returns the
+        C expression of its (physical) value."""
+        if self._masked(name) or name not in self.gen.namespace:
+            fname, comment, dtype, const = f"{self.cname}_{name}", f"{self.path}: {name}", DOUBLE, False
+        else:
+            var = self.gen.model.diagram.root.workspace.variable(name)
+            fname, comment = c_identifier(name), f"workspace variable {name}"
+            dtype, const = parse_datatype(var.data_type) or DOUBLE, not var.calibratable
+        self.gen.add_param(fname, np.array([float(value)]), comment, dtype, const)
+        return self.at(f"{self.gen.prefix}_{'C' if const else 'P'}.{fname}", "0")
+
     def at(self, field_expr: str, ix: str) -> str:
         """Element ``ix`` of a parameter array as a physical real_T value (scaled for fixed-point storage)."""
         f = self.gen.params[field_expr.split(".", 1)[1]]
