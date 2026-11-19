@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- Test checks failed to notice NaN/inf: a bounds check passed on a diverged signal. Checks now fail.
+- `generate_c` for an atomic subsystem ignored its own sample time.
 - Out blocks could be scheduled before the block driving them, so generated C output last step's value.
 - Generated C for 2-point lookup axes compared an unsigned value with 0 (rejected by GCC with -Werror).
 - A Transfer Fcn without dynamics (e.g. `3/2`) failed to build its state-space form.
@@ -20,7 +22,6 @@ All notable changes to this project are documented here. The format follows
   delete wire, layout, ...).
 - Example and tutorial: lambda closed-loop control with short- and long-term fuel trims (vacuum leak, clogged
   injector), with the link to the OBD-II fuel trim PIDs.
-- `generate_c` for an atomic subsystem uses its own sample time.
 - Atomic subsystems: a subsystem *sample_time* makes it a task; inherited blocks inside run at that period,
   inputs are sampled and outputs held; the period is shown on the block; multirate C code.
 - OBD-II: read stored, pending and permanent trouble codes (with descriptions of common codes), freeze frame
