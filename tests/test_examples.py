@@ -100,3 +100,25 @@ def test_throttle_ecu_stored_tests_pass() -> None:
     results = run_tests(load(EXAMPLES / "throttle_ecu.nervus"), base_dir=EXAMPLES)
     assert len(results) == 3
     assert all(r.passed for r in results), "\n".join(r.summary() for r in results)
+
+
+def test_idle_speed_control() -> None:
+    from nervus.testing import run_tests
+
+    mod = _import("idle_speed_control")
+    d = mod.build()
+    results = run_tests(d)
+    assert all(r.passed for r in results), "\n".join(r.summary() for r in results)
+    assert load(EXAMPLES / "idle_speed_control.nervus").tests[0].name == "AC compressor on at 5 s"
+
+
+def test_idle_ecu_generates_c() -> None:
+    from nervus.codegen.sil import back_to_back, find_compiler
+
+    if find_compiler() is None:
+        pytest.skip("no C compiler")
+    d = _import("idle_speed_control").build()
+    k = np.arange(400)
+    inputs = {"engine_rpm": 800 + 60 * np.sin(k / 25.0), "target_rpm": 800.0, "ac_request": (k > 200).astype(float)}
+    res = back_to_back(d.block("ECU"), inputs, 400)
+    assert res.passed, res.summary()

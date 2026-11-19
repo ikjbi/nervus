@@ -1,0 +1,700 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "idle_speed_control",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 12.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": 0.01,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "Ts",
+      "value": 0.01,
+      "description": "ECU task period",
+      "unit": "s"
+    },
+    {
+      "name": "rpm_idle",
+      "value": 800.0,
+      "description": "Idle speed target",
+      "unit": "rpm",
+      "min": 500.0,
+      "max": 1500.0
+    },
+    {
+      "name": "Kp_idle",
+      "value": 0.04,
+      "description": "Idle PI proportional gain",
+      "unit": "°/rpm",
+      "min": 0.0
+    },
+    {
+      "name": "Ki_idle",
+      "value": 0.03,
+      "description": "Idle PI integral gain",
+      "unit": "°/(rpm·s)",
+      "min": 0.0
+    },
+    {
+      "name": "alpha_base",
+      "value": 2.0,
+      "description": "Feed-forward throttle opening at idle",
+      "unit": "°",
+      "min": 0.0,
+      "max": 20.0
+    },
+    {
+      "name": "J_engine",
+      "value": 0.15,
+      "description": "Crankshaft and flywheel inertia",
+      "unit": "kg·m²"
+    },
+    {
+      "name": "V_im",
+      "value": 0.002,
+      "description": "Intake manifold volume",
+      "unit": "m³"
+    },
+    {
+      "name": "T_ac",
+      "value": 12.0,
+      "description": "Air-conditioning compressor load",
+      "unit": "N·m"
+    },
+    {
+      "name": "alpha_ac",
+      "value": 3.0,
+      "description": "Extra throttle opening when the AC is requested",
+      "unit": "°",
+      "min": 0.0,
+      "max": 10.0
+    }
+  ],
+  "blocks": [
+    {
+      "name": "target_rpm",
+      "type": "ports.inport",
+      "params": {
+        "port": 1,
+        "value": "rpm_idle",
+        "sample_time": -1.0
+      },
+      "meta": {
+        "position": [
+          0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "ECU",
+      "type": "ports.subsystem",
+      "params": {},
+      "meta": {
+        "position": [
+          180,
+          0.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "engine_rpm",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0
+            },
+            "meta": {
+              "position": [
+                0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "rpm_sample",
+            "type": "discrete.zero_order_hold",
+            "params": {
+              "sample_time": "Ts"
+            },
+            "meta": {
+              "position": [
+                160,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "rpm_error",
+            "type": "math.sum",
+            "params": {
+              "signs": "-+"
+            },
+            "meta": {
+              "position": [
+                320,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "idle_pi",
+            "type": "control.discrete_pid",
+            "params": {
+              "P": "Kp_idle",
+              "I": "Ki_idle",
+              "D": 0.0,
+              "N": 100.0,
+              "initial_integrator": 0.0,
+              "upper": 15.0,
+              "lower": -2.0,
+              "anti_windup": "clamping",
+              "Kb": 1.0,
+              "sample_time": "Ts"
+            },
+            "meta": {
+              "position": [
+                480,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "base_opening",
+            "type": "math.bias",
+            "params": {
+              "bias": "alpha_base"
+            },
+            "meta": {
+              "position": [
+                640,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "throttle_cmd_deg",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                960,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "target_rpm",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0
+            },
+            "meta": {
+              "position": [
+                0,
+                110.0
+              ]
+            }
+          },
+          {
+            "name": "ac_request",
+            "type": "ports.inport",
+            "params": {
+              "port": 3,
+              "value": 0.0,
+              "sample_time": -1.0
+            },
+            "meta": {
+              "position": [
+                0,
+                220.0
+              ]
+            }
+          },
+          {
+            "name": "ac_feedforward",
+            "type": "math.gain",
+            "params": {
+              "gain": "alpha_ac",
+              "multiplication": "elementwise"
+            },
+            "meta": {
+              "position": [
+                160,
+                110.0
+              ]
+            }
+          },
+          {
+            "name": "throttle_sum",
+            "type": "math.sum",
+            "params": {
+              "signs": "++"
+            },
+            "meta": {
+              "position": [
+                800,
+                0.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "engine_rpm",
+            "src_port": 0,
+            "dst": "rpm_sample",
+            "dst_port": 0
+          },
+          {
+            "src": "rpm_sample",
+            "src_port": 0,
+            "dst": "rpm_error",
+            "dst_port": 0
+          },
+          {
+            "src": "target_rpm",
+            "src_port": 0,
+            "dst": "rpm_error",
+            "dst_port": 1
+          },
+          {
+            "src": "rpm_error",
+            "src_port": 0,
+            "dst": "idle_pi",
+            "dst_port": 0
+          },
+          {
+            "src": "idle_pi",
+            "src_port": 0,
+            "dst": "base_opening",
+            "dst_port": 0
+          },
+          {
+            "src": "base_opening",
+            "src_port": 0,
+            "dst": "throttle_sum",
+            "dst_port": 0
+          },
+          {
+            "src": "ac_request",
+            "src_port": 0,
+            "dst": "ac_feedforward",
+            "dst_port": 0
+          },
+          {
+            "src": "ac_feedforward",
+            "src_port": 0,
+            "dst": "throttle_sum",
+            "dst_port": 1
+          },
+          {
+            "src": "throttle_sum",
+            "src_port": 0,
+            "dst": "throttle_cmd_deg",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "throttle_actuator",
+      "type": "continuous.transfer_function",
+      "params": {
+        "numerator": [
+          1.0
+        ],
+        "denominator": [
+          0.03,
+          1.0
+        ]
+      },
+      "meta": {
+        "position": [
+          460,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "throttle_flow",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, alpha_deg, p_im):\n    \"\"\"Air mass flow through the throttle [kg/s] (compressible orifice flow).\"\"\"\n    p_amb, T, R, gamma, cd = 101325.0, 293.0, 287.0, 1.4, 0.8\n    area = 2.8e-3 * (1 - math.cos(math.radians(max(alpha_deg, 0.0)))) + 4e-6   # plate + leakage [m^2]\n    pr = min(max(p_im / p_amb, 0.0), 1.0)\n    if pr < 0.528:  # choked flow\n        psi = 0.6847\n    else:\n        psi = math.sqrt(2 * gamma / (gamma - 1) * (pr ** (2 / gamma) - pr ** ((gamma + 1) / gamma)))\n    return cd * area * p_amb / math.sqrt(R * T) * psi\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1
+      },
+      "meta": {
+        "position": [
+          640,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "cylinder_flow",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, p_im, omega):\n    \"\"\"Air mass flow into the cylinders [kg/s] (speed-density, four-stroke).\"\"\"\n    eta_vol, v_d, R, T = 0.85, 1.6e-3, 287.0, 293.0\n    return eta_vol * p_im * v_d * max(omega, 0.0) / (4 * math.pi * R * T)\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1
+      },
+      "meta": {
+        "position": [
+          1360,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "manifold_net_flow",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-"
+      },
+      "meta": {
+        "position": [
+          820,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "R_T_over_V",
+      "type": "math.gain",
+      "params": {
+        "gain": "287 * 293 / V_im",
+        "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          1000,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "p_intake",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 30000.0,
+        "upper": 101325.0,
+        "lower": 1000.0
+      },
+      "meta": {
+        "position": [
+          1180,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "ac_load",
+      "type": "sources.step",
+      "params": {
+        "time": 5.0,
+        "initial": 0.0,
+        "final": "T_ac",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "ac_request",
+      "type": "sources.step",
+      "params": {
+        "time": 4.8,
+        "initial": 0.0,
+        "final": 1.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "net_torque",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, m_cyl, omega, load):\n    \"\"\"Net torque on the crankshaft [N·m]: combustion - friction - load.\"\"\"\n    eta_th, q_lhv, afr = 0.30, 44e6, 14.7\n    omega = max(omega, 10.0)\n    combustion = eta_th * q_lhv * (m_cyl / afr) / omega\n    friction = 10.0 + 0.02 * omega\n    return combustion - friction - load\n",
+        "num_inputs": 3,
+        "num_outputs": 1,
+        "output_width": -1
+      },
+      "meta": {
+        "position": [
+          1540,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "1/J",
+      "type": "math.gain",
+      "params": {
+        "gain": "1 / J_engine",
+        "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          1720,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "omega",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 83.7758040957278,
+        "upper": "inf",
+        "lower": 0.0
+      },
+      "meta": {
+        "position": [
+          1900,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "engine_rpm",
+      "type": "math.gain",
+      "params": {
+        "gain": 9.549296585513721,
+        "multiplication": "elementwise"
+      },
+      "meta": {
+        "position": [
+          2080,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          2260,
+          0.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 0
+    },
+    {
+      "src": "target_rpm",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 1
+    },
+    {
+      "src": "ac_request",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 2
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "throttle_actuator",
+      "dst_port": 0
+    },
+    {
+      "src": "throttle_actuator",
+      "src_port": 0,
+      "dst": "throttle_flow",
+      "dst_port": 0
+    },
+    {
+      "src": "p_intake",
+      "src_port": 0,
+      "dst": "throttle_flow",
+      "dst_port": 1
+    },
+    {
+      "src": "p_intake",
+      "src_port": 0,
+      "dst": "cylinder_flow",
+      "dst_port": 0
+    },
+    {
+      "src": "omega",
+      "src_port": 0,
+      "dst": "cylinder_flow",
+      "dst_port": 1
+    },
+    {
+      "src": "throttle_flow",
+      "src_port": 0,
+      "dst": "manifold_net_flow",
+      "dst_port": 0
+    },
+    {
+      "src": "cylinder_flow",
+      "src_port": 0,
+      "dst": "manifold_net_flow",
+      "dst_port": 1
+    },
+    {
+      "src": "manifold_net_flow",
+      "src_port": 0,
+      "dst": "R_T_over_V",
+      "dst_port": 0
+    },
+    {
+      "src": "R_T_over_V",
+      "src_port": 0,
+      "dst": "p_intake",
+      "dst_port": 0
+    },
+    {
+      "src": "cylinder_flow",
+      "src_port": 0,
+      "dst": "net_torque",
+      "dst_port": 0
+    },
+    {
+      "src": "omega",
+      "src_port": 0,
+      "dst": "net_torque",
+      "dst_port": 1
+    },
+    {
+      "src": "ac_load",
+      "src_port": 0,
+      "dst": "net_torque",
+      "dst_port": 2
+    },
+    {
+      "src": "net_torque",
+      "src_port": 0,
+      "dst": "1/J",
+      "dst_port": 0
+    },
+    {
+      "src": "1/J",
+      "src_port": 0,
+      "dst": "omega",
+      "dst_port": 0
+    },
+    {
+      "src": "omega",
+      "src_port": 0,
+      "dst": "engine_rpm",
+      "dst_port": 0
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "throttle_actuator",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "p_intake",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    }
+  ],
+  "tests": [
+    {
+      "name": "AC compressor on at 5 s",
+      "description": "With feed-forward the speed dips less than 50 rpm, and is back within ±20 rpm after 4 s",
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "engine_rpm",
+          "lower": 780.0,
+          "upper": 820.0,
+          "t_from": 3.0,
+          "t_to": 4.8
+        },
+        {
+          "kind": "min",
+          "signal": "engine_rpm",
+          "value": 750.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "engine_rpm",
+          "lower": 780.0,
+          "upper": 820.0,
+          "t_from": 9.0
+        }
+      ]
+    },
+    {
+      "name": "AC compressor on, no feed-forward",
+      "description": "Feedback alone: a much deeper dip (but the engine must not stall)",
+      "parameters": {
+        "alpha_ac": 0.0
+      },
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "engine_rpm",
+          "lower": 600.0,
+          "upper": 900.0,
+          "t_from": 4.5
+        }
+      ]
+    },
+    {
+      "name": "higher idle target",
+      "parameters": {
+        "rpm_idle": 1000.0
+      },
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "final_value",
+          "signal": "engine_rpm",
+          "value": 1000.0,
+          "tolerance": 15.0
+        }
+      ]
+    }
+  ]
+}

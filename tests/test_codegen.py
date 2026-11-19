@@ -268,3 +268,19 @@ def test_a2l_file(tmp_path) -> None:  # type: ignore[no-untyped-def]
     lib = build_shared_library(code, tmp_path)
     filled = fill_addresses(a2l, symbol_addresses(lib))
     assert "@dut_P" not in filled and "@dut_B" not in filled
+
+
+def test_outport_added_first_is_ordered_after_its_driver(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Regression: an Out block added before its driver must not output last step's value in C."""
+    d = Diagram("order")
+    y = d.add(Outport(port=1), name="y")  # added first
+    u = d.add(Inport(port=1), name="u")
+    g = d.add(Gain(gain=2.0), name="g")
+    d.chain(u, g, y)
+    d.connect(d.add(Constant(value=1.0)), d.add(Outport(port=2), name="dummy"))
+    d.blocks  # noqa: B018
+    z = d.add(ZeroOrderHold(sample_time=0.01), name="z")
+    d.connect(d.add(Inport(port=2), name="v"), z)
+    d.connect(z, d.add(Outport(port=3), name="w"))
+    res = back_to_back(d, {"u": np.arange(10.0), "v": np.arange(10.0)}, 10, tolerance=0.0, folder=tmp_path)
+    assert res.passed, res.summary()

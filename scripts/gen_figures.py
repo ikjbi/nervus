@@ -770,6 +770,36 @@ def chart_engine_modes() -> plt.Figure:
     return fig
 
 
+@figure("idle_speed_control")
+def idle_speed_control() -> plt.Figure:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("idle", ROOT / "examples" / "idle_speed_control.py")
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    d = mod.build()
+    fig, (a1, a2) = plt.subplots(2, 1, figsize=(7.2, 4.6), sharex=True, gridspec_kw={"height_ratios": [2, 1]})
+    for alpha, color, label in (
+        (0.0, C2, "feedback only (alpha_ac = 0)"),
+        (3.0, C1, "with AC feed-forward (alpha_ac = 3°)"),
+    ):
+        r = simulate(d, params={"alpha_ac": alpha})
+        a1.plot(r.t, r["engine_rpm"], color=color, label=label)
+        a2.plot(r.t, r["throttle_actuator"], color=color)
+    a1.axvline(5.0, color=INK, ls=":", lw=1)
+    a1.text(5.05, 870, "AC compressor on", color=INK, fontsize=9)
+    a1.axvline(4.8, color=C1, ls=":", lw=1)
+    a1.set_ylabel("engine speed [rpm]")
+    a1.set_ylim(650, 900)
+    a1.set_xlim(3.5, 12)
+    a1.legend(loc="lower right", fontsize=9)
+    a2.set_ylabel("throttle [°]")
+    a2.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

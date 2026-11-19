@@ -35,7 +35,7 @@ external output of the model (logged in the results, and a field of the outputs 
 |---|---|---|---|
 | `port` | `1` |  | Port number (1, 2, ...) |
 
-*Direct feedthrough:* no · no outputs
+*Direct feedthrough:* yes · no outputs
 
 ---
 

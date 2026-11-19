@@ -217,16 +217,18 @@ tests/
 - [ ] Example: gear-shift logic, engine operating modes (crank, idle, run, fuel cut-off)
 
 ## Phase 15 – Automotive and ECU learning library
-- [ ] Mean-value engine model: throttle and intake manifold, air mass flow, torque production, crank dynamics
+- [x] Mean-value engine model: throttle and intake manifold, air mass flow, torque production, crank dynamics
+      (example `idle_speed_control.py`)
+- [ ] Turn the engine model into reusable library subsystems (needs component libraries, Phase 9)
 - [ ] Fuel control: injector model, lambda (AFR) closed-loop control, short and long term fuel trim
 - [ ] Ignition timing from speed/load maps, knock retard
-- [ ] Idle speed control
+- [x] Idle speed control (PI + base opening + AC feed-forward), with tutorial
 - [ ] Electronic throttle control (DC motor, return spring, PID)
 - [ ] Vehicle longitudinal dynamics: driveline, gearbox, tire slip, aero and rolling resistance
 - [ ] Driver model and drive cycles (WLTP, NEDC, FTP-75)
 - [ ] Sensor and actuator models: quantisation, noise, delay, faults
 - [ ] Truck-specific models: heavy-duty diesel, exhaust brake, AMT gearbox
-- [ ] Tutorial series: "Learn engine control with Nervus"
+- [ ] Tutorial series: "Learn engine control with Nervus" (first: idle speed control)
 
 ## Phase 16 – Control design and analysis tools
 - [ ] Linearise a model around an operating point (state-space / transfer function)

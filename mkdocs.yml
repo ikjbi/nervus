@@ -40,10 +40,13 @@ nav:
           - State machines: app-help/statecharts.md
           - C code generation: app-help/codegen.md
           - Test cases and the Data Inspector: app-help/testing.md
+          - "Tutorial: idle speed control": app-help/tutorial_idle.md
           - Keyboard shortcuts: app-help/shortcuts.md
       - Concepts: concepts.md
       - Coming from Simulink: coming-from-simulink.md
       - Model files: model-files.md
+  - Tutorials:
+      - Idle speed control: tutorials/idle-speed-control.md
   - Block reference:
       - Overview: blocks/index.md
       - Sources: blocks/sources.md

@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- Out blocks could be scheduled before the block driving them, so generated C output last step's value.
 - Generated C for 2-point lookup axes compared an unsigned value with 0 (rejected by GCC with -Werror).
 - A Transfer Fcn without dynamics (e.g. `3/2`) failed to build its state-space form.
 - 1-D lookup with `nearest` interpolation and linear extrapolation rounded halves to even.
@@ -13,6 +14,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Example and tutorial: idle speed control on a mean-value engine model (throttle flow, manifold, cylinder
+  flow, torque, crankshaft) with PI control, AC feed-forward, requirement tests and C code.
 - A2L (ASAM MCD-2 MC) file with every C code generation: parameters as CHARACTERISTICs with units/limits from
   the workspace, signals as MEASUREMENTs; `fill_addresses()` resolves addresses from the built binary.
 - State Chart block: state machines with entry/during/exit actions, prioritised transitions with guards and

@@ -93,4 +93,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
 - `mass_spring_damper_pid.py`: continuous PID position control with actuator limits.
 - `throttle_pi.py`: electronic throttle control with a 10 ms discrete PI controller, as on an ECU, with its
   gains as workspace variables and a second calibration file.
+- `idle_speed_control.py`: idle speed control on a mean-value engine model, with AC feed-forward,
+  requirement tests and C code. See the [tutorial](tutorials/idle-speed-control.md).
+- `throttle_ecu.py`: the throttle controller as an ECU subsystem, with generated C and A2L.
 - `coolant_fan.py`: radiator fan on/off control with a filtered sensor, a hysteresis relay and a lookup table.

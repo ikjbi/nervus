@@ -53,6 +53,7 @@ HELP_PAGES = [
     ("statecharts", "State machines"),
     ("codegen", "C code generation"),
     ("testing", "Test cases and the Data Inspector"),
+    ("tutorial_idle", "Tutorial: idle speed control"),
     ("shortcuts", "Keyboard shortcuts"),
 ]
 

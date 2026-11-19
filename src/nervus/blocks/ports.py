@@ -75,7 +75,9 @@ class Outport(Block):
     label = "Out"
     category = CATEGORY
     NUM_OUTPUTS = 0
-    DIRECT_FEEDTHROUGH = False
+    # Feedthrough so the Out block is always ordered after the block driving it; otherwise generated code
+    # could copy the output before it is computed (a one-step delay).
+    DIRECT_FEEDTHROUGH = True
     LOGS_INPUTS = True
     PARAMS = (Param("port", 1, ParamKind.INT, "Port number (1, 2, ...)", min=1),)
 
