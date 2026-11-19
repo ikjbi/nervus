@@ -85,4 +85,5 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --timeout=60"
+timeout_method = "thread"  # also interrupts a test blocked inside Qt, with a stack dump
 qt_api = "pyside6"
