@@ -94,6 +94,11 @@ class DiscreteIntegrator(_Discrete):
     $$ y[k] = x[k] + K\\,T\\,u[k], \\qquad x[k+1] = y[k] $$
 
     The state is limited to [*lower*, *upper*].
+
+    *external_reset* adds a second input, **reset**. When it fires, the state goes back to *initial* before the
+    output of that step is computed: ``rising`` (reset goes from ≤ 0 to > 0), ``falling`` (> 0 to ≤ 0),
+    ``either``, or ``level`` (every step while reset ≠ 0). Typical use: clear an accumulated error or an
+    on-time counter when a mode changes.
     """
 
     type_id = "discrete.integrator"
@@ -110,6 +115,13 @@ class DiscreteIntegrator(_Discrete):
         ),
         Param("upper", np.inf, ParamKind.FLOAT, "Upper limit"),
         Param("lower", -np.inf, ParamKind.FLOAT, "Lower limit"),
+        Param(
+            "external_reset",
+            "none",
+            ParamKind.CHOICE,
+            "Add a reset input that sets the state back to the initial value",
+            choices=("none", "rising", "falling", "either", "level"),
+        ),
         _st(1.0),
     )
 
@@ -117,19 +129,46 @@ class DiscreteIntegrator(_Discrete):
         if self.params["lower"] > self.params["upper"]:
             raise ParameterError("lower limit must be <= upper limit")
 
+    @property
+    def _has_reset(self) -> bool:
+        return self.params.get("external_reset", "none") != "none"
+
+    def num_inputs(self) -> int:
+        return 2 if self._has_reset else 1
+
+    def input_names(self) -> list[str]:
+        return ["u", f"reset ({self.params['external_reset']})"] if self._has_reset else ["u"]
+
+    def _reset_now(self, r: float, r_prev: float) -> bool:
+        mode = self.params["external_reset"]
+        rising, falling = r_prev <= 0 < r, r_prev > 0 >= r
+        return {"rising": rising, "falling": falling, "either": rising or falling, "level": r != 0}.get(mode, False)
+
+    def _effective(self, u: Sequence[Array], xd: Array) -> Array:
+        """The state after an external reset (if one fires at this step)."""
+        w = self.out_widths[0]
+        if self._has_reset and self._reset_now(float(np.ravel(u[1])[0]), float(xd[w])):
+            return self._x0()
+        return xd[:w]
+
     def _period(self) -> float:
         return self.period()
 
     def direct_feedthrough(self) -> bool:
-        return bool(self.params["method"] == "backward_euler")
+        return bool(self.params["method"] == "backward_euler") or self._has_reset
 
     def output_widths(self, in_widths: list[Width]) -> list[Width]:
         n = as_signal(self.params["initial"]).size
         return [n if n > 1 else in_widths[0] if in_widths[0] is not None else 1]
 
-    def initial_discrete_state(self) -> Array:
+    def _x0(self) -> Array:
         x0 = np.broadcast_to(as_signal(self.params["initial"]), (self.out_widths[0],)).copy()
         return np.clip(x0, self.params["lower"], self.params["upper"])
+
+    def initial_discrete_state(self) -> Array:
+        """The accumulator, plus the previous reset input when there is an external reset."""
+        x0 = self._x0()
+        return np.concatenate([x0, [0.0]]) if self._has_reset else x0
 
     def _step(self, u: Array, xd: Array) -> Array:
         return np.clip(
@@ -139,12 +178,16 @@ class DiscreteIntegrator(_Discrete):
         )
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        x = self._effective(u, xd)
         if self.params["method"] == "backward_euler":
-            return [self._step(u[0], xd)]
-        return [xd.copy()]
+            return [self._step(u[0], x)]
+        return [x.copy()]
 
     def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
-        return self._step(u[0], xd)
+        new = self._step(u[0], self._effective(u, xd))
+        if self._has_reset:
+            return np.concatenate([new, [float(np.ravel(u[1])[0])]])
+        return new
 
 
 @register

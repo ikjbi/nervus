@@ -335,20 +335,37 @@ def _integer_delay(e: Emitter) -> BlockCode:
 
 @template("discrete.integrator")
 def _discrete_integrator(e: Emitter) -> BlockCode:
-    s = e.state("x", e.block.initial_discrete_state(), "accumulator")
+    b = e.block
+    w = e.w()
+    reset = b.params.get("external_reset", "none")
+    s = e.state(
+        "x", b.initial_discrete_state(), "accumulator" + (f", [{w}] previous reset input" if reset != "none" else "")
+    )
     k, lo, hi = e.p("gain", "0"), e.p("lower", "0"), e.p("upper", "0")
     ts = c_float(e.period)
 
     def step(ix: str) -> str:
         return f"fmin(fmax({s}[{ix}] + {k} * {ts} * {e.u(0, ix)}, {lo}), {hi})"
 
-    if e.block.params["method"] == "backward_euler":
-        out = e.each(e.w(), lambda ix: [f"{e.y(0, ix)} = {step(ix)};"])
-        upd = e.each(e.w(), lambda ix: [f"{s}[{ix}] = {e.y(0, ix)};"])
+    pre: list[str] = []
+    post: list[str] = []
+    if reset != "none":
+        # The reset is decided when the outputs are computed: the state goes back to its initial value first, so
+        # the output and the update of this step both use it (as in the simulation).
+        r, prev = e.u(1, "0"), f"{s}[{w}]"
+        rising, falling = f"(({prev} <= 0.0) && ({r} > 0.0))", f"(({prev} > 0.0) && ({r} <= 0.0))"
+        cond = {"rising": rising, "falling": falling, "either": f"({rising} || {falling})", "level": f"({r} != 0.0)"}
+        x0 = b._x0()  # type: ignore[attr-defined]
+        pre = [f"if {cond[reset]} {{ /* external reset ({reset}) */"]
+        pre += [f"    {s}[{ix}] = {c_float(float(x0[ix]))};" for ix in range(w)]
+        pre += ["}", f"{prev} = {r};"]
+    if b.params["method"] == "backward_euler":
+        out = pre + e.each(w, lambda ix: [f"{e.y(0, ix)} = {step(ix)};"])
+        upd = e.each(w, lambda ix: [f"{s}[{ix}] = {e.y(0, ix)};"])
     else:
-        out = e.each(e.w(), lambda ix: [f"{e.y(0, ix)} = {s}[{ix}];"])
-        upd = e.each(e.w(), lambda ix: [f"{s}[{ix}] = {step(ix)};"])
-    return BlockCode(out, upd)
+        out = pre + e.each(w, lambda ix: [f"{e.y(0, ix)} = {s}[{ix}];"])
+        upd = e.each(w, lambda ix: [f"{s}[{ix}] = {step(ix)};"])
+    return BlockCode(out, upd + post)
 
 
 @template("discrete.transfer_function")

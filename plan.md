@@ -198,7 +198,8 @@ tests/
 ## Phase 12 – Zero crossings, events and solver robustness
 - [x] Zero-crossing detection with frozen modes (Saturation, Switch, Abs, Dead Zone, comparisons, Integrator
       limits, PID limits/clamping), direction-aware events and a chattering (Zeno) guard
-- [ ] Integrator external reset and saturation ports
+- [x] Discrete-Time Integrator external reset (rising/falling/either/level), with C code
+- [ ] Continuous Integrator external reset (needs a solver restart) and saturation ports
 - [ ] Algebraic loop solver (optional), with warnings
 - [ ] Investigate: a clamped continuous PID with D = 0 chatters (Zeno guard, 30 s) when its unused derivative
       filter state is frozen, but not when it moves: make the sliding mode at the limit robust

@@ -215,6 +215,10 @@ class Block:
     def num_inputs(self) -> int:
         return self.NUM_INPUTS
 
+    def input_names(self) -> list[str]:
+        """Names of the inputs, shown as port tooltips in the editor ("" = no name)."""
+        return []
+
     def num_outputs(self) -> int:
         return self.NUM_OUTPUTS
 

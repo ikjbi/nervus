@@ -63,6 +63,11 @@ $$ y[k] = x[k] + K\,T\,u[k], \qquad x[k+1] = y[k] $$
 
 The state is limited to [*lower*, *upper*].
 
+*external_reset* adds a second input, **reset**. When it fires, the state goes back to *initial* before the
+output of that step is computed: ``rising`` (reset goes from ≤ 0 to > 0), ``falling`` (> 0 to ≤ 0),
+``either``, or ``level`` (every step while reset ≠ 0). Typical use: clear an accumulated error or an
+on-time counter when a mode changes.
+
 ### Parameters
 
 | Name | Default | Unit | Description |
@@ -72,6 +77,7 @@ The state is limited to [*lower*, *upper*].
 | `method` | `'forward_euler'` |  | Integration method — one of `forward_euler`, `backward_euler` |
 | `upper` | inf |  | Upper limit |
 | `lower` | -inf |  | Lower limit |
+| `external_reset` | `'none'` |  | Add a reset input that sets the state back to the initial value — one of `none`, `rising`, `falling`, `either`, `level` |
 | `sample_time` | `1.0` | s | Sample period (-1 = inherit from input) |
 
 *Direct feedthrough:* depends on parameters

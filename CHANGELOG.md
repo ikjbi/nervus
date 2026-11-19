@@ -17,6 +17,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Discrete-Time Integrator: *external_reset* input (rising, falling, either, level); identical C code.
+- Port tooltips show input names (e.g. "input 2: reset (rising)").
 - Flip blocks (Ctrl+Shift+F): inputs on the right and outputs on the left, for feedback paths; saved with the model.
   The lambda and drive-cycle examples use it.
 - Example and tutorial: a car with a driver model on the ECE-15 urban drive cycle (driver and vehicle

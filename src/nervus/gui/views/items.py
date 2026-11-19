@@ -123,6 +123,10 @@ class BlockItem(QGraphicsItem):
             if p.scene():
                 p.scene().removeItem(p)
         self.in_ports = [PortItem(self, True, i) for i in range(self.block.num_inputs())]
+        names = self.block.input_names()
+        for i, p in enumerate(self.in_ports):
+            label = names[i] if i < len(names) and names[i] else ""
+            p.setToolTip(f"input {i + 1}" + (f": {label}" if label else ""))
         self.out_ports = [PortItem(self, False, i) for i in range(self.block.num_outputs())]
         left, right = -PORT_SIZE / 2, self._w + PORT_SIZE / 2
         if self.flipped:
