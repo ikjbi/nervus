@@ -49,3 +49,20 @@ def test_generate_selected_subsystem_and_error(window, qtbot) -> None:  # type: 
     dlg = window.generate_code()
     assert dlg is not None and dlg.code.name == "Subsystem"
     dlg.close()
+
+
+def test_tasks_checkbox_regenerates(window) -> None:  # type: ignore[no-untyped-def]
+    import sys
+
+    from nervus.gui.views.codegen_dialog import CodegenDialog
+
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent))
+    from test_tasks_codegen import two_tasks
+
+    window.diagram_model.set_diagram(two_tasks())
+    code = window.codegen.generate(window.diagram_model.root)
+    dlg = CodegenDialog(window.codegen, window.diagram_model.root, code, window)
+    dlg.tasks_box.setChecked(True)
+    assert dlg.code.tasks == ["ecu_task_10ms", "ecu_task_100ms"]
+    assert "os_task_10ms" in dlg.code.files["main_example.c"]
+    dlg.close()

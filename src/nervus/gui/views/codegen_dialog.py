@@ -8,6 +8,7 @@ from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDialog,
     QFileDialog,
     QHBoxLayout,
@@ -39,25 +40,19 @@ class CodegenDialog(QDialog):
         self.setWindowTitle(f"C Code — {code.name}")
         self.resize(940, 700)
 
-        rates = ", ".join(f"{r:g} s" for r in code.rates)
-        ins = ", ".join(f"{n}[{w}]" for n, w in code.inputs) or "none"
-        outs = ", ".join(f"{n}[{w}]" for n, w in code.outputs) or "none"
-        info = QLabel(
-            f"<b>{code.name}</b>: call <code>{code.name}_step()</code> every <b>{code.base_period:g} s</b> "
-            f"(rates: {rates}).<br>Inputs: {ins}<br>Outputs: {outs}<br>"
-            f"Tunable parameters: {len(code.params)}"
-        )
+        info = self.info = QLabel()
         info.setTextFormat(Qt.TextFormat.RichText)
         info.setWordWrap(True)
+        self.tasks_box = QCheckBox("One function per task (for an RTOS)")
+        self.tasks_box.setToolTip(
+            "Generate one function per rate, e.g. model_task_10ms() and model_task_100ms(), to call from the "
+            "tasks of an RTOS. Signals between tasks need Rate Transition blocks."
+        )
+        self.tasks_box.setChecked(bool(code.tasks))
+        self.tasks_box.toggled.connect(self._regenerate)
 
-        mono = monospace_font()
         self.tabs = QTabWidget()
-        for fname in (f"{code.name}.h", f"{code.name}.c", "main_example.c", f"{code.name}.a2l"):
-            edit = QPlainTextEdit(code.files[fname])
-            edit.setReadOnly(True)
-            edit.setFont(mono)
-            edit.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-            self.tabs.addTab(edit, fname)
+        self._show_code()
 
         self.sil_label = QLabel(
             "Software-in-the-loop: compile this code and compare it with the model, step by step."
@@ -84,6 +79,7 @@ class CodegenDialog(QDialog):
         buttons.addWidget(close)
         layout = QVBoxLayout(self)
         layout.addWidget(info)
+        layout.addWidget(self.tasks_box)
         layout.addWidget(self.tabs, 1)
         layout.addWidget(self.sil_label)
         layout.addLayout(buttons)
@@ -93,6 +89,43 @@ class CodegenDialog(QDialog):
         self.report_button.clicked.connect(self._open_report)
         self.copy_button.clicked.connect(self._copy)
         close.clicked.connect(self.accept)
+
+    def _show_code(self) -> None:
+        code = self.code
+        rates = ", ".join(f"{r:g} s" for r in code.rates)
+        ins = ", ".join(f"{n}[{w}]" for n, w in code.inputs) or "none"
+        outs = ", ".join(f"{n}[{w}]" for n, w in code.outputs) or "none"
+        call = (
+            "call " + ", ".join(f"<code>{t}()</code>" for t in code.tasks) + " from their tasks, or "
+            if code.tasks
+            else "call "
+        )
+        self.info.setText(
+            f"<b>{code.name}</b>: {call}<code>{code.name}_step()</code> every <b>{code.base_period:g} s</b> "
+            f"(rates: {rates}).<br>Inputs: {ins}<br>Outputs: {outs}<br>"
+            f"Tunable parameters: {len(code.params)}"
+        )
+        current = self.tabs.currentIndex()
+        self.tabs.clear()
+        mono = monospace_font()
+        for fname in (f"{code.name}.h", f"{code.name}.c", "main_example.c", f"{code.name}.a2l"):
+            edit = QPlainTextEdit(code.files[fname])
+            edit.setReadOnly(True)
+            edit.setFont(mono)
+            edit.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+            self.tabs.addTab(edit, fname)
+        self.tabs.setCurrentIndex(max(0, current))
+
+    def _regenerate(self, tasks: bool) -> None:
+        code = self.controller.generate(self.target, tasks=tasks)
+        if code is None:  # e.g. a missing Rate Transition: the controller reported why
+            self.tasks_box.blockSignals(True)
+            self.tasks_box.setChecked(not tasks)
+            self.tasks_box.blockSignals(False)
+            self.sil_label.setText("Cannot generate one function per task; see the status bar for the reason.")
+            return
+        self.code = code
+        self._show_code()
 
     def run_sil(self) -> None:
         self.sil_label.setText("Compiling and running…")

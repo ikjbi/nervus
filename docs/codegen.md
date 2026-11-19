@@ -148,6 +148,38 @@ if (rt_hit[1]) {        /* blocks of the 50 ms rate */
 }
 ```
 
+## One function per task (RTOS)
+
+On a real ECU an operating system (an RTOS, e.g. AUTOSAR OS or FreeRTOS) runs the software in periodic
+tasks, and a faster task interrupts a slower one. Tick **One function per task (for an RTOS)** in the
+Generate C dialog (or `generate_c(model, tasks=True)`) to get one function per rate:
+
+```c
+void ecu_task_10ms(void);   /* call every 10 ms, highest priority */
+void ecu_task_100ms(void);  /* call every 100 ms */
+```
+
+`main_example.c` then shows one OS task per rate, with the priorities to use. `ecu_step()` still exists:
+called every base period, it runs the due tasks fastest first, which is what the SIL check compares with the
+simulation.
+
+**Signals between tasks need a Rate Transition block.** If the 10 ms task read the 100 ms task's output
+directly, it would see the old or the new value depending on whether the slow task had finished, so the
+result would depend on timing. A Rate Transition makes the transfer deterministic, in the simulation and on
+the target:
+
+![Rate Transition between a 10 ms and a 100 ms task](images/blocks/rate_transition.png)
+
+| Direction | Set | Behaviour |
+|---|---|---|
+| `fast_to_slow` | *sample_time* = the slow rate | the slow task gets the fast signal as it was at the start of its period |
+| `slow_to_fast` | *sample_time* = the slow rate, *output_sample_time* = the fast rate | the fast task gets the slow signal one slow period later |
+
+The code generator checks the model: a signal that goes from one task to another without a Rate Transition
+is reported with both block names. Blocks that get the model's In ports directly must have a rate of their
+own: sample the inputs with a Zero-Order Hold, or put each task in an
+[atomic subsystem](subsystems.md#atomic-subsystems-one-ecu-task) with its own *sample_time*.
+
 ## Supported blocks
 
 **Supported:** 1-D/2-D Lookup Table, Abs, Bias, Compare To Constant, Constant, Counter, Dead Zone, Debounce, Demux, Discrete Filter (PT1), Discrete PID Controller, Discrete Transfer Fcn, Discrete-Time Integrator, Edge Detect, Gain (elementwise and matrix), Ground, In, Integer Delay, Logical Operator, Math Function, MinMax, Moving Average, Mux, Out, Product, Quantizer, Rate Limiter, Relational Operator, Relay, Saturation, Subsystems, Sum, Switch, Unit Delay, Zero-Order Hold (Scope, To Workspace and Terminator are ignored).

@@ -33,6 +33,38 @@ The code generator also writes `<name>.a2l`, the file calibration tools such as 
 lists the tunable parameters, with units and limits from the model workspace, and the block signals for
 measurement.
 
+## One function per task (RTOS)
+
+On a real ECU an operating system (an RTOS, e.g. AUTOSAR OS or FreeRTOS) runs the software in periodic
+tasks, and a faster task interrupts a slower one. Tick **One function per task (for an RTOS)** in the
+Generate C dialog (or `generate_c(model, tasks=True)`) to get one function per rate:
+
+```c
+void ecu_task_10ms(void);   /* call every 10 ms, highest priority */
+void ecu_task_100ms(void);  /* call every 100 ms */
+```
+
+`main_example.c` then shows one OS task per rate, with the priorities to use. `ecu_step()` still exists:
+called every base period, it runs the due tasks fastest first, which is what the SIL check compares with the
+simulation.
+
+**Signals between tasks need a Rate Transition block.** If the 10 ms task read the 100 ms task's output
+directly, it would see the old or the new value depending on whether the slow task had finished, so the
+result would depend on timing. A Rate Transition makes the transfer deterministic, in the simulation and on
+the target:
+
+![Rate Transition between a 10 ms and a 100 ms task](figures/rate_transition.png)
+
+| Direction | Set | Behaviour |
+|---|---|---|
+| `fast_to_slow` | *sample_time* = the slow rate | the slow task gets the fast signal as it was at the start of its period |
+| `slow_to_fast` | *sample_time* = the slow rate, *output_sample_time* = the fast rate | the fast task gets the slow signal one slow period later |
+
+The code generator checks the model: a signal that goes from one task to another without a Rate Transition
+is reported with both block names. Blocks that get the model's In ports directly must have a rate of their
+own: sample the inputs with a Zero-Order Hold, or put each task in an
+atomic subsystem (see *Subsystems*) with its own *sample_time*.
+
 ## What can be generated
 
 Everything that is discrete-time or has no state: gains, sums, lookup tables, logic, relays, filters,

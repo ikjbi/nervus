@@ -566,10 +566,17 @@ def _resolve_sample_times(
         for i, b in enumerate(blocks):
             if not b.sample_time().is_inherited or b.num_inputs() == 0 or forced[i] is not None:
                 continue
-            known = {sts[s] for s, _ in inputs[i] if sts[s] is not None}
+            known: set[SampleTime] = set()
+            for s, _ in inputs[i]:
+                override = blocks[s].output_sample_time()
+                src_st = sts[s]
+                if override is not None:
+                    known.add(override)
+                elif src_st is not None:
+                    known.add(src_st)
             if not known:
                 continue
-            new = _combine(known)  # type: ignore[arg-type]
+            new = _combine(known)
             if new != sts[i]:
                 sts[i] = new
                 changed = True

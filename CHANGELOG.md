@@ -19,6 +19,10 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- C code with one function per task for an RTOS (`generate_c(..., tasks=True)`, a checkbox in the Generate C
+  dialog), an RTOS `main_example.c`, and the Rate Transition block (fast_to_slow, slow_to_fast) that makes data
+  transfer between tasks deterministic; missing transitions are reported. Blocks can declare the rate their
+  outputs pass on (`output_sample_time`).
 - Test suites as `.nervtest` files (Test Manager: Export…/Import…), an HTML test report (Report…), and
   parameter sweeps and Monte Carlo runs from Python (`nervus.sweep`).
 - Prelookup and Interpolation using Prelookup blocks (1-D/2-D maps over shared axes), with C code.

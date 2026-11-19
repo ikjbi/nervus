@@ -17,6 +17,7 @@ from nervus.blocks.discrete import (
     EdgeDetect,
     IntegerDelay,
     MovingAverage,
+    RateTransition,
     UnitDelay,
     ZeroOrderHold,
 )
@@ -73,6 +74,7 @@ __all__ = [
     "Quantizer",
     "Ramp",
     "RateLimiter",
+    "RateTransition",
     "RelationalOperator",
     "Relay",
     "Saturation",

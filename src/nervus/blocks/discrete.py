@@ -11,6 +11,7 @@ from nervus.blocks.registry import register
 from nervus.core.block import Block, Width
 from nervus.core.errors import ParameterError
 from nervus.core.params import Param, ParamKind
+from nervus.core.sample_time import SampleTime
 from nervus.core.types import Array, as_signal
 
 CATEGORY = "Discrete"
@@ -444,3 +445,77 @@ class MovingAverage(_Discrete):
         if xd.size == 0:
             return xd
         return np.concatenate([xd[w:], np.broadcast_to(u[0], (w,))])
+
+
+@register
+class RateTransition(_Discrete):
+    """Passes a signal between two rates (two ECU tasks) in a way that is deterministic on an RTOS.
+
+    ![Rate transitions between a 10 ms and a 100 ms task](figures/rate_transition.png)
+
+    Set *sample_time* to the **slower** of the two rates. For ``slow_to_fast``, also set *output_sample_time* to
+    the fast rate, so that the blocks after it inherit the fast rate.
+
+    - ``fast_to_slow``: the slow task gets the fast signal sampled at its own start:
+      $y = u$ at every slow sample (like a Zero-Order Hold).
+    - ``slow_to_fast``: the fast task gets the slow signal **one slow period late**:
+      $y[k] = u[k-1]$ at the slow rate (like a Unit Delay), held in between.
+
+    Why the delay? On an ECU the fast task interrupts the slow one. If the fast task read the slow task's output
+    directly, it would sometimes see the old and sometimes the new value, depending on timing. With the delay it
+    always sees the value the slow task finished one period ago, in the simulation and on the target.
+    C code generated with one function per task (``generate_c(..., tasks=True)``) requires a Rate Transition on
+    every signal that crosses between rates.
+    """
+
+    type_id = "discrete.rate_transition"
+    label = "Rate Transition"
+    category = "Signal Attributes"
+    PARAMS = (
+        Param(
+            "direction",
+            "fast_to_slow",
+            ParamKind.CHOICE,
+            "From a faster to a slower rate, or from slower to faster",
+            choices=("fast_to_slow", "slow_to_fast"),
+        ),
+        Param("initial", 0.0, ParamKind.ARRAY, "Output before the first slow sample has arrived (slow_to_fast)"),
+        _st(0.1),
+        Param(
+            "output_sample_time",
+            -1.0,
+            ParamKind.SAMPLE_TIME,
+            "slow_to_fast: the fast rate that the blocks after it inherit (-1 = the sample time)",
+            "s",
+        ),
+    )
+
+    def output_sample_time(self) -> SampleTime | None:
+        st = SampleTime.from_value(self.params["output_sample_time"])
+        return st if self._delayed and st.is_discrete else None
+
+    @property
+    def _delayed(self) -> bool:
+        return bool(self.params["direction"] == "slow_to_fast")
+
+    def validate_params(self) -> None:
+        st = self.sample_time()
+        if not st.is_discrete:
+            raise ParameterError("a Rate Transition needs a discrete sample time: the slower of the two rates")
+
+    def direct_feedthrough(self) -> bool:
+        return not self._delayed
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [in_widths[0] if in_widths[0] is not None else 1]
+
+    def initial_discrete_state(self) -> Array:
+        if not self._delayed:
+            return np.zeros(0)
+        return np.broadcast_to(as_signal(self.params["initial"]), (self.out_widths[0],)).copy()
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        return [xd.copy()] if self._delayed else [u[0].copy()]
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        return np.broadcast_to(u[0], xd.shape).copy() if self._delayed else xd

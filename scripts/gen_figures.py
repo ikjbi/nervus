@@ -395,6 +395,33 @@ def prelookup() -> plt.Figure:
     return fig
 
 
+@figure("rate_transition")
+def rate_transition() -> plt.Figure:
+    fig, (top, bottom) = plt.subplots(2, 1, figsize=(6.4, 3.6), sharex=True)
+    t = np.arange(0, 0.501, 0.01)
+    fast = np.sin(2 * np.pi * 2 * t) + 1.5
+    slow_t = np.arange(0, 0.501, 0.1)
+    top.step(t, fast, where="post", color=C1, lw=1.2, label="10 ms signal")
+    held = fast[(np.floor(t / 0.1 + 1e-9) * 10).astype(int)]
+    top.step(t, held, where="post", color=C2, lw=2, label="fast_to_slow: sampled at 100 ms")
+    top.set_ylabel("value")
+    top.legend(loc="upper right", fontsize=8)
+    top.set_title("Rate Transition between a 10 ms and a 100 ms task", color=INK, fontsize=10)
+    slow = np.array([1.0, 2.0, 1.5, 3.0, 2.5, 2.0])
+    bottom.step(slow_t, slow, where="post", color=C3, lw=2, label="100 ms signal")
+    delayed = np.concatenate([[0.0], slow[:-1]])
+    bottom.step(slow_t, delayed, where="post", color=C4, lw=2, ls="--", label="slow_to_fast: one slow period later")
+    bottom.set_ylabel("value")
+    bottom.set_xlabel("time [s]")
+    bottom.legend(loc="upper left", fontsize=8)
+    bottom.set_xlim(0, 0.5)
+    for ax in (top, bottom):
+        for x in slow_t:
+            ax.axvline(x, color=INK, lw=0.6, ls=":")
+    fig.tight_layout()
+    return fig
+
+
 @figure("pid_anti_windup")
 def pid_anti_windup() -> plt.Figure:
     def response(aw: str):  # type: ignore[no-untyped-def]

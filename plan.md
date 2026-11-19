@@ -185,7 +185,7 @@ tests/
 - [x] Structs for inputs, outputs, states and parameters; parameters as `const` or as calibratable globals
 - [x] Per-block C templates for all discrete/stateless blocks, including lookup tables
 - [x] Multi-rate: a base-rate scheduler with rate counters
-- [ ] Multi-rate: one step function per rate (for RTOS tasks), with rate transition blocks
+- [x] Multi-rate: one step function per rate (for RTOS tasks), with rate transition blocks
 - [x] Software-in-the-loop (SIL): compile the generated C, run it via ctypes, and compare it with the Python
       simulation (back-to-back test)
 - [x] Code generation report (HTML): block-to-code traceability, memory use

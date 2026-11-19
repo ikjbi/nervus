@@ -246,6 +246,11 @@ class Block:
             return SampleTime.from_value(self.params["sample_time"])
         return self.DEFAULT_SAMPLE_TIME
 
+    def output_sample_time(self) -> SampleTime | None:
+        """The rate that blocks fed by this one inherit, if it differs from this block's own rate (e.g. a
+        Rate Transition from a slow to a fast task). ``None``: the block's resolved rate."""
+        return None
+
     def period(self) -> float:
         """The resolved sample period in seconds of a discrete block (valid during simulation).
 

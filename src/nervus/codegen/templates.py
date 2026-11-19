@@ -323,6 +323,16 @@ def _unit_delay(e: Emitter) -> BlockCode:
     return BlockCode(out, upd)
 
 
+@template("discrete.rate_transition")
+def _rate_transition(e: Emitter) -> BlockCode:
+    if e.block.params["direction"] == "fast_to_slow":
+        return BlockCode(e.each(e.w(), lambda ix: [f"{e.y(0, ix)} = {e.u(0, ix)};"]))
+    s = e.state("x", e.block.initial_discrete_state(), "value from the slow task, one slow period ago")
+    out = e.each(e.w(), lambda ix: [f"{e.y(0, ix)} = {s}[{ix}];"])
+    upd = e.each(e.w(), lambda ix: [f"{s}[{ix}] = {e.u(0, ix)};"])
+    return BlockCode(out, upd)
+
+
 @template("discrete.integer_delay")
 def _integer_delay(e: Emitter) -> BlockCode:
     w, n = e.w(), int(e.block.params["delay"])

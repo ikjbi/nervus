@@ -175,6 +175,8 @@ class GeneratedCode:
     outputs: list[tuple[str, int]]
     params: dict[str, list[float]]
     model: CompiledModel
+    tasks: list[str] = field(default_factory=list)
+    """Names of the task functions (one per rate) when generated with ``tasks=True``."""
 
     @property
     def c_files(self) -> dict[str, str]:
@@ -193,9 +195,11 @@ class GeneratedCode:
 
 
 class CGenerator:
-    def __init__(self, model: CompiledModel, name: str) -> None:
+    def __init__(self, model: CompiledModel, name: str, tasks: bool = False) -> None:
         self.model = model
         self.prefix = c_identifier(name)
+        self.tasks = tasks
+        """One C function per rate (for an RTOS) instead of one step function with a built-in scheduler."""
         self.namespace = model.diagram.root.workspace.namespace()  # shared calibration parameters
         self.cnames = self._unique_cnames(model.names)
         self.params: dict[str, _Field] = {}
@@ -368,6 +372,7 @@ class CGenerator:
             s, p = m.inputs[i][0]
             self.io_types[c_identifier(m.names[i])] = m.out_types[s][p]
 
+        self.task_plan = self._task_plan(steps) if self.tasks else None
         header = self._header(in_fields, out_fields, base_period, steps)
         source = self._source(codes, steps, base_period)
         files = {
@@ -387,6 +392,7 @@ class CGenerator:
             outputs=out_fields,
             params={k: v.init for k, v in self.params.items()},
             model=m,
+            tasks=[self.task_name(k) for k in self.task_plan["order"]] if self.task_plan is not None else [],
         )
 
     def _banner(self, what: str) -> list[str]:
@@ -465,6 +471,7 @@ class CGenerator:
             "",
             f"void {pfx}_initialize(void);",
             f"void {pfx}_step(void);",
+            *self._task_declarations(),
             "",
             f"#endif /* {guard} */",
             "",
@@ -538,6 +545,9 @@ class CGenerator:
                     f"    rt_count[{k}] = {(n - off) % n}u; /* rate {k}: every {n} base steps, offset {off} */"
                 )
         lines += [f"    {x}" for x in init_out]
+        if self.task_plan is not None:
+            lines += ["}", "", *self._task_functions(codes, len(steps))]
+            return "\n".join(lines)
         lines += ["}", "", f"void {pfx}_step(void)", "{", "    uint32_T i;", "    (void)i;"]
         if multirate:
             lines += [f"    for (i = 0; i < {len(steps)}u; i++) {{ rt_hit[i] = (rt_count[i] == 0u); }}"]
@@ -554,11 +564,194 @@ class CGenerator:
         lines += ["}", ""]
         return "\n".join(lines)
 
+    # ------------------------------------------------------------------ one function per task (RTOS)
+
+    def task_name(self, k: int) -> str:
+        period = self.model.rates[k].period
+        ms = period * 1000
+        tag = f"{round(ms)}ms" if abs(ms - round(ms)) < 1e-9 and ms >= 1 else f"{period:g}s".replace(".", "p")
+        return f"{self.prefix}_task_{tag}"
+
+    def _task_plan(self, steps: list[tuple[int, int]]) -> dict[str, Any]:
+        """Which task runs the outputs and the update of every block, checked for deterministic data transfer."""
+        m = self.model
+        if any(off for _n, off in steps) or (steps and min(n for n, _ in steps) != 1):
+            raise CodegenError("one function per task needs rates without offsets, all multiples of the fastest rate")
+        fastest = min(range(len(m.rates)), key=lambda k: m.rates[k].period)
+        n = len(m.blocks)
+        out_task: list[int | None] = [None] * n
+        upd_task: list[int | None] = [None] * n
+        guard: list[int | None] = [None] * n
+        consumers: list[list[int]] = [[] for _ in range(n)]
+        for i in range(n):
+            for s, _p in m.inputs[i]:
+                consumers[s].append(i)
+        for i, b in enumerate(m.blocks):
+            kind = m.kinds[i]
+            if kind is Kind.CONSTANT:
+                continue
+            if kind is not Kind.DISCRETE:
+                if isinstance(b, Inport):
+                    out_task[i] = fastest  # copies the inputs; read by every task
+                    continue
+                periods = sorted(
+                    {m.rates[m.rate_index[s]].period for s, _p in m.inputs[i] if m.kinds[s] is Kind.DISCRETE}
+                )
+                if len(periods) > 1:
+                    raise CodegenError(
+                        f"{m.names[i]} gets signals from tasks with different rates ("
+                        + " s and ".join(f"{p:g}" for p in periods)
+                        + " s): insert a Rate Transition block on the inputs that come from the other task",
+                        (m.names[i],),
+                    )
+                raise CodegenError(
+                    f"{m.names[i]}: one function per task needs every block to have a discrete rate. Set its "
+                    "sample time, sample the model inputs it uses with a Zero-Order Hold, or put it in an atomic "
+                    "subsystem with a sample time",
+                    (m.names[i],),
+                )
+            out_task[i] = upd_task[i] = m.rate_index[i]
+        for i, b in enumerate(m.blocks):  # rate transitions run in the fast task, at the slow rate's ticks
+            if b.type_id != "discrete.rate_transition":
+                continue
+            slow = m.rate_index[i]
+            if b.params["direction"] == "fast_to_slow":
+                s = m.inputs[i][0][0]
+                src_task = out_task[s]
+                fast = src_task if src_task is not None else slow
+                if m.rates[fast].period > m.rates[slow].period:
+                    raise CodegenError(
+                        f"{m.names[i]}: its input is slower than its sample time; use slow_to_fast", (m.names[i],)
+                    )
+                out_task[i], upd_task[i], guard[i] = fast, None, slow if fast != slow else None
+            else:
+                rates = [t for c in consumers[i] if (t := out_task[c]) is not None]
+                fast = min(rates, key=lambda k: m.rates[k].period) if rates else slow
+                out_task[i], upd_task[i], guard[i] = fast, slow, slow if fast != slow else None
+        for i, b in enumerate(m.blocks):  # every other signal must stay within one task
+            if out_task[i] is None or (
+                b.type_id == "discrete.rate_transition" and b.params["direction"] == "fast_to_slow"
+            ):
+                continue
+            mine = {t for t in (out_task[i], upd_task[i]) if t is not None}
+            if b.type_id == "discrete.rate_transition":
+                mine = {m.rate_index[i]}  # its input is read by the slow task's update
+            for s, _p in m.inputs[i]:
+                src = m.blocks[s]
+                src_task = out_task[s]
+                if m.kinds[s] is Kind.CONSTANT or src_task is None or src.type_id == "discrete.rate_transition":
+                    continue
+                if isinstance(src, Inport) and m.kinds[s] is not Kind.DISCRETE:
+                    continue
+                if src_task not in mine or len(mine) > 1:
+                    raise CodegenError(
+                        f"{m.names[s]} ({m.rates[src_task].period:g} s) feeds {m.names[i]} "
+                        f"({m.rates[next(iter(mine))].period:g} s): insert a Rate Transition block between the two "
+                        "tasks (fast_to_slow or slow_to_fast)",
+                        (m.names[s], m.names[i]),
+                    )
+        order = sorted(range(len(m.rates)), key=lambda k: m.rates[k].period)
+        return {"out": out_task, "upd": upd_task, "guard": guard, "order": order, "fastest": fastest}
+
+    def _task_declarations(self) -> list[str]:
+        if getattr(self, "task_plan", None) is None:
+            return []
+        pfx, m = self.prefix, self.model
+        lines = [
+            "",
+            "/* One function per task. Call each one every period; at the same tick, the faster task first (as a",
+        ]
+        lines.append(f" * rate-monotonic RTOS does). {pfx}_step() does that for you when called every base period. */")
+        for k in self.task_plan["order"]:  # type: ignore[index]
+            lines.append(f"void {self.task_name(k)}(void); /* every {m.rates[k].period:g} s */")
+        return lines
+
+    def _task_functions(self, codes: list[BlockCode], n_rates: int) -> list[str]:
+        plan = self.task_plan
+        assert plan is not None
+        pfx, m = self.prefix, self.model
+        fastest = plan["fastest"]
+        lines = []
+        for k in plan["order"]:
+            out_lines: list[str] = []
+            upd_lines: list[str] = []
+            for i, code in enumerate(codes):
+                label = f"/* {m.names[i]} ({m.blocks[i].label or 'port'}) */"
+                g = plan["guard"][i]
+                if plan["out"][i] == k and code.outputs:
+                    body = (
+                        [f"if (rt_hit[{g}]) {{", *[f"    {x}" for x in code.outputs], "}"]
+                        if g is not None
+                        else code.outputs
+                    )
+                    out_lines += [label, *body]
+                if plan["upd"][i] == k and code.update:
+                    upd_lines += [label, *code.update]
+            lines += [f"void {self.task_name(k)}(void)", "{", "    uint32_T i;", "    (void)i;"]
+            if k == fastest and n_rates > 1:
+                lines += [f"    for (i = 0; i < {n_rates}u; i++) {{ rt_hit[i] = (rt_count[i] == 0u); }}"]
+            lines += ["", "    /* outputs */", *[f"    {x}" for x in out_lines]]
+            lines += ["", "    /* state updates */", *[f"    {x}" for x in upd_lines]]
+            if k == fastest and n_rates > 1:
+                lines += [
+                    "",
+                    "    /* this task counts the ticks of all tasks */",
+                    f"    for (i = 0; i < {n_rates}u; i++) {{",
+                    "        rt_count[i] = (rt_count[i] + 1u == rt_period[i]) ? 0u : rt_count[i] + 1u;",
+                    "    }",
+                ]
+            lines += ["}", ""]
+        lines += [f"void {pfx}_step(void)", "{", f"    {self.task_name(fastest)}();"]
+        for k in plan["order"]:
+            if k != fastest:
+                lines.append(f"    if (rt_hit[{k}]) {{ {self.task_name(k)}(); }}")
+        lines += ["}", ""]
+        return lines
+
+    def _main_example_rtos(self, read: list[str], write: list[str]) -> str:
+        """Template for an RTOS: one OS task per rate, the fastest with the highest priority."""
+        plan = self.task_plan
+        assert plan is not None
+        m = self.model
+        lines = [
+            *self._banner("main_example.c: how to run the task functions on an RTOS (a template)"),
+            f'#include "{self.prefix}.h"',
+            "",
+            "/* Give every rate its own periodic OS task. Faster tasks need a higher priority (rate-monotonic), so",
+            " * that at a common tick the faster task runs first. Rate Transition blocks in the model take care of",
+            " * the data passed between the tasks. */",
+            "",
+        ]
+        for rank, k in enumerate(plan["order"]):
+            period = m.rates[k].period
+            lines += [f"/* priority {len(plan['order']) - rank} (highest = fastest), every {period:g} s */"]
+            lines += [f"void os_task_{self.task_name(k).split('_task_')[-1]}(void)", "{"]
+            if k == plan["fastest"]:
+                lines += read
+            lines.append(f"    {self.task_name(k)}();")
+            if k == plan["fastest"]:
+                lines += write
+            lines += ["}", ""]
+        lines += [
+            "int main(void)",
+            "{",
+            f"    {self.prefix}_initialize();",
+            "    /* TODO: create the OS tasks above with their periods and priorities, then start the scheduler,",
+            "     * e.g. FreeRTOS: xTaskCreate(...); vTaskStartScheduler(); */",
+            "    for (;;) {",
+            "    }",
+            "}",
+            "",
+        ]
+        return "\n".join(lines)
+
     def _main_example(self, ins: list[tuple[str, int]], outs: list[tuple[str, int]], base: float) -> str:
         """A template for the ECU side: how to call the generated code from a periodic task."""
         pfx = self.prefix
         read = [f"    {pfx}_U.{n}[{k}] = 0.0; /* TODO: read sensor */" for n, w in ins for k in range(w)]
         write = [f"    (void){pfx}_Y.{n}[{k}]; /* TODO: drive actuator */" for n, w in outs for k in range(w)]
+        if getattr(self, "task_plan", None) is not None:
+            return self._main_example_rtos(read, write)
         lines = [
             *self._banner("main_example.c: how to run the generated code on a target (a template)"),
             f'#include "{pfx}.h"',
@@ -704,7 +897,7 @@ def _pass_through(e: Emitter) -> BlockCode:
     return BlockCode(outputs=e.each(e.w(), body))
 
 
-def generate_c(target: Diagram | Block, name: str | None = None) -> GeneratedCode:
+def generate_c(target: Diagram | Block, name: str | None = None, tasks: bool = False) -> GeneratedCode:
     """Generate C code for a model, or for a subsystem of a model.
 
     For a subsystem, its In/Out blocks become the inputs and outputs of the generated code, and the rest of
@@ -723,7 +916,7 @@ def generate_c(target: Diagram | Block, name: str | None = None) -> GeneratedCod
         rate = None if st.is_inherited else st  # an atomic subsystem: its own task period
     model = compile_diagram(diagram, default_rate=rate)
     label = name or (target.name if isinstance(target, Block) else diagram.name) or "model"
-    return CGenerator(model, label).generate()
+    return CGenerator(model, label, tasks=tasks).generate()
 
 
 # Register the block templates.

@@ -29,6 +29,7 @@ maps Simulink names to Nervus names.
 | Enabled Subsystem (held / reset) | Subsystem with *enable_port* and *when_enabled* |
 | Triggered Subsystem (rising / falling / either) | Subsystem with *trigger* |
 | Atomic Subsystem with a sample time | Subsystem with *sample_time* (one ECU task) |
+| Rate Transition, "single-tasking" / "multitasking" code | Rate Transition block; `generate_c(..., tasks=True)` for one function per task |
 | Variant Subsystem, variant conditions | Variants…: conditions such as `ENGINE == 2` |
 | Library (`.slx` library), library links | Component libraries (`.nervlib`), linked subsystems ([Libraries](libraries.md)) |
 | Flip block (Ctrl+I) | Flip Block (Ctrl+Shift+F) |

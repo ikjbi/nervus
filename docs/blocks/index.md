@@ -71,6 +71,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 ## [Signal Attributes](signal-attributes.md)
 
+- **Rate Transition**: Passes a signal between two rates (two ECU tasks) in a way that is deterministic on an RTOS.
 - **Data Type Conversion**: Converts the input to another data type, e.g. a sensor value to ``int16`` or a controller output to
 
 ## [Signal Routing](signal-routing.md)
