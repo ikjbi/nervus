@@ -135,7 +135,7 @@ tests/
 - [x] Parameter sets ("calibrations"): save/load named sets of variable values as separate files and switch
       between them (e.g. `petrol.nervcal.json` vs `diesel.nervcal.json`)
 - [x] GUI: Model Workspace panel to add/edit/delete variables; parameter fields accept and show expressions
-- [ ] Autocomplete variable names in parameter fields; "find usages" of a variable
+- [x] Autocomplete variable names in parameter fields; "find usages" of a variable
 - [x] Python API: `diagram.workspace["Kp"] = 2.0`, `simulate(d, params={...})` overrides
 
 ## Phase 8 – ECU block library

@@ -112,6 +112,47 @@ class Diagram:
                 for name, inner in system.walk():
                     yield f"{b.name}/{name}", inner
 
+    def usages(self, name: str) -> list[tuple[str, str]]:
+        """Where the workspace variable ``name`` is used, as ``(block path, what)`` pairs: block parameters,
+        chart ``param`` declarations, mask variables, variant conditions and other workspace variables
+        (path ``""`` for this diagram's workspace). Subsystems whose mask defines ``name`` themselves are skipped
+        inside (they use their own variable)."""
+        from nervus.core.expressions import names_in
+
+        out: list[tuple[str, str]] = []
+        for var in self.workspace.variables:
+            if var.name != name and isinstance(var.value, str) and name in names_in(var.value):
+                out.append(("", f"workspace variable {var.name} = {var.value}"))
+        self._usages(name, "", out)
+        return out
+
+    def _usages(self, name: str, prefix: str, out: list[tuple[str, str]]) -> None:
+        from nervus.core.expressions import names_in
+
+        for b in self._blocks.values():
+            path = prefix + b.name
+            for pname, expr in b.expressions.items():
+                if name in names_in(expr):
+                    out.append((path, f"{pname} = {expr}"))
+            spec = getattr(b, "spec", None)
+            if name in getattr(spec, "params", ()):
+                out.append((path, f"chart param {name}"))
+            mask = getattr(b, "mask", None)
+            if isinstance(mask, Workspace):
+                for var in mask.variables:
+                    if var.name != name and isinstance(var.value, str) and name in names_in(var.value):
+                        out.append((path, f"mask variable {var.name} = {var.value}"))
+                if name in mask:
+                    continue  # inside, the name means the mask's own variable
+            variants = getattr(b, "variants", None) or {}
+            for vname, variant in variants.items():
+                if variant.condition and name in names_in(variant.condition):
+                    out.append((path, f"variant {vname}: {variant.condition}"))
+            systems = [v.system for v in variants.values()] or [getattr(b, "system", None)]
+            for system in systems:
+                if isinstance(system, Diagram):
+                    system._usages(name, path + "/", out)
+
     # ------------------------------------------------------------------ blocks
 
     @property

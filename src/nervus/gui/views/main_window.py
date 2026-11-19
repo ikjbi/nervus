@@ -50,6 +50,7 @@ from nervus.gui.views.properties import PropertyPanel
 from nervus.gui.views.scope_window import ScopeWindow
 from nervus.gui.views.settings_dialog import SettingsDialog
 from nervus.gui.views.test_manager import TestManagerPanel
+from nervus.gui.views.usages_dialog import UsagesDialog
 from nervus.gui.views.workspace_panel import WorkspacePanel
 from nervus.io import FILE_EXTENSION
 
@@ -398,6 +399,7 @@ class MainWindow(QMainWindow):
         self.codegen.errorOccurred.connect(self._codegen_error)
         self.files.recentFilesChanged.connect(self._rebuild_recent)
         self.workspace_panel.statusMessage.connect(self.status_label.setText)
+        self.workspace_panel.usagesRequested.connect(self.show_usages)
         self.test_panel.statusMessage.connect(self.status_label.setText)
         self.test_panel.openResult.connect(self._open_test_result)
         self.sim_model.stateChanged.connect(self._sim_state_changed)
@@ -596,6 +598,13 @@ class MainWindow(QMainWindow):
     def _editor_error(self, message: str) -> None:
         self.status_label.setText(message)
         self.properties.show_controller_error(message)
+
+    def show_usages(self, name: str) -> UsagesDialog:
+        """Where a workspace variable is used (Model Workspace → Find Usages)."""
+        dlg = UsagesDialog(self.diagram_model.root, name, self)
+        dlg.blockActivated.connect(lambda path: self._highlight((path,)))
+        dlg.show()
+        return dlg
 
     def _highlight(self, names: tuple[str, ...]) -> None:
         # Open the subsystem that contains the first block, then select it.

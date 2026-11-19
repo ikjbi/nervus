@@ -27,6 +27,7 @@ from nervus.core.expressions import format_value, parse_value
 from nervus.gui.controllers.editor_controller import EditorController
 from nervus.gui.models.diagram_model import DiagramModel
 from nervus.gui.theme import monospace_font
+from nervus.gui.views.completer import attach_completer
 from nervus.help import block_doc
 
 
@@ -158,6 +159,7 @@ class PropertyPanel(QWidget):
             for v in mask.variables:
                 edit = QLineEdit(v.display_value)
                 edit.setToolTip(v.description or v.name)
+                attach_completer(edit, b.diagram)  # a mask value may use the variables outside
                 edit.editingFinished.connect(lambda name=v.name, le=edit: self._apply_mask(name, le))
                 label = QLabel(v.name + (f" [{v.unit}]" if v.unit else ""))
                 label.setToolTip(v.description)
@@ -291,6 +293,8 @@ class PropertyPanel(QWidget):
             line.setPlaceholderText("e.g. 2, [1 2 3], [1 0; 0 1], 2*pi, Kp")
         if p.kind is ParamKind.SAMPLE_TIME:
             line.setPlaceholderText("-1 inherit · 0 continuous · T or [T, offset]")
+        if p.kind in EXPRESSION_KINDS and self.block is not None:
+            attach_completer(line, self.block.diagram)
         line.editingFinished.connect(lambda name=p.name, le=line: self._apply_text(name, le))
         return line
 

@@ -35,6 +35,18 @@ Expressions may use `+ - * / ** %`, the functions `sqrt`, `exp`, `log`, `sin`, `
 constants `pi`, `e`, `inf`, `true` and `false`. Comparisons (`==`, `!=`, `<`, `<=`, `>`, `>=`) and `and`, `or`, `not` give 1 (true)
 or 0 (false), so `Kp * (MODE == 2)` works. The MATLAB spellings `~=`, `&&`, `||` and `~` are accepted too.
 
+## Autocompletion and Find Usages
+
+While you type a parameter in the Properties panel, the names of the variables the block can see (the model
+workspace and the masks around it) pop up; Enter or a click completes the word under the cursor, so
+`Kp / T` becomes `Kp / Ti`.
+
+Select a variable in the **Model Workspace** and press **Find Usages** to list every place that uses it: block
+parameters (`gain = 1 / r_wheel`), State Chart `param` declarations, mask variables, variant conditions and
+other workspace variables. Double-click a row to open the subsystem and select the block. Inside a masked
+subsystem whose mask defines the same name, the mask's own variable is meant, so those blocks are not
+listed. From Python: `d.usages("r_wheel")`.
+
 ## Calibration maps over shared axes
 
 ECU software is full of curves and maps over the same few axes: engine speed, load, coolant temperature.

@@ -29,6 +29,7 @@ CAL_FILTER = f"Parameter sets (*{PARAMETER_SET_EXTENSION});;All files (*)"
 
 class WorkspacePanel(QWidget):
     statusMessage = Signal(str)
+    usagesRequested = Signal(str)  # variable name: show where it is used
 
     def __init__(self, model: DiagramModel, controller: EditorController, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -56,13 +57,15 @@ class WorkspacePanel(QWidget):
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.add_button = QPushButton("Add")
         self.delete_button = QPushButton("Delete")
+        self.usages_button = QPushButton("Find Usages")
+        self.usages_button.setToolTip("List the blocks that use the selected variable")
         self.load_button = QPushButton("Load set…")
         self.save_button = QPushButton("Save set…")
         self.add_button.setToolTip("Add a workspace variable")
         self.load_button.setToolTip("Load a parameter set (calibration) and apply its values")
         self.save_button.setToolTip("Save the current values as a parameter set")
         buttons = QHBoxLayout()
-        for b in (self.add_button, self.delete_button):
+        for b in (self.add_button, self.delete_button, self.usages_button):
             buttons.addWidget(b)
         buttons.addStretch(1)
         for b in (self.load_button, self.save_button):
@@ -74,6 +77,7 @@ class WorkspacePanel(QWidget):
 
         self.add_button.clicked.connect(self._add)
         self.delete_button.clicked.connect(self._delete)
+        self.usages_button.clicked.connect(self._find_usages)
         self.load_button.clicked.connect(self._load)
         self.save_button.clicked.connect(self._save)
         self.table.itemChanged.connect(self._edited)
@@ -81,6 +85,18 @@ class WorkspacePanel(QWidget):
         model.diagramReset.connect(self.refresh)
         controller.editingEnabledChanged.connect(self.setEnabled)
         self.refresh()
+
+    def selected_name(self) -> str | None:
+        row = self.table.currentRow()
+        item = self.table.item(row, 0) if row >= 0 else None
+        return None if item is None else str(item.data(Qt.ItemDataRole.UserRole))
+
+    def _find_usages(self) -> None:
+        name = self.selected_name()
+        if name is None:
+            self.statusMessage.emit("Select a variable first.")
+            return
+        self.usagesRequested.emit(name)
 
     def refresh(self) -> None:
         self._updating = True
