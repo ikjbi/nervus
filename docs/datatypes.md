@@ -38,7 +38,8 @@ temperature from −40 °C to 87.5 °C in 0.5 °C steps, in one byte. On wires t
   Logic and comparison blocks output `boolean`. Continuous-time blocks, PID controllers and charts always
   use `double`.
 
-Turn on **View → Show Data Types** to label every wire that carries a non-double type.
+Turn on **View → Show Data Types** to label every wire that carries a non-double type (**Show Signal
+Widths** and **Sample Time Colours** are next to it).
 
 ## How it is simulated
 

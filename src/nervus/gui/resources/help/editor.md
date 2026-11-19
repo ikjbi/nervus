@@ -56,6 +56,21 @@ it is saved with the model.
 
 In Python, set `block.meta["flipped"] = True`.
 
+## Sample times, widths and data types on the canvas
+
+The **View** menu can annotate the diagram with what the compiler found out:
+
+| View → | Shows |
+|---|---|
+| **Show Data Types** | the data type on every wire that is not `double` (`int16`, `fixdt(1,16,8)`, ...) |
+| **Show Signal Widths** | `[3]` on vector wires, which are also drawn thicker |
+| **Sample Time Colours** | blocks and wires coloured by their sample time, with a legend in the status bar |
+
+The discrete rates get colours from fastest to slowest (orange, green, blue, amber, ...); continuous blocks
+keep the normal colour and constant blocks are pink. A subsystem whose blocks all run at one rate takes that
+colour. Use it to check that every block of an ECU task really runs in that task, and to find where a
+Rate Transition is needed. The annotations update while you edit, once the model compiles.
+
 ## Editing parameters
 
 Numeric fields accept:

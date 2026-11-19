@@ -11,7 +11,7 @@ import contextlib
 from typing import Any
 
 from PySide6.QtCore import QMimeData, QPointF, QRect, QRectF, Qt, Signal
-from PySide6.QtGui import QKeyEvent, QNativeGestureEvent, QPainter, QPainterPath, QPen, QWheelEvent
+from PySide6.QtGui import QColor, QKeyEvent, QNativeGestureEvent, QPainter, QPainterPath, QPen, QWheelEvent
 from PySide6.QtWidgets import (
     QGraphicsItem,
     QGraphicsPathItem,
@@ -184,14 +184,28 @@ class DiagramScene(QGraphicsScene):
             if item.block.name in names or self.model.path_of(item.block) in names:
                 item.setSelected(True)
 
-    def set_type_labels(self, labels: dict[tuple[str, int], str]) -> None:
-        """Show data types on wires: ``labels[(source block path, port)] = "int16"``."""
+    def set_type_labels(
+        self,
+        labels: dict[tuple[str, int], str],
+        wide: set[tuple[str, int]] | None = None,
+        rate_colors: dict[str, QColor] | None = None,
+    ) -> None:
+        """Annotate wires and blocks: ``labels[(source block path, port)] = "int16 [3]"``; ``wide``: vector
+        signals (thicker lines); ``rate_colors[block path]``: sample-time colours of blocks and their wires."""
+        wide, rate_colors = wide or set(), rate_colors or {}
         for w in self.wires.values():
-            text = labels.get((self.model.path_of(w.connection.src), w.connection.src_port), "")
-            if text != w.type_label:
+            key = (self.model.path_of(w.connection.src), w.connection.src_port)
+            text = labels.get(key, "")
+            color = rate_colors.get(key[0])
+            if text != w.type_label or (key in wide) != w.wide or color != w.rate_color:
                 w.prepareGeometryChange()
-                w.type_label = text
+                w.type_label, w.wide, w.rate_color = text, key in wide, color
                 w.update()
+        for item in self.blocks.values():
+            color = rate_colors.get(self.model.path_of(item.block))
+            if color != item.rate_color:
+                item.rate_color = color
+                item.update()
 
     def mark_errors(self, names: list[str] | tuple[str, ...]) -> None:
         """Outline blocks with errors (full paths). A subsystem is outlined if a block inside it has an error."""

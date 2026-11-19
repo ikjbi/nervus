@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- View → Show Signal Widths and Sample Time Colours: vector wires labelled and drawn thicker; blocks and
+  wires coloured by sample time, with a legend in the status bar.
 - Example `gear_shift.py` and tutorial: automatic-gearbox shift logic (shift maps, kickdown, hysteresis)
   on a car with engine, gearbox and road grade; the TCU generates C code.
 - Initial Condition block (Signal Attributes): a defined output in the first step, then the input; in C too.

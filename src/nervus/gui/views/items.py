@@ -85,6 +85,8 @@ class BlockItem(QGraphicsItem):
         super().__init__()
         self.block = block
         self.error = False
+        self.rate_color: QColor | None = None
+        """Border colour for View → Sample Time Colours (``None``: normal border)."""
         self.in_ports: list[PortItem] = []
         self.out_ports: list[PortItem] = []
         self._w, self._h = MIN_W, MIN_H
@@ -159,7 +161,11 @@ class BlockItem(QGraphicsItem):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         rect = self.body_rect()
         border = (
-            t.color("error") if self.error else t.color("selection") if self.isSelected() else t.color("block_border")
+            t.color("error")
+            if self.error
+            else t.color("selection")
+            if self.isSelected()
+            else self.rate_color or t.color("block_border")
         )
         # soft shadow
         shadow = QColor(0, 0, 0, 35 if t.name == "light" else 90)
@@ -167,7 +173,7 @@ class BlockItem(QGraphicsItem):
         painter.setBrush(shadow)
         painter.drawRoundedRect(rect.translated(0, 2), 7, 7)
         painter.setBrush(t.color("block_fill"))
-        painter.setPen(QPen(border, 2.0 if (self.isSelected() or self.error) else 1.2))
+        painter.setPen(QPen(border, 2.0 if (self.isSelected() or self.error or self.rate_color) else 1.2))
         painter.drawRoundedRect(rect, 7, 7)
 
         font = QFont(painter.font())
@@ -281,7 +287,11 @@ class WireItem(QGraphicsPathItem):
         self.src, self.dst = src, dst
         self.hover = False
         self.type_label = ""
-        """Data type shown next to the wire (empty: not shown, e.g. for double)."""
+        """Data type and/or width shown next to the wire (empty: not shown, e.g. for a scalar double)."""
+        self.wide = False
+        """A vector signal: drawn with a thicker line (View → Signal Widths)."""
+        self.rate_color: QColor | None = None
+        """Colour of the source block's sample time (View → Sample Time Colours)."""
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         self.setAcceptHoverEvents(True)
         self.setZValue(0)
@@ -302,11 +312,11 @@ class WireItem(QGraphicsPathItem):
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget | None = None) -> None:
         t = current_theme()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        color = t.color("selection") if (self.isSelected() or self.hover) else t.color("wire")
+        color = t.color("selection") if (self.isSelected() or self.hover) else self.rate_color or t.color("wire")
         painter.setPen(
             QPen(
                 color,
-                2.0 if self.isSelected() else 1.5,
+                (2.0 if self.isSelected() else 1.5) + (1.5 if self.wide else 0.0),
                 Qt.PenStyle.SolidLine,
                 Qt.PenCapStyle.RoundCap,
                 Qt.PenJoinStyle.RoundJoin,

@@ -214,6 +214,13 @@ def main() -> None:
             win.diagram_model.set_diagram(tasks_example())
             win.view.fit()
             grab(win.view, "subsystem-tasks.png")
+            win.act_rates.setChecked(True)
+            win.act_widths.setChecked(True)
+            win.refresh_types()
+            grab(win, "sample-time-colours.png")
+            win.act_rates.setChecked(False)
+            win.act_widths.setChecked(False)
+            win.refresh_types()
 
             # Enabled and triggered subsystem.
             gd = gated_example()

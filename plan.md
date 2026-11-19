@@ -114,7 +114,7 @@ tests/
 - [x] Flip blocks (Ctrl+Shift+F) for feedback paths; the wire router handles flipped ports
 - [ ] Rotate blocks (vertical signal flow), resize blocks, nudge with arrow keys
 - [x] Show data types on the canvas (View → Show Data Types)
-- [ ] Show signal widths and sample-time colours on the canvas (like Simulink's "port data types" / "sample time colors")
+- [x] Show signal widths and sample-time colours on the canvas (like Simulink's "port data types" / "sample time colors")
 - [x] Right-click context menus on blocks, wires and the canvas
 
 ## Phase 6 – Documentation and in-app help

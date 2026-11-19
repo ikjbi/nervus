@@ -178,3 +178,41 @@ def test_datatype_labels_and_param(qtbot, qsettings) -> None:  # type: ignore[no
     finally:
         w.editor.undo_stack.setClean()
         w.close()
+
+
+def test_sample_time_colours_and_widths(qtbot, qsettings) -> None:  # type: ignore[no-untyped-def]
+    from nervus.gui.theme import ThemeManager
+    from nervus.gui.views.main_window import MainWindow
+
+    ThemeManager.instance().apply()
+    w = MainWindow(qsettings)
+    try:
+        ed = w.editor
+        c = ed.add_block("sources.constant", QPointF(0, 0), value=[1.0, 2.0, 3.0])
+        fast = ed.add_block("discrete.unit_delay", QPointF(150, 0), sample_time=0.01)
+        slow = ed.add_block("discrete.zero_order_hold", QPointF(300, 0), sample_time=0.1)
+        sine = ed.add_block("sources.sine", QPointF(0, 150))
+        ed.connect_ports(c, 0, fast, 0)
+        ed.connect_ports(fast, 0, slow, 0)
+        ed.connect_ports(slow, 0, ed.add_block("sinks.scope", QPointF(450, 0)), 0)
+        ed.connect_ports(sine, 0, ed.add_block("sinks.scope", QPointF(150, 150)), 0)
+        w.act_rates.setChecked(True)
+        w.act_widths.setChecked(True)
+        w.refresh_types()
+        by_src = {wire.connection.src.name: wire for wire in w.scene.wires.values()}
+        assert by_src[fast.name].rate_color != by_src[slow.name].rate_color  # 10 ms and 100 ms differ
+        assert by_src[fast.name].rate_color is not None and by_src[sine.name].rate_color is None  # continuous
+        assert by_src[c.name].rate_color is not None  # constant
+        assert by_src[c.name].wide and by_src[c.name].type_label == "[3]"
+        assert not by_src[sine.name].wide
+        legend = w.rates_legend.text()
+        assert "10 ms" in legend and "100 ms" in legend and "continuous" in legend and "constant" in legend
+        assert any(item.rate_color is not None for item in w.scene.blocks.values() if item.block is fast)
+        w.act_rates.setChecked(False)
+        w.act_widths.setChecked(False)
+        w.refresh_types()
+        assert all(wire.rate_color is None and not wire.wide for wire in w.scene.wires.values())
+        assert not w.rates_legend.isVisible()
+    finally:
+        w.editor.undo_stack.setClean()
+        w.close()

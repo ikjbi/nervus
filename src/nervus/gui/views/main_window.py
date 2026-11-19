@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import QPoint, QPointF, QSettings, Qt
-from PySide6.QtGui import QAction, QCloseEvent, QGuiApplication, QKeySequence
+from PySide6.QtGui import QAction, QCloseEvent, QColor, QGuiApplication, QKeySequence
 from PySide6.QtWidgets import (
     QDockWidget,
     QFileDialog,
@@ -35,7 +36,7 @@ from nervus.gui.controllers import (
 )
 from nervus.gui.controllers.test_controller import TestController
 from nervus.gui.models import DiagramModel, SimulationModel, SimulationState
-from nervus.gui.theme import ThemeManager, ThemeMode
+from nervus.gui.theme import ThemeManager, ThemeMode, current_theme
 from nervus.gui.views.advisor_dialog import AdvisorDialog
 from nervus.gui.views.analysis_dialog import AnalysisDialog
 from nervus.gui.views.canvas import DiagramScene, DiagramView
@@ -207,6 +208,14 @@ class MainWindow(QMainWindow):
         )
         self.act_types = self._action("Show &Data Types", self.refresh_types, None, "Label wires with their data type")
         self.act_types.setCheckable(True)
+        self.act_widths = self._action(
+            "Show Signal &Widths", self.refresh_types, None, "Label vector wires with their width and draw them thicker"
+        )
+        self.act_widths.setCheckable(True)
+        self.act_rates = self._action(
+            "Sample &Time Colours", self.refresh_types, None, "Colour blocks and wires by their sample time"
+        )
+        self.act_rates.setCheckable(True)
         self.act_up = self._action("&Up to Parent", self.diagram_model.up, "Ctrl+Up", "Leave this subsystem")
         self.act_layout = self._action(
             "Auto &Layout", self.auto_layout, "Ctrl+Shift+L", "Arrange the blocks of this diagram left to right"
@@ -267,6 +276,8 @@ class MainWindow(QMainWindow):
         m.addActions([self.act_zoom_in, self.act_zoom_out, self.act_fit])
         m.addAction(self.act_up)
         m.addAction(self.act_types)
+        m.addAction(self.act_widths)
+        m.addAction(self.act_rates)
         m.addSeparator()
         for dock in (
             self.library_dock,
@@ -343,10 +354,14 @@ class MainWindow(QMainWindow):
         self.progress.setFixedWidth(180)
         self.progress.setTextVisible(False)
         self.progress.hide()
+        self.rates_legend = QLabel()
+        self.rates_legend.setTextFormat(Qt.TextFormat.RichText)
+        self.rates_legend.hide()
         self.zoom_label = QLabel("100%")
         self.zoom_label.setObjectName("muted")
         sb.addWidget(self.status_label, 1)
         sb.addPermanentWidget(self.progress)
+        sb.addPermanentWidget(self.rates_legend)
         sb.addPermanentWidget(self.zoom_label)
 
     def _wire(self) -> None:
@@ -369,7 +384,7 @@ class MainWindow(QMainWindow):
         self.diagram_model.settingsChanged.connect(self._sync_settings_widgets)
         self.diagram_model.diagramReset.connect(self._on_reset)
         self.diagram_model.currentChanged.connect(self._on_current_changed)
-        self.diagram_model.changed.connect(lambda: self.act_types.isChecked() and self._types_timer.start())
+        self.diagram_model.changed.connect(lambda: self._annotations_on() and self._types_timer.start())
         self.diagram_model.blockRenamed.connect(self._on_renamed)
         self.files.errorOccurred.connect(lambda msg: QMessageBox.warning(self, "Nervus", msg))
         self.codegen.errorOccurred.connect(self._codegen_error)
@@ -400,9 +415,14 @@ class MainWindow(QMainWindow):
         dlg.show()
         return dlg
 
+    def _annotations_on(self) -> bool:
+        return self.act_types.isChecked() or self.act_widths.isChecked() or self.act_rates.isChecked()
+
     def refresh_types(self) -> None:
-        """Compile the model and label wires that carry a non-double data type (View → Show Data Types)."""
-        if not self.act_types.isChecked():
+        """Compile the model and annotate the canvas: data types and widths on wires, sample-time colours
+        (View → Show Data Types / Show Signal Widths / Sample Time Colours)."""
+        self.rates_legend.setVisible(self.act_rates.isChecked())
+        if not self._annotations_on():
             self.scene.set_type_labels({})
             return
         from nervus.sim import compile_diagram
@@ -410,16 +430,44 @@ class MainWindow(QMainWindow):
         try:
             m = compile_diagram(self.diagram_model.root)
         except NervusError:
-            self.status_label.setText("Data types are shown once the model compiles (see Diagnostics).")
+            self.status_label.setText("Annotations are shown once the model compiles (see Diagnostics).")
             return
         labels: dict[tuple[str, int], str] = {}
+        wide: set[tuple[str, int]] = set()
+        colors: dict[str, QColor] = {}
+        legend = sample_time_colors(m.rates)
         for i, ts in enumerate(m.out_types):
+            paths = {m.names[i], self.diagram_model.path_of(m.origin[i])}  # In blocks in subsystems: both
             for p, t in enumerate(ts):
-                if not t.is_double:
-                    labels[(m.names[i], p)] = t.short_name
-                    origin = m.origin[i]  # In blocks inside subsystems appear as their own path
-                    labels[(self.diagram_model.path_of(origin), p)] = t.short_name
-        self.scene.set_type_labels(labels)
+                parts = []
+                if self.act_types.isChecked() and not t.is_double:
+                    parts.append(t.short_name)
+                width = m.out_widths[i][p]
+                if self.act_widths.isChecked() and width > 1:
+                    parts.append(f"[{width}]")
+                    wide.update((path, p) for path in paths)
+                if parts:
+                    labels.update({(path, p): " ".join(parts) for path in paths})
+            if self.act_rates.isChecked():
+                color = legend.get(_rate_key(m, i))
+                if color is not None:
+                    colors.update({path: QColor(color) for path in paths})
+        self._colour_subsystems(colors)
+        self.scene.set_type_labels(labels, wide, colors)
+        self.rates_legend.setText(
+            "  ".join(f'<span style="color:{c}">■</span> {name}' for name, c in _legend_names(m, legend)) + "  "
+        )
+
+    def _colour_subsystems(self, colors: dict[str, QColor]) -> None:
+        """A subsystem whose blocks all run at one rate gets that colour; with several rates, none."""
+        by_parent: dict[str, set[str]] = {}
+        for path, c in colors.items():
+            parts = path.split("/")
+            for k in range(1, len(parts)):
+                by_parent.setdefault("/".join(parts[:k]), set()).add(c.name())
+        for parent, names in by_parent.items():
+            if len(names) == 1 and parent not in colors:
+                colors[parent] = QColor(next(iter(names)))
 
     def _open_test_result(self, name: str) -> None:
         res = self.tests.results.get(name)
@@ -480,6 +528,8 @@ class MainWindow(QMainWindow):
         self._rebuild_breadcrumb()
         self.properties.show_blocks([])
         self.view.fit()
+        if self._annotations_on():
+            self.refresh_types()
 
     def _on_renamed(self, block: Block, _old: str) -> None:
         if getattr(block, "system", None) is not None:
@@ -900,3 +950,39 @@ class MainWindow(QMainWindow):
         for w in self.scopes.values():
             w.close()
         event.accept()
+
+
+def sample_time_colors(rates: list[Any]) -> dict[Any, str]:
+    """Colour per sample time for View → Sample Time Colours: discrete rates fastest first, then continuous
+    (the normal wire colour, so not listed) and constant."""
+    series = current_theme().series
+    order = (1, 2, 0, 3, 5, 6, 7)  # orange, green, blue, amber, ...
+    colors: dict[Any, str] = {r: series[order[k % len(order)]] for k, r in enumerate(rates)}
+    colors["constant"] = series[4]
+    return colors
+
+
+def _rate_key(m: Any, i: int) -> Any:
+    from nervus.sim.compiler import Kind
+
+    kind = m.kinds[i]
+    if kind is Kind.CONSTANT:
+        return "constant"
+    if kind is Kind.DISCRETE:
+        return m.rates[m.rate_index[i]]
+    return None  # continuous: the normal colour
+
+
+def _legend_names(m: Any, colors: dict[Any, str]) -> list[tuple[str, str]]:
+    from nervus.sim.compiler import Kind
+
+    out = []
+    for r in m.rates:
+        period = r.period
+        name = f"{period * 1000:g} ms" if period < 1 else f"{period:g} s"
+        out.append((name + (f" (offset {r.offset:g} s)" if r.offset else ""), colors[r]))
+    if any(k is Kind.CONTINUOUS for k in m.kinds):
+        out.append(("continuous", current_theme().wire))
+    if any(k is Kind.CONSTANT for k in m.kinds):
+        out.append(("constant", colors["constant"]))
+    return out
