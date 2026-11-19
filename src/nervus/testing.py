@@ -69,6 +69,9 @@ def evaluate_check(check: Check, res: SimResult, base_dir: Path | None = None) -
     except KeyError:
         return CheckResult(check, False, f"no signal named {check.signal!r}")
     a = check.args
+    if check.kind != "baseline" and not np.all(np.isfinite(np.asarray(data, dtype=float))):
+        k = int(np.argmax(~np.isfinite(np.asarray(data, dtype=float)).reshape(len(res.t), -1).all(axis=1)))
+        return CheckResult(check, False, f"the signal is not a finite number (NaN or inf) from t = {res.t[k]:g}")
     if check.kind == "bounds":
         t, y = _window(res, data, check)
         lo, hi = float(a.get("lower", -np.inf)), float(a.get("upper", np.inf))

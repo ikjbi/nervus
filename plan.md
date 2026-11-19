@@ -199,6 +199,8 @@ tests/
       limits, PID limits/clamping), direction-aware events and a chattering (Zeno) guard
 - [ ] Integrator external reset and saturation ports
 - [ ] Algebraic loop solver (optional), with warnings
+- [ ] Investigate: a clamped continuous PID with D = 0 chatters (Zeno guard, 30 s) when its unused derivative
+      filter state is frozen, but not when it moves: make the sliding mode at the limit robust
 - [x] Simulation stop block and assertions
 - [x] First performance pass: precomputed execution tables, scalar fast paths (~25 % faster)
 - [ ] Performance: avoid per-step Python overhead (vectorised execution, Numba, or simulate the generated C:

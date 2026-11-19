@@ -71,7 +71,8 @@ def build_driver() -> Subsystem:
     a_ref = d.add(Inport(port=2), name="a_ref")
     v = d.add(Inport(port=3), name="v")
     err = d.add(Sum(signs="+-"), name="speed_error")
-    pi = d.add(PID(P="Kp_driver", I="Ki_driver"), name="driver_pi")
+    # D = 0, so the derivative filter is unused; N = 1 keeps its state slow enough for a 0.1 s step.
+    pi = d.add(PID(P="Kp_driver", I="Ki_driver", N=1.0), name="driver_pi")
     ff = d.add(Gain(gain="m / F_max"), name="feed_forward")
     total = d.add(Sum(signs="++"), name="pedal_sum")
     pedal = d.add(Saturation(upper=1.0, lower=-1.0), name="pedal")
@@ -167,7 +168,7 @@ def build() -> Diagram:
     d = Diagram("drive_cycle")
     d.settings.t_final = 195.0
     d.settings.solver = "rk4"
-    d.settings.step = 0.01
+    d.settings.step = 0.1
     ws = d.workspace
     ws.add(Variable("m", 1300.0, "Vehicle mass incl. driver", "kg"))
     ws.add(Variable("cd_A", 0.30 * 2.2, "Drag coefficient × frontal area", "m²"))

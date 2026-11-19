@@ -144,3 +144,16 @@ def test_saved_tests_in_file_roundtrip(tmp_path) -> None:  # type: ignore[no-unt
     d.tests.append(_case())
     save(d, tmp_path / "m")
     assert load(tmp_path / "m.nervus").tests[0].inputs["setpoint"](2.0)[0] == 2.0
+
+
+def test_checks_fail_on_nan() -> None:
+    import numpy as np
+
+    from nervus.core import Check
+    from nervus.sim.result import SimResult, SimStats
+    from nervus.testing import evaluate_check
+
+    t = np.array([0.0, 1.0, 2.0])
+    res = SimResult(t, {"x:0": np.array([[0.0], [np.nan], [np.nan]])}, {}, {}, SimStats("rk4", 0.1, 3, 3, 2.0))
+    r = evaluate_check(Check("bounds", "x", {"lower": -1.0, "upper": 1.0}), res)
+    assert not r.passed and "t = 1" in r.message
