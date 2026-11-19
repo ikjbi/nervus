@@ -49,6 +49,7 @@ from nervus.gui.views.library import LibraryBrowser
 from nervus.gui.views.properties import PropertyPanel
 from nervus.gui.views.scope_window import ScopeWindow
 from nervus.gui.views.settings_dialog import SettingsDialog
+from nervus.gui.views.sweep_dialog import SweepDialog
 from nervus.gui.views.test_manager import TestManagerPanel
 from nervus.gui.views.usages_dialog import UsagesDialog
 from nervus.gui.views.workspace_panel import WorkspacePanel
@@ -247,6 +248,12 @@ class MainWindow(QMainWindow):
             "Ctrl+B",
             "Generate C code for the selected subsystem, or for the whole model",
         )
+        self.act_sweep = self._action(
+            "Parameter &Sweep / Monte Carlo…",
+            self.show_sweep,
+            "Ctrl+Shift+W",
+            "Run the model many times with different workspace values",
+        )
         self.act_analysis = self._action(
             "&Linear Analysis…", self.show_analysis, "Ctrl+L", "Linearize the model; Bode plot, margins, step response"
         )
@@ -313,6 +320,7 @@ class MainWindow(QMainWindow):
         m.addAction(self.act_settings)
         m = mb.addMenu("&Analysis")
         m.addAction(self.act_analysis)
+        m.addAction(self.act_sweep)
         m.addAction(self.act_advisor)
         m = mb.addMenu("&Code")
         m.addAction(self.act_codegen)
@@ -417,6 +425,11 @@ class MainWindow(QMainWindow):
     def show_advisor(self) -> AdvisorDialog:
         dlg = AdvisorDialog(self.diagram_model.root, self)
         dlg.blocksActivated.connect(self._highlight)
+        dlg.show()
+        return dlg
+
+    def show_sweep(self) -> SweepDialog:
+        dlg = SweepDialog(self.diagram_model.root, self.editor, self)
         dlg.show()
         return dlg
 

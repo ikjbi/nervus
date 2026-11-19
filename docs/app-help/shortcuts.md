@@ -21,6 +21,7 @@ On macOS use ⌘ where *Ctrl* is listed.
 | Simulation settings | Ctrl+E |
 | Generate C code | Ctrl+B |
 | Linear analysis | Ctrl+L |
+| Parameter sweep / Monte Carlo | Ctrl+Shift+W |
 | Model Advisor | Ctrl+Shift+A |
 | Run all test cases | Ctrl+T |
 | Data Inspector | Ctrl+I |

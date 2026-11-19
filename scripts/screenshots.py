@@ -249,6 +249,22 @@ def main() -> None:
             win.act_widths.setChecked(False)
             win.refresh_types()
 
+            # Parameter sweep of the throttle controller gain.
+            win.files.open(ROOT / "examples" / "throttle_pi.nervus")
+            sw = win.show_sweep()
+            sw.signal.setCurrentText("plate_angle")
+            sw.add_parameter("Kp", "0.5, 1, 1.5, 3")
+            sw.add_parameter("Ki", "20, 40")
+            sw.stat.setCurrentText("max")
+            sw.start()
+            sw.wait()
+            QApplication.processEvents()
+            QApplication.processEvents()
+            grab(sw, "sweep-signals.png")
+            sw.tabs.setCurrentIndex(1)
+            grab(sw, "sweep-metric.png")
+            sw.close()
+
             # Rotated blocks: a vertical sensor chain.
             win.diagram_model.set_diagram(rotated_example())
             win.view.fit()

@@ -173,7 +173,7 @@ tests/
 - [ ] Import/export ASAM MDF4 (`.mf4`, via `asammdf`), the format of INCA/CANape vehicle logs
 - [x] Run several cases in batch
 - [x] Parameter sweeps and Monte Carlo runs (`nervus.sweep`); HTML test report
-- [ ] Sweep and Monte Carlo dialog in the editor, with result plots
+- [x] Sweep and Monte Carlo dialog in the editor, with result plots
 - [x] Simulation Data Inspector: overlay and compare runs, with differences and tolerance checks
 - [x] GUI: Test Manager panel (create, run, pass/fail), compare-runs window
 - [x] Python API for all of the above (usable from pytest for regression tests)

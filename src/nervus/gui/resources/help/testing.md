@@ -83,6 +83,24 @@ lowest = table.column("ltft_end").min()
 A metric is any function of the result that returns one number. Runs that fail (for example a parameter
 value that makes the model invalid) are kept with their error message, so they show up in the table.
 
+### In the editor
+
+**Analysis → Parameter Sweep / Monte Carlo…** (Ctrl+Shift+W) does the same without code. Add the workspace
+variables to vary and their values: a list (`0.5, 1, 1.5, 3`) or `linspace(0.5, 3, 6)` for a sweep over every
+combination, or `normal(mean, std)` / `uniform(low, high)` with a number of runs and a seed for Monte Carlo.
+Choose a signal (an Out block or any block) and a metric of it: final value, max, min, mean, RMS,
+peak-to-peak or the time of the maximum. **Run** simulates in the background (the model is locked meanwhile;
+**Stop** ends early) and shows:
+
+- **Signal**: the signal of every run on top of each other; with many runs (Monte Carlo) in one transparent
+  colour, so where the runs bunch up is darker;
+- **Metric**: the metric against the first variable, one line per value of the second (sweep), or a
+  histogram (Monte Carlo);
+- **Table**: one row per run, with **Export CSV…**.
+
+
+Ready-made metrics are also available in Python: `metric("plate_angle", "max")` from `nervus.sweep`.
+
 ## Data Inspector
 
 **Simulation → Data Inspector** (⌘I / Ctrl+I) lists the recent runs, including test results. Check runs

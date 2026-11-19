@@ -69,21 +69,84 @@ class SweepTable:
         return "\n".join(lines)
 
 
-def _run(
-    diagram: Diagram, points: Sequence[dict[str, Any]], metrics: Mapping[str, Metric], t_final: float | None, keep: bool
+STATISTICS: dict[str, Callable[[np.ndarray, np.ndarray], float]] = {
+    "final": lambda t, y: float(y[-1]),
+    "max": lambda t, y: float(np.max(y)),
+    "min": lambda t, y: float(np.min(y)),
+    "mean": lambda t, y: float(np.trapezoid(y, t) / (t[-1] - t[0])) if t[-1] > t[0] else float(y[-1]),
+    "rms": lambda t, y: float(np.sqrt(np.trapezoid(y * y, t) / (t[-1] - t[0]))) if t[-1] > t[0] else abs(float(y[-1])),
+    "peak-to-peak": lambda t, y: float(np.ptp(y)),
+    "time of max": lambda t, y: float(t[int(np.argmax(y))]),
+}
+"""Ready-made metrics of one signal: ``metric("speed", "max")``. ``mean`` and ``rms`` are time-weighted."""
+
+
+def metric(signal: str, statistic: str) -> Metric:
+    """A metric that reduces one (scalar) signal of a run to a number, e.g. ``metric("lambda", "min")``."""
+    fn = STATISTICS[statistic]
+
+    def compute(res: SimResult) -> float:
+        y = np.asarray(res[signal], dtype=float)
+        return fn(res.t, y if y.ndim == 1 else y[:, 0])
+
+    return compute
+
+
+def grid_points(grid: Mapping[str, Sequence[Any]]) -> list[dict[str, Any]]:
+    """Every combination of the values in ``grid`` (variable name -> values)."""
+    names = list(grid)
+    return [dict(zip(names, combo, strict=True)) for combo in itertools.product(*(grid[n] for n in names))]
+
+
+def random_points(
+    distributions: Mapping[str, tuple[Any, ...]], runs: int, seed: int | None = None
+) -> list[dict[str, Any]]:
+    """``runs`` random draws: ``("normal", mean, std)``, ``("uniform", low, high)`` or ``("choice", [values])``."""
+    rng = np.random.default_rng(seed)
+
+    def draw(spec: tuple[Any, ...]) -> Any:
+        kind = spec[0]
+        if kind == "normal":
+            return float(rng.normal(spec[1], spec[2]))
+        if kind == "uniform":
+            return float(rng.uniform(spec[1], spec[2]))
+        if kind == "choice":
+            return spec[1][int(rng.integers(len(spec[1])))]
+        raise ValueError(f"unknown distribution {kind!r} (use normal, uniform or choice)")
+
+    return [{name: draw(spec) for name, spec in distributions.items()} for _ in range(runs)]
+
+
+def run_points(
+    diagram: Diagram,
+    points: Sequence[dict[str, Any]],
+    metrics: Mapping[str, Metric] | None = None,
+    t_final: float | None = None,
+    keep_results: bool = False,
+    on_result: Callable[[int, dict[str, Any], SimResult | None], None] | None = None,
+    should_stop: Callable[[], bool] | None = None,
 ) -> SweepTable:
+    """Simulate once per point (workspace values). ``on_result(k, row, result)`` is called after each run (the
+    result is ``None`` if it failed); ``should_stop()`` ends the series early."""
+    metrics = metrics or {}
     table = SweepTable(list(points[0]) if points else [], list(metrics))
-    for point in points:
+    for k, point in enumerate(points):
+        if should_stop is not None and should_stop():
+            break
         row: dict[str, Any] = dict(point)
+        res: SimResult | None = None
         try:
             res = simulate(diagram, t_final, params=point)
             for name, fn in metrics.items():
                 row[name] = float(np.squeeze(fn(res)))  # a metric must be one number
-            if keep:
+            if keep_results:
                 row["result"] = res
-        except (NervusError, ValueError, TypeError, ArithmeticError) as exc:
+        except (NervusError, ValueError, TypeError, ArithmeticError, KeyError, IndexError) as exc:
             row["error"] = str(exc).splitlines()[0]
+            res = None
         table.rows.append(row)
+        if on_result is not None:
+            on_result(k, row, res)
     return table
 
 
@@ -95,9 +158,7 @@ def sweep(
     keep_results: bool = False,
 ) -> SweepTable:
     """Simulate every combination of the values in ``grid`` (workspace variable name -> values)."""
-    names = list(grid)
-    points = [dict(zip(names, combo, strict=True)) for combo in itertools.product(*(grid[n] for n in names))]
-    return _run(diagram, points, metrics or {}, t_final, keep_results)
+    return run_points(diagram, grid_points(grid), metrics, t_final, keep_results)
 
 
 def monte_carlo(
@@ -113,17 +174,4 @@ def monte_carlo(
 
     Distributions: ``("normal", mean, std)``, ``("uniform", low, high)`` or ``("choice", [values...])``.
     """
-    rng = np.random.default_rng(seed)
-
-    def draw(spec: tuple[Any, ...]) -> Any:
-        kind = spec[0]
-        if kind == "normal":
-            return float(rng.normal(spec[1], spec[2]))
-        if kind == "uniform":
-            return float(rng.uniform(spec[1], spec[2]))
-        if kind == "choice":
-            return spec[1][int(rng.integers(len(spec[1])))]
-        raise ValueError(f"unknown distribution {kind!r} (use normal, uniform or choice)")
-
-    points = [{name: draw(spec) for name, spec in distributions.items()} for _ in range(runs)]
-    return _run(diagram, points, metrics or {}, t_final, keep_results)
+    return run_points(diagram, random_points(distributions, runs, seed), metrics, t_final, keep_results)
