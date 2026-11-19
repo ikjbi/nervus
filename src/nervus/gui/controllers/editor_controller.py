@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import json
 import os
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +13,7 @@ from PySide6.QtCore import QObject, QPointF, Signal
 from PySide6.QtGui import QUndoStack
 
 from nervus.blocks import create_block, get_block_class
-from nervus.core import Block, Connection, NervusError, ParameterSet, SimulationSettings, Variable
+from nervus.core import Block, Connection, Link, NervusError, ParameterSet, SimulationSettings, Variable
 from nervus.core.expressions import parse_value
 from nervus.gui.controllers.commands import (
     AddBlockCommand,
@@ -21,6 +22,7 @@ from nervus.gui.controllers.commands import (
     ConnectCommand,
     CreateSubsystemCommand,
     FlipBlocksCommand,
+    LinkCommand,
     MoveBlocksCommand,
     RemoveCommand,
     RenameCommand,
@@ -111,9 +113,9 @@ class EditorController(QObject):
             return None
         return block if self._push(AddBlockCommand(self.model, block, position)) else None
 
-    def delete(self, blocks: list[Block], connections: list[Connection]) -> None:
+    def delete(self, blocks: Sequence[Block], connections: Sequence[Connection | Link]) -> None:
         if blocks or connections:
-            self._push(RemoveCommand(self.model, blocks, connections))
+            self._push(RemoveCommand(self.model, list(blocks), list(connections)))
 
     def flip_blocks(self, blocks: list[Block]) -> bool:
         """Flip blocks left-right (undoable)."""
@@ -176,6 +178,20 @@ class EditorController(QObject):
             self.errorOccurred.emit(f"A block named '{new_name}' already exists.")
             return False
         return self._push(RenameCommand(self.model, block, new_name))
+
+    def link_ports(self, a: Block, a_port: str, b: Block, b_port: str) -> bool:
+        """Join two physical ports (undoable). Ports of different domains cannot be linked."""
+        d = a.diagram
+        if d is None or (a is b and a_port == b_port):
+            return False
+        for k in d.links:
+            if {(id(k.a), k.a_port), (id(k.b), k.b_port)} == {(id(a), a_port), (id(b), b_port)}:
+                return True  # already linked
+        doms = dict(a.physical_ports()).get(a_port), dict(b.physical_ports()).get(b_port)
+        if doms[0] != doms[1]:
+            self.errorOccurred.emit(f"Cannot link a {doms[0]} port to a {doms[1]} port.")
+            return False
+        return self._push(LinkCommand(self.model, a, a_port, b, b_port))
 
     def connect_ports(self, src: Block, src_port: int, dst: Block, dst_port: int) -> bool:
         if self.model.find_connection(src, src_port, dst, dst_port):

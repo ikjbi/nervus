@@ -11,6 +11,19 @@ electrical circuits, rotating shafts and heat paths with **physical blocks** who
 | rotational | angular velocity [rad/s] | torque [N·m] | Rotational: Inertia, Spring, Damper, Torque/Speed Source, Ideal Gear, sensors |
 | thermal | temperature [°C] | heat flow [W] | Thermal: Thermal Mass, Thermal Resistance, Heat Source, Temperature Source, sensors |
 
+## Drawing circuits in the editor
+
+Physical blocks are in the library under **Electrical**, **Rotational** and **Thermal**. Their physical ports are
+small squares on the left and right sides, in the colour of their domain (blue electrical, green rotational,
+orange thermal); signal inputs (a controlled source) are on the top and signal outputs (sensors) at the bottom.
+**Drag from one square to another** to link them: a link is a plain line without an arrow, because current can
+flow both ways. Several links on one port join at one node. Ports of different domains cannot be linked.
+Select a link and press Delete (or right-click → *Delete Link*) to remove it; deleting a block removes its
+links, and everything can be undone.
+
+To put part of a circuit into a subsystem, add **Connection Port** blocks inside (Library → Ports &
+Subsystems): each one becomes a physical port along the bottom edge of the subsystem.
+
 ## A first circuit
 
 ```python

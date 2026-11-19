@@ -36,7 +36,41 @@ def _tf(b: Block, var: str) -> str:
     return f"{poly(b.params['numerator'])}\n{'─' * 6}\n{poly(b.params['denominator'])}"
 
 
+def _src(b: Block, unit: str, key: str) -> str:
+    return "⇢ u" if b.params.get("controlled") else f"{_num(b.param_source(key))} {unit}"
+
+
 _GLYPHS: dict[str, Callable[[Block], str]] = {
+    "electrical.reference": lambda b: "⏚",
+    "electrical.resistor": lambda b: f"⏛ {_num(b.param_source('R'))} Ω",
+    "electrical.capacitor": lambda b: f"┤├ {_num(b.param_source('C'))} F",
+    "electrical.inductor": lambda b: f"∿∿ {_num(b.param_source('L'))} H",
+    "electrical.voltage_source": lambda b: "⊕ " + _src(b, "V", "V"),
+    "electrical.current_source": lambda b: "⇥ " + _src(b, "A", "I"),
+    "electrical.voltage_sensor": lambda b: "Ⓥ",
+    "electrical.current_sensor": lambda b: "Ⓐ",
+    "electrical.switch": lambda b: "─╱ ─",
+    "electrical.diode": lambda b: "▷|",
+    "electrical.battery": lambda b: f"▮▯ {_num(b.param_source('capacity'))} Ah",
+    "electrical.h_bridge": lambda b: "H-bridge",
+    "electrical.dc_motor": lambda b: "Ⓜ DC",
+    "rotational.reference": lambda b: "⫽",
+    "rotational.inertia": lambda b: f"J {_num(b.param_source('J'))}",
+    "rotational.spring": lambda b: f"⌇ k {_num(b.param_source('k'))}",
+    "rotational.damper": lambda b: f"⊐ d {_num(b.param_source('d'))}",
+    "rotational.torque_source": lambda b: "τ " + _src(b, "N·m", "tau"),
+    "rotational.speed_source": lambda b: "ω " + _src(b, "rad/s", "w"),
+    "rotational.gear": lambda b: f"⚙ {_num(b.param_source('n'))}:1",
+    "rotational.speed_sensor": lambda b: "ω",
+    "rotational.angle_sensor": lambda b: "φ",
+    "rotational.torque_sensor": lambda b: "τ",
+    "thermal.mass": lambda b: f"m·c {_num(b.param_source('C'))}",
+    "thermal.resistance": lambda b: f"R_th {_num(b.param_source('R'))}",
+    "thermal.heat_source": lambda b: "Q " + _src(b, "W", "Q"),
+    "thermal.temperature_source": lambda b: "T " + _src(b, "°C", "T"),
+    "thermal.temperature_sensor": lambda b: "🌡 T",
+    "thermal.heat_flow_sensor": lambda b: "Q̇",
+    "ports.connection_port": lambda b: f"⧉ {b.params['port']}",
     "sources.constant": lambda b: _num(b.param_source("value")),
     "sources.step": lambda b: "⌐ step",
     "sources.ramp": lambda b: "⟋",

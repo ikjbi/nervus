@@ -295,6 +295,16 @@ tests/
 - [ ] Editor: physical ports and wires drawn differently from signal lines; component library; examples and
       tutorials (battery + starter motor, electronic throttle)
 
+## Phase 20b – Circuit simulation like LTspice
+*Bigger electronic circuits with real semiconductor models, the way LTspice is used.*
+- [ ] Nonlinear devices solved with Newton iteration: Shockley diode (with Zener and LED variants), BJT
+      (Ebers-Moll), MOSFET (square law), ideal and macro-model op-amps, comparators
+- [ ] Analyses: DC operating point, DC sweep, AC small-signal (Bode of a circuit), transient with switching
+- [ ] Sparse matrices for circuits with hundreds of nodes; time-step control at switching events
+- [ ] SPICE netlist import/export (`.cir`/`.net`: R, C, L, V, I, D, Q, M, E, G, .model, .tran, .ac, .dc)
+- [ ] Examples: rectifier with smoothing capacitor, transistor relay driver, buck converter, op-amp filter,
+      battery charging; comparison with LTspice results
+
 ## Phase 21 – CAN bus networks
 *Several ECUs exchanging messages over a simulated bus.*
 - [ ] CAN bus block: frames with IDs, periods and DLC from DBC files; arbitration by priority; bit timing and bus

@@ -7,7 +7,7 @@ from typing import Any
 from PySide6.QtCore import QPointF
 from PySide6.QtGui import QUndoCommand
 
-from nervus.core import Block, Connection, SimulationSettings, Variable
+from nervus.core import Block, Connection, Link, SimulationSettings, Variable
 from nervus.gui.models.diagram_model import DiagramModel, block_position
 
 
@@ -56,22 +56,29 @@ class AddBlockCommand(Command):
 class RemoveCommand(Command):
     """Remove blocks and/or connections."""
 
-    def __init__(self, model: DiagramModel, blocks: list[Block], connections: list[Connection]) -> None:
+    def __init__(self, model: DiagramModel, blocks: list[Block], connections: list[Connection | Link]) -> None:
         n = len(blocks) + len(connections)
         super().__init__(f"Delete {n} item{'s' if n != 1 else ''}")
         self.model = model
         self.blocks = list(blocks)
         self._homes = [b.diagram for b in blocks]
         block_set = {id(b) for b in blocks}
+
+        def ends(c: Connection | Link) -> tuple[Block, Block]:
+            return (c.a, c.b) if isinstance(c, Link) else (c.src, c.dst)
+
         # Connections removed together with their blocks are handled by remove_block.
-        self.connections = [c for c in connections if id(c.src) not in block_set and id(c.dst) not in block_set]
-        self._removed: list[Connection] = []
+        self.connections = [c for c in connections if not any(id(e) in block_set for e in ends(c))]
+        self._removed: list[Connection | Link] = []
         self._positions: list[QPointF] = []
 
     def do(self) -> None:
         self._removed = []
         for c in self.connections:
-            self.model.remove_connection(c)
+            if isinstance(c, Link):
+                self.model.remove_link(c)
+            else:
+                self.model.remove_connection(c)
             self._removed.append(c)
         self._positions = [block_position(b) for b in self.blocks]
         for b in self.blocks:
@@ -80,9 +87,9 @@ class RemoveCommand(Command):
     def revert(self) -> None:
         for b, pos, home in zip(self.blocks, self._positions, self._homes, strict=True):
             self.model.add_block(b, pos, home)
-        restored = []
+        restored: list[Connection | Link] = []
         for c in self._removed:
-            restored.append(self.model.restore_connection(c))
+            restored.append(self.model.restore_link(c) if isinstance(c, Link) else self.model.restore_connection(c))
         # The diagram holds new Connection objects now; keep ours in sync for the next redo.
         mapping = dict(zip(map(id, self._removed), restored, strict=True))
         self.connections = [mapping.get(id(c), c) for c in self.connections]
@@ -163,6 +170,22 @@ class ConnectCommand(Command):
         self.model.remove_connection(self._conn)
         if self._replaced is not None:
             self._replaced = self.model.restore_connection(self._replaced)
+
+
+class LinkCommand(Command):
+    """Join two physical ports."""
+
+    def __init__(self, model: DiagramModel, a: Block, a_port: str, b: Block, b_port: str) -> None:
+        super().__init__(f"Link {a.name}.{a_port} to {b.name}.{b_port}")
+        self.model, self.args = model, (a, a_port, b, b_port)
+        self._link: Link | None = None
+
+    def do(self) -> None:
+        self._link = self.model.add_link(*self.args)
+
+    def revert(self) -> None:
+        assert self._link is not None
+        self.model.remove_link(self._link)
 
 
 class SetSettingsCommand(Command):

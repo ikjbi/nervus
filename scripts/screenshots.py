@@ -82,6 +82,55 @@ def rotated_example():  # type: ignore[no-untyped-def]
     return d
 
 
+def circuit_example():  # type: ignore[no-untyped-def]
+    """A battery, a switch and a DC motor with its rotor: a starter motor circuit."""
+    from nervus.blocks import (
+        Battery,
+        CurrentSensor,
+        DCMotor,
+        ElectricalReference,
+        ElectricalSwitch,
+        Inertia,
+        RotationalDamper,
+        RotationalReference,
+        Scope,
+        SpeedSensor,
+        Step,
+    )  # fmt: skip
+    from nervus.core import Diagram
+
+    d = Diagram("starter_circuit")
+    bat = d.add(Battery(), name="battery")
+    key = d.add(Step(time=0.2), name="key")
+    sw = d.add(ElectricalSwitch(), name="starter_relay")
+    amp = d.add(CurrentSensor(), name="current")
+    motor = d.add(DCMotor(R=0.02, L=1e-4, k=0.02), name="starter_motor")
+    rotor = d.add(Inertia(J=0.002), name="rotor")
+    friction = d.add(RotationalDamper(d=0.0005), name="friction")
+    housing = d.add(RotationalReference(), name="housing")
+    speed = d.add(SpeedSensor(), name="speed")
+    gnd = d.add(ElectricalReference(), name="ground")
+    d.connect(key, sw)
+    d.link((bat, "p"), (sw, "p"))
+    d.link((sw, "n"), (amp, "p"))
+    d.link((amp, "n"), (motor, "p"))
+    d.link((motor, "n"), (gnd, "p"))
+    d.link((bat, "n"), (gnd, "p"))
+    d.link((motor, "shaft"), (rotor, "a"))
+    d.link((motor, "shaft"), (friction, "a"))
+    d.link((friction, "b"), (housing, "a"))
+    d.link((rotor, "a"), (speed, "a"))
+    scope = d.add(Scope(num_inputs=2), name="scope")
+    d.connect(amp, (scope, 0))
+    d.connect(speed, (scope, 1))
+    positions = {"battery": (0, 100), "key": (130, -20), "starter_relay": (130, 90), "current": (260, 90),
+                 "starter_motor": (400, 90), "ground": (260, 230), "rotor": (560, 60), "friction": (560, 170),
+                 "housing": (700, 170), "speed": (560, -40), "scope": (720, 0)}  # fmt: skip
+    for name, (x, y) in positions.items():
+        d.block(name).meta["position"] = [float(x), float(y)]
+    return d
+
+
 def tasks_example():  # type: ignore[no-untyped-def]
     """An ECU with a 10 ms and a 100 ms task (atomic subsystems with their own sample time)."""
     from nervus.blocks import DiscretePID, Inport, MovingAverage, Outport, Scope, Sine, Subsystem, Sum
@@ -264,6 +313,11 @@ def main() -> None:
             sw.tabs.setCurrentIndex(1)
             grab(sw, "sweep-metric.png")
             sw.close()
+
+            # A circuit drawn with physical links.
+            win.diagram_model.set_diagram(circuit_example())
+            win.view.fit()
+            grab(win.view, "circuit.png")
 
             # Rotated blocks: a vertical sensor chain.
             win.diagram_model.set_diagram(rotated_example())

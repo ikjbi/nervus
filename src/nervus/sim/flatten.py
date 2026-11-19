@@ -154,6 +154,14 @@ def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, in
             continue
         d_node, d_port = dest(c.dst, c.dst_port)
         g.inputs[d_node][d_port] = source(c.src, c.src_port)
+
+    def end(b: Block, port: str) -> tuple[int, str]:
+        if isinstance(b, Subsystem):  # a physical port of a subsystem: its Connection Port block inside
+            sub, inner = subs[id(b)]
+            cp = next(c for c in sub.connection_ports() if c.name == port)
+            return inner[id(cp)], "a"
+        return node[id(b)], port
+
     for link in diagram.links:
-        g.links.append((node[id(link.a)], link.a_port, node[id(link.b)], link.b_port))
+        g.links.append((*end(link.a, link.a_port), *end(link.b, link.b_port)))
     return node

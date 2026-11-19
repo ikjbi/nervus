@@ -23,11 +23,21 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from nervus.core import Block, Connection
+from nervus.core import Block, Connection, Link
 from nervus.gui.controllers.editor_controller import EditorController
 from nervus.gui.models.diagram_model import DiagramModel, block_position
 from nervus.gui.theme import ThemeManager, current_theme
-from nervus.gui.views.items import GRID, BlockItem, PortItem, WireItem, route, snap
+from nervus.gui.views.items import (
+    GRID,
+    BlockItem,
+    LinkItem,
+    PhysicalPortItem,
+    PortItem,
+    WireItem,
+    domain_color,
+    route,
+    snap,
+)
 from nervus.gui.views.routing import Point, Rect
 
 BLOCK_MIME = "application/x-nervus-block-type"
@@ -51,6 +61,8 @@ class DiagramScene(QGraphicsScene):
         self.controller = controller
         self.blocks: dict[int, BlockItem] = {}
         self.wires: dict[int, WireItem] = {}
+        self.links: dict[int, LinkItem] = {}
+        self._link_from: PhysicalPortItem | None = None
         self._temp_wire: QGraphicsPathItem | None = None
         self._wire_from: PortItem | None = None
         self._press_positions: dict[int, QPointF] = {}
@@ -67,6 +79,8 @@ class DiagramScene(QGraphicsScene):
         model.connectionAdded.connect(self._on_connection_added)
         model.connectionRemoved.connect(self._on_connection_removed)
         model.connectionChanged.connect(self._on_connection_changed)
+        model.linkAdded.connect(self._on_link_added)
+        model.linkRemoved.connect(self._on_link_removed)
         model.diagramReset.connect(self.rebuild)
         model.currentChanged.connect(self._on_current_changed)
         controller.editingEnabledChanged.connect(self._on_editing_enabled)
@@ -86,11 +100,15 @@ class DiagramScene(QGraphicsScene):
         self.clear()
         self.blocks.clear()
         self.wires.clear()
+        self.links.clear()
+        self._link_from = None
         self._temp_wire = None
         for b in self.model.diagram.blocks:
             self._on_block_added(b)
         for c in self.model.diagram.connections:
             self._on_connection_added(c)
+        for link in self.model.diagram.links:
+            self._on_link_added(link)
 
     def _item(self, block: Block) -> BlockItem | None:
         return self.blocks.get(id(block))
@@ -119,6 +137,7 @@ class DiagramScene(QGraphicsScene):
         if item is None:
             return
         item.refresh()
+        self._refresh_links_of(block)
         for w in self.wires.values():
             c = w.connection
             if c.src is block:
@@ -166,6 +185,49 @@ class DiagramScene(QGraphicsScene):
         for w in self.wires.values():
             if w.connection.src is item.block or w.connection.dst is item.block:
                 w.update_path()
+        for k in self.links.values():
+            if k.link.a is item.block or k.link.b is item.block:
+                k.update_path()
+
+    # ------------------------------------------------------------------ physical links
+
+    def _on_link_added(self, link: Link) -> None:
+        if link.a.diagram is not self.model.diagram:
+            return
+        ia, ib = self._item(link.a), self._item(link.b)
+        pa = ia.physical_port(link.a_port) if ia else None
+        pb = ib.physical_port(link.b_port) if ib else None
+        if pa is None or pb is None:
+            return
+        item = LinkItem(link, pa, pb)
+        self.addItem(item)
+        item.update_path()
+        self.links[id(link)] = item
+
+    def _on_link_removed(self, link: Link) -> None:
+        item = self.links.pop(id(link), None)
+        if item is not None:
+            self.removeItem(item)
+
+    def _refresh_links_of(self, block: Block) -> None:
+        item = self._item(block)
+        for k in self.links.values():
+            if item is None:
+                continue
+            if k.link.a is block:
+                k.a = item.physical_port(k.link.a_port) or k.a
+            if k.link.b is block:
+                k.b = item.physical_port(k.link.b_port) or k.b
+            k.update_path()
+
+    def _physical_port_at(self, pos: QPointF) -> PhysicalPortItem | None:
+        for item in self.items(pos):
+            if isinstance(item, PhysicalPortItem):
+                return item
+        return None
+
+    def selected_links(self) -> list[Link]:
+        return [i.link for i in self.selectedItems() if isinstance(i, LinkItem)]
 
     def _on_editing_enabled(self, enabled: bool) -> None:
         for item in self.blocks.values():
@@ -254,6 +316,15 @@ class DiagramScene(QGraphicsScene):
                 self._resizing = (grip, list(size) if isinstance(size, list | tuple) else None)
                 event.accept()
                 return
+            phys = self._physical_port_at(event.scenePos())
+            if phys is not None:
+                self._link_from = phys
+                self._temp_wire = QGraphicsPathItem()
+                self._temp_wire.setPen(QPen(domain_color(phys.domain), 1.5, Qt.PenStyle.DashLine))
+                self._temp_wire.setZValue(3)
+                self.addItem(self._temp_wire)
+                event.accept()
+                return
             port = self._port_at(event.scenePos())
             wire = self._wire_at(event.scenePos()) if port is None else None
             if wire is not None:
@@ -292,6 +363,10 @@ class DiagramScene(QGraphicsScene):
             self._update_wires_of(item)
             event.accept()
             return
+        if self._temp_wire is not None and self._link_from is not None:
+            self._temp_wire.setPath(route(self._link_from.scene_anchor(), event.scenePos(), self._link_from.outward, 1))
+            event.accept()
+            return
         if self._temp_wire is not None and self._wire_from is not None:
             a = self._wire_from.scene_anchor()
             b = event.scenePos()
@@ -326,6 +401,15 @@ class DiagramScene(QGraphicsScene):
             self.controller.resize_block(item.block, old, new)
             item.refresh()
             self._update_wires_of(item)
+            event.accept()
+            return
+        if self._temp_wire is not None and self._link_from is not None:
+            self.removeItem(self._temp_wire)
+            self._temp_wire = None
+            start_port, self._link_from = self._link_from, None
+            target = self._physical_port_at(event.scenePos())
+            if target is not None and target is not start_port:
+                self.controller.link_ports(start_port.block, start_port.name, target.block, target.name)
             event.accept()
             return
         if self._temp_wire is not None and self._wire_from is not None:
@@ -391,11 +475,14 @@ class DiagramScene(QGraphicsScene):
         """Route every wire again (after blocks moved, a route that was clear may now pass through a block)."""
         for w in self.wires.values():
             w.update_path()
+        for k in self.links.values():
+            k.update_path()
 
     def _update_wires_of(self, item: BlockItem) -> None:
         for w in self.wires.values():
             if w.src.block_item is item or w.dst.block_item is item:
                 w.update_path()
+        self._refresh_links_of(item.block)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Arrow keys nudge the selected blocks by one grid step (Shift: five)."""
@@ -450,6 +537,11 @@ class DiagramScene(QGraphicsScene):
                 self.clearSelection()
                 wire.setSelected(True)
                 target = wire.connection
+            link = next((i for i in self.items(event.scenePos()) if isinstance(i, LinkItem)), None)
+            if wire is None and link is not None:
+                self.clearSelection()
+                link.setSelected(True)
+                target = link.link
         self.contextMenuRequested.emit(target, event.screenPos())
         event.accept()
 

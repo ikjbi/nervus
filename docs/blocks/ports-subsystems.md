@@ -1,5 +1,24 @@
 # Ports & Subsystems
 
+## Connection Port
+
+`ports.connection_port` · Ports & Subsystems
+
+A physical port of the subsystem it is in: what is linked to it inside is linked to whatever is linked
+to the subsystem's port of the same name outside. Use it to put a motor, a battery or a heat path into a
+subsystem. The ports appear on the subsystem in the order of *port*; *domain* must match the links.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `port` | `1` |  | Position among the subsystem's physical ports |
+| `domain` | `'electrical'` |  | Physical domain — one of `electrical`, `rotational`, `thermal` |
+
+*Direct feedthrough:* yes · no inputs, no outputs
+
+---
+
 ## In
 
 `ports.inport` · Ports & Subsystems

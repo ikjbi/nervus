@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from nervus import __version__
-from nervus.core import Block, Connection, Diagram, NervusError
+from nervus.core import Block, Connection, Diagram, Link, NervusError
 from nervus.core.expressions import format_value, parse_value
 from nervus.gui.controllers import (
     CLIPBOARD_MIME,
@@ -748,7 +748,9 @@ class MainWindow(QMainWindow):
 
     def delete_selection(self) -> None:
         if self.view.hasFocus() or self.scene.selectedItems():
-            self.editor.delete(self.scene.selected_blocks(), self.scene.selected_connections())
+            self.editor.delete(
+                self.scene.selected_blocks(), [*self.scene.selected_connections(), *self.scene.selected_links()]
+            )
 
     def copy(self) -> None:
         blocks = self.scene.selected_blocks()
@@ -910,6 +912,9 @@ class MainWindow(QMainWindow):
             if any("size" in b.meta for b in self.scene.selected_blocks()):
                 menu.addAction(self.act_reset_size)
             menu.addAction(self.act_create_subsystem)
+        elif isinstance(target, Link):  # a physical link
+            link = target
+            menu.addAction("Delete Link", lambda: self.editor.delete([], [link]))
         elif isinstance(target, Connection):  # a wire
             wire = target
             menu.addAction("Delete Wire", lambda: self.editor.delete([], [wire]))

@@ -60,6 +60,7 @@ from nervus.blocks.mechanical import (
     TorqueSensor,
     TorqueSource,
 )
+from nervus.blocks.physical_ports import ConnectionPort
 from nervus.blocks.ports import Inport, Outport, Subsystem
 from nervus.blocks.registry import block_types, categories, create_block, get_block_class, register
 from nervus.blocks.routing import DataTypeConversion, Demux, InitialCondition, Mux, Switch
@@ -79,6 +80,7 @@ __all__ = [
     "Capacitor",
     "Clock",
     "CompareToConstant",
+    "ConnectionPort",
     "Constant",
     "Counter",
     "CurrentSensor",

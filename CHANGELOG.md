@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Drawing circuits in the editor: physical ports in domain colours, links dragged between them (undo,
+  delete, context menu), Connection Ports for physical ports on subsystems, symbols for physical blocks.
 - Physical modelling: electrical, rotational and thermal components with physical ports joined by links
   (`Diagram.link`), solved by modified nodal analysis together with the block diagram: R, C, L, sources,
   switch, diode, battery, DC motor, H-bridge, inertia, spring, damper, gear, thermal mass and resistance,

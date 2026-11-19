@@ -241,3 +241,37 @@ def test_links_are_saved_and_checked() -> None:
         d.link((r, "p"), (rot, "a"))
     d.remove("C")
     assert d.links == []
+
+
+def test_connection_ports_cross_subsystems() -> None:
+    """The motor and its load inside a subsystem, the supply outside, linked through Connection Ports."""
+    from nervus.blocks import ConnectionPort, Subsystem
+    from nervus.io import dumps, loads
+
+    inner = Diagram()
+    plus = inner.add(ConnectionPort(port=1), name="plus")
+    minus = inner.add(ConnectionPort(port=2), name="minus")
+    motor = inner.add(DCMotor(R=2.0, L=0.01, k=0.1), name="motor")
+    rotor = inner.add(Inertia(J=1e-4), name="rotor")
+    from nervus.blocks import RotationalReference
+
+    friction, housing = inner.add(RotationalDamper(d=1e-4), name="friction"), inner.add(RotationalReference(), name="h")
+    speed = inner.add(SpeedSensor(), name="speed")
+    inner.link((plus, "a"), (motor, "p"))
+    inner.link((minus, "a"), (motor, "n"))
+    for part in (rotor, friction, speed):
+        inner.link((motor, "shaft"), (part, "a"))
+    inner.link((friction, "b"), (housing, "a"))
+    from nervus.blocks import Outport
+
+    inner.connect(speed, inner.add(Outport(port=1), name="w"))
+    d = Diagram()
+    drive = d.add(Subsystem(system=inner), name="drive")
+    assert drive.physical_ports() == [("plus", "electrical"), ("minus", "electrical")]
+    src, gnd = d.add(VoltageSource(V=12.0), name="supply"), d.add(ElectricalReference(), name="gnd")
+    d.link((src, "p"), (drive, "plus"))
+    d.link((src, "n"), (gnd, "p"))
+    d.link((drive, "minus"), (gnd, "p"))
+    d.connect(drive, d.add(Scope(), name="scope"))
+    res = simulate(loads(dumps(d)), 2.0, solver="RK45", rtol=1e-8)
+    assert res["drive/speed"][-1] == pytest.approx(0.1 * 12.0 / (2.0 * 1e-4 + 0.01), rel=1e-4)

@@ -86,6 +86,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 ## [Ports & Subsystems](ports-subsystems.md)
 
+- **Connection Port**: A physical port of the subsystem it is in: what is linked to it inside is linked to whatever is linked
 - **In**: An input port.
 - **Out**: An output port. Inside a subsystem it is the subsystem's output number *port*; at the top level it is an
 - **Subsystem**: A block that contains its own diagram. Double-click it in the editor to open it.

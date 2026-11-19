@@ -12,7 +12,7 @@ from typing import Any
 
 from PySide6.QtCore import QObject, QPointF, Signal
 
-from nervus.core import Block, Connection, Diagram, SimulationSettings, Variable
+from nervus.core import Block, Connection, Diagram, Link, SimulationSettings, Variable
 from nervus.core.layout import auto_layout
 
 
@@ -30,6 +30,8 @@ class DiagramModel(QObject):
     connectionAdded = Signal(object)  # Connection
     connectionRemoved = Signal(object)  # Connection
     connectionChanged = Signal(object)  # Connection (its drawn route changed)
+    linkAdded = Signal(object)  # Link (a physical connection)
+    linkRemoved = Signal(object)  # Link
     settingsChanged = Signal()
     workspaceChanged = Signal()
     testsChanged = Signal()
@@ -51,6 +53,8 @@ class DiagramModel(QObject):
             self.paramsChanged,
             self.connectionAdded,
             self.connectionRemoved,
+            self.linkAdded,
+            self.linkRemoved,
             self.settingsChanged,
             self.workspaceChanged,
             self.testsChanged,
@@ -142,17 +146,40 @@ class DiagramModel(QObject):
         self.blockAdded.emit(block)
         return block
 
-    def remove_block(self, block: Block) -> list[Connection]:
-        """Remove ``block`` and its connections. Returns the removed connections (for undo)."""
+    def remove_block(self, block: Block) -> list[Connection | Link]:
+        """Remove ``block`` with its connections and links. Returns what was removed with it (for undo)."""
         d = block.diagram
         assert d is not None
         self._focus(d)
-        conns = [c for c in d.connections if c.src is block or c.dst is block]
+        conns: list[Connection | Link] = [c for c in d.connections if c.src is block or c.dst is block]
         for c in conns:
-            self.remove_connection(c)
+            self.remove_connection(c)  # type: ignore[arg-type]
+        links = [k for k in d.links if k.a is block or k.b is block]
+        for k in links:
+            self.remove_link(k)
         d.remove(block)
         self.blockRemoved.emit(block)
-        return conns
+        return conns + links
+
+    def add_link(self, a: Block, a_port: str, b: Block, b_port: str) -> Link:
+        d = a.diagram
+        assert d is not None
+        self._focus(d)
+        link = d.link((a, a_port), (b, b_port))
+        self.linkAdded.emit(link)
+        return link
+
+    def restore_link(self, link: Link) -> Link:
+        new = self.add_link(link.a, link.a_port, link.b, link.b_port)
+        new.meta.update(link.meta)
+        return new
+
+    def remove_link(self, link: Link) -> None:
+        d = link.a.diagram
+        assert d is not None
+        self._focus(d)
+        d.unlink(link)
+        self.linkRemoved.emit(link)
 
     def move_block(self, block: Block, position: QPointF) -> None:
         self._focus(block.diagram)

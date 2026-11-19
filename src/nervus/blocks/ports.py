@@ -308,6 +308,14 @@ class Subsystem(Block):
         d.connect(u, y)
         return d
 
+    def connection_ports(self) -> list[Block]:
+        """The Connection Port blocks inside, in port order: the subsystem's physical ports."""
+        found = [b for b in self.system.blocks if b.type_id == "ports.connection_port"]
+        return sorted(found, key=lambda b: (b.params["port"], b.name))
+
+    def physical_ports(self) -> list[tuple[str, str]]:
+        return [(b.name, str(b.params["domain"])) for b in self.connection_ports()]
+
     def inports(self) -> list[Block]:
         try:
             return _ports(self.system, Inport)
