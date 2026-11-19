@@ -26,6 +26,7 @@ from nervus.gui.controllers.commands import (
     RenameCommand,
     SetLinkCommand,
     SetMaskCommand,
+    SetMetaCommand,
     SetParamsCommand,
     SetSettingsCommand,
     SetTestsCommand,
@@ -116,6 +117,26 @@ class EditorController(QObject):
     def flip_blocks(self, blocks: list[Block]) -> bool:
         """Flip blocks left-right (undoable)."""
         return bool(blocks) and self._push(FlipBlocksCommand(self.model, blocks))
+
+    def rotate_blocks(self, blocks: list[Block]) -> bool:
+        """Rotate blocks a quarter turn clockwise: right -> down -> left -> up (undoable)."""
+        from nervus.core.layout import ROTATE_CLOCKWISE, orientation_of, rotated_meta
+
+        if not blocks:
+            return False
+        changes: list[tuple[Block, dict[str, Any]]] = [
+            (b, dict(rotated_meta(ROTATE_CLOCKWISE[orientation_of(b)]))) for b in blocks
+        ]
+        n = len(blocks)
+        return self._push(SetMetaCommand(self.model, f"Rotate {n} block{'s' if n != 1 else ''}", changes))
+
+    def resize_block(self, block: Block, old: list[float] | None, new: list[float] | None) -> bool:
+        """Set the drawn size of a block (``None``: its natural size). ``old`` is the size before a live drag."""
+        if old == new:
+            return False
+        cmd = SetMetaCommand(self.model, f"Resize {block.name}", [(block, {"size": new})])
+        cmd.old = [(block, {"size": old})]
+        return self._push(cmd)
 
     def move_blocks(self, moves: list[tuple[Block, QPointF, QPointF]]) -> None:
         moves = [(b, o, n) for b, o, n in moves if o != n]

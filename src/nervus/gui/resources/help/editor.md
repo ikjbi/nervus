@@ -56,6 +56,19 @@ it is saved with the model.
 
 In Python, set `block.meta["flipped"] = True`.
 
+## Rotating, resizing and nudging blocks
+
+**Ctrl+Shift+R** (**Edit → Rotate Block**, or right-click → *Rotate Block*) turns the selected blocks a
+quarter turn clockwise: the signal then flows down (inputs on top, outputs at the bottom), then to the left,
+then up, then right again. Use it for signal chains drawn top to bottom, like a sensor path. Flipping a
+rotated block swaps top and bottom.
+
+To make a block bigger, select it and drag the grip in its lower right corner; blocks never get smaller than
+their natural size. **Edit → Reset Block Size** undoes it. The **arrow keys** move the selected blocks by one
+grid step, **Shift+arrow** by five. All of these can be undone and are saved with the model.
+
+In Python: `block.meta["vertical"] = True` (with `flipped` for upwards), `block.meta["size"] = [140, 80]`.
+
 ## Sample times, widths and data types on the canvas
 
 The **View** menu can annotate the diagram with what the compiler found out:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QPointF, QRectF, Qt
@@ -9,6 +10,7 @@ from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPainterPath, QPainte
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsPathItem, QStyleOptionGraphicsItem, QWidget
 
 from nervus.core import Block, Connection
+from nervus.core.layout import ORIENTATIONS, Direction, orientation_of
 from nervus.gui.theme import current_theme
 from nervus.gui.views.glyphs import glyph
 
@@ -25,7 +27,8 @@ def snap(v: float) -> float:
 
 
 class PortItem(QGraphicsItem):
-    """A port on the side of a block. Inputs are on the left, outputs on the right (swapped when flipped)."""
+    """A port on the side of a block. Inputs are on the left, outputs on the right (swapped when flipped; on the
+    top and bottom when the block is rotated)."""
 
     def __init__(self, block_item: BlockItem, is_input: bool, index: int) -> None:
         super().__init__(block_item)
@@ -42,9 +45,9 @@ class PortItem(QGraphicsItem):
         return self.block_item.block
 
     @property
-    def direction(self) -> int:
-        """Direction the signal flows through this port: +1 = to the right, -1 = to the left (flipped block)."""
-        return -1 if self.block_item.flipped else 1
+    def direction(self) -> Direction:
+        """Direction the signal flows through this port, e.g. (1, 0) to the right or (0, 1) downwards."""
+        return ORIENTATIONS[self.block_item.orientation]
 
     def boundingRect(self) -> QRectF:
         s = PORT_SIZE + 6  # generous hit area
@@ -59,8 +62,8 @@ class PortItem(QGraphicsItem):
             pts = [QPointF(-h, -h), QPointF(h * 0.6, 0), QPointF(-h, h)]
         else:
             pts = [QPointF(-h * 0.6, -h), QPointF(h, 0), QPointF(-h * 0.6, h)]
-        if self.direction < 0:
-            pts = [QPointF(-p.x(), p.y()) for p in pts]
+        dx, dy = self.direction
+        pts = [QPointF(p.x() * dx - p.y() * dy, p.x() * dy + p.y() * dx) for p in pts]  # rotate
         color = t.color("accent") if self.hover else t.color("port")
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(color)
@@ -76,8 +79,9 @@ class PortItem(QGraphicsItem):
 
     def scene_anchor(self) -> QPointF:
         """Where wires attach, in scene coordinates."""
-        outward = (-1 if self.is_input else 1) * self.direction
-        return self.mapToScene(QPointF(outward * PORT_SIZE / 2, 0))
+        sign = -1 if self.is_input else 1
+        dx, dy = self.direction
+        return self.mapToScene(QPointF(sign * dx * PORT_SIZE / 2, sign * dy * PORT_SIZE / 2))
 
 
 class BlockItem(QGraphicsItem):
@@ -118,8 +122,16 @@ class BlockItem(QGraphicsItem):
             icon_lines = str(getattr(self.block, "mask_icon", "")).replace("\\n", "\n").split("\n")
             width = 2 * max((len(x) for x in names), default=4) + max((len(x) for x in icon_lines), default=0)
             lines = [" " * width] * max(1, len(icon_lines))
-        self._w = max(MIN_W, snap(max(len(line) for line in lines) * 8 + 24))
-        self._h = max(MIN_H, snap(max(n * 20 + 10, len(lines) * 16 + 16)))
+        text_w = snap(max(len(line) for line in lines) * 8 + 24)
+        if self.vertical:  # ports along the top and bottom edges
+            self._w = max(MIN_W, text_w, snap(n * 24 + 10))
+            self._h = max(MIN_H, snap(len(lines) * 16 + 16))
+        else:
+            self._w = max(MIN_W, text_w)
+            self._h = max(MIN_H, snap(max(n * 20 + 10, len(lines) * 16 + 16)))
+        size = self.block.meta.get("size")
+        if isinstance(size, list | tuple) and len(size) == 2:  # resized by the user: at least the minimum
+            self._w, self._h = max(self._w, snap(float(size[0]))), max(self._h, snap(float(size[1])))
         for p in self.in_ports + self.out_ports:
             p.setParentItem(None)  # type: ignore[arg-type]
             if p.scene():
@@ -130,16 +142,20 @@ class BlockItem(QGraphicsItem):
             label = names[i] if i < len(names) and names[i] else ""
             p.setToolTip(f"input {i + 1}" + (f": {label}" if label else ""))
         self.out_ports = [PortItem(self, False, i) for i in range(self.block.num_outputs())]
-        left, right = -PORT_SIZE / 2, self._w + PORT_SIZE / 2
-        if self.flipped:
-            left, right = right, left
-        for ports, x in ((self.in_ports, left), (self.out_ports, right)):
+        dx, dy = ORIENTATIONS[self.orientation]
+        for ports, sign in ((self.in_ports, -1), (self.out_ports, 1)):
             for i, p in enumerate(ports):
-                p.setPos(x, self._h * (i + 1) / (len(ports) + 1))
+                along = (i + 1) / (len(ports) + 1)
+                if dy == 0:
+                    p.setPos(self._w / 2 + sign * dx * (self._w + PORT_SIZE) / 2, self._h * along)
+                else:
+                    p.setPos(self._w * along, self._h / 2 + sign * dy * (self._h + PORT_SIZE) / 2)
         self.setToolTip(f"{self.block.label} ({self.block.type_id})\nDouble-click to edit · F1 for help")
         self.update()
 
     def boundingRect(self) -> QRectF:
+        if self.vertical:  # ports above and below, the name label on the right
+            return QRectF(-2, -PORT_SIZE, self._w + 130, self._h + 2 * PORT_SIZE)
         # Room for the name label under the block.
         return QRectF(-PORT_SIZE, -2, self._w + 2 * PORT_SIZE, self._h + 22)
 
@@ -147,6 +163,19 @@ class BlockItem(QGraphicsItem):
     def flipped(self) -> bool:
         """Flipped blocks have their inputs on the right and outputs on the left (for feedback paths)."""
         return bool(self.block.meta.get("flipped", False))
+
+    @property
+    def vertical(self) -> bool:
+        """Rotated a quarter turn: inputs on the top (bottom when flipped), signal flowing down (up)."""
+        return bool(self.block.meta.get("vertical", False))
+
+    @property
+    def orientation(self) -> str:
+        return orientation_of(self.block)
+
+    def resize_handle(self) -> QRectF:
+        """The corner to drag to resize the block (shown when selected)."""
+        return QRectF(self._w - 9, self._h - 9, 9, 9)
 
     def body_rect(self) -> QRectF:
         return QRectF(0, 0, self._w, self._h)
@@ -190,7 +219,17 @@ class BlockItem(QGraphicsItem):
         name_font.setPointSizeF(10)
         painter.setFont(name_font)
         painter.setPen(t.color("text_secondary"))
-        painter.drawText(QRectF(-40, self._h + 2, self._w + 80, 18), Qt.AlignmentFlag.AlignHCenter, self.block.name)
+        if self.vertical:
+            painter.drawText(
+                QRectF(self._w + 6, self._h / 2 - 9, 124, 18), Qt.AlignmentFlag.AlignVCenter, self.block.name
+            )
+        else:
+            painter.drawText(QRectF(-40, self._h + 2, self._w + 80, 18), Qt.AlignmentFlag.AlignHCenter, self.block.name)
+        if self.isSelected():  # resize grip
+            painter.setPen(QPen(t.color("selection"), 1.2))
+            r = self.resize_handle()
+            for k in (3, 6):
+                painter.drawLine(QPointF(r.right() - k, r.bottom() - 1), QPointF(r.right() - 1, r.bottom() - k))
 
     def _paint_subsystem(self, painter: QPainter, rect: QRectF) -> None:
         """Port names inside the block, like Simulink's subsystem icon."""
@@ -200,12 +239,25 @@ class BlockItem(QGraphicsItem):
         painter.setFont(small)
         painter.setPen(t.color("text_secondary"))
         sub = self.block
+        if self.vertical:  # names next to the ports on the top and bottom edges
+            for ports, items in ((sub.inports(), self.in_ports), (sub.outports(), self.out_ports)):  # type: ignore[attr-defined]
+                for port_block, item in zip(ports, items, strict=False):
+                    top = item.pos().y() < rect.height() / 2
+                    box = QRectF(item.pos().x() - 40, 3 if top else rect.height() - 17, 80, 14)
+                    painter.drawText(box, Qt.AlignmentFlag.AlignCenter, port_block.name)
+            ports_done = True
+        else:
+            ports_done = False
         left, right = Qt.AlignmentFlag.AlignLeft, Qt.AlignmentFlag.AlignRight
         if self.flipped:
             left, right = right, left
         for ports, items, align, dx in (
-            (sub.inports(), self.in_ports, left, 6 if not self.flipped else -6),  # type: ignore[attr-defined]
-            (sub.outports(), self.out_ports, right, -6 if not self.flipped else 6),  # type: ignore[attr-defined]
+            ()
+            if ports_done
+            else (
+                (sub.inports(), self.in_ports, left, 6 if not self.flipped else -6),  # type: ignore[attr-defined]
+                (sub.outports(), self.out_ports, right, -6 if not self.flipped else 6),  # type: ignore[attr-defined]
+            )
         ):
             for port_block, item in zip(ports, items, strict=False):
                 y = item.pos().y()
@@ -354,40 +406,75 @@ class WireItem(QGraphicsPathItem):
         self.update()
 
 
-def route(a: QPointF, b: QPointF, a_dir: int = 1, b_dir: int = 1) -> QPainterPath:
+def _vec(d: int | Direction) -> Direction:
+    return (d, 0) if isinstance(d, int) else d
+
+
+def route(a: QPointF, b: QPointF, a_dir: int | Direction = 1, b_dir: int | Direction = 1) -> QPainterPath:
     """Orthogonal route from an output anchor ``a`` to an input anchor ``b``.
 
-    ``a_dir``/``b_dir`` are the signal directions at the ports (+1 = to the right, -1 = flipped block).
+    ``a_dir``/``b_dir`` are the signal directions at the ports: (1, 0) to the right, (-1, 0) to the left (flipped
+    block), (0, 1) down and (0, -1) up (rotated blocks). An int means a horizontal direction (+1 or -1).
     """
-    stub = 10.0
-    if a_dir < 0 and b_dir < 0:  # both flipped: route the mirror image
-        mirrored = route(QPointF(-a.x(), a.y()), QPointF(-b.x(), b.y()))
-        path = QPainterPath(a)
-        for k in range(1, mirrored.elementCount()):
-            el = mirrored.elementAt(k)
-            path.lineTo(-el.x, el.y)
-        return path
+    da, db = _vec(a_dir), _vec(b_dir)
+    # Route in a frame where the signal leaves ``a`` to the right, then map the corners back.
+    fwd, back = _FRAMES[da]
+    pa, pb = fwd(a.x(), a.y()), fwd(b.x(), b.y())
+    db_local = fwd(*db)
+    pts = _route_right(pa, pb, (round(db_local[0]), round(db_local[1])))
     path = QPainterPath(a)
-    if a_dir != b_dir:
+    for x, y in pts[1:]:
+        path.lineTo(*back(x, y))
+    return path
+
+
+Point = tuple[float, float]
+
+
+def _identity(x: float, y: float) -> Point:
+    return (x, y)
+
+
+def _mirror(x: float, y: float) -> Point:
+    return (-x, y)
+
+
+def _quarter_ccw(x: float, y: float) -> Point:
+    return (y, -x)
+
+
+def _quarter_cw(x: float, y: float) -> Point:
+    return (-y, x)
+
+
+_FRAMES: dict[Direction, tuple[Callable[[float, float], Point], Callable[[float, float], Point]]] = {
+    (1, 0): (_identity, _identity),
+    (-1, 0): (_mirror, _mirror),
+    (0, 1): (_quarter_ccw, _quarter_cw),  # (0, 1) -> (1, 0) and back
+    (0, -1): (_quarter_cw, _quarter_ccw),
+}
+
+
+def _route_right(a: Point, b: Point, db: Direction) -> list[Point]:
+    """Corner points from ``a`` (signal leaving to the right) to ``b``, entering ``b`` in direction ``db``."""
+    stub = 10.0
+    (ax, ay), (bx, by) = a, b
+    if db == (1, 0):
+        if bx - ax >= 2 * stub:
+            mx = snap((ax + bx) / 2)
+            return [a, (mx, ay), (mx, by), b]
+        # Backwards (feedback) wire: go out, loop below/above, come back in.
+        out_x, in_x = ax + 2 * stub, bx - 2 * stub
+        detour_y = max(ay, by) + 40 if abs(ay - by) < 30 else (ay + by) / 2
+        return [a, (out_x, ay), (out_x, detour_y), (in_x, detour_y), (in_x, by), b]
+    if db == (-1, 0):
         # Out of one side and into the same side of the other block (typical for a flipped feedback block):
         # go past both, then turn back.
-        x = max(a.x(), b.x()) + 2 * stub if a_dir > 0 else min(a.x(), b.x()) - 2 * stub
-        path.lineTo(x, a.y())
-        path.lineTo(x, b.y())
-        path.lineTo(b)
-        return path
-    if b.x() - a.x() >= 2 * stub:
-        mx = snap((a.x() + b.x()) / 2)
-        path.lineTo(mx, a.y())
-        path.lineTo(mx, b.y())
-        path.lineTo(b)
-    else:
-        # Backwards (feedback) wire: go out, loop below/above, come back in.
-        out_x, in_x = a.x() + 2 * stub, b.x() - 2 * stub
-        detour_y = max(a.y(), b.y()) + 40 if abs(a.y() - b.y()) < 30 else (a.y() + b.y()) / 2
-        path.lineTo(out_x, a.y())
-        path.lineTo(out_x, detour_y)
-        path.lineTo(in_x, detour_y)
-        path.lineTo(in_x, b.y())
-        path.lineTo(b)
-    return path
+        x = max(ax, bx) + 2 * stub
+        return [a, (x, ay), (x, by), b]
+    # Into a port on the top (db = down) or bottom (db = up) of a rotated block.
+    sy = db[1]
+    if bx - ax >= stub and (by - ay) * sy >= stub:
+        return [a, (bx, ay), b]  # one corner
+    out_x, in_y = ax + 2 * stub, by - sy * 2 * stub
+    return [a, (out_x, ay), (out_x, in_y), (bx, in_y), b]

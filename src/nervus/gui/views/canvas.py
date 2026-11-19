@@ -53,6 +53,7 @@ class DiagramScene(QGraphicsScene):
         self._temp_wire: QGraphicsPathItem | None = None
         self._wire_from: PortItem | None = None
         self._press_positions: dict[int, QPointF] = {}
+        self._resizing: tuple[BlockItem, list[float] | None] | None = None  # item, size before the drag
         self.setSceneRect(QRectF(-5000, -5000, 10000, 10000))
 
         model.blockAdded.connect(self._on_block_added)
@@ -238,6 +239,16 @@ class DiagramScene(QGraphicsScene):
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton and self.controller.editing_enabled:
+            grip = self._block_at(event.scenePos())
+            if (
+                grip is not None
+                and grip.isSelected()
+                and grip.resize_handle().contains(grip.mapFromScene(event.scenePos()))
+            ):
+                size = grip.block.meta.get("size")
+                self._resizing = (grip, list(size) if isinstance(size, list | tuple) else None)
+                event.accept()
+                return
             port = self._port_at(event.scenePos())
             if port is not None:
                 self._wire_from = port
@@ -252,6 +263,14 @@ class DiagramScene(QGraphicsScene):
         self._press_positions = {id(i.block): i.pos() for i in self.selectedItems() if isinstance(i, BlockItem)}
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if self._resizing is not None:
+            item = self._resizing[0]
+            corner = item.mapFromScene(event.scenePos())
+            item.block.meta["size"] = [snap(max(corner.x(), 10.0)), snap(max(corner.y(), 10.0))]
+            item.refresh()
+            self._update_wires_of(item)
+            event.accept()
+            return
         if self._temp_wire is not None and self._wire_from is not None:
             a = self._wire_from.scene_anchor()
             b = event.scenePos()
@@ -263,6 +282,18 @@ class DiagramScene(QGraphicsScene):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if self._resizing is not None:
+            item, old = self._resizing
+            self._resizing = None
+            new = [item.size[0], item.size[1]]
+            item.block.meta.pop("size", None)
+            if old is not None:
+                item.block.meta["size"] = old
+            self.controller.resize_block(item.block, old, new)
+            item.refresh()
+            self._update_wires_of(item)
+            event.accept()
+            return
         if self._temp_wire is not None and self._wire_from is not None:
             self.removeItem(self._temp_wire)
             self._temp_wire = None
@@ -274,12 +305,34 @@ class DiagramScene(QGraphicsScene):
         moves = []
         for i in self.selectedItems():
             if isinstance(i, BlockItem):
-                old = self._press_positions.get(id(i.block))
-                if old is not None and old != i.pos():
-                    moves.append((i.block, old, i.pos()))
+                was = self._press_positions.get(id(i.block))
+                if was is not None and was != i.pos():
+                    moves.append((i.block, was, i.pos()))
         self._press_positions = {}
         if moves:
             self.controller.move_blocks(moves)
+
+    def _update_wires_of(self, item: BlockItem) -> None:
+        for w in self.wires.values():
+            if w.src.block_item is item or w.dst.block_item is item:
+                w.update_path()
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Arrow keys nudge the selected blocks by one grid step (Shift: five)."""
+        steps = {
+            Qt.Key.Key_Left: (-1, 0),
+            Qt.Key.Key_Right: (1, 0),
+            Qt.Key.Key_Up: (0, -1),
+            Qt.Key.Key_Down: (0, 1),
+        }
+        selected = [i for i in self.selectedItems() if isinstance(i, BlockItem)]
+        if event.key() in steps and selected and self.controller.editing_enabled and self.focusItem() is None:
+            dx, dy = steps[Qt.Key(event.key())]
+            k = GRID * (5 if event.modifiers() & Qt.KeyboardModifier.ShiftModifier else 1)
+            self.controller.move_blocks([(i.block, i.pos(), i.pos() + QPointF(dx * k, dy * k)) for i in selected])
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
     def _finish_wire(self, start: PortItem, pos: QPointF) -> None:
         target = self._port_at(pos)

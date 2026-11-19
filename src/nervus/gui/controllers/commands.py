@@ -413,6 +413,33 @@ class SetLinkCommand(Command):
         self._apply(self.old)
 
 
+class SetMetaCommand(Command):
+    """Change drawing-only entries of ``block.meta`` (orientation, size): ``changes = [(block, {key: value})]``,
+    where ``None`` removes the key."""
+
+    def __init__(self, model: DiagramModel, text: str, changes: list[tuple[Block, dict[str, Any]]]) -> None:
+        super().__init__(text)
+        self.model = model
+        self.new = [(b, dict(c)) for b, c in changes]
+        self.old = [(b, {k: b.meta.get(k) for k in c}) for b, c in changes]
+
+    @staticmethod
+    def _apply(model: DiagramModel, changes: list[tuple[Block, dict[str, Any]]]) -> None:
+        for b, c in changes:
+            for k, v in c.items():
+                if v is None or v is False:
+                    b.meta.pop(k, None)
+                else:
+                    b.meta[k] = v
+            model.paramsChanged.emit(b)
+
+    def do(self) -> None:
+        self._apply(self.model, self.new)
+
+    def revert(self) -> None:
+        self._apply(self.model, self.old)
+
+
 class FlipBlocksCommand(Command):
     """Flip blocks left-right (inputs on the right, outputs on the left), e.g. for feedback paths."""
 

@@ -206,6 +206,12 @@ class MainWindow(QMainWindow):
         self.act_flip = self._action(
             "&Flip Block", self.flip_selection, "Ctrl+Shift+F", "Swap the inputs and outputs sides (for feedback paths)"
         )
+        self.act_rotate = self._action(
+            "&Rotate Block", self.rotate_selection, "Ctrl+Shift+R", "Turn blocks a quarter turn (vertical signal flow)"
+        )
+        self.act_reset_size = self._action(
+            "Reset Block &Size", self.reset_size_selection, None, "Back to the natural size after resizing"
+        )
         self.act_types = self._action("Show &Data Types", self.refresh_types, None, "Label wires with their data type")
         self.act_types.setCheckable(True)
         self.act_widths = self._action(
@@ -270,6 +276,8 @@ class MainWindow(QMainWindow):
         m.addSeparator()
         m.addAction(self.act_create_subsystem)
         m.addAction(self.act_flip)
+        m.addAction(self.act_rotate)
+        m.addAction(self.act_reset_size)
         m.addAction(self.act_save_to_library)
         m.addAction(self.act_layout)
         m = mb.addMenu("&View")
@@ -864,6 +872,9 @@ class MainWindow(QMainWindow):
             menu.addSeparator()
             menu.addActions([self.act_cut, self.act_copy, self.act_delete])
             menu.addAction(self.act_flip)
+            menu.addAction(self.act_rotate)
+            if any("size" in b.meta for b in self.scene.selected_blocks()):
+                menu.addAction(self.act_reset_size)
             menu.addAction(self.act_create_subsystem)
         elif target is not None:  # a wire
             menu.addAction("Delete Wire", lambda: self.editor.delete([], [target]))  # type: ignore[list-item]
@@ -878,6 +889,15 @@ class MainWindow(QMainWindow):
 
     def flip_selection(self) -> None:
         self.editor.flip_blocks(self.scene.selected_blocks())
+
+    def rotate_selection(self) -> None:
+        self.editor.rotate_blocks(self.scene.selected_blocks())
+
+    def reset_size_selection(self) -> None:
+        for b in self.scene.selected_blocks():
+            size = b.meta.get("size")
+            if size is not None:
+                self.editor.resize_block(b, list(size), None)
 
     def rename_block(self, block: Block) -> None:
         name, ok = QInputDialog.getText(self, "Rename block", "New name:", text=block.name)

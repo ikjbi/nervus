@@ -55,6 +55,33 @@ def gated_example():  # type: ignore[no-untyped-def]
     return d
 
 
+def rotated_example():  # type: ignore[no-untyped-def]
+    """A sensor chain drawn top to bottom with rotated blocks, feeding a controller on the right."""
+    from nervus.blocks import Constant, DiscreteFilter, Gain, Saturation, Scope, Sum, ZeroOrderHold
+    from nervus.core import Diagram
+
+    d = Diagram("rotated_example")
+    sensor = d.add(Constant(value=2.5), name="sensor_volts")
+    adc = d.add(ZeroOrderHold(sample_time=0.01), name="adc")
+    scale = d.add(Gain(gain=40.0), name="to_kpa")
+    filt = d.add(DiscreteFilter(time_constant=0.05), name="filter")
+    d.chain(sensor, adc, scale, filt)
+    target = d.add(Constant(value=100.0), name="target_kpa")
+    err = d.add(Sum(signs="+-"), name="error")
+    sat = d.add(Saturation(upper=1.0, lower=0.0), name="limit")
+    d.connect(target, (err, 0))
+    d.connect(filt, (err, 1))
+    d.chain(err, d.add(Gain(gain=0.02), name="Kp"), sat, d.add(Scope(), name="valve"))
+    positions = {"sensor_volts": (0, 0), "adc": (0, 110), "to_kpa": (0, 220), "filter": (0, 330),
+                 "target_kpa": (160, 200), "error": (300, 220), "Kp": (430, 220), "limit": (560, 220),
+                 "valve": (690, 220)}  # fmt: skip
+    for name, (x, y) in positions.items():
+        d.block(name).meta["position"] = [float(x), float(y)]
+    for name in ("sensor_volts", "adc", "to_kpa", "filter"):
+        d.block(name).meta["vertical"] = True
+    return d
+
+
 def tasks_example():  # type: ignore[no-untyped-def]
     """An ECU with a 10 ms and a 100 ms task (atomic subsystems with their own sample time)."""
     from nervus.blocks import DiscretePID, Inport, MovingAverage, Outport, Scope, Sine, Subsystem, Sum
@@ -221,6 +248,11 @@ def main() -> None:
             win.act_rates.setChecked(False)
             win.act_widths.setChecked(False)
             win.refresh_types()
+
+            # Rotated blocks: a vertical sensor chain.
+            win.diagram_model.set_diagram(rotated_example())
+            win.view.fit()
+            grab(win.view, "rotated-blocks.png")
 
             # Enabled and triggered subsystem.
             gd = gated_example()

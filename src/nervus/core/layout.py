@@ -11,6 +11,25 @@ COLUMN_GAP = 90.0
 ROW_HEIGHT = 110.0
 DEFAULT_WIDTH = 70.0
 
+Direction = tuple[int, int]
+ORIENTATIONS: dict[str, Direction] = {"right": (1, 0), "down": (0, 1), "left": (-1, 0), "up": (0, -1)}
+"""Signal flow direction through a block, from its inputs to its outputs."""
+
+
+def orientation_of(block: Block) -> str:
+    """``right`` (default), ``down``, ``left`` or ``up``. Stored as ``meta["vertical"]`` (rotated a quarter turn)
+    and ``meta["flipped"]`` (mirrored), so models from before rotation existed keep their flipped blocks."""
+    vertical, flipped = bool(block.meta.get("vertical")), bool(block.meta.get("flipped"))
+    return ("up" if flipped else "down") if vertical else ("left" if flipped else "right")
+
+
+def rotated_meta(orientation: str) -> dict[str, bool]:
+    """The ``vertical``/``flipped`` meta entries for one orientation."""
+    return {"vertical": orientation in ("down", "up"), "flipped": orientation in ("left", "up")}
+
+
+ROTATE_CLOCKWISE = {"right": "down", "down": "left", "left": "up", "up": "right"}
+
 
 def _feedback_edges(diagram: Diagram) -> set[tuple[int, int]]:
     """Edges that close a cycle when walking from the sources (found with a depth-first search)."""

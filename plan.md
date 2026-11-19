@@ -112,7 +112,7 @@ tests/
 - [ ] Obstacle-avoiding automatic wire routing (wires currently may pass behind blocks)
 - [x] Auto Layout command (left-to-right by signal flow), undoable
 - [x] Flip blocks (Ctrl+Shift+F) for feedback paths; the wire router handles flipped ports
-- [ ] Rotate blocks (vertical signal flow), resize blocks, nudge with arrow keys
+- [x] Rotate blocks (vertical signal flow), resize blocks, nudge with arrow keys
 - [x] Show data types on the canvas (View → Show Data Types)
 - [x] Show signal widths and sample-time colours on the canvas (like Simulink's "port data types" / "sample time colors")
 - [x] Right-click context menus on blocks, wires and the canvas

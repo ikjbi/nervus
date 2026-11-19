@@ -12,6 +12,8 @@ On macOS use ⌘ where *Ctrl* is listed.
 | Select all | Ctrl+A |
 | Create subsystem from selection | Ctrl+G |
 | Flip the selected blocks | Ctrl+Shift+F |
+| Rotate the selected blocks | Ctrl+Shift+R |
+| Move the selected blocks | arrow keys (Shift: 5 grid steps) |
 | Auto layout | Ctrl+Shift+L |
 | Up to the parent system | Ctrl+Up |
 | Run simulation | Ctrl+R or F5 |

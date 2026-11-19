@@ -33,7 +33,7 @@ maps Simulink names to Nervus names.
 | Rate Transition, "single-tasking" / "multitasking" code | Rate Transition block; `generate_c(..., tasks=True)` for one function per task |
 | Variant Subsystem, variant conditions | Variants…: conditions such as `ENGINE == 2` |
 | Library (`.slx` library), library links | Component libraries (`.nervlib`), linked subsystems (*Libraries*) |
-| Flip block (Ctrl+I) | Flip Block (Ctrl+Shift+F) |
+| Flip block (Ctrl+I), rotate block (Ctrl+R) | Flip Block (Ctrl+Shift+F), Rotate Block (Ctrl+Shift+R) |
 | Stateflow chart | State Chart block with a text definition (*State machines*) |
 | MATLAB Function block | Python Function block (with a *parameters* vector) |
 | S-Function | a Python `Block` subclass (*Writing blocks*) |

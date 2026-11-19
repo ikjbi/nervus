@@ -1,5 +1,7 @@
 """Subsystems in the editor: navigation, Create Subsystem from Selection, undo across levels."""
 
+import itertools
+
 from PySide6.QtCore import QPointF
 
 from nervus.blocks import Subsystem
@@ -203,6 +205,77 @@ def test_flip_blocks(window) -> None:  # type: ignore[no-untyped-def]
 
     ed.undo_stack.redo()
     assert loads(dumps(window.diagram_model.root)).block(g.name).meta["flipped"] is True
+
+
+def test_rotate_blocks(window) -> None:  # type: ignore[no-untyped-def]
+    from nervus.core.layout import orientation_of
+    from nervus.io import dumps, loads
+
+    ed = window.editor
+    c = ed.add_block("sources.constant", QPointF(0, 0))
+    g = ed.add_block("math.gain", QPointF(0, 200))
+    ed.connect_ports(c, 0, g, 0)
+    seen = []
+    for _ in range(4):
+        assert ed.rotate_blocks([g])
+        seen.append(orientation_of(g))
+    assert seen == ["down", "left", "up", "right"]  # clockwise, back to the start
+    assert "vertical" not in g.meta and "flipped" not in g.meta
+    ed.undo_stack.undo()
+    ed.undo_stack.undo()
+    ed.undo_stack.undo()
+    assert orientation_of(g) == "down"
+    item = window.scene._item(g)
+    body = item.mapRectToScene(item.body_rect())
+    inp, out = item.in_ports[0].scene_anchor(), item.out_ports[0].scene_anchor()
+    assert inp.y() < body.top() and out.y() > body.bottom()  # input on top, output below
+    wire = next(iter(window.scene.wires.values()))
+    end = wire.path().elementAt(wire.path().elementCount() - 1)
+    before = wire.path().elementAt(wire.path().elementCount() - 2)
+    assert abs(before.x - end.x) < 1e-9 and before.y < end.y  # the wire comes down into the top port
+    assert ed.flip_blocks([g])
+    assert orientation_of(g) == "up"
+    assert orientation_of(loads(dumps(window.diagram_model.root)).block(g.name)) == "up"  # saved
+
+
+def test_resize_and_nudge(window, qtbot) -> None:  # type: ignore[no-untyped-def]
+    from PySide6.QtCore import Qt
+
+    ed = window.editor
+    g = ed.add_block("math.gain", QPointF(0, 0))
+    item = window.scene._item(g)
+    w0, h0 = item.size
+    assert ed.resize_block(g, None, [200.0, 100.0])
+    assert window.scene._item(g).size == (200.0, 100.0)
+    assert ed.resize_block(g, [200.0, 100.0], [10.0, 10.0])
+    assert window.scene._item(g).size == (w0, h0)  # never smaller than the natural size
+    ed.undo_stack.undo()
+    ed.undo_stack.undo()
+    assert "size" not in g.meta and window.scene._item(g).size == (w0, h0)
+    window.scene._item(g).setSelected(True)
+    window.view.setFocus()
+    qtbot.keyClick(window.view.viewport(), Qt.Key.Key_Right)
+    qtbot.keyClick(window.view.viewport(), Qt.Key.Key_Down, Qt.KeyboardModifier.ShiftModifier)
+    assert g.meta["position"] == [10.0, 50.0]
+    ed.undo_stack.undo()
+    assert g.meta["position"] == [10.0, 0.0]
+
+
+def test_vertical_routes() -> None:
+    from nervus.gui.views.items import route
+
+    def corners(path):  # type: ignore[no-untyped-def]
+        return [(round(path.elementAt(k).x), round(path.elementAt(k).y)) for k in range(path.elementCount())]
+
+    # Down out of one block and down into a block below it: a Z with horizontal middle segment.
+    pts = corners(route(QPointF(0, 0), QPointF(100, 200), (0, 1), (0, 1)))
+    assert pts[0] == (0, 0) and pts[-1] == (100, 200)
+    assert all(a[0] == b[0] or a[1] == b[1] for a, b in itertools.pairwise(pts))  # orthogonal
+    assert pts[1][0] == 0 and pts[-2][0] == 100  # leaves downwards, arrives from above
+    # Right out of a block and down into a rotated block: one corner.
+    assert corners(route(QPointF(0, 0), QPointF(100, 100), (1, 0), (0, 1))) == [(0, 0), (100, 0), (100, 100)]
+    # The old horizontal routes are unchanged.
+    assert corners(route(QPointF(0, 0), QPointF(100, 50), 1, 1)) == [(0, 0), (50, 0), (50, 50), (100, 50)]
 
 
 def test_shortcuts_are_unique(window) -> None:  # type: ignore[no-untyped-def]
