@@ -195,6 +195,12 @@ class BlockItem(QGraphicsItem):
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
                 text,
             )
+        if getattr(sub, "library_link", None) is not None:
+            pen = QPen(t.color("block_text"), 1.0, Qt.PenStyle.DashLine)
+            painter.setPen(pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRoundedRect(rect.adjusted(3, 3, -3, -3), 4, 4)
+            painter.setPen(t.color("block_text"))
         if getattr(sub, "variants", None):
             small = QFont(painter.font())
             small.setPointSizeF(max(6.0, small.pointSizeF() - 1))

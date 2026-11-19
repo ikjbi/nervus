@@ -181,6 +181,26 @@ def main() -> None:
             grab(vdlg, "variants-dialog.png")
             vdlg.close()
 
+            # Component library: a library in the panel and a linked copy (dashed outline).
+            from nervus.library import instantiate, save_to_library
+
+            lib_dir = Path(tempfile.mkdtemp())
+            md3, comp = masked_example()
+            lib_path = save_to_library(comp, lib_dir / "engine_parts.nervlib")
+            win.library.add_library(lib_path)
+            md3.remove("combustion")
+            linked = instantiate(lib_path, "combustion")
+            md3.add(linked, name="combustion")
+            md3.connect(md3.block("air"), linked)
+            md3.connect(linked, md3.block("scope"))
+            win.diagram_model.set_diagram(md3)
+            win.scene.select_blocks(["combustion"])
+            win.view.fit()
+            tree = win.library.tree
+            tree.scrollToBottom()
+            grab(win, "library-linked.png")
+            win.library.remove_library(lib_path.resolve())
+
             # Data types shown on the wires.
             win.files.open(ROOT / "examples" / "fixed_point_sensor.nervus")
             win.act_types.setChecked(True)

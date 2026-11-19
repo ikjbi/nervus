@@ -392,3 +392,22 @@ class SetVariantsCommand(Command):
 
     def revert(self) -> None:
         self._apply(self.old)
+
+
+class SetLinkCommand(Command):
+    """Link a subsystem to a library component, or break the link (``link`` = None)."""
+
+    def __init__(self, model: DiagramModel, subsystem: Block, link: Any, text: str) -> None:
+        super().__init__(text)
+        self.model, self.subsystem = model, subsystem
+        self.old, self.new = getattr(subsystem, "library_link", None), link
+
+    def _apply(self, link: Any) -> None:
+        self.subsystem.library_link = link  # type: ignore[attr-defined]
+        self.model.paramsChanged.emit(self.subsystem)
+
+    def do(self) -> None:
+        self._apply(self.new)
+
+    def revert(self) -> None:
+        self._apply(self.old)

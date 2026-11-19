@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +23,7 @@ from nervus.gui.controllers.commands import (
     MoveBlocksCommand,
     RemoveCommand,
     RenameCommand,
+    SetLinkCommand,
     SetMaskCommand,
     SetParamsCommand,
     SetSettingsCommand,
@@ -31,6 +34,21 @@ from nervus.gui.controllers.commands import (
 from nervus.gui.models.diagram_model import DiagramModel, block_position
 
 CLIPBOARD_MIME = "application/x-nervus-blocks"
+
+
+LIBRARY_PREFIX = "library:"
+"""Type ids ``library:<library path>|<component>`` add a linked copy of a library component."""
+
+_DIAGRAM_EDITS = (
+    AddBlockCommand,
+    ConnectCommand,
+    RemoveCommand,
+    RenameCommand,
+    SetParamsCommand,
+    MoveBlocksCommand,
+    CreateSubsystemCommand,
+)
+"""Commands that change the shown diagram (refused inside linked library subsystems)."""
 
 
 class EditorController(QObject):
@@ -60,6 +78,16 @@ class EditorController(QObject):
         if not self._editing_enabled:
             self.errorOccurred.emit("The diagram cannot be edited while a simulation is running.")
             return False
+        if isinstance(cmd, _DIAGRAM_EDITS):
+            from nervus.library import locked_by
+
+            owner = locked_by(self.model.diagram)
+            if owner is not None:
+                self.errorOccurred.emit(
+                    f"{owner.name!r} is a linked copy of library component {owner.library_link}. Edit the library "
+                    "(File → Open), or break the link in the Properties panel."
+                )
+                return False
         self.undo_stack.push(cmd)  # an obsolete (failed) command is dropped by Qt
         if cmd.error is not None:
             self.errorOccurred.emit(str(cmd.error))
@@ -70,8 +98,11 @@ class EditorController(QObject):
 
     def add_block(self, type_id: str, position: QPointF, **params: Any) -> Block | None:
         try:
-            block = create_block(type_id, **params)
-        except (NervusError, KeyError) as exc:
+            if type_id.startswith(LIBRARY_PREFIX):
+                block = self._library_instance(type_id)
+            else:
+                block = create_block(type_id, **params)
+        except (NervusError, KeyError, OSError) as exc:
             self.errorOccurred.emit(str(exc))
             return None
         return block if self._push(AddBlockCommand(self.model, block, position)) else None
@@ -142,9 +173,62 @@ class EditorController(QObject):
                 b.meta["position"] = saved[id(b)]
         self.move_blocks(moves)
 
+    def _library_instance(self, type_id: str) -> Block:
+        """A linked subsystem for ``library:<path>|<component>``; the path is stored relative to the model."""
+        from nervus.library import instantiate
+
+        path, component = type_id[len(LIBRARY_PREFIX) :].rsplit("|", 1)
+        stored = path
+        base = Path(self.model.root.source_path).parent if self.model.root.source_path else None
+        if base is not None:
+            with contextlib.suppress(ValueError):
+                stored = os.path.relpath(path, base)
+        block: Block = instantiate(stored, component, base_dir=base)
+        taken = {b.name for b in self.model.diagram.blocks}
+        name, k = component, 1
+        while name in taken:
+            k += 1
+            name = f"{component}{k}"
+        block.name = name
+        return block
+
+    def save_to_library(self, subsystem: Block, library: str | Path, link: bool = True) -> bool:
+        """Add ``subsystem`` to a library file as a component and (by default) link it to that component."""
+        from nervus.library import LibraryLink, save_to_library
+
+        try:
+            path = save_to_library(subsystem, library)
+        except (NervusError, OSError) as exc:
+            self.errorOccurred.emit(f"Could not save to library: {exc}")
+            return False
+        if not link:
+            return True
+        stored = str(path.resolve())
+        if self.model.root.source_path:
+            with contextlib.suppress(ValueError):
+                stored = os.path.relpath(stored, Path(self.model.root.source_path).parent)
+        new = LibraryLink(stored, subsystem.name)
+        return self._push(SetLinkCommand(self.model, subsystem, new, f"Link {subsystem.name} to {path.name}"))
+
+    def break_link(self, subsystem: Block) -> bool:
+        if getattr(subsystem, "library_link", None) is None:
+            return False
+        return self._push(SetLinkCommand(self.model, subsystem, None, f"Break library link of {subsystem.name}"))
+
     def set_mask(self, subsystem: Block, variables: list[dict[str, Any]], icon: str, description: str) -> bool:
         """Replace a subsystem's mask. Validates that the mask variables evaluate in their context."""
         from nervus.core.workspace import Workspace
+
+        sub: Any = subsystem
+        if sub.library_link is not None:
+            names = [v["name"] for v in variables]
+            same_definition = names == list(sub.mask) and (icon, description) == (sub.mask_icon, sub.mask_description)
+            if not same_definition:
+                self.errorOccurred.emit(
+                    f"{subsystem.name}: the mask of a linked subsystem is defined in its library; only the "
+                    "parameter values can be changed here"
+                )
+                return False
 
         try:
             ws = Workspace.from_list(variables)
@@ -159,6 +243,9 @@ class EditorController(QObject):
     def set_variants(self, subsystem: Block, rows: list[tuple[str | None, str, str]], active: str) -> bool:
         """Replace a subsystem's variants. ``rows`` are (existing variant name or None for a new copy of the
         active variant, name, condition). An empty list removes the variants and keeps the active diagram."""
+        if getattr(subsystem, "library_link", None) is not None:
+            self.errorOccurred.emit(f"{subsystem.name}: the variants of a linked subsystem are defined in its library")
+            return False
         from nervus.blocks.ports import Variant
         from nervus.io.model_file import system_from_dict, system_to_dict
 

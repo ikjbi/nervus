@@ -159,7 +159,7 @@ tests/
 - [x] Triggered subsystems (rising/falling/either edge, combined with enable; C code)
 - [ ] Function-call subsystems (task scheduling from a chart or scheduler block)
 - [x] Variant subsystems (conditions on workspace variables, default variant, Variants dialog, C code of the active variant)
-- [ ] Reusable component libraries (a subsystem saved to a library file and linked)
+- [x] Reusable component libraries (`.nervlib` files, linked subsystems updated on load, per-instance mask values)
 
 ## Phase 10 – Test cases, scenarios and results
 *"Save/load cases": reproducible simulations you can rerun and compare.*

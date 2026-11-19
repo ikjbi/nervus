@@ -206,6 +206,8 @@ class Subsystem(Block):
         self.mask_icon = ""
         """Text shown on the block when it is masked (e.g. "Engine\\n1.6 l")."""
         self.mask_description = ""
+        self.library_link: Any = None
+        """A :class:`nervus.library.LibraryLink` if this is a linked copy of a library component."""
         self.variants: dict[str, Variant] = {}
         """Alternative implementations (empty = no variants). ``system`` is the active one's diagram."""
         self.active_variant = ""

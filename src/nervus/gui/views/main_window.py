@@ -50,7 +50,9 @@ from nervus.gui.views.test_manager import TestManagerPanel
 from nervus.gui.views.workspace_panel import WorkspacePanel
 from nervus.io import FILE_EXTENSION
 
-FILE_FILTER = f"Nervus models (*{FILE_EXTENSION});;All files (*)"
+FILE_FILTER = f"Nervus models (*{FILE_EXTENSION});;Component libraries (*.nervlib);;All files (*)"
+OPEN_FILTER = f"Nervus models and libraries (*{FILE_EXTENSION} *.nervlib);;All files (*)"
+LIBRARY_FILTER = "Component libraries (*.nervlib)"
 
 
 class MainWindow(QMainWindow):
@@ -105,6 +107,7 @@ class MainWindow(QMainWindow):
         self._rebuild_breadcrumb()
         self.resize(1280, 800)
         self._restore_layout()
+        self._load_libraries()
 
     # ------------------------------------------------------------------ construction
 
@@ -182,6 +185,21 @@ class MainWindow(QMainWindow):
         self.act_create_subsystem = self._action(
             "Create &Subsystem from Selection", self.create_subsystem, "Ctrl+G", "Group the selected blocks"
         )
+        self.act_add_library = self._action(
+            "Add Component &Library…",
+            self.add_library,
+            None,
+            "Show the components of a .nervlib file in the Library panel",
+        )
+        self.act_refresh_links = self._action(
+            "&Update Library Links", self.refresh_links, None, "Update linked subsystems from their libraries"
+        )
+        self.act_save_to_library = self._action(
+            "Save Subsystem to Li&brary…",
+            self.save_to_library,
+            None,
+            "Add the selected subsystem to a component library",
+        )
         self.act_types = self._action("Show &Data Types", self.refresh_types, None, "Label wires with their data type")
         self.act_types.setCheckable(True)
         self.act_up = self._action("&Up to Parent", self.diagram_model.up, "Ctrl+Up", "Leave this subsystem")
@@ -226,6 +244,8 @@ class MainWindow(QMainWindow):
         m.addSeparator()
         m.addActions([self.act_save, self.act_save_as])
         m.addSeparator()
+        m.addActions([self.act_add_library, self.act_refresh_links])
+        m.addSeparator()
         m.addAction(self.act_quit)
         m = mb.addMenu("&Edit")
         m.addActions([self.act_undo, self.act_redo])
@@ -235,6 +255,7 @@ class MainWindow(QMainWindow):
         m.addAction(self.act_select_all)
         m.addSeparator()
         m.addAction(self.act_create_subsystem)
+        m.addAction(self.act_save_to_library)
         m.addAction(self.act_layout)
         m = mb.addMenu("&View")
         m.addActions([self.act_zoom_in, self.act_zoom_out, self.act_fit])
@@ -324,6 +345,9 @@ class MainWindow(QMainWindow):
 
     def _wire(self) -> None:
         self.library.addRequested.connect(self._add_from_library)
+        self.library.librariesChanged.connect(self._store_libraries)
+        self.library.openLibraryRequested.connect(self._open_path)
+        self.files.saved.connect(self._saved)
         self.library.helpRequested.connect(self.show_help_for_type)
         self.properties.helpRequested.connect(self.show_help_for_type)
         self.properties.editMaskRequested.connect(self.edit_mask)
@@ -495,6 +519,11 @@ class MainWindow(QMainWindow):
         for w in self.scopes.values():
             w.close()
         self.scopes.clear()
+        warnings = self.diagram_model.root.link_warnings
+        if warnings:
+            self.status_label.setText(
+                f"Library links: {warnings[0]}" + (f" (+{len(warnings) - 1} more)" if len(warnings) > 1 else "")
+            )
         self._sync_settings_widgets()
         self._rebuild_breadcrumb()
         self.view.fit()
@@ -539,7 +568,7 @@ class MainWindow(QMainWindow):
         if not self._confirm_discard():
             return
         start = str(self.diagram_model.file_path.parent) if self.diagram_model.file_path else ""
-        path, _ = QFileDialog.getOpenFileName(self, "Open model", start, FILE_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, "Open model", start, OPEN_FILTER)
         if path:
             self.files.open(path)
 
@@ -563,6 +592,52 @@ class MainWindow(QMainWindow):
         return ok
 
     # ------------------------------------------------------------------ edit actions
+
+    # ------------------------------------------------------------------ component libraries
+
+    def _load_libraries(self) -> None:
+        stored = self.qsettings.value("libraries", [])
+        for p in stored if isinstance(stored, list) else [stored] if stored else []:
+            self.library.add_library(str(p))
+
+    def _store_libraries(self, paths: list[Path]) -> None:
+        self.qsettings.setValue("libraries", [str(p) for p in paths])
+
+    def add_library(self) -> None:
+        start = str(self.diagram_model.file_path.parent) if self.diagram_model.file_path else ""
+        path, _ = QFileDialog.getOpenFileName(self, "Add component library", start, LIBRARY_FILTER)
+        if path:
+            error = self.library.add_library(path)
+            self.status_label.setText(error or f"Added library {Path(path).name}")
+
+    def refresh_links(self) -> None:
+        from nervus.library import linked_subsystems, refresh_links
+
+        if not linked_subsystems(self.diagram_model.root):
+            self.status_label.setText("This model has no linked library subsystems.")
+            return
+        warnings = refresh_links(self.diagram_model.root)
+        self.diagram_model.set_diagram(self.diagram_model.root, self.diagram_model.file_path)
+        self.editor.undo_stack.clear()
+        self.status_label.setText(warnings[0] if warnings else "Library links updated.")
+
+    def save_to_library(self) -> None:
+        blocks = [b for b in self.scene.selected_blocks() if hasattr(b, "system")]
+        if len(blocks) != 1:
+            self.status_label.setText("Select one subsystem to save it to a library.")
+            return
+        start = str(self.diagram_model.file_path.parent) if self.diagram_model.file_path else ""
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save to component library", start, LIBRARY_FILTER, options=QFileDialog.Option.DontConfirmOverwrite
+        )
+        if path and self.editor.save_to_library(blocks[0], path):
+            lib = Path(path) if Path(path).suffix else Path(path).with_suffix(".nervlib")
+            self.library.add_library(lib)
+            self.status_label.setText(f"Saved {blocks[0].name} to {lib.name} and linked it")
+
+    def _saved(self, path: Path) -> None:
+        if path.suffix == ".nervlib":
+            self.library.reload_libraries()  # an edited library: show its new components
 
     def _add_from_library(self, type_id: str) -> None:
         pos = self.view.view_center_scene() - QPointF(35, 23)
@@ -729,6 +804,8 @@ class MainWindow(QMainWindow):
     def show_block_help(self) -> None:
         blocks = self.scene.selected_blocks()
         type_id = blocks[0].type_id if blocks else self.library.selected_type()
+        if type_id and self.library.selected_is_component() and not blocks:
+            type_id = "ports.subsystem"
         if type_id:
             self.show_help_for_type(type_id)
         else:

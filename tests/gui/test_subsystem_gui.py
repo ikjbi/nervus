@@ -130,3 +130,35 @@ def test_variants_editing_with_undo(window) -> None:  # type: ignore[no-untyped-
     window.diagram_model.root.workspace["ENGINE"] = 2
     assert ed.set_variants(sub, [(None, "petrol", "ENGINE == 1"), (None, "diesel", "ENGINE == 2")], "petrol")
     assert sub.active_variant == "diesel"  # chosen by the condition
+
+
+def test_component_library_workflow(window, tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from nervus.gui.controllers.editor_controller import LIBRARY_PREFIX
+
+    ed = window.editor
+    c = ed.add_block("sources.constant", QPointF(0, 0), value=1.0)
+    g = ed.add_block("math.gain", QPointF(150, 0), gain=3.0)
+    sc = ed.add_block("sinks.scope", QPointF(300, 0))
+    ed.connect_ports(c, 0, g, 0)
+    ed.connect_ports(g, 0, sc, 0)
+    sub = ed.create_subsystem([g])
+    lib = tmp_path / "parts.nervlib"
+    assert ed.save_to_library(sub, lib)
+    assert sub.library_link is not None and sub.library_link.component == sub.name
+    # Editing inside a linked subsystem is refused.
+    window.diagram_model.enter(sub)
+    assert ed.add_block("math.gain", QPointF(0, 100)) is None
+    window.diagram_model.up()
+    # The library shows up in the panel; adding a component creates a linked copy.
+    window.library.add_library(lib)
+    assert window.library.reload_libraries() is None
+    copy = ed.add_block(f"{LIBRARY_PREFIX}{lib}|{sub.name}", QPointF(0, 200))
+    assert copy is not None and copy.library_link is not None
+    assert ed.break_link(copy) and copy.library_link is None
+    window.diagram_model.enter(copy)
+    assert ed.add_block("math.gain", QPointF(0, 100)) is not None  # editable after breaking the link
+    window.diagram_model.up()
+    ed.undo_stack.undo()
+    ed.undo_stack.undo()
+    assert copy.library_link is not None
+    window.library.remove_library(lib.resolve())

@@ -50,6 +50,7 @@ HELP_PAGES = [
     ("simulation", "Running simulations"),
     ("workspace", "Workspace and calibrations"),
     ("subsystems", "Subsystems"),
+    ("libraries", "Component libraries"),
     ("datatypes", "Data types and fixed point"),
     ("statecharts", "State machines"),
     ("can", "CAN communication"),

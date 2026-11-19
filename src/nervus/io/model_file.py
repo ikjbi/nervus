@@ -84,6 +84,9 @@ def _block_dict(b: Block) -> dict[str, Any]:
                 "icon": getattr(b, "mask_icon", ""),
                 "description": getattr(b, "mask_description", ""),
             }
+        link = getattr(b, "library_link", None)
+        if link is not None:
+            d["link"] = {"library": link.library, "component": link.component}
         variants = getattr(b, "variants", None)
         if variants:
             active = getattr(b, "active_variant", "")
@@ -200,6 +203,10 @@ def _fill_system(d: Diagram, data: dict[str, Any], prefix: str) -> None:
                     block.mask_icon = str(entry["mask"].get("icon", ""))  # type: ignore[attr-defined]
                     block.mask_description = str(entry["mask"].get("description", ""))  # type: ignore[attr-defined]
                 _fill_system(inner, entry["system"], path + "/")
+                if "link" in entry:
+                    from nervus.library import LibraryLink
+
+                    block.library_link = LibraryLink(str(entry["link"]["library"]), str(entry["link"]["component"]))  # type: ignore[attr-defined]
                 if entry.get("variants"):
                     active = str(entry.get("active_variant", ""))
                     block.active_variant = active  # type: ignore[attr-defined]
@@ -260,4 +267,7 @@ def load(path: str | Path) -> Diagram:
     finally:
         _SOURCE.path = None
     d.source_path = str(Path(path).resolve())
+    from nervus.library import refresh_links
+
+    d.link_warnings = refresh_links(d)  # linked subsystems are updated from their libraries
     return d

@@ -28,6 +28,7 @@ nav:
       - The editor: editor.md
       - Workspace and calibrations: workspace.md
       - Subsystems: subsystems.md
+      - Component libraries: libraries.md
       - Data types and fixed point: datatypes.md
       - State machines: statecharts.md
       - CAN communication: can.md
@@ -42,6 +43,7 @@ nav:
           - Running simulations: app-help/simulation.md
           - Workspace and calibrations: app-help/workspace.md
           - Subsystems: app-help/subsystems.md
+          - Component libraries: app-help/libraries.md
           - Data types and fixed point: app-help/datatypes.md
           - State machines: app-help/statecharts.md
           - CAN communication: app-help/can.md

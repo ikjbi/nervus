@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Qt, Signal
@@ -162,10 +163,24 @@ class PropertyPanel(QWidget):
                 label.setToolTip(v.description)
                 self.form.addRow(label, edit)
                 self._editors[f"mask:{v.name}"] = edit
+            link = getattr(b, "library_link", None)
+            if link is not None:
+                info = QLabel(f"🔗 {link.component} from <b>{Path(link.library).name}</b>")
+                info.setWordWrap(True)
+                info.setToolTip(
+                    f"{link.library}\n\nA linked copy of a library component: it is updated from the library when "
+                    "the model is opened. Its contents and mask are edited in the library."
+                )
+                self.form.addRow("library", info)
+                unlink = QPushButton("Break Link")
+                unlink.setToolTip("Make this an ordinary subsystem that you can edit here")
+                unlink.clicked.connect(lambda _c=False: self.controller.break_link(b))
+                self.form.addRow("", unlink)
             masked = len(mask) > 0 or bool(getattr(b, "mask_icon", ""))
             button = QPushButton("Edit Mask…" if masked else "Create Mask…")
             button.clicked.connect(lambda _c=False: self.editMaskRequested.emit(b))
-            self.form.addRow("", button)
+            if link is None:  # a linked subsystem's mask and variants are defined in its library
+                self.form.addRow("", button)
             variants = getattr(b, "variants", {})
             if variants:
                 combo = QComboBox()
@@ -179,7 +194,8 @@ class PropertyPanel(QWidget):
                 self._editors["variant"] = combo
             vbutton = QPushButton("Variants…" if variants else "Create Variants…")
             vbutton.clicked.connect(lambda _c=False: self.editVariantsRequested.emit(b))
-            self.form.addRow("", vbutton)
+            if link is None:
+                self.form.addRow("", vbutton)
         for p in b.PARAMS:
             editor = self._editor_for(p, b.param_source(p.name))
             label = QLabel(p.name + (f" [{p.unit}]" if p.unit else ""))

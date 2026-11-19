@@ -8,6 +8,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import StrEnum
 from itertools import pairwise
+from pathlib import Path
 from typing import Any, TypeVar
 
 from nervus.core.block import Block, InPort, OutPort
@@ -65,6 +66,8 @@ class Diagram:
         """Named parameters that block parameters can refer to (``Gain(gain="Kp")``). Only the top-level
         diagram's workspace is used; subsystems see their model's workspace."""
         self.source_path: str | None = None
+        self.link_warnings: list[str] = []
+        """Problems updating linked library subsystems when the model was loaded."""
         """The file this model was loaded from or saved to (used to resolve relative file paths)."""
         self.tests: list[Any] = []
         """Test cases (:class:`nervus.core.testcase.TestCase`) stored with the model."""
@@ -301,6 +304,17 @@ class Diagram:
                 sub.validate_ports()  # type: ignore[attr-defined]
             except ParameterError as exc:
                 issues.append(Issue(Severity.ERROR, f"{path}: {exc}", (path,)))
+            link = getattr(sub, "library_link", None)
+            if link is not None:
+                base = Path(self.root.source_path).parent if self.root.source_path else None
+                if not link.resolve(base).exists():
+                    issues.append(
+                        Issue(
+                            Severity.WARNING,
+                            f"{path}: library {link.library} not found; using the copy saved in the model",
+                            (path,),
+                        )
+                    )
             issues.extend(sub.system._check_structure(path + "/"))  # type: ignore[attr-defined]
         for c in self._connections:
             src, dst = prefix + c.src.name, prefix + c.dst.name
