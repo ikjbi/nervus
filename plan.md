@@ -226,7 +226,9 @@ tests/
 - [x] Mean-value engine model: throttle and intake manifold, air mass flow, torque production, crank dynamics
       (example `idle_speed_control.py`)
 - [x] Turn the engine model into reusable library subsystems (`examples/library/engine_parts.nervlib`)
-- [ ] Fuel control: injector model, lambda (AFR) closed-loop control, short and long term fuel trim
+- [x] Fuel control: injector model, lambda (AFR) closed-loop control, short and long term fuel trim
+      (`examples/lambda_control.py`, tutorial)
+- [ ] Fuel control, more: wall wetting (x-tau), narrow-band switching sensor, LTFT maps per load/speed cell
 - [ ] Ignition timing from speed/load maps, knock retard
 - [x] Idle speed control (PI + base opening + AC feed-forward), with tutorial
 - [ ] Electronic throttle control (DC motor, return spring, PID)

@@ -155,3 +155,16 @@ def test_engine_library_example() -> None:
         stored.pop("meta", None)
         built.pop("meta", None)
         assert stored == built, f"examples/library is stale: run examples/engine_library.py ({fresh.name})"
+
+
+def test_lambda_control_example() -> None:
+    from nervus.codegen import generate_c
+    from nervus.testing import run_tests
+
+    mod = _import("lambda_control")
+    d = mod.build()
+    assert all(r.passed for r in run_tests(d)), [r.summary() for r in run_tests(d)]
+    stored = load(EXAMPLES / "lambda_control.nervus")
+    assert [t.name for t in stored.tests] == [t.name for t in d.tests]
+    code = generate_c(d.block("ECU"))  # the fuel task is ECU code
+    assert "stft" in code.files["ECU.c"] and code.rates == [0.01]

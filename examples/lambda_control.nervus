@@ -1,0 +1,880 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "lambda_control",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 40.0,
+    "solver": "rk4",
+    "step": 0.005,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "Ts",
+      "value": 0.01,
+      "description": "Fuel task period",
+      "unit": "s"
+    },
+    {
+      "name": "Kp_stft",
+      "value": 0.1,
+      "description": "STFT proportional gain",
+      "unit": "1/λ"
+    },
+    {
+      "name": "Ki_stft",
+      "value": 1.0,
+      "description": "STFT integral gain",
+      "unit": "1/(λ·s)"
+    },
+    {
+      "name": "K_ltft",
+      "value": 0.1,
+      "description": "LTFT learning rate",
+      "unit": "1/s"
+    },
+    {
+      "name": "q_inj",
+      "value": 4.0,
+      "description": "Injector flow (nominal)",
+      "unit": "mg/ms"
+    },
+    {
+      "name": "t_dead",
+      "value": 0.4,
+      "description": "Injector dead time",
+      "unit": "ms"
+    },
+    {
+      "name": "injector_error",
+      "value": 0.0,
+      "description": "Actual injector flow error (e.g. -0.05 = clogged)",
+      "unit": "-"
+    },
+    {
+      "name": "leak",
+      "value": 0.06,
+      "description": "Unmetered air from t = 12 s (vacuum leak)",
+      "unit": "-"
+    },
+    {
+      "name": "n_exh",
+      "value": 8.0,
+      "description": "Exhaust transport delay to the sensor",
+      "unit": "samples of 10 ms"
+    },
+    {
+      "name": "tau_sensor",
+      "value": 0.1,
+      "description": "Lambda sensor time constant",
+      "unit": "s"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "part_load",
+      "type": "sources.constant",
+      "params": {
+        "value": 250.0,
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "tip_in",
+      "type": "sources.step",
+      "params": {
+        "time": 4.0,
+        "initial": 0.0,
+        "final": 150.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          90.0
+        ]
+      }
+    },
+    {
+      "name": "tip_out",
+      "type": "sources.step",
+      "params": {
+        "time": 8.0,
+        "initial": 0.0,
+        "final": -150.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          180.0
+        ]
+      }
+    },
+    {
+      "name": "air_charge_mg",
+      "type": "math.sum",
+      "params": {
+        "signs": "+++",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          160.0,
+          90.0
+        ]
+      }
+    },
+    {
+      "name": "air_leak",
+      "type": "sources.step",
+      "params": {
+        "time": 12.0,
+        "initial": 1.0,
+        "final": "1 + leak",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          160.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "actual_air_mg",
+      "type": "math.product",
+      "params": {
+        "ops": "**",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          320.0,
+          150.0
+        ]
+      }
+    },
+    {
+      "name": "ECU",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": "Ts",
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          620.0,
+          380.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "air_charge_mg",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "lambda_meas",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "base_fuel",
+            "type": "math.gain",
+            "params": {
+              "gain": 0.06802721088435375,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                160.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "lambda_error",
+            "type": "math.bias",
+            "params": {
+              "bias": -1.0,
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                160.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "stft",
+            "type": "control.discrete_pid",
+            "params": {
+              "P": "Kp_stft",
+              "I": "Ki_stft",
+              "D": 0.0,
+              "N": 100.0,
+              "initial_integrator": 0.0,
+              "upper": 0.25,
+              "lower": -0.25,
+              "anti_windup": "clamping",
+              "Kb": 1.0,
+              "sample_time": -1.0
+            },
+            "meta": {
+              "position": [
+                320.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "ltft",
+            "type": "discrete.integrator",
+            "params": {
+              "gain": "K_ltft",
+              "initial": 0.0,
+              "method": "forward_euler",
+              "upper": 0.25,
+              "lower": -0.25,
+              "sample_time": -1.0
+            },
+            "meta": {
+              "position": [
+                480.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "total_trim",
+            "type": "math.sum",
+            "params": {
+              "signs": "++",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                640.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "correction",
+            "type": "math.bias",
+            "params": {
+              "bias": 1.0,
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                800.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "fuel_cmd_mg",
+            "type": "math.product",
+            "params": {
+              "ops": "**",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                960.0,
+                20.0
+              ]
+            }
+          },
+          {
+            "name": "to_ms",
+            "type": "math.gain",
+            "params": {
+              "gain": "1 / q_inj",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                1120.0,
+                20.0
+              ]
+            }
+          },
+          {
+            "name": "dead_time",
+            "type": "math.bias",
+            "params": {
+              "bias": "t_dead",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                1280.0,
+                20.0
+              ]
+            }
+          },
+          {
+            "name": "t_inj_ms",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                1440.0,
+                20.0
+              ]
+            }
+          },
+          {
+            "name": "stft_pct",
+            "type": "math.gain",
+            "params": {
+              "gain": 100.0,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                480.0,
+                420.0
+              ]
+            }
+          },
+          {
+            "name": "ltft_pct",
+            "type": "math.gain",
+            "params": {
+              "gain": 100.0,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                640.0,
+                520.0
+              ]
+            }
+          },
+          {
+            "name": "stft_out",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            },
+            "meta": {
+              "position": [
+                640.0,
+                420.0
+              ]
+            }
+          },
+          {
+            "name": "ltft_out",
+            "type": "ports.outport",
+            "params": {
+              "port": 3
+            },
+            "meta": {
+              "position": [
+                800.0,
+                520.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "air_charge_mg",
+            "src_port": 0,
+            "dst": "base_fuel",
+            "dst_port": 0
+          },
+          {
+            "src": "lambda_meas",
+            "src_port": 0,
+            "dst": "lambda_error",
+            "dst_port": 0
+          },
+          {
+            "src": "lambda_error",
+            "src_port": 0,
+            "dst": "stft",
+            "dst_port": 0
+          },
+          {
+            "src": "stft",
+            "src_port": 0,
+            "dst": "ltft",
+            "dst_port": 0
+          },
+          {
+            "src": "stft",
+            "src_port": 0,
+            "dst": "total_trim",
+            "dst_port": 0
+          },
+          {
+            "src": "ltft",
+            "src_port": 0,
+            "dst": "total_trim",
+            "dst_port": 1
+          },
+          {
+            "src": "total_trim",
+            "src_port": 0,
+            "dst": "correction",
+            "dst_port": 0
+          },
+          {
+            "src": "base_fuel",
+            "src_port": 0,
+            "dst": "fuel_cmd_mg",
+            "dst_port": 0
+          },
+          {
+            "src": "correction",
+            "src_port": 0,
+            "dst": "fuel_cmd_mg",
+            "dst_port": 1
+          },
+          {
+            "src": "fuel_cmd_mg",
+            "src_port": 0,
+            "dst": "to_ms",
+            "dst_port": 0
+          },
+          {
+            "src": "to_ms",
+            "src_port": 0,
+            "dst": "dead_time",
+            "dst_port": 0
+          },
+          {
+            "src": "dead_time",
+            "src_port": 0,
+            "dst": "t_inj_ms",
+            "dst_port": 0
+          },
+          {
+            "src": "stft",
+            "src_port": 0,
+            "dst": "stft_pct",
+            "dst_port": 0
+          },
+          {
+            "src": "stft_pct",
+            "src_port": 0,
+            "dst": "stft_out",
+            "dst_port": 0
+          },
+          {
+            "src": "ltft",
+            "src_port": 0,
+            "dst": "ltft_pct",
+            "dst_port": 0
+          },
+          {
+            "src": "ltft_pct",
+            "src_port": 0,
+            "dst": "ltft_out",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "injector_open_ms",
+      "type": "math.bias",
+      "params": {
+        "bias": "-t_dead",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          920.0,
+          380.0
+        ]
+      }
+    },
+    {
+      "name": "fuel_mg",
+      "type": "math.gain",
+      "params": {
+        "gain": "q_inj * (1 + injector_error)",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1080.0,
+          380.0
+        ]
+      }
+    },
+    {
+      "name": "air_fuel_ratio",
+      "type": "math.product",
+      "params": {
+        "ops": "*/",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1240.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "lambda_cyl",
+      "type": "math.gain",
+      "params": {
+        "gain": 0.06802721088435375,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1400.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "exhaust_sample",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          0.0,
+          560.0
+        ]
+      }
+    },
+    {
+      "name": "exhaust_delay",
+      "type": "discrete.integer_delay",
+      "params": {
+        "delay": "n_exh",
+        "initial": 1.0,
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          120.0,
+          560.0
+        ]
+      }
+    },
+    {
+      "name": "deviation",
+      "type": "math.bias",
+      "params": {
+        "bias": -1.0,
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          240.0,
+          560.0
+        ]
+      }
+    },
+    {
+      "name": "sensor_lag",
+      "type": "continuous.transfer_function",
+      "params": {
+        "numerator": [
+          1.0
+        ],
+        "denominator": "[tau_sensor, 1]"
+      },
+      "meta": {
+        "position": [
+          360.0,
+          560.0
+        ]
+      }
+    },
+    {
+      "name": "lambda_sensor",
+      "type": "math.bias",
+      "params": {
+        "bias": 1.0,
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          480.0,
+          560.0
+        ]
+      }
+    },
+    {
+      "name": "lambda",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          1560.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "STFT",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          920.0,
+          520.0
+        ]
+      }
+    },
+    {
+      "name": "LTFT",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          920.0,
+          620.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "part_load",
+      "src_port": 0,
+      "dst": "air_charge_mg",
+      "dst_port": 0
+    },
+    {
+      "src": "tip_in",
+      "src_port": 0,
+      "dst": "air_charge_mg",
+      "dst_port": 1
+    },
+    {
+      "src": "tip_out",
+      "src_port": 0,
+      "dst": "air_charge_mg",
+      "dst_port": 2
+    },
+    {
+      "src": "air_charge_mg",
+      "src_port": 0,
+      "dst": "actual_air_mg",
+      "dst_port": 0
+    },
+    {
+      "src": "air_leak",
+      "src_port": 0,
+      "dst": "actual_air_mg",
+      "dst_port": 1
+    },
+    {
+      "src": "air_charge_mg",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 0
+    },
+    {
+      "src": "lambda_sensor",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 1
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "injector_open_ms",
+      "dst_port": 0
+    },
+    {
+      "src": "injector_open_ms",
+      "src_port": 0,
+      "dst": "fuel_mg",
+      "dst_port": 0
+    },
+    {
+      "src": "actual_air_mg",
+      "src_port": 0,
+      "dst": "air_fuel_ratio",
+      "dst_port": 0
+    },
+    {
+      "src": "fuel_mg",
+      "src_port": 0,
+      "dst": "air_fuel_ratio",
+      "dst_port": 1
+    },
+    {
+      "src": "air_fuel_ratio",
+      "src_port": 0,
+      "dst": "lambda_cyl",
+      "dst_port": 0
+    },
+    {
+      "src": "lambda_cyl",
+      "src_port": 0,
+      "dst": "exhaust_sample",
+      "dst_port": 0
+    },
+    {
+      "src": "exhaust_sample",
+      "src_port": 0,
+      "dst": "exhaust_delay",
+      "dst_port": 0
+    },
+    {
+      "src": "exhaust_delay",
+      "src_port": 0,
+      "dst": "deviation",
+      "dst_port": 0
+    },
+    {
+      "src": "deviation",
+      "src_port": 0,
+      "dst": "sensor_lag",
+      "dst_port": 0
+    },
+    {
+      "src": "sensor_lag",
+      "src_port": 0,
+      "dst": "lambda_sensor",
+      "dst_port": 0
+    },
+    {
+      "src": "lambda_cyl",
+      "src_port": 0,
+      "dst": "lambda",
+      "dst_port": 0
+    },
+    {
+      "src": "ECU",
+      "src_port": 1,
+      "dst": "STFT",
+      "dst_port": 0
+    },
+    {
+      "src": "ECU",
+      "src_port": 2,
+      "dst": "LTFT",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "vacuum leak learned by the LTFT",
+      "description": "6 % unmetered air at 12 s: after 25 s the LTFT has learned it and the STFT is back near 0",
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "lambda_cyl",
+          "lower": 0.97,
+          "upper": 1.03,
+          "t_from": 15.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "ECU/ltft_pct",
+          "value": 6.0,
+          "tolerance": 0.6
+        },
+        {
+          "kind": "final_value",
+          "signal": "ECU/stft_pct",
+          "value": 0.0,
+          "tolerance": 1.0
+        }
+      ]
+    },
+    {
+      "name": "clogged injector",
+      "description": "Injectors deliver 5 % less fuel: the LTFT learns about +5 %",
+      "parameters": {
+        "leak": 0.0,
+        "injector_error": -0.05
+      },
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "final_value",
+          "signal": "ECU/ltft_pct",
+          "value": 5.3,
+          "tolerance": 0.6
+        }
+      ]
+    },
+    {
+      "name": "tip-in and tip-out stay close to lambda 1",
+      "description": "The air charge changes by 60 %; the base fuel follows the measured air, so lambda stays at 1 (this simple plant has no fuel film on the intake walls, which causes lean spikes in real engines)",
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "lambda_cyl",
+          "lower": 0.99,
+          "upper": 1.01,
+          "t_to": 11.9
+        }
+      ]
+    }
+  ]
+}

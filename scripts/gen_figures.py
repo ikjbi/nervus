@@ -891,6 +891,33 @@ def engine_comparison() -> plt.Figure:
     return fig
 
 
+@figure("lambda_trims")
+def lambda_trims() -> plt.Figure:
+    from nervus import load
+
+    d = load(Path(__file__).parent.parent / "examples" / "lambda_control.nervus")
+    res = simulate(d)
+    fig, (top, bottom) = plt.subplots(2, 1, figsize=(6.4, 4.2), sharex=True, height_ratios=[1, 1.3])
+    top.plot(res.t, res["lambda_cyl"], color=C1, lw=2)
+    top.axhline(1.0, color=INK, ls=":", lw=1)
+    top.set_ylabel("lambda")
+    top.set_ylim(0.97, 1.07)
+    top.set_title("6 % unmetered air at 12 s: the STFT reacts, the LTFT learns", color=INK, fontsize=10)
+    for name, color, label in (("ECU/stft_pct", C2, "STFT"), ("ECU/ltft_pct", C3, "LTFT")):
+        y = res[name]
+        bottom.plot(res.t, y, color=color, lw=2, label=label)
+        bottom.text(res.t[-1] + 0.4, y[-1], label, color=INK, va="center", fontsize=9)
+    for ax in (top, bottom):
+        ax.axvline(12.0, color=INK, ls=":", lw=1)
+    bottom.text(12.3, 6.6, "leak", color=INK, fontsize=9, va="top")
+    bottom.set_ylabel("fuel trim [%]")
+    bottom.set_xlabel("time [s]")
+    bottom.set_xlim(0, 43)
+    bottom.legend(loc="upper left", fontsize=9)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

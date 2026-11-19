@@ -14,6 +14,9 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Example and tutorial: lambda closed-loop control with short- and long-term fuel trims (vacuum leak, clogged
+  injector), with the link to the OBD-II fuel trim PIDs.
+- `generate_c` for an atomic subsystem uses its own sample time.
 - Atomic subsystems: a subsystem *sample_time* makes it a task; inherited blocks inside run at that period,
   inputs are sampled and outputs held; the period is shown on the block; multirate C code.
 - OBD-II: read stored, pending and permanent trouble codes (with descriptions of common codes), freeze frame

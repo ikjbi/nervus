@@ -250,6 +250,15 @@ def main() -> None:
             grab(win, "library-linked.png")
             win.library.remove_library(lib_path.resolve())
 
+            # Lambda control example: the plant and the fuel task.
+            win.files.open(ROOT / "examples" / "lambda_control.nervus")
+            win.view.fit()
+            grab(win.view, "lambda-model.png")
+            win.diagram_model.enter(win.diagram_model.root.block("ECU"))
+            win.view.fit()
+            grab(win.view, "lambda-ecu.png")
+            win.diagram_model.up()
+
             # Library example: two linked engines, and the inside of one.
             win.files.open(ROOT / "examples" / "engine_comparison.nervus")
             win.view.fit()

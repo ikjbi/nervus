@@ -306,11 +306,14 @@ class CompiledModel:
 # ---------------------------------------------------------------------------- compile
 
 
-def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> CompiledModel:
+def compile_diagram(
+    diagram: Diagram, params: dict[str, Any] | None = None, default_rate: SampleTime | None = None
+) -> CompiledModel:
     """Compile ``diagram``. Raises :class:`ModelError` describing the first problem found.
 
     ``params`` overrides workspace variables for this compilation (e.g. one point of a parameter sweep).
-    Block parameter expressions are re-evaluated every time a diagram is compiled.
+    Block parameter expressions are re-evaluated every time a diagram is compiled. ``default_rate`` is the
+    rate of blocks that inherit theirs and are in no task (used to compile the inside of an atomic subsystem).
     """
     errors = [i for i in diagram.check() if i.severity is Severity.ERROR]
     if not errors:
@@ -362,7 +365,7 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
     trigger = [[(pos[s], p, e) for s, p, e in graph.trigger[i]] for i in order]
     feedthrough = [feedthrough[i] for i in order]
 
-    task_rate = [graph.task_rate[i] for i in order]
+    task_rate = [graph.task_rate[i] if graph.task_rate[i] is not None else default_rate for i in order]
     sample_times = _resolve_sample_times(blocks, inputs, task_rate)
     for b, st in zip(blocks, sample_times, strict=True):
         b.resolved_sample_time = st

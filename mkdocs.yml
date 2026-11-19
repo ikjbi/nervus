@@ -53,12 +53,14 @@ nav:
           - Test cases and the Data Inspector: app-help/testing.md
           - Coverage and Model Advisor: app-help/verification.md
           - "Tutorial: idle speed control": app-help/tutorial_idle.md
+          - "Tutorial: lambda control": app-help/tutorial_lambda.md
           - Keyboard shortcuts: app-help/shortcuts.md
       - Concepts: concepts.md
       - Coming from Simulink: coming-from-simulink.md
       - Model files: model-files.md
   - Tutorials:
       - Idle speed control: tutorials/idle-speed-control.md
+      - Lambda control and fuel trims: tutorials/lambda-control.md
   - Block reference:
       - Overview: blocks/index.md
       - CAN: blocks/can.md

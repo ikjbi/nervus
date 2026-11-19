@@ -715,7 +715,13 @@ def generate_c(target: Diagram | Block, name: str | None = None) -> GeneratedCod
     diagram = system if isinstance(system, Diagram) else target
     if not isinstance(diagram, Diagram):
         raise TypeError("generate_c needs a Diagram or a Subsystem block")
-    model = compile_diagram(diagram)
+    rate = None
+    if isinstance(target, Block) and diagram is system and "sample_time" in target.params:
+        if target.diagram is not None:
+            target.resolve(target.diagram.namespace())  # e.g. sample_time = "Ts"
+        st = target.sample_time()
+        rate = None if st.is_inherited else st  # an atomic subsystem: its own task period
+    model = compile_diagram(diagram, default_rate=rate)
     label = name or (target.name if isinstance(target, Block) else diagram.name) or "model"
     return CGenerator(model, label).generate()
 
