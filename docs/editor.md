@@ -24,6 +24,22 @@ Dark mode follows the system setting, or choose it under **View → Theme**:
 
 ![The editor in dark mode](images/editor-dark.png)
 
+## Right-click menus
+
+Right-click a block, a wire or the empty canvas for the actions that fit it:
+
+![The right-click menu of a subsystem](images/context-menu.png)
+
+| On | Actions |
+|---|---|
+| a block | Rename, help, cut / copy / delete, create a subsystem from the selection; *Open Scope* for scopes |
+| a subsystem | also *Open Subsystem*, *Edit Mask…*, *Variants…*, *Save Subsystem to Library…*, *Generate C Code…* (or *Break Library Link* when it is linked) |
+| a wire | *Delete Wire* |
+| the canvas | paste, select all, auto layout, fit to window, up to the parent system |
+
+Right-clicking a block that is part of a selection keeps the selection, so *Delete* or *Create Subsystem*
+act on all selected blocks.
+
 ## Running a simulation
 
 Press **▶ Run** (⌘R / Ctrl+R / F5). The simulation runs in the background, so the window stays responsive,

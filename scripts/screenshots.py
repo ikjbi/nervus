@@ -200,6 +200,16 @@ def main() -> None:
             grab(mdlg, "mask-dialog.png")
             mdlg.close()
 
+            # Right-click menu of a subsystem.
+            md4, sub4 = masked_example()
+            win.diagram_model.set_diagram(md4)
+            win.scene.select_blocks([sub4.name])
+            cmenu = win.context_menu(sub4)
+            cmenu.popup(win.mapToGlobal(win.rect().center()))
+            QApplication.processEvents()
+            grab(cmenu, "context-menu.png")
+            cmenu.close()
+
             # Atomic subsystems with their own task period.
             win.diagram_model.set_diagram(tasks_example())
             win.view.fit()

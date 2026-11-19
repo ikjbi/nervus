@@ -162,3 +162,23 @@ def test_component_library_workflow(window, tmp_path) -> None:  # type: ignore[n
     ed.undo_stack.undo()
     assert copy.library_link is not None
     window.library.remove_library(lib.resolve())
+
+
+def test_context_menus(window) -> None:  # type: ignore[no-untyped-def]
+    ed = window.editor
+    c = ed.add_block("sources.constant", QPointF(0, 0))
+    g = ed.add_block("math.gain", QPointF(150, 0))
+    ed.connect_ports(c, 0, g, 0)
+    sub = ed.create_subsystem([g])
+    texts = lambda menu: [a.text() for a in menu.actions() if a.text()]  # noqa: E731
+    window.scene.select_blocks([sub.name])
+    sub_menu = texts(window.context_menu(sub))
+    assert "Open Subsystem" in sub_menu and "Edit Mask…" in sub_menu and "Variants…" in sub_menu
+    window.scene.select_blocks([c.name])
+    assert "Rename…" in texts(window.context_menu(c))
+    wire = window.diagram_model.diagram.connections[0]
+    menu = window.context_menu(wire)
+    assert texts(menu) == ["Delete Wire"]
+    menu.actions()[0].trigger()
+    assert not window.diagram_model.diagram.connections
+    assert any("Layout" in t for t in texts(window.context_menu(None)))

@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Right-click menus on blocks, subsystems, wires and the canvas (rename, open, mask, variants, library, code,
+  delete wire, layout, ...).
 - Example and tutorial: lambda closed-loop control with short- and long-term fuel trims (vacuum leak, clogged
   injector), with the link to the OBD-II fuel trim PIDs.
 - `generate_c` for an atomic subsystem uses its own sample time.

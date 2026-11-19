@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QGraphicsItem,
     QGraphicsPathItem,
     QGraphicsScene,
+    QGraphicsSceneContextMenuEvent,
     QGraphicsSceneDragDropEvent,
     QGraphicsSceneMouseEvent,
     QGraphicsView,
@@ -41,6 +42,7 @@ def block_mime(type_id: str) -> QMimeData:
 class DiagramScene(QGraphicsScene):
     selectedBlocksChanged = Signal(list)  # list[Block]
     blockActivated = Signal(object)  # Block (double-click)
+    contextMenuRequested = Signal(object, object)  # Block | Connection | None, QPoint (screen position)
 
     def __init__(self, model: DiagramModel, controller: EditorController, parent: Any = None) -> None:
         super().__init__(parent)
@@ -284,6 +286,24 @@ class DiagramScene(QGraphicsScene):
             if self.model.diagram.driver(item.block, p.index) is None:
                 return p
         return ports[0] if ports else None
+
+    def contextMenuEvent(self, event: QGraphicsSceneContextMenuEvent) -> None:
+        """Right-click: select what is under the mouse (keeping a multi-selection) and ask for its menu."""
+        target: object = None
+        block_item = self._block_at(event.scenePos())
+        if block_item is not None:
+            if not block_item.isSelected():
+                self.clearSelection()
+                block_item.setSelected(True)
+            target = block_item.block
+        else:
+            wire = next((i for i in self.items(event.scenePos()) if isinstance(i, WireItem)), None)
+            if wire is not None:
+                self.clearSelection()
+                wire.setSelected(True)
+                target = wire.connection
+        self.contextMenuRequested.emit(target, event.screenPos())
+        event.accept()
 
     def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         item = self._block_at(event.scenePos())

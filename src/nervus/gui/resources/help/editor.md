@@ -30,6 +30,20 @@ Panels can be moved, closed and reopened from the **View** menu.
   new line to an input that is already used replaces the old line.
 - Click a line to select it; Delete removes it.
 
+## Right-click menus
+
+Right-click a block, a wire or the empty canvas for the actions that fit it:
+
+| On | Actions |
+|---|---|
+| a block | Rename, help, cut / copy / delete, create a subsystem from the selection; *Open Scope* for scopes |
+| a subsystem | also *Open Subsystem*, *Edit Mask…*, *Variants…*, *Save Subsystem to Library…*, *Generate C Code…* (or *Break Library Link* when it is linked) |
+| a wire | *Delete Wire* |
+| the canvas | paste, select all, auto layout, fit to window, up to the parent system |
+
+Right-clicking a block that is part of a selection keeps the selection, so *Delete* or *Create Subsystem*
+act on all selected blocks.
+
 ## Editing parameters
 
 Numeric fields accept:

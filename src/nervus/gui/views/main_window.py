@@ -4,15 +4,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QPointF, QSettings, Qt
+from PySide6.QtCore import QPoint, QPointF, QSettings, Qt
 from PySide6.QtGui import QAction, QCloseEvent, QGuiApplication, QKeySequence
 from PySide6.QtWidgets import (
     QDockWidget,
     QFileDialog,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QProgressBar,
     QToolBar,
@@ -354,6 +356,7 @@ class MainWindow(QMainWindow):
         self.properties.editVariantsRequested.connect(self.edit_variants)
         self.scene.selectedBlocksChanged.connect(self.properties.show_blocks)
         self.scene.blockActivated.connect(self._block_activated)
+        self.scene.contextMenuRequested.connect(self._show_context_menu)
         self.diagnostics.blocksActivated.connect(self._highlight)
         self.diagnostics.errorBlocksChanged.connect(self.scene.mark_errors)
         self.editor.errorOccurred.connect(self._editor_error)
@@ -776,6 +779,52 @@ class MainWindow(QMainWindow):
         win.show()
         win.raise_()
         return win
+
+    # ------------------------------------------------------------------ context menus
+
+    def _show_context_menu(self, target: object, screen_pos: QPoint) -> None:
+        self.context_menu(target).exec(screen_pos)
+
+    def context_menu(self, target: object) -> QMenu:
+        """The right-click menu for a block, a wire (Connection) or the empty canvas (None)."""
+        menu = QMenu(self)
+        if isinstance(target, Block):
+            blocks = self.scene.selected_blocks()
+            if len(blocks) <= 1:
+                is_sub = getattr(target, "system", None) is not None
+                if is_sub:
+                    menu.addAction("Open Subsystem", lambda: self.diagram_model.enter(target))
+                elif target.type_id == "sinks.scope":
+                    menu.addAction("Open Scope", lambda: self.open_scope(target))
+                menu.addAction("Rename…", lambda: self.rename_block(target))
+                menu.addAction(self.act_block_help)
+                if is_sub:
+                    menu.addSeparator()
+                    if getattr(target, "library_link", None) is None:
+                        menu.addAction("Edit Mask…", lambda: self.edit_mask(target))
+                        menu.addAction("Variants…", lambda: self.edit_variants(target))
+                    else:
+                        menu.addAction("Break Library Link", lambda: self.editor.break_link(target))
+                    menu.addAction(self.act_save_to_library)
+                    menu.addAction(self.act_codegen)
+            menu.addSeparator()
+            menu.addActions([self.act_cut, self.act_copy, self.act_delete])
+            menu.addAction(self.act_create_subsystem)
+        elif target is not None:  # a wire
+            menu.addAction("Delete Wire", lambda: self.editor.delete([], [target]))  # type: ignore[list-item]
+        else:
+            menu.addAction(self.act_paste)
+            menu.addAction(self.act_select_all)
+            menu.addSeparator()
+            menu.addActions([self.act_layout, self.act_fit])
+            if self.diagram_model.diagram.parent is not None:
+                menu.addAction(self.act_up)
+        return menu
+
+    def rename_block(self, block: Block) -> None:
+        name, ok = QInputDialog.getText(self, "Rename block", "New name:", text=block.name)
+        if ok and name.strip() and name.strip() != block.name:
+            self.editor.rename(block, name.strip())
 
     def _block_activated(self, block: Block) -> None:
         if getattr(block, "system", None) is not None:
