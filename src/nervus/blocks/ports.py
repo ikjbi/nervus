@@ -20,6 +20,7 @@ from nervus.core.sample_time import CONTINUOUS
 from nervus.core.types import Array, as_signal
 
 CATEGORY = "Ports & Subsystems"
+TRIGGER_EDGES = ("none", "rising", "falling", "either")
 
 
 @register
@@ -106,6 +107,11 @@ class Subsystem(Block):
     runs: outputs and discrete states are held and continuous states stop. With *when_enabled* = ``reset``
     the discrete states return to their initial values each time the subsystem is enabled again.
 
+    With *trigger* the subsystem gets a last input, **trigger**, and runs only when that signal has an edge
+    (``rising``: from ≤ 0 to > 0, ``falling``: from > 0 to ≤ 0, or ``either``). Between triggers its outputs
+    and states are held. The trigger is checked each time the blocks inside would execute, so drive it with a
+    discrete signal of the same rate. Blocks with continuous states are not allowed inside.
+
     Its inputs and outputs are the In and Out blocks inside, in the order of their *port* numbers. Subsystems
     structure a model the way functions structure code: one subsystem per ECU function (e.g. "idle control",
     "fuel", "ignition"). Parameters inside can use the model workspace.
@@ -122,6 +128,13 @@ class Subsystem(Block):
             ParamKind.CHOICE,
             "Discrete states when the subsystem is enabled again",
             choices=("held", "reset"),
+        ),
+        Param(
+            "trigger",
+            "none",
+            ParamKind.CHOICE,
+            "Add a trigger input: the subsystem only runs when it has this kind of edge",
+            choices=TRIGGER_EDGES,
         ),
     )
 
@@ -168,8 +181,22 @@ class Subsystem(Block):
     def has_enable(self) -> bool:
         return bool(self.params.get("enable_port", False))
 
+    @property
+    def has_trigger(self) -> bool:
+        return self.params.get("trigger", "none") != "none"
+
+    @property
+    def enable_index(self) -> int | None:
+        """Input index of the enable port (after the data inputs), or ``None``."""
+        return len(self.inports()) if self.has_enable else None
+
+    @property
+    def trigger_index(self) -> int | None:
+        """Input index of the trigger port (the last input), or ``None``."""
+        return len(self.inports()) + (1 if self.has_enable else 0) if self.has_trigger else None
+
     def num_inputs(self) -> int:
-        return len(self.inports()) + (1 if self.has_enable else 0)
+        return len(self.inports()) + (1 if self.has_enable else 0) + (1 if self.has_trigger else 0)
 
     def num_outputs(self) -> int:
         return len(self.outports())

@@ -53,6 +53,11 @@ With *enable_port* the subsystem gets an extra last input, **enable**. While it 
 runs: outputs and discrete states are held and continuous states stop. With *when_enabled* = ``reset``
 the discrete states return to their initial values each time the subsystem is enabled again.
 
+With *trigger* the subsystem gets a last input, **trigger**, and runs only when that signal has an edge
+(``rising``: from ≤ 0 to > 0, ``falling``: from > 0 to ≤ 0, or ``either``). Between triggers its outputs
+and states are held. The trigger is checked each time the blocks inside would execute, so drive it with a
+discrete signal of the same rate. Blocks with continuous states are not allowed inside.
+
 Its inputs and outputs are the In and Out blocks inside, in the order of their *port* numbers. Subsystems
 structure a model the way functions structure code: one subsystem per ECU function (e.g. "idle control",
 "fuel", "ignition"). Parameters inside can use the model workspace.
@@ -63,6 +68,7 @@ structure a model the way functions structure code: one subsystem per ECU functi
 |---|---|---|---|
 | `enable_port` | `False` |  | Add an enable input: the subsystem only runs while it is > 0 |
 | `when_enabled` | `'held'` |  | Discrete states when the subsystem is enabled again — one of `held`, `reset` |
+| `trigger` | `'none'` |  | Add a trigger input: the subsystem only runs when it has this kind of edge — one of `none`, `rising`, `falling`, `either` |
 
 *Direct feedthrough:* yes
 

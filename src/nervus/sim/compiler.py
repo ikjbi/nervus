@@ -67,6 +67,8 @@ class CompiledModel:
     enable: list[list[tuple[int, int]]] = field(default_factory=list)
     """Enable signals gating each block (enabled subsystems); empty = always runs."""
     reset_on_enable: list[bool] = field(default_factory=list)
+    trigger: list[list[tuple[int, int, str]]] = field(default_factory=list)
+    """Trigger signals and edges gating each block (triggered subsystems); empty = always runs."""
     xd: list[Array] = field(default_factory=list)
     y: list[list[Array]] = field(default_factory=list)
     _validated: bool = False
@@ -112,12 +114,35 @@ class CompiledModel:
             if kind is Kind.CONTINUOUS and type(b).zero_crossings is not _Block.zero_crossings
         ]
         self.n_zero_crossings = -1  # determined on first evaluation
-        self._enabled = [True] * len(self.blocks)
+        self._enabled = [True] * len(self.blocks)  # the block ran at its last execution
+        self._en_prev = [True] * len(self.blocks)  # its enable was on at its last execution
+        self._trig_prev: list[list[float | None]] = [[None] * len(tr) for tr in self.trigger]
         self._monitors = [(i, b, self.inputs[i]) for i, b, *_ in self._plan if hasattr(b, "check_major")]
 
     def _u(self, i: int) -> list[Array]:
         y = self.y
         return [y[s][p] for s, p in self.inputs[i]]
+
+    def _gate(self, i: int) -> bool:
+        """Decide whether gated block ``i`` runs at this execution (enabled and/or triggered subsystems)."""
+        y = self.y
+        on = all(y[s][p][0] > 0 for s, p in self.enable[i])
+        if on and not self._en_prev[i] and self.reset_on_enable[i]:
+            self.xd[i] = self.xd0[i].copy()  # enabled again: reset states
+        self._en_prev[i] = on
+        prev = self._trig_prev[i]
+        for k, (s, p, edge) in enumerate(self.trigger[i]):
+            now = float(y[s][p][0])
+            before = prev[k]
+            prev[k] = now
+            if before is None:  # first execution: only remember the value
+                on = False
+                continue
+            rising = before <= 0 < now
+            falling = before > 0 >= now
+            fired = rising if edge == "rising" else falling if edge == "falling" else rising or falling
+            on = on and fired
+        return on
 
     def eval_outputs(self, t: float, xc: Array, hits: frozenset[int] | None, init: bool = False) -> None:
         """Compute block outputs at time ``t``.
@@ -128,23 +153,22 @@ class CompiledModel:
         y, xd = self.y, self.xd
         validated = self._validated
         constant, discrete = Kind.CONSTANT, Kind.DISCRETE
-        gates = self.enable
+        gates = [bool(e or tr) for e, tr in zip(self.enable, self.trigger, strict=True)]
         for i, b, kind, rate, sl, inputs in self._plan:
             if not init:
                 if kind is constant:
                     continue
                 if kind is discrete and (hits is None or rate not in hits):
                     continue
-            if gates[i] and not init:
-                # Enabled subsystems: the enable is decided when the block executes at a major step, and kept
-                # during solver stages (like Simulink, and like the generated code).
+            if gates[i] and kind is not constant:
+                # Enabled/triggered subsystems: decided when the block executes at a major step (including the
+                # first one), and kept during solver stages (like Simulink, and like the generated code).
                 if hits is not None:
-                    on = all(y[s][p][0] > 0 for s, p in gates[i])
-                    if on and not self._enabled[i] and self.reset_on_enable[i]:
-                        xd[i] = self.xd0[i].copy()
-                    self._enabled[i] = on
+                    self._enabled[i] = self._gate(i)
+                elif init:
+                    continue  # not decided yet: keep the initial outputs
                 if not self._enabled[i]:
-                    continue  # disabled: outputs held
+                    continue  # disabled or not triggered: outputs held
             try:
                 out = b.outputs(t, [y[s][p] for s, p in inputs], xc[sl], xd[i])
             except Exception as exc:
@@ -182,7 +206,7 @@ class CompiledModel:
         dx = np.empty_like(xc)
         y, xd = self.y, self.xd
         for i, b, sl, inputs in self._cont_states:
-            if self.enable[i] and not self._enabled[i]:
+            if (self.enable[i] or self.trigger[i]) and not self._enabled[i]:
                 dx[sl] = 0.0  # disabled subsystem: continuous states hold
                 continue
             try:
@@ -258,7 +282,7 @@ class CompiledModel:
         """Advance the discrete states of every block that has a sample hit now."""
         new: list[tuple[int, Array]] = []
         for i, b in enumerate(self.blocks):
-            if self.enable[i] and not self._enabled[i]:
+            if (self.enable[i] or self.trigger[i]) and not self._enabled[i]:
                 continue  # disabled subsystem: discrete states hold
             if self.kinds[i] is Kind.DISCRETE and self.rate_index[i] in hits and self.xd[i].size:
                 try:
@@ -321,7 +345,8 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
 
     out_t = _propagate_types(blocks, inputs, names)
     feedthrough = [b.direct_feedthrough() for b in blocks]
-    order = _sort(blocks, inputs, feedthrough, names, graph.enable)
+    gating = [[*e, *[(s, p) for s, p, _ in tr]] for e, tr in zip(graph.enable, graph.trigger, strict=True)]
+    order = _sort(blocks, inputs, feedthrough, names, gating)
 
     # Re-index everything into execution order.
     pos = {old: new for new, old in enumerate(order)}
@@ -334,6 +359,7 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
     out_t = [out_t[i] for i in order]
     enable = [[(pos[s], p) for s, p in graph.enable[i]] for i in order]
     reset_on_enable = [graph.reset_on_enable[i] for i in order]
+    trigger = [[(pos[s], p, e) for s, p, e in graph.trigger[i]] for i in order]
     feedthrough = [feedthrough[i] for i in order]
 
     sample_times = _resolve_sample_times(blocks, inputs)
@@ -344,9 +370,15 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
     xc_slices: list[slice] = []
     xd0: list[Array] = []
     n = 0
-    for b, name, st in zip(blocks, names, sample_times, strict=True):
+    for b, name, st, triggered in zip(blocks, names, sample_times, trigger, strict=True):
         xc = as_signal(b.initial_continuous_state())
         xd = as_signal(b.initial_discrete_state())
+        if xc.size and triggered:
+            raise ModelError(
+                f"{name}: blocks with continuous states cannot be inside a triggered subsystem "
+                "(use a discrete equivalent)",
+                (name,),
+            )
         if xc.size and not st.is_continuous:
             raise ModelError(
                 f"{name}: blocks with continuous states must have a continuous sample time",
@@ -389,6 +421,7 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
         out_types=out_t,
         enable=enable,
         reset_on_enable=reset_on_enable,
+        trigger=trigger,
     )
     model.reset()
     return model

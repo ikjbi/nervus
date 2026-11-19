@@ -217,20 +217,39 @@ class CGenerator:
         return out
 
     def _gate(self, i: int, code: BlockCode, block_states: list[str]) -> None:
-        """Wrap a block of an enabled subsystem: run only while the enable is > 0, optionally resetting its
-        states when enabled again. The decision is stored, so the state update uses the same one."""
+        """Wrap a block of an enabled and/or triggered subsystem: run only while the enable is > 0 and the
+        trigger has an edge, optionally resetting its states when enabled again. The decision is stored, so the
+        state update uses the same one (same logic as ``CompiledModel._gate``)."""
         m = self.model
-        flag = f"{self.cnames[i]}_enabled"
-        self.states[flag] = _Field(flag, 1, [1.0], f"{m.names[i]}: enabled at its last execution")
-        cond = " && ".join(f"({self.signal_var(s, p)}[0] > 0.0)" for s, p in m.enable[i])
+        c = self.cnames[i]
+        flag = f"{c}_enabled"
+        self.states[flag] = _Field(flag, 1, [1.0], f"{m.names[i]}: ran at its last execution")
         dw = f"{self.prefix}_DW"
+        cond = " && ".join(f"({self.signal_var(s, p)}[0] > 0.0)" for s, p in m.enable[i]) or "1"
         head = ["{", f"    real_T en = ({cond}) ? 1.0 : 0.0;"]
         if m.reset_on_enable[i] and block_states:
-            head.append(f"    if ((en > 0.0) && ({dw}.{flag}[0] == 0.0)) {{ /* enabled again: reset states */")
+            prev = f"{c}_en_prev"
+            self.states[prev] = _Field(prev, 1, [1.0], f"{m.names[i]}: enable at its last execution")
+            head.append(f"    if ((en > 0.0) && ({dw}.{prev}[0] == 0.0)) {{ /* enabled again: reset states */")
             for name in block_states:
                 for k, v in enumerate(self.states[name].init):
                     head.append(f"        {dw}.{name}[{k}] = {c_float(v)};")
             head.append("    }")
+            head.append(f"    {dw}.{prev}[0] = en;")
+        for k, (s, p, edge) in enumerate(m.trigger[i]):
+            tr = f"{c}_trig{k}"
+            self.states[tr] = _Field(tr, 2, [0.0, 0.0], f"{m.names[i]}: [seen, last value] of its trigger")
+            rising = f"(({dw}.{tr}[1] <= 0.0) && (tv > 0.0))"
+            falling = f"(({dw}.{tr}[1] > 0.0) && (tv <= 0.0))"
+            fired = rising if edge == "rising" else falling if edge == "falling" else f"({rising} || {falling})"
+            head += [
+                "    {",
+                f"        real_T tv = {self.signal_var(s, p)}[0];",
+                f"        if (!(({dw}.{tr}[0] > 0.0) && {fired})) {{ en = 0.0; }} /* {edge} edge */",
+                f"        {dw}.{tr}[0] = 1.0;",
+                f"        {dw}.{tr}[1] = tv;",
+                "    }",
+            ]
         head.append(f"    {dw}.{flag}[0] = en;")
         head.append("}")
         if code.outputs:
@@ -325,7 +344,7 @@ class CGenerator:
                 codes.append(TEMPLATES[b.type_id](Emitter(self, i)))
                 block_states = [k for k in self.states if k not in before]
             code = codes[-1]
-            if m.enable[i]:
+            if (m.enable[i] or m.trigger[i]) and m.kinds[i] is not Kind.CONSTANT:
                 self._gate(i, code, [] if isinstance(b, PortProxy) else block_states)
             if code.outputs:
                 rounding, overflow = b.quantization()

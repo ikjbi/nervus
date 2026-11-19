@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Triggered subsystems: a trigger input (rising, falling or either edge) runs the subsystem only on edges;
+  works together with the enable input; edge detection in generated C matches the simulation.
 - OBD-II (read-only): decoding of 21 standard mode 01 PIDs, an ELM327 client and `python -m nervus.obd record`
   to record a drive into a `.nervres`/CSV file for the Data Inspector and test inputs (optional extra `obd`).
 - Roadmap: OBD-II diagnostics (Phase 22).

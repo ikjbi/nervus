@@ -36,6 +36,25 @@ def masked_example():  # type: ignore[no-untyped-def]
     return md, sub
 
 
+def gated_example():  # type: ignore[no-untyped-def]
+    """A subsystem with an enable and a rising-edge trigger input (for the docs)."""
+    from nervus.blocks import Constant, Counter, Inport, Outport, Pulse, Scope, Subsystem
+    from nervus.core import Diagram
+
+    d = Diagram("gated_example")
+    inner = Diagram()
+    x = inner.add(Inport(port=1), name="tooth")
+    cnt = inner.add(Counter(limit=1000, sample_time=0.001), name="count")
+    inner.chain(x, cnt, inner.add(Outport(port=1), name="teeth"))
+    sub = Subsystem(system=inner, enable_port=True, trigger="rising")
+    d.add(sub, name="tooth_counter")
+    d.connect(d.add(Constant(value=1.0), name="one"), (sub, 0))
+    d.connect(d.add(Constant(value=1.0), name="engine_running"), (sub, 1))
+    d.connect(d.add(Pulse(period=0.01, sample_time=0.001), name="crank_sensor"), (sub, 2))
+    d.connect(sub, d.add(Scope(), name="scope"))
+    return d
+
+
 def grab(widget: QWidget, name: str) -> None:
     QApplication.processEvents()
     widget.grab().save(str(OUT / name))
@@ -136,6 +155,13 @@ def main() -> None:
             mdlg.show()
             grab(mdlg, "mask-dialog.png")
             mdlg.close()
+
+            # Enabled and triggered subsystem.
+            gd = gated_example()
+            win.diagram_model.set_diagram(gd)
+            win.scene.select_blocks(["tooth_counter"])
+            win.view.fit()
+            grab(win.view, "subsystem-gated.png")
 
             # Data types shown on the wires.
             win.files.open(ROOT / "examples" / "fixed_point_sensor.nervus")

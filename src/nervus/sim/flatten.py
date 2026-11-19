@@ -28,6 +28,8 @@ class FlatGraph:
     """For each node, the enable signals (source node, port) of enclosing enabled subsystems (all must be > 0)."""
     reset_on_enable: list[bool] = field(default_factory=list)
     """For each node: reset its discrete state when an enclosing subsystem is enabled again."""
+    trigger: list[list[tuple[int, int, str]]] = field(default_factory=list)
+    """For each node, the trigger signals (source node, port, edge) of enclosing triggered subsystems."""
 
 
 def flatten(diagram: Diagram) -> FlatGraph:
@@ -63,6 +65,7 @@ def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, in
         g.origin.append(b)
         g.enable.append([])
         g.reset_on_enable.append(False)
+        g.trigger.append([])
         node[id(b)] = len(g.blocks) - 1
 
     def source(b: Block, port: int) -> tuple[int, int]:
@@ -78,7 +81,12 @@ def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, in
         return node[id(b)], port
 
     for c in diagram.connections:
-        if isinstance(c.dst, Subsystem) and c.dst.has_enable and c.dst_port == len(c.dst.inports()):
+        if isinstance(c.dst, Subsystem) and c.dst_port == c.dst.trigger_index:
+            s_node, s_port = source(c.src, c.src_port)  # the trigger input gates every block inside
+            for k in spans[id(c.dst)]:
+                g.trigger[k].append((s_node, s_port, str(c.dst.params["trigger"])))
+            continue
+        if isinstance(c.dst, Subsystem) and c.dst_port == c.dst.enable_index:
             src = source(c.src, c.src_port)  # the enable input gates every block inside
             reset = c.dst.params["when_enabled"] == "reset"
             for k in spans[id(c.dst)]:

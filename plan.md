@@ -156,7 +156,8 @@ tests/
 - [ ] Atomic subsystems with their own sample time (one ECU task = one atomic subsystem)
 - [ ] Masks: parameter dialog and icon text for a subsystem; mask parameters as local workspace
 - [x] Enabled subsystems (held or reset states; C code)
-- [ ] Triggered and function-call subsystems (task scheduling, event-driven code)
+- [x] Triggered subsystems (rising/falling/either edge, combined with enable; C code)
+- [ ] Function-call subsystems (task scheduling from a chart or scheduler block)
 - [ ] Variant subsystems (choose an implementation by a workspace variable, e.g. engine type)
 - [ ] Reusable component libraries (a subsystem saved to a library file and linked)
 

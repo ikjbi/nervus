@@ -103,6 +103,8 @@ class BlockItem(QGraphicsItem):
         n = max(self.block.num_inputs(), self.block.num_outputs(), 1)
         if getattr(self.block, "system", None) is not None:
             names = [b.name for b in self.block.inports() + self.block.outports()]  # type: ignore[attr-defined]
+            names += ["⏻ enable "] * bool(getattr(self.block, "has_enable", False))
+            names += ["↑ trigger "] * bool(getattr(self.block, "has_trigger", False))
             icon_lines = str(getattr(self.block, "mask_icon", "")).replace("\\n", "\n").split("\n")
             width = 2 * max((len(x) for x in names), default=4) + max((len(x) for x in icon_lines), default=0)
             lines = [" " * width] * max(1, len(icon_lines))
@@ -180,12 +182,18 @@ class BlockItem(QGraphicsItem):
                 y = item.pos().y()
                 box = QRectF(6 if dx > 0 else rect.width() / 2, y - 8, rect.width() / 2 - 8, 16)
                 painter.drawText(box, align | Qt.AlignmentFlag.AlignVCenter, port_block.name)
-        if getattr(sub, "has_enable", False) and self.in_ports:
-            y = self.in_ports[-1].pos().y()
+        edge_marks = {"rising": "↑", "falling": "↓", "either": "↕"}
+        for index, text in (
+            (getattr(sub, "enable_index", None), "⏻ enable"),
+            (getattr(sub, "trigger_index", None), f"{edge_marks.get(sub.params.get('trigger', ''), '')} trigger"),
+        ):
+            if index is None or index >= len(self.in_ports):
+                continue
+            y = self.in_ports[index].pos().y()
             painter.drawText(
                 QRectF(6, y - 8, rect.width() / 2, 16),
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
-                "⏻ enable",
+                text,
             )
         icon = getattr(sub, "mask_icon", "")
         if icon:

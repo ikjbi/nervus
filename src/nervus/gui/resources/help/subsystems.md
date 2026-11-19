@@ -43,6 +43,26 @@ functions that only run in some operating mode, e.g. idle speed control only whi
 values each time the subsystem is enabled again. The enable is checked once per time step, and the
 generated C code wraps the subsystem's blocks in `if (enabled)`.
 
+## Triggered subsystems
+
+Set *trigger* to `rising`, `falling` or `either` to give the subsystem a last input, **trigger**. The
+subsystem then runs only when that signal has an edge, and holds its outputs and states in between. Use it
+for event-driven functions: counting crank teeth, latching a value when a button is pressed, or running a
+task each time a CAN message arrives.
+
+| *trigger* | Runs when the trigger signal goes |
+|---|---|
+| `rising` | from ≤ 0 to > 0 |
+| `falling` | from > 0 to ≤ 0 |
+| `either` | either way |
+
+The trigger is checked each time the blocks inside would execute, so drive it with a discrete signal of the
+same rate as those blocks. The first execution only records the trigger value, so nothing runs before the
+first real edge. Blocks with continuous states (integrators, transfer functions) are not allowed inside; use
+their discrete versions. A subsystem can have both an enable and a trigger input (data inputs first, then
+enable, then trigger). It then runs on an edge only while it is enabled. The generated C checks the edge the
+same way, and the tests compare it with the simulation with zero tolerance.
+
 ## Masks: reusable components with parameters
 
 A **masked** subsystem has its own parameters, like a function's arguments. The blocks inside use them in
