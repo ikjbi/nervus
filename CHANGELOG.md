@@ -14,6 +14,10 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Model coverage (`nervus.coverage`): decision outcomes of switches, comparisons, saturations, limits, relays,
+  rate limiters, lookups and charts; `simulate(coverage=...)`, `run_tests(coverage=...)`, HTML report; the Test
+  Manager shows coverage and opens the report.
+- Model Advisor (`nervus.advisor`, Analysis → Model Advisor) with 10 rules for ECU modelling practice.
 - CAN: DBC files (optional `cantools`), CAN Pack and CAN Unpack blocks (Intel/Motorola, signed, factor/offset,
   rounding and saturation), bit-exact C code; file pickers and message suggestions in the editor.
 - Data types: double, single, boolean, int8…uint32 and fixed point (`fixdt`), with rounding and overflow modes;

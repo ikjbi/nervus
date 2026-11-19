@@ -34,6 +34,7 @@ from nervus.gui.controllers import (
 from nervus.gui.controllers.test_controller import TestController
 from nervus.gui.models import DiagramModel, SimulationModel, SimulationState
 from nervus.gui.theme import ThemeManager, ThemeMode
+from nervus.gui.views.advisor_dialog import AdvisorDialog
 from nervus.gui.views.analysis_dialog import AnalysisDialog
 from nervus.gui.views.canvas import DiagramScene, DiagramView
 from nervus.gui.views.codegen_dialog import CodegenDialog
@@ -210,6 +211,9 @@ class MainWindow(QMainWindow):
         self.act_analysis = self._action(
             "&Linear Analysis…", self.show_analysis, "Ctrl+L", "Linearize the model; Bode plot, margins, step response"
         )
+        self.act_advisor = self._action(
+            "Model &Advisor…", self.show_advisor, "Ctrl+Shift+A", "Check the model for risky modelling practices"
+        )
         self.act_help = self._action("Nervus &Help", self.show_help, K.HelpContents, "Open the help", "help")
         self.act_block_help = self._action("Help for Selected &Block", self.show_block_help, Qt.Key.Key_F1)
         self.act_about = self._action("&About Nervus", self.about)
@@ -262,6 +266,7 @@ class MainWindow(QMainWindow):
         m.addAction(self.act_settings)
         m = mb.addMenu("&Analysis")
         m.addAction(self.act_analysis)
+        m.addAction(self.act_advisor)
         m = mb.addMenu("&Code")
         m.addAction(self.act_codegen)
         m = mb.addMenu("&Help")
@@ -350,6 +355,12 @@ class MainWindow(QMainWindow):
         self._inspector.show()
         self._inspector.raise_()
         return self._inspector
+
+    def show_advisor(self) -> AdvisorDialog:
+        dlg = AdvisorDialog(self.diagram_model.root, self)
+        dlg.blocksActivated.connect(self._highlight)
+        dlg.show()
+        return dlg
 
     def show_analysis(self) -> AnalysisDialog:
         dlg = AnalysisDialog(self.diagram_model.root, self)

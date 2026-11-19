@@ -161,3 +161,55 @@ class RateLimiter(Block):
 
     def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
         return self._limit(np.broadcast_to(u[0], xd.shape), xd)
+
+
+def _relay_outcomes(self: Block) -> list[str]:
+    return ["on", "off"]
+
+
+def _relay_hits(self: Block, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+    on = np.any(y[0] == self.params["on_value"])
+    off = np.any(y[0] == self.params["off_value"])
+    return [h for h, c in (("on", on), ("off", off)) if c]
+
+
+def _dz_outcomes(self: Block) -> list[str]:
+    return ["below dead zone", "inside dead zone", "above dead zone"]
+
+
+def _dz_hits(self: Block, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+    x, lo, hi = u[0], self.params["start"], self.params["end"]
+    return [
+        h
+        for h, c in (
+            ("below dead zone", np.any(x < lo)),
+            ("inside dead zone", np.any((x >= lo) & (x <= hi))),
+            ("above dead zone", np.any(x > hi)),
+        )
+        if c
+    ]
+
+
+def _rl_outcomes(self: Block) -> list[str]:
+    return ["rising limited", "falling limited", "not limited"]
+
+
+def _rl_hits(self: Block, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+    x, out = np.broadcast_to(u[0], y[0].shape), y[0]
+    return [
+        h
+        for h, c in (
+            ("rising limited", np.any(out < x)),
+            ("falling limited", np.any(out > x)),
+            ("not limited", np.any(out == x)),
+        )
+        if c
+    ]
+
+
+Relay.coverage_outcomes = _relay_outcomes  # type: ignore[method-assign]
+Relay.coverage_hits = _relay_hits  # type: ignore[method-assign]
+DeadZone.coverage_outcomes = _dz_outcomes  # type: ignore[method-assign]
+DeadZone.coverage_hits = _dz_hits  # type: ignore[method-assign]
+RateLimiter.coverage_outcomes = _rl_outcomes  # type: ignore[method-assign]
+RateLimiter.coverage_hits = _rl_hits  # type: ignore[method-assign]

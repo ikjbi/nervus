@@ -174,6 +174,31 @@ class CompiledModel:
                 raise SimulationError(f"{name}: error computing derivatives at t={t:g}: {exc}", (name,)) from exc
         return dx
 
+    def start_coverage(self, cov: Any) -> None:
+        """Register the decision outcomes of every block with a :class:`nervus.coverage.Coverage`."""
+        from nervus.core.block import Block as _Block
+
+        self._coverage = cov
+        self._cov_blocks = []
+        for i, b in enumerate(self.blocks):
+            if type(b).coverage_outcomes is _Block.coverage_outcomes:
+                continue
+            outcomes = b.coverage_outcomes()
+            if outcomes:
+                cov.register(self.names[i], b.label or b.type_id, outcomes)
+                self._cov_blocks.append((i, b, self.inputs[i]))
+
+    def collect_coverage(self, t: float, hits: frozenset[int] | None) -> None:
+        """Record outcomes at a major step (discrete blocks only when they executed)."""
+        cov = getattr(self, "_coverage", None)
+        if cov is None:
+            return
+        for i, b, inputs in self._cov_blocks:
+            if self.kinds[i] is Kind.DISCRETE and (hits is None or self.rate_index[i] not in hits):
+                continue
+            u = [self.y[s][p] for s, p in inputs]
+            cov.hit(self.names[i], b.coverage_hits(t, u, self.y[i], self.xd[i]))
+
     def check_monitors(self, t: float) -> bool:
         """Run Stop Simulation / Assertion blocks at a major step. Returns True if the run should stop."""
         stop = False

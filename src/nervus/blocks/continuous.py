@@ -94,6 +94,28 @@ class Integrator(_Continuous):
             parts.append(xc - lo)
         return np.concatenate(parts)
 
+    def coverage_outcomes(self) -> list[str]:
+        p = self.params
+        if not (np.isfinite(p["lower"]) or np.isfinite(p["upper"])):
+            return []
+        return [
+            *(["at upper limit"] if np.isfinite(p["upper"]) else []),
+            *(["at lower limit"] if np.isfinite(p["lower"]) else []),
+            "between limits",
+        ]
+
+    def coverage_hits(self, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+        p, out = self.params, y[0]
+        return [
+            h
+            for h, c in (
+                ("at upper limit", np.any(out >= p["upper"])),
+                ("at lower limit", np.any(out <= p["lower"])),
+                ("between limits", np.any((out > p["lower"]) & (out < p["upper"]))),
+            )
+            if c
+        ]
+
     def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
         if not self._limited:
             return None

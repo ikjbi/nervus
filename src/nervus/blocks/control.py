@@ -172,3 +172,30 @@ class DiscretePID(_PIDBase):
     def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
         _, di, df = self._law(u[0], xd)
         return xd + self.period() * np.concatenate([di, df])
+
+
+def _pid_outcomes(self: Block) -> list[str]:
+    p = self.params
+    out = []
+    if np.isfinite(p["upper"]):
+        out.append("output at upper limit")
+    if np.isfinite(p["lower"]):
+        out.append("output at lower limit")
+    return [*out, "output within limits"] if out else []
+
+
+def _pid_hits(self: Block, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+    p, out = self.params, y[0]
+    hits = []
+    if np.any(out >= p["upper"]):
+        hits.append("output at upper limit")
+    if np.any(out <= p["lower"]):
+        hits.append("output at lower limit")
+    if np.any((out > p["lower"]) & (out < p["upper"])):
+        hits.append("output within limits")
+    return hits
+
+
+for _cls in (PID, DiscretePID):
+    _cls.coverage_outcomes = _pid_outcomes  # type: ignore[method-assign]
+    _cls.coverage_hits = _pid_hits  # type: ignore[method-assign]

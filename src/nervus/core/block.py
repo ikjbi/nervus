@@ -279,6 +279,15 @@ class Block:
             return [None] * n
         return [common_type(known)] * n
 
+    def coverage_outcomes(self) -> list[str]:
+        """All decision outcomes of this block for model coverage, e.g. ``["true", "false"]``. Empty if the
+        block makes no decisions."""
+        return []
+
+    def coverage_hits(self, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+        """The outcomes taken at this time step (called with the block's inputs, outputs and state)."""
+        return []
+
     def suggestions(self, param: str) -> list[str]:
         """Values to offer for a text parameter in the editor (e.g. the messages of a DBC file)."""
         return []

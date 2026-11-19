@@ -233,6 +233,7 @@ def simulate(
     settings: SimulationSettings | None = None,
     params: dict[str, Any] | None = None,
     inputs: dict[str, Any] | None = None,
+    coverage: Any = None,
     progress: Callable[[float], None] | None = None,
     should_stop: Callable[[], bool] | None = None,
 ) -> SimResult:
@@ -240,6 +241,7 @@ def simulate(
 
     Settings come from ``settings`` if given, otherwise from ``diagram.settings``; keyword arguments override
     individual values. ``params`` overrides workspace variables for this run, e.g. ``params={"Kp": 2.0}``.
+    ``coverage`` (a :class:`nervus.coverage.Coverage`) records which decision outcomes occur.
     ``inputs`` drives the model's top-level In blocks, by name: a :class:`~nervus.core.signals.Signal`, a
     number/vector (constant) or a ``(time, values)`` pair.
     ``progress(t)`` is called after each major step; if ``should_stop()`` returns true the run ends early (used
@@ -249,13 +251,13 @@ def simulate(
         if params or inputs:
             raise ValueError("params/inputs cannot be used with an already compiled model; pass the Diagram")
         return _simulate_compiled(
-            diagram, t_final, t_start, solver, step, max_step, rtol, atol, settings, progress, should_stop
+            diagram, t_final, t_start, solver, step, max_step, rtol, atol, settings, progress, should_stop, coverage
         )
     attached = _attach_inputs(diagram, inputs or {})
     try:
         model = compile_diagram(diagram, params)
         return _simulate_compiled(
-            model, t_final, t_start, solver, step, max_step, rtol, atol, settings, progress, should_stop
+            model, t_final, t_start, solver, step, max_step, rtol, atol, settings, progress, should_stop, coverage
         )
     finally:
         for block in attached:
@@ -291,6 +293,7 @@ def _simulate_compiled(
     settings: SimulationSettings | None,
     progress: Callable[[float], None] | None,
     should_stop: Callable[[], bool] | None,
+    coverage: Any = None,
 ) -> SimResult:
     base = settings or model.diagram.settings
     overrides: dict[str, Any] = {
@@ -305,6 +308,10 @@ def _simulate_compiled(
     opts = replace(base, **{k: v for k, v in overrides.items() if v is not None})
     opts.validate()
     model.reset()
+    model._coverage = None
+    if coverage is not None:
+        model.start_coverage(coverage)
+        coverage.runs += 1
     wall0 = time.perf_counter()
     log = _Logger(model)
     t0, tf = opts.t_start, opts.t_final
@@ -355,6 +362,7 @@ def _run_fixed(
         hits = sched.hits(t)
         model.eval_outputs(t, x, hits, init=(k == 0))
         log.record(t)
+        model.collect_coverage(t, hits)
         if progress:
             progress(t)
         if model.check_monitors(t):
@@ -402,6 +410,7 @@ def _run_variable(
         model.eval_outputs(t, x, hits, init=first)
         first = False
         log.record(t)
+        model.collect_coverage(t, hits)
         n_major += 1
         if progress:
             progress(t)

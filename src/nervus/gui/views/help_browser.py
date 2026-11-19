@@ -56,6 +56,7 @@ HELP_PAGES = [
     ("analysis", "Linear analysis"),
     ("codegen", "C code generation"),
     ("testing", "Test cases and the Data Inspector"),
+    ("verification", "Coverage and Model Advisor"),
     ("tutorial_idle", "Tutorial: idle speed control"),
     ("shortcuts", "Keyboard shortcuts"),
 ]

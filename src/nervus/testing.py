@@ -16,6 +16,7 @@ from __future__ import annotations
 import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -106,7 +107,7 @@ def evaluate_check(check: Check, res: SimResult, base_dir: Path | None = None) -
     return CheckResult(check, diff <= tol, f"max difference {diff:.3g}")
 
 
-def run_test(diagram: Diagram, case: TestCase, base_dir: str | Path | None = None) -> TestResult:
+def run_test(diagram: Diagram, case: TestCase, base_dir: str | Path | None = None, coverage: Any = None) -> TestResult:
     """Run one test case on ``diagram``. Parameter overrides only apply to this run; the model is unchanged."""
     base = Path(base_dir) if base_dir is not None else None
     try:
@@ -117,7 +118,7 @@ def run_test(diagram: Diagram, case: TestCase, base_dir: str | Path | None = Non
                 ps_path = base / ps_path
             params.update({k: v for k, v in ParameterSet.load(ps_path).values.items() if k in diagram.workspace})
         params.update(case.parameters)
-        res = simulate(diagram, case.stop_time, params=params or None, inputs=dict(case.inputs))
+        res = simulate(diagram, case.stop_time, params=params or None, inputs=dict(case.inputs), coverage=coverage)
     except NervusError as exc:
         return TestResult(case, False, error=str(exc))
     except Exception as exc:
@@ -127,10 +128,14 @@ def run_test(diagram: Diagram, case: TestCase, base_dir: str | Path | None = Non
 
 
 def run_tests(
-    diagram: Diagram, cases: list[TestCase] | None = None, base_dir: str | Path | None = None
+    diagram: Diagram,
+    cases: list[TestCase] | None = None,
+    base_dir: str | Path | None = None,
+    coverage: Any = None,
 ) -> list[TestResult]:
-    """Run the given test cases, or all test cases stored with the model."""
-    return [run_test(diagram, c, base_dir) for c in (cases if cases is not None else diagram.tests)]
+    """Run the given test cases, or all test cases stored with the model. Pass a
+    :class:`nervus.coverage.Coverage` to measure the model coverage of the whole suite."""
+    return [run_test(diagram, c, base_dir, coverage) for c in (cases if cases is not None else diagram.tests)]
 
 
 def compare_results(a: SimResult, b: SimResult, signals: list[str] | None = None) -> dict[str, float]:

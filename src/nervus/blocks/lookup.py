@@ -91,6 +91,24 @@ class Lookup1D(Block):
         i, f = locate(u[0], bp, self.params["interpolation"], self.params["extrapolation"])
         return [tab[i] + f * (tab[i + 1] - tab[i])]
 
+    def coverage_outcomes(self) -> list[str]:
+        bp, _ = self._data()
+        return ["below range", *[f"[{bp[k]:g}, {bp[k + 1]:g}]" for k in range(bp.size - 1)], "above range"]
+
+    def coverage_hits(self, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+        bp, _ = self._data()
+        names = self.coverage_outcomes()
+        hits = set()
+        for x in np.atleast_1d(u[0]):
+            if x < bp[0]:
+                hits.add(names[0])
+            elif x > bp[-1]:
+                hits.add(names[-1])
+            else:
+                k = min(int(np.searchsorted(bp, x, side="right")) - 1, bp.size - 2)
+                hits.add(names[1 + k])
+        return sorted(hits)
+
 
 @register
 class Lookup2D(Block):

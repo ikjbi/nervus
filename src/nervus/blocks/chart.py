@@ -430,3 +430,28 @@ class StateChart(Block):
 
     def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
         return self._step(u, xd)
+
+    def coverage_outcomes(self) -> list[str]:
+        states = [f"state {s.name}" for s in self.spec.states]
+        trans = [
+            f"{self.spec.states[t.source].name} -> {self.spec.states[t.target].name} ({t.guard_src})"
+            for t in self.spec.transitions
+        ]
+        return states + trans
+
+    def coverage_hits(self, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+        before = int(xd[0])
+        env = self._env(u, xd)
+        elapsed_ticks = int(xd[1])
+        hits = [f"state {self.spec.states[before].name}"]
+        env["t_in_state"] = (elapsed_ticks + 1) * self.period()
+        env["after"] = lambda n: elapsed_ticks + 1 >= n
+        for k in self._interp.outgoing[before]:
+            if eval(self._interp.guards[k], {"__builtins__": {}}, env):
+                tr = self.spec.transitions[k]
+                hits.append(
+                    f"{self.spec.states[tr.source].name} -> {self.spec.states[tr.target].name} ({tr.guard_src})"
+                )
+                hits.append(f"state {self.spec.states[tr.target].name}")
+                break
+        return hits

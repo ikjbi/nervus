@@ -260,6 +260,13 @@ class TestManagerPanel(QWidget):
             self.buttons[key] = QPushButton(label)
             bar.addWidget(self.buttons[key])
         bar.addStretch(1)
+        self.coverage_label = QLabel("")
+        self.coverage_label.setObjectName("muted")
+        self.buttons["coverage"] = QPushButton("Coverage report")
+        self.buttons["coverage"].setToolTip("Open the model coverage report of the last test run")
+        self.buttons["coverage"].setEnabled(False)
+        bar.addWidget(self.coverage_label)
+        bar.addWidget(self.buttons["coverage"])
         for key, label in (("run", "Run selected"), ("run_all", "Run all")):
             self.buttons[key] = QPushButton(label)
             bar.addWidget(self.buttons[key])
@@ -275,6 +282,7 @@ class TestManagerPanel(QWidget):
         self.buttons["delete"].clicked.connect(self.delete_selected)
         self.buttons["run"].clicked.connect(self.run_selected)
         self.buttons["run_all"].clicked.connect(self.run_all)
+        self.buttons["coverage"].clicked.connect(self.open_coverage_report)
         self.tree.itemDoubleClicked.connect(self._double_clicked)
         model.testsChanged.connect(self.refresh)
         model.diagramReset.connect(self._reset)
@@ -394,7 +402,25 @@ class TestManagerPanel(QWidget):
         self._set_running(False)
         results = [self.runner.results[c.name] for c in self.model.root.tests if c.name in self.runner.results]
         passed = sum(r.passed for r in results)
+        cov = self.runner.coverage
+        if cov is not None and cov.total:
+            self.coverage_label.setText(f"Coverage {cov.percent:.0f} %")
+            self.coverage_label.setToolTip(cov.summary())
+        self.buttons["coverage"].setEnabled(cov is not None and cov.total > 0)
         self.statusMessage.emit(f"Tests: {passed} of {len(results)} passed")
+
+    def open_coverage_report(self) -> str | None:
+        import tempfile
+        import webbrowser
+        from pathlib import Path
+
+        cov = self.runner.coverage
+        if cov is None:
+            return None
+        path = Path(tempfile.mkdtemp(prefix="nervus_cov_")) / "coverage.html"
+        cov.save_html(path, f"Model coverage — {self.model.root.name}")
+        webbrowser.open(path.as_uri())
+        return str(path)
 
     def _double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         if column == 0:

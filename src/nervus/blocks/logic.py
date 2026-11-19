@@ -130,3 +130,21 @@ class LogicalOperator(Block):
         else:  # NOR
             r = ~b.any(axis=0)
         return [r.astype(float)]
+
+
+def _bool_outcomes(self: Block) -> list[str]:
+    return ["true", "false"]
+
+
+def _bool_hits(self: Block, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+    hits = []
+    if np.any(y[0] != 0):
+        hits.append("true")
+    if np.any(y[0] == 0):
+        hits.append("false")
+    return hits
+
+
+for _cls in (RelationalOperator, CompareToConstant, LogicalOperator):
+    _cls.coverage_outcomes = _bool_outcomes  # type: ignore[method-assign]
+    _cls.coverage_hits = _bool_hits  # type: ignore[method-assign]

@@ -119,6 +119,12 @@ class Switch(_Routing):
     def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
         return np.array([1.0 if self._passed(u) else 0.0])
 
+    def coverage_outcomes(self) -> list[str]:
+        return ["input 0 passed", "input 2 passed"]
+
+    def coverage_hits(self, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+        return ["input 0 passed" if self._passed(u) else "input 2 passed"]
+
 
 @register
 class DataTypeConversion(_Routing):

@@ -85,3 +85,15 @@ def test_case_dialog_roundtrip(qtbot) -> None:  # type: ignore[no-untyped-def]
     qtbot.addWidget(dlg)
     built = dlg.build()
     assert built.to_dict() == case.to_dict()
+
+
+def test_coverage_after_test_run(window, qtbot, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    window.files.open(EXAMPLES / "idle_speed_control.nervus")
+    with qtbot.waitSignal(window.tests.finished, timeout=60000):
+        window.test_panel.run_all()
+    assert window.tests.coverage is not None and window.tests.coverage.total > 0
+    assert window.test_panel.coverage_label.text().startswith("Coverage")
+    opened = []
+    monkeypatch.setattr("webbrowser.open", opened.append)
+    path = window.test_panel.open_coverage_report()
+    assert path is not None and opened and "never" not in opened[0]

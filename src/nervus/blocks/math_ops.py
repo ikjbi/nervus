@@ -181,6 +181,20 @@ class Saturation(_Math):
     def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
         return np.concatenate([u[0] - self.params["upper"], u[0] - self.params["lower"]])
 
+    def coverage_outcomes(self) -> list[str]:
+        return ["below lower", "within limits", "above upper"]
+
+    def coverage_hits(self, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
+        x = u[0]
+        hits = []
+        if np.any(x < self.params["lower"]):
+            hits.append("below lower")
+        if np.any(x > self.params["upper"]):
+            hits.append("above upper")
+        if np.any((x >= self.params["lower"]) & (x <= self.params["upper"])):
+            hits.append("within limits")
+        return hits
+
     def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
         x = np.broadcast_to(u[0], (self.out_widths[0],))
         return np.where(x > self.params["upper"], 1.0, np.where(x < self.params["lower"], -1.0, 0.0))

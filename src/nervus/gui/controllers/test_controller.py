@@ -7,6 +7,7 @@ import threading
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 
 from nervus.core.testcase import TestCase
+from nervus.coverage import Coverage
 from nervus.gui.controllers.editor_controller import EditorController
 from nervus.gui.models.diagram_model import DiagramModel
 from nervus.gui.models.simulation_model import SimulationModel
@@ -17,9 +18,9 @@ class _Worker(QObject):
     resultReady = Signal(object)  # TestResult
     done = Signal()
 
-    def __init__(self, model: DiagramModel, cases: list[TestCase], stop: threading.Event) -> None:
+    def __init__(self, model: DiagramModel, cases: list[TestCase], stop: threading.Event, coverage: Coverage) -> None:
         super().__init__()
-        self.model, self.cases, self.stop = model, cases, stop
+        self.model, self.cases, self.stop, self.coverage = model, cases, stop, coverage
 
     @Slot()
     def run(self) -> None:
@@ -27,7 +28,7 @@ class _Worker(QObject):
         for case in self.cases:
             if self.stop.is_set():
                 break
-            self.resultReady.emit(run_test(self.model.root, case, base))
+            self.resultReady.emit(run_test(self.model.root, case, base, self.coverage))
         self.done.emit()
 
 
@@ -44,6 +45,8 @@ class TestController(QObject):
         super().__init__(parent)
         self.model, self.sim, self.editor = model, sim, editor
         self.results: dict[str, TestResult] = {}
+        self.coverage: Coverage | None = None
+        """Model coverage of the last test run."""
         self._thread: QThread | None = None
         self._stop = threading.Event()
 
@@ -57,7 +60,8 @@ class TestController(QObject):
         self._stop.clear()
         self.editor.set_editing_enabled(False)  # tests resolve parameters and drive In blocks
         thread = QThread(self)
-        worker = _Worker(self.model, cases, self._stop)
+        self.coverage = Coverage()
+        worker = _Worker(self.model, cases, self._stop, self.coverage)
         worker.moveToThread(thread)
         thread.started.connect(worker.run)
         worker.resultReady.connect(self._on_result)

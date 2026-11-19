@@ -34,6 +34,7 @@ nav:
       - Linear analysis: analysis.md
       - C code generation: codegen.md
       - Test cases and results: testing.md
+      - Coverage and Model Advisor: verification.md
       - In-app help pages:
           - Getting started (app): app-help/getting_started.md
           - Using the editor: app-help/editor.md
@@ -46,6 +47,7 @@ nav:
           - Linear analysis: app-help/analysis.md
           - C code generation: app-help/codegen.md
           - Test cases and the Data Inspector: app-help/testing.md
+          - Coverage and Model Advisor: app-help/verification.md
           - "Tutorial: idle speed control": app-help/tutorial_idle.md
           - Keyboard shortcuts: app-help/shortcuts.md
       - Concepts: concepts.md
