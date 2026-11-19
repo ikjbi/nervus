@@ -203,8 +203,8 @@ tests/
 - [x] Discrete-Time Integrator external reset (rising/falling/either/level), with C code
 - [ ] Continuous Integrator external reset (needs a solver restart) and saturation ports
 - [ ] Algebraic loop solver (optional), with warnings
-- [ ] Investigate: a clamped continuous PID with D = 0 chatters (Zeno guard, 30 s) when its unused derivative
-      filter state is frozen, but not when it moves: make the sliding mode at the limit robust
+- [x] Clamped continuous PID at its limit: sliding mode with a boundary layer (it chattered, or stayed clamped too
+      long); blocks are told when the Zeno guard switches them to `sliding`; no derivative-filter dynamics with D = 0
 - [x] Simulation stop block and assertions
 - [x] First performance pass: precomputed execution tables, scalar fast paths (~25 % faster)
 - [ ] Performance: avoid per-step Python overhead (vectorised execution, Numba, or simulate the generated C:

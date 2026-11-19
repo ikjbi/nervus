@@ -123,6 +123,9 @@ class Block:
         self.out_widths: list[int] = []
         self.resolved_sample_time: SampleTime | None = None
         """Set by the compiler: the sample time after inheritance is resolved."""
+        self.sliding = False
+        """Set by the simulator when the system chatters along one of this block's discontinuities (Zeno guard):
+        the block may then use a smooth version of its switch."""
         self.mode: Array | None = None
         """Frozen discontinuity mode during variable-step integration (set by the simulator, see
         :meth:`compute_mode`). ``None`` means: choose the branch from the current inputs."""

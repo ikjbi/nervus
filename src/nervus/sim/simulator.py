@@ -121,6 +121,8 @@ class _ZeroCrossings:
         self._values = EMPTY
         self._probe = EMPTY
         self.mode_blocks = list(model._zc_blocks)
+        for _i, b, _sl, _inp in self.mode_blocks:
+            b.sliding = False
         self.unfrozen: set[int] = set()
         self.signal_block: list[int] = []
         x0 = model.xc0
@@ -194,6 +196,8 @@ class _ZeroCrossings:
                 if owner == block:
                     self.disabled.add(j)
             self.unfrozen.add(block)
+            if block >= 0:
+                self.model.blocks[block].sliding = True  # blocks may switch to a smooth version of the switch
             who = self.model.names[block] if block >= 0 else "a block"
             self.info["warnings"].append(
                 f"{who}: zero crossings keep repeating near t = {t:.6g} (the system chatters along a "

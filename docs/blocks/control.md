@@ -19,8 +19,11 @@ the integral term keeps growing ("winds up") and causes overshoot. *anti_windup*
 
 ![Anti-windup comparison](../images/blocks/pid_anti_windup.png)
 
-With variable-step solvers, zero-crossing detection locates the moments the output saturates and the
-integrator is clamped exactly.
+With variable-step solvers, zero-crossing detection locates the moments the output saturates exactly. With
+``clamping``, the integrator then slides along the limit: it integrates just enough to keep the output there
+(a thin boundary layer of 0.1 % of the limit, instead of switching the integrator on and off, which would
+chatter). With a fixed-step solver the integrator is switched off in every step that would push the output
+further out.
 
 ### Parameters
 

@@ -66,20 +66,32 @@ def test_integrator_hits_limit_exactly() -> None:
     assert res["i"][-1] == pytest.approx(1.0)
 
 
-def test_chattering_pid_is_detected_and_fast() -> None:
+def _clamped_pid_loop(aw: str, d_gain: float = 0.0) -> Diagram:
     d = Diagram()
     r = d.add(Step(time=0.0, final=1.2), name="r")
     e = d.add(Sum(signs="+-"), name="e")
-    c = d.add(PID(P=1.0, I=5.0, upper=1.5, lower=-1.5, anti_windup="clamping"), name="pid")
+    c = d.add(PID(P=1.0, I=5.0, D=d_gain, upper=1.5, lower=-1.5, anti_windup=aw), name="pid")
     p = d.add(TransferFunction(numerator=[1.0], denominator=[1.0, 1.0]), name="y")
     d.connect(r, (e, 0))
     d.connect(p, (e, 1))
     d.chain(e, c, p, d.add(Scope()))
+    return d
+
+
+@pytest.mark.parametrize("aw", ["clamping", "none", "back_calculation"])
+@pytest.mark.parametrize("d_gain", [0.0, 0.01])
+def test_saturated_pid_matches_a_fine_fixed_step_reference(aw: str, d_gain: float) -> None:
+    """The clamped integrator slides along the limit. Variable step must follow the same trajectory as a
+    very fine fixed-step run (it used to stay clamped too long, and only the final value was right)."""
     t0 = time.perf_counter()
-    res = simulate(d, 15.0)
+    res = simulate(_clamped_pid_loop(aw, d_gain), 15.0)
     elapsed = time.perf_counter() - t0
-    assert elapsed < 10.0
-    assert res["y"][-1] == pytest.approx(1.2, abs=1e-3)
+    ref = simulate(_clamped_pid_loop(aw, d_gain), 15.0, solver="rk4", step=2e-3)  # within 2e-4 of 1e-4
+    t = np.linspace(0, 15, 601)
+    err = np.abs(np.interp(t, res.t, res["y"].ravel()) - np.interp(t, ref.t, ref["y"].ravel()))
+    assert err.max() < 0.01
+    assert elapsed < 5.0
+    assert not res.stats.warnings
 
 
 def test_zero_crossing_can_be_disabled() -> None:

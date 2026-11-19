@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- A continuous PID with clamping anti-windup followed a wrong trajectory with variable-step solvers when it
+  slid along its output limit (the integrator stayed clamped too long; only the final value was right), or
+  chattered for tens of seconds. Clamping now uses a boundary layer during variable-step integration and
+  matches a fine fixed-step reference. The derivative filter no longer integrates when D = 0.
 - Blocks with a parameter given as a not-yet-resolved workspace expression were validated with the default
   value (e.g. a 2-D Interpolation with `table="ign_map"` failed); they are now validated once resolved.
 - On Linux and Windows, Help and Help for Selected Block were both on F1, so F1 did nothing; Help is now Ctrl+?.
