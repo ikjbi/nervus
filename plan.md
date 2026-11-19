@@ -318,7 +318,7 @@ tests/
 - [ ] OBD over a CAN interface (`python-can`, ISO-TP / ISO 15765-4) without an ELM327
 - [ ] Editor: Tools → Record from OBD-II… with live plots
 - [ ] OBD responder in models: a simulated ECU that answers OBD requests (to test diagnostic tools)
-- [ ] Diagnostic logic in models: DTC setting/debouncing, MIL lamp, readiness monitors
+- [x] Diagnostic logic in models: DTC setting/debouncing, MIL lamp, readiness monitors (Diagnostic Monitor block, with C code)
 
 ## Safety note
 

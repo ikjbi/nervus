@@ -19,6 +19,10 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **PID Controller**: Continuous PID controller (parallel form) with a filtered derivative:
 - **Discrete PID Controller**: Discrete PID controller (parallel form), as it would run on an ECU every *sample_time* seconds.
 
+## [Diagnostics](diagnostics.md)
+
+- **Diagnostic Monitor**: A diagnostic monitor with a trouble code (DTC), like the diagnostic event manager of an engine ECU.
+
 ## [Discontinuities](discontinuities.md)
 
 - **Dead Zone**: Zero output inside the dead zone [*start*, *end*]; outside, the input shifted by the zone edge.

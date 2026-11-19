@@ -64,6 +64,29 @@ emissions inspection checks. Use your car's diagnostic tool for that, once the c
 
 In Python: `elm.trouble_codes("stored")`, `elm.freeze_frame(PIDS["rpm"])`, `elm.vin()`.
 
+## Trouble codes in your own models
+
+The **Diagnostic Monitor** block (Library → Diagnostics) is the ECU side of a trouble code: it turns the raw
+result of a monitor (e.g. `misfire_rate > limit`) into a debounced DTC, the way the diagnostic event manager of
+an engine ECU does:
+
+1. **Debouncing**: a counter goes up by *fail_step* for each failed sample and down by *pass_step* for each
+   passed one. At +*threshold* the test has failed, at −*threshold* it has passed; short glitches do nothing.
+2. **Pending**: the first failure makes the code pending immediately.
+3. **Confirmed and MIL**: after *confirm_cycles* operation cycles in a row with a failure (2: OBD's two-trip
+   detection) the code is confirmed and the MIL (check-engine lamp) comes on.
+4. **Healing**: after *heal_cycles* passed cycles in a row the MIL goes off; the code stays stored as confirmed.
+5. **Readiness**: the *ready* output is 1 once the monitor has completed (passed or failed) since the codes were
+   last cleared, which is what an inspection checks; clearing the codes (the optional *clear* input, like
+   mode 04) sets it back to "not complete".
+
+![A misfire monitor over four operation cycles](figures/diagnostic_monitor.png)
+
+The optional *enable* input holds the test while its conditions are not met (e.g. only with a warm engine),
+and a rising edge on the optional *cycle* input starts a new operation cycle (key on). The *status* output is
+the UDS DTC status byte (ISO 14229), the same bits a scan tool shows. The block generates C code, so the
+diagnostic logic can run in the ECU code and be tested back to back like the rest of the model.
+
 ## How a PID is decoded
 
 The adapter sends a request such as `010C` (mode 01, PID 0x0C = engine speed). The car answers with

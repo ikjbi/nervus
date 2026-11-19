@@ -905,3 +905,78 @@ def _can_pack(e: Emitter) -> BlockCode:
 
 
 __all__ = ["as_signal"]
+
+
+@template("diagnostics.monitor")
+def _diagnostic_monitor(e: Emitter) -> BlockCode:
+    b = e.block
+    x = e.state("dem", b.initial_discrete_state(), f"{e.path}: DTC {b.params['dtc']} (counter, status, cycles)")
+    threshold, fail_step, pass_step = (e.p(n, "0") for n in ("threshold", "fail_step", "pass_step"))
+    confirm, heal = e.p("confirm_cycles", "0"), e.p("heal_cycles", "0")
+    ports = b.input_names()
+
+    def inp(name: str, default: str) -> str:
+        return f"({e.u(ports.index(name), '0')} >= 0.5)" if name in ports else default
+
+    status = f"((uint32_T){x}[1])"
+    out = [
+        f"{e.y(0, '0')} = ({status} & 0x80u) ? 1.0 : 0.0;  /* MIL */",
+        f"{e.y(1, '0')} = ({status} & 0x04u) ? 1.0 : 0.0;  /* pending */",
+        f"{e.y(2, '0')} = ({status} & 0x08u) ? 1.0 : 0.0;  /* confirmed */",
+        f"{e.y(3, '0')} = ({status} & 0x10u) ? 0.0 : 1.0;  /* ready: completed since clear */",
+        f"{e.y(4, '0')} = {x}[1];",
+    ]
+    upd = [
+        "{",
+        f"    real_T c = {x}[0];",
+        f"    uint32_T st = (uint32_T){x}[1];",
+        f"    real_T fc = {x}[2];",
+        f"    real_T pc = {x}[3];",
+        f"    int fault = {inp('fault', '0')};",
+        f"    int enable = {inp('enable', '1')};",
+        f"    int cycle = {inp('cycle', '0')};",
+        f"    int clear = {inp('clear', '0')};",
+        f"    if (clear && {x}[5] < 0.5) {{  /* mode 04: clear the code and the readiness */",
+        "        c = 0.0; st = 0x50u; fc = 0.0; pc = 0.0;",
+        f"    }} else if (cycle && {x}[4] < 0.5) {{  /* a new operation cycle */",
+        "        if (st & 0x02u) {",
+        "            pc = 0.0;",
+        "        } else if (!(st & 0x40u)) {  /* the last cycle completed and passed */",
+        "            fc = 0.0;",
+        "            pc += 1.0;",
+        "            st &= ~0x04u;",
+        f"            if (pc >= {heal}) {{ st &= ~0x80u; }}",
+        "        }",
+        "        st = (st & ~0x03u) | 0x40u;",
+        "        c = 0.0;",
+        "    }",
+        "    if (enable) {",
+        "        if (fault) {",
+        f"            if (c < 0.0 && {'1' if b.params['jump_down'] else '0'}) {{ c = 0.0; }}",
+        f"            c = fmin(c + {fail_step}, {threshold});",
+        "        } else {",
+        f"            c = fmax(c - {pass_step}, -{threshold});",
+        "        }",
+        f"        if (c >= {threshold} && !(st & 0x02u)) {{  /* failed, first time this cycle */",
+        "            fc += 1.0;",
+        "            st |= 0x27u;",
+        "            st &= ~0x50u;",
+        f"            if (fc >= {confirm}) {{",
+        "                st |= 0x08u;",
+        *(["                st |= 0x80u;", "                pc = 0.0;"] if b.params["mil"] else []),
+        "            }",
+        f"        }} else if (c >= {threshold}) {{",
+        "            st |= 0x01u;",
+        f"        }} else if (c <= -{threshold}) {{  /* passed */",
+        "            st &= ~0x51u;",
+        "        }",
+        "    }",
+        f"    {x}[0] = c;",
+        f"    {x}[1] = (real_T)st;",
+        f"    {x}[2] = fc;",
+        f"    {x}[3] = pc;",
+        f"    {x}[4] = cycle ? 1.0 : 0.0;",
+        f"    {x}[5] = clear ? 1.0 : 0.0;",
+        "}",
+    ]
+    return BlockCode(out, upd)

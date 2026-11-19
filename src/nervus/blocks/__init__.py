@@ -7,6 +7,7 @@ from nervus.blocks.can_blocks import CanPack, CanUnpack
 from nervus.blocks.chart import StateChart
 from nervus.blocks.continuous import Derivative, Integrator, StateSpace, TransferFunction
 from nervus.blocks.control import PID, DiscretePID
+from nervus.blocks.diagnostics import DiagnosticMonitor
 from nervus.blocks.discontinuities import DeadZone, Quantizer, RateLimiter, Relay
 from nervus.blocks.discrete import (
     Counter,
@@ -47,6 +48,7 @@ __all__ = [
     "Debounce",
     "Demux",
     "Derivative",
+    "DiagnosticMonitor",
     "DiscreteFilter",
     "DiscreteIntegrator",
     "DiscretePID",

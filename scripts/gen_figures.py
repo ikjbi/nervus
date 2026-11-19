@@ -1054,6 +1054,47 @@ def gear_shift() -> plt.Figure:
     return fig
 
 
+@figure("diagnostic_monitor")
+def diagnostic_monitor() -> plt.Figure:
+    from nervus.blocks import DiagnosticMonitor, Inport, Outport
+
+    ts, n = 0.01, 60  # four operation cycles of 0.6 s
+    d = Diagram()
+    mon = d.add(DiagnosticMonitor(dtc="P0300", threshold=5.0, cycle_input=True, sample_time=ts), name="m")
+    for k, name in enumerate(("fault", "cycle")):
+        d.connect(d.add(Inport(port=k + 1), name=name), (mon, k))
+    for k, name in enumerate(("mil", "pending", "confirmed")):
+        d.connect((mon, k), d.add(Outport(port=k + 1), name=name))
+    rng = np.random.default_rng(7)
+    fault, cycle = [], []
+    for failing in (True, True, False, False):
+        f = (rng.random(n) < (0.85 if failing else 0.08)).astype(float)
+        f[:5] = 0.0
+        c = np.zeros(n)
+        c[1:3] = 1.0
+        fault += f.tolist()
+        cycle += c.tolist()
+    t = np.arange(len(fault)) * ts
+    res = simulate(d, t[-1], solver="rk4", step=ts,
+                   inputs={"fault": (t, np.c_[fault]), "cycle": (t, np.c_[cycle])})  # fmt: skip
+    fig, axes = plt.subplots(4, 1, figsize=(6.4, 4.2), sharex=True)
+    rows = (("fault", fault, C1), ("pending", res["pending"], C2), ("confirmed", res["confirmed"], C3),
+            ("MIL", res["mil"], C4))  # fmt: skip
+    for ax, (label, y, color) in zip(axes, rows, strict=True):
+        ax.step(t, y, where="post", color=color, lw=1.5 if label == "fault" else 2)
+        ax.set_ylim(-0.2, 1.3)
+        ax.set_yticks([0, 1])
+        ax.set_ylabel(label, rotation=0, ha="right", va="center")
+        for k in range(1, 4):
+            ax.axvline(k * n * ts, color=INK, ls=":", lw=1)
+    for k, text in enumerate(("cycle 1: fails", "cycle 2: fails", "cycle 3: passes", "cycle 4: passes")):
+        axes[0].text((k + 0.5) * n * ts, 1.15, text, ha="center", va="bottom", color=INK, fontsize=8)
+    axes[-1].set_xlabel("time [s]")
+    axes[-1].set_xlim(0, t[-1])
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

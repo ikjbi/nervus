@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Diagnostic Monitor block: debounced trouble codes with pending/confirmed (two-trip) status, MIL and
+  healing over operation cycles, readiness, clear, and the UDS status byte; generates C code.
 - Linear Analysis: Nyquist and root-locus tabs (with poles and zeros), the closed-loop step response, and PID
   Tuning: the plant seen by a PID block (`plant_at`) and loop-shaping gains (`tune_pid`) with Apply to Block.
 - Analysis → Parameter Sweep / Monte Carlo: vary workspace variables, overlay a signal of every run, plot a
