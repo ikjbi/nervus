@@ -163,3 +163,97 @@ def compare_results(a: SimResult, b: SimResult, signals: list[str] | None = None
         yb_on_a = np.column_stack([np.interp(a.t, b.t, yb[:, j]) for j in range(yb.shape[1])])
         out[name] = float(np.max(np.abs(ya - yb_on_a)))
     return out
+
+
+# ---------------------------------------------------------------------------- test suites as files
+
+SUITE_FORMAT = "nervus-tests"
+SUITE_EXTENSION = ".nervtest"
+
+
+def save_suite(tests: list[TestCase], path: str | Path) -> Path:
+    """Save test cases to a ``.nervtest`` file, e.g. to share a test suite between models or in review."""
+    import json
+
+    p = Path(path)
+    if not p.suffix:
+        p = p.with_suffix(SUITE_EXTENSION)
+    doc = {"format": SUITE_FORMAT, "version": 1, "tests": [t.to_dict() for t in tests]}
+    p.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return p
+
+
+def load_suite(path: str | Path) -> list[TestCase]:
+    """Load test cases saved with :func:`save_suite`."""
+    import json
+
+    try:
+        doc = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise NervusError(f"cannot read test suite {path}: {exc}") from exc
+    if not isinstance(doc, dict) or doc.get("format") != SUITE_FORMAT:
+        raise NervusError(f"{path} is not a Nervus test suite")
+    return [TestCase.from_dict(d) for d in doc.get("tests", [])]
+
+
+# ---------------------------------------------------------------------------- HTML report
+
+
+def html_report(results: list[TestResult], title: str = "Test report", coverage: Any = None) -> str:
+    """A self-contained HTML page with the result of every test case and check (and the coverage, if given)."""
+    import datetime
+    import html
+
+    passed = sum(r.passed for r in results)
+    rows = []
+    for r in results:
+        status = "pass" if r.passed else "fail"
+        detail = [f"<p class='desc'>{html.escape(r.case.description)}</p>"] if r.case.description else []
+        if r.case.parameters:
+            params = ", ".join(f"{html.escape(k)} = {html.escape(str(v))}" for k, v in r.case.parameters.items())
+            detail.append(f"<p class='desc'>Parameters: {params}</p>")
+        if r.error:
+            detail.append(f"<pre>{html.escape(r.error)}</pre>")
+        checks = "".join(
+            f"<tr><td class='{'pass' if c.passed else 'fail'}'>{'✓' if c.passed else '✗'}</td>"
+            f"<td>{html.escape(c.check.describe())}</td><td>{html.escape(c.message)}</td></tr>"
+            for c in r.checks
+        )
+        rows.append(
+            f"<section><h2><span class='badge {status}'>{status.upper()}</span> {html.escape(r.case.name)}</h2>"
+            + "".join(detail)
+            + (f"<table><tr><th></th><th>Check</th><th>Result</th></tr>{checks}</table>" if checks else "")
+            + "</section>"
+        )
+    cov = ""
+    if coverage is not None and coverage.total:
+        cov = f"<p>Model coverage: <b>{coverage.percent:.0f} %</b> ({html.escape(coverage.summary())})</p>"
+    when = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{html.escape(title)}</title>
+<style>
+:root {{ --text:#1d1d1b; --muted:#6b6a65; --line:#dcdad4; --pass:#1b7f55; --fail:#c0392b; --bg:#fbfaf7; }}
+@media (prefers-color-scheme: dark) {{ :root {{ --text:#ecebe6; --muted:#a3a29c; --line:#3a3936; --pass:#4cc38a; --fail:#ff6b5e; --bg:#1c1c1a; }} }}
+body {{ font: 15px/1.5 system-ui, sans-serif; color: var(--text); background: var(--bg); max-width: 960px; margin: 2rem auto; padding: 0 16px; }}
+h1 {{ font-size: 1.5rem; }} h2 {{ font-size: 1.1rem; margin: 1.6rem 0 .4rem; }}
+.badge {{ font-size: .75rem; padding: 2px 8px; border-radius: 4px; color: #fff; vertical-align: 2px; }}
+.badge.pass {{ background: var(--pass); }} .badge.fail {{ background: var(--fail); }}
+td.pass {{ color: var(--pass); }} td.fail {{ color: var(--fail); }}
+table {{ border-collapse: collapse; width: 100%; }} td, th {{ border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; }}
+.desc, .meta {{ color: var(--muted); margin: .2rem 0; }} pre {{ white-space: pre-wrap; color: var(--fail); }}
+</style></head><body>
+<h1>{html.escape(title)}</h1>
+<p class="meta">{passed} of {len(results)} test cases passed · {when}</p>
+{cov}
+{"".join(rows)}
+</body></html>
+"""
+
+
+def save_html_report(
+    results: list[TestResult], path: str | Path, title: str = "Test report", coverage: Any = None
+) -> Path:
+    p = Path(path)
+    p.write_text(html_report(results, title, coverage), encoding="utf-8")
+    return p

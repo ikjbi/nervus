@@ -19,6 +19,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Test suites as `.nervtest` files (Test Manager: Export…/Import…), an HTML test report (Report…), and
+  parameter sweeps and Monte Carlo runs from Python (`nervus.sweep`).
 - Prelookup and Interpolation using Prelookup blocks (1-D/2-D maps over shared axes), with C code.
 - Documentation: a feature overview in the README, the docs home page and the in-app Getting started page;
   in-app pages *Concepts*, *Coming from Simulink* (rewritten: masks, variants, libraries, tasks, codegen,

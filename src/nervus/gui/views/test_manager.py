@@ -256,15 +256,28 @@ class TestManagerPanel(QWidget):
         self.tree.setColumnWidth(1, 70)
         self.buttons: dict[str, QPushButton] = {}
         bar = QHBoxLayout()
-        for key, label in (("new", "New"), ("edit", "Edit…"), ("duplicate", "Duplicate"), ("delete", "Delete")):
+        for key, label in (
+            ("new", "New"),
+            ("edit", "Edit…"),
+            ("duplicate", "Duplicate"),
+            ("delete", "Delete"),
+            ("import", "Import…"),
+            ("export", "Export…"),
+        ):
             self.buttons[key] = QPushButton(label)
             bar.addWidget(self.buttons[key])
+        self.buttons["import"].setToolTip("Add the test cases of a .nervtest file to this model")
+        self.buttons["export"].setToolTip("Save the selected (or all) test cases to a .nervtest file")
         bar.addStretch(1)
         self.coverage_label = QLabel("")
         self.coverage_label.setObjectName("muted")
         self.buttons["coverage"] = QPushButton("Coverage report")
         self.buttons["coverage"].setToolTip("Open the model coverage report of the last test run")
         self.buttons["coverage"].setEnabled(False)
+        self.buttons["report"] = QPushButton("Report…")
+        self.buttons["report"].setToolTip("Save an HTML report of the last test run")
+        self.buttons["report"].setEnabled(False)
+        bar.addWidget(self.buttons["report"])
         bar.addWidget(self.coverage_label)
         bar.addWidget(self.buttons["coverage"])
         for key, label in (("run", "Run selected"), ("run_all", "Run all")):
@@ -283,6 +296,9 @@ class TestManagerPanel(QWidget):
         self.buttons["run"].clicked.connect(self.run_selected)
         self.buttons["run_all"].clicked.connect(self.run_all)
         self.buttons["coverage"].clicked.connect(self.open_coverage_report)
+        self.buttons["report"].clicked.connect(self._ask_report)
+        self.buttons["import"].clicked.connect(self._ask_import)
+        self.buttons["export"].clicked.connect(self._ask_export)
         self.tree.itemDoubleClicked.connect(self._double_clicked)
         model.testsChanged.connect(self.refresh)
         model.diagramReset.connect(self._reset)
@@ -407,7 +423,63 @@ class TestManagerPanel(QWidget):
             self.coverage_label.setText(f"Coverage {cov.percent:.0f} %")
             self.coverage_label.setToolTip(cov.summary())
         self.buttons["coverage"].setEnabled(cov is not None and cov.total > 0)
+        self.buttons["report"].setEnabled(bool(results))
         self.statusMessage.emit(f"Tests: {passed} of {len(results)} passed")
+
+    # ------------------------------------------------------------------ files
+
+    def export_suite(self, path: str, names: list[str] | None = None) -> str:
+        from nervus.testing import save_suite
+
+        return str(save_suite(self._cases(names or None), path))
+
+    def import_suite(self, path: str) -> int:
+        """Add the test cases of a suite file; cases whose names exist get a unique name."""
+        from nervus.core import NervusError
+        from nervus.testing import load_suite
+
+        try:
+            new = load_suite(path)
+        except NervusError as exc:
+            self.statusMessage.emit(str(exc))
+            return 0
+        tests = list(self.model.root.tests)
+        for case in new:
+            case.name = self._unique(case.name)
+            tests.append(case)
+        self.editor.set_tests(tests, f"Import {len(new)} test case{'s' if len(new) != 1 else ''}")
+        return len(new)
+
+    def save_report(self, path: str) -> str:
+        from nervus.testing import save_html_report
+
+        results = [self.runner.results[c.name] for c in self.model.root.tests if c.name in self.runner.results]
+        title = f"Test report — {self.model.root.name or 'model'}"
+        return str(save_html_report(results, path, title, self.runner.coverage))
+
+    def _ask_export(self) -> None:
+        from PySide6.QtWidgets import QFileDialog
+
+        path, _ = QFileDialog.getSaveFileName(self, "Export test cases", "tests.nervtest", "Test suites (*.nervtest)")
+        if path:
+            self.statusMessage.emit(f"Saved {self.export_suite(path, self.selected_names())}")
+
+    def _ask_import(self) -> None:
+        from PySide6.QtWidgets import QFileDialog
+
+        path, _ = QFileDialog.getOpenFileName(self, "Import test cases", "", "Test suites (*.nervtest)")
+        if path:
+            self.statusMessage.emit(f"Imported {self.import_suite(path)} test cases")
+
+    def _ask_report(self) -> None:
+        import webbrowser
+        from pathlib import Path
+
+        from PySide6.QtWidgets import QFileDialog
+
+        path, _ = QFileDialog.getSaveFileName(self, "Save test report", "test_report.html", "HTML (*.html)")
+        if path:
+            webbrowser.open(Path(self.save_report(path)).resolve().as_uri())
 
     def open_coverage_report(self) -> str | None:
         import tempfile

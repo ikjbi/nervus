@@ -97,3 +97,18 @@ def test_coverage_after_test_run(window, qtbot, monkeypatch) -> None:  # type: i
     monkeypatch.setattr("webbrowser.open", opened.append)
     path = window.test_panel.open_coverage_report()
     assert path is not None and opened and "never" not in opened[0]
+
+
+def test_suite_export_import_and_report(window, qtbot, tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from PySide6.QtCore import QPointF
+
+    tm = window.test_panel
+    window.editor.add_block("sources.constant", QPointF(0, 0))
+    window.editor.set_tests([TestCase("t1", checks=[Check("final_value", "Constant", {"value": 1.0})])])
+    path = tm.export_suite(str(tmp_path / "suite.nervtest"))
+    assert tm.import_suite(path) == 1
+    assert [c.name for c in window.diagram_model.root.tests] == ["t1", "t1 2"]
+    with qtbot.waitSignal(window.tests.finished, timeout=30000):
+        tm.run_all()
+    report = Path(tm.save_report(str(tmp_path / "r.html")))
+    assert "2 of 2 test cases passed" in report.read_text()
