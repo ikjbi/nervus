@@ -180,6 +180,13 @@ class BlockItem(QGraphicsItem):
                 y = item.pos().y()
                 box = QRectF(6 if dx > 0 else rect.width() / 2, y - 8, rect.width() / 2 - 8, 16)
                 painter.drawText(box, align | Qt.AlignmentFlag.AlignVCenter, port_block.name)
+        if getattr(sub, "has_enable", False) and self.in_ports:
+            y = self.in_ports[-1].pos().y()
+            painter.drawText(
+                QRectF(6, y - 8, rect.width() / 2, 16),
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                "⏻ enable",
+            )
         icon = getattr(sub, "mask_icon", "")
         if icon:
             big = QFont(painter.font())

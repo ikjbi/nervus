@@ -34,6 +34,15 @@ Blocks inside subsystems are named by their path: `ECU/throttle_pi`, `ECU/fuel/m
 read results (`res["ECU/throttle_pi"]`). Clicking a diagnostic opens the subsystem and selects the block. A
 subsystem that contains an error is outlined in red.
 
+## Enabled subsystems
+
+Tick *enable_port* in a subsystem's Properties to give it an extra last input, **⏻ enable**. While the
+enable is ≤ 0 nothing inside runs: outputs and discrete states are held, and continuous states stop. Use it for
+functions that only run in some operating mode, e.g. idle speed control only while the engine idles. With
+*when_enabled* = `reset`, the discrete states (counters, delays, integrators) restart from their initial
+values each time the subsystem is enabled again. The enable is checked once per time step, and the
+generated C code wraps the subsystem's blocks in `if (enabled)`.
+
 ## Masks: reusable components with parameters
 
 A **masked** subsystem has its own parameters, like a function's arguments. The blocks inside use them in

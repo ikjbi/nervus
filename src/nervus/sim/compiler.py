@@ -64,6 +64,9 @@ class CompiledModel:
     xd0: list[Array]
     out_types: list[list[DataType]] = field(default_factory=list)
     """Data type of each block output."""
+    enable: list[list[tuple[int, int]]] = field(default_factory=list)
+    """Enable signals gating each block (enabled subsystems); empty = always runs."""
+    reset_on_enable: list[bool] = field(default_factory=list)
     xd: list[Array] = field(default_factory=list)
     y: list[list[Array]] = field(default_factory=list)
     _validated: bool = False
@@ -109,6 +112,7 @@ class CompiledModel:
             if kind is Kind.CONTINUOUS and type(b).zero_crossings is not _Block.zero_crossings
         ]
         self.n_zero_crossings = -1  # determined on first evaluation
+        self._enabled = [True] * len(self.blocks)
         self._monitors = [(i, b, self.inputs[i]) for i, b, *_ in self._plan if hasattr(b, "check_major")]
 
     def _u(self, i: int) -> list[Array]:
@@ -124,12 +128,23 @@ class CompiledModel:
         y, xd = self.y, self.xd
         validated = self._validated
         constant, discrete = Kind.CONSTANT, Kind.DISCRETE
+        gates = self.enable
         for i, b, kind, rate, sl, inputs in self._plan:
             if not init:
                 if kind is constant:
                     continue
                 if kind is discrete and (hits is None or rate not in hits):
                     continue
+            if gates[i] and not init:
+                # Enabled subsystems: the enable is decided when the block executes at a major step, and kept
+                # during solver stages (like Simulink, and like the generated code).
+                if hits is not None:
+                    on = all(y[s][p][0] > 0 for s, p in gates[i])
+                    if on and not self._enabled[i] and self.reset_on_enable[i]:
+                        xd[i] = self.xd0[i].copy()
+                    self._enabled[i] = on
+                if not self._enabled[i]:
+                    continue  # disabled: outputs held
             try:
                 out = b.outputs(t, [y[s][p] for s, p in inputs], xc[sl], xd[i])
             except Exception as exc:
@@ -167,6 +182,9 @@ class CompiledModel:
         dx = np.empty_like(xc)
         y, xd = self.y, self.xd
         for i, b, sl, inputs in self._cont_states:
+            if self.enable[i] and not self._enabled[i]:
+                dx[sl] = 0.0  # disabled subsystem: continuous states hold
+                continue
             try:
                 dx[sl] = b.derivatives(t, [y[s][p] for s, p in inputs], xc[sl], xd[i])
             except Exception as exc:
@@ -240,6 +258,8 @@ class CompiledModel:
         """Advance the discrete states of every block that has a sample hit now."""
         new: list[tuple[int, Array]] = []
         for i, b in enumerate(self.blocks):
+            if self.enable[i] and not self._enabled[i]:
+                continue  # disabled subsystem: discrete states hold
             if self.kinds[i] is Kind.DISCRETE and self.rate_index[i] in hits and self.xd[i].size:
                 try:
                     new.append((i, as_signal(b.update(t, self._u(i), xc[self.xc_slices[i]], self.xd[i]))))
@@ -301,7 +321,7 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
 
     out_t = _propagate_types(blocks, inputs, names)
     feedthrough = [b.direct_feedthrough() for b in blocks]
-    order = _sort(blocks, inputs, feedthrough, names)
+    order = _sort(blocks, inputs, feedthrough, names, graph.enable)
 
     # Re-index everything into execution order.
     pos = {old: new for new, old in enumerate(order)}
@@ -312,6 +332,8 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
     in_w = [in_w[i] for i in order]
     out_w = [out_w[i] for i in order]
     out_t = [out_t[i] for i in order]
+    enable = [[(pos[s], p) for s, p in graph.enable[i]] for i in order]
+    reset_on_enable = [graph.reset_on_enable[i] for i in order]
     feedthrough = [feedthrough[i] for i in order]
 
     sample_times = _resolve_sample_times(blocks, inputs)
@@ -365,6 +387,8 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
         xc0=np.concatenate(xc_parts) if xc_parts else EMPTY,
         xd0=xd0,
         out_types=out_t,
+        enable=enable,
+        reset_on_enable=reset_on_enable,
     )
     model.reset()
     return model
@@ -422,14 +446,21 @@ def _propagate_types(
 
 
 def _sort(
-    blocks: list[Block], inputs: list[list[tuple[int, int]]], feedthrough: list[bool], names: list[str]
+    blocks: list[Block],
+    inputs: list[list[tuple[int, int]]],
+    feedthrough: list[bool],
+    names: list[str],
+    enable: list[list[tuple[int, int]]] | None = None,
 ) -> list[int]:
-    """Topological sort over direct-feedthrough dependencies (Kahn's algorithm, stable)."""
+    """Topological sort over direct-feedthrough dependencies (Kahn's algorithm, stable). Blocks in an enabled
+    subsystem also depend on its enable signal."""
     n = len(blocks)
     deps: list[set[int]] = [set() for _ in range(n)]
     for i in range(n):
         if feedthrough[i]:
             deps[i] = {s for s, _ in inputs[i]}
+        if enable is not None:
+            deps[i] |= {s for s, _ in enable[i]}
     users: list[list[int]] = [[] for _ in range(n)]
     for i in range(n):
         for s in deps[i]:

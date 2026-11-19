@@ -216,6 +216,30 @@ class CGenerator:
             out.append(c)
         return out
 
+    def _gate(self, i: int, code: BlockCode, block_states: list[str]) -> None:
+        """Wrap a block of an enabled subsystem: run only while the enable is > 0, optionally resetting its
+        states when enabled again. The decision is stored, so the state update uses the same one."""
+        m = self.model
+        flag = f"{self.cnames[i]}_enabled"
+        self.states[flag] = _Field(flag, 1, [1.0], f"{m.names[i]}: enabled at its last execution")
+        cond = " && ".join(f"({self.signal_var(s, p)}[0] > 0.0)" for s, p in m.enable[i])
+        dw = f"{self.prefix}_DW"
+        head = ["{", f"    real_T en = ({cond}) ? 1.0 : 0.0;"]
+        if m.reset_on_enable[i] and block_states:
+            head.append(f"    if ((en > 0.0) && ({dw}.{flag}[0] == 0.0)) {{ /* enabled again: reset states */")
+            for name in block_states:
+                for k, v in enumerate(self.states[name].init):
+                    head.append(f"        {dw}.{name}[{k}] = {c_float(v)};")
+            head.append("    }")
+        head.append(f"    {dw}.{flag}[0] = en;")
+        head.append("}")
+        if code.outputs:
+            code.outputs[:] = [*head, f"if ({dw}.{flag}[0] > 0.0) {{", *[f"    {x}" for x in code.outputs], "}"]
+        else:
+            code.outputs[:] = head
+        if code.update:
+            code.update[:] = [f"if ({dw}.{flag}[0] > 0.0) {{", *[f"    {x}" for x in code.update], "}"]
+
     def quantizer(self, dtype: DataType, rounding: str = "nearest", overflow: str = "saturate") -> str:
         """Name of a generated C function that converts a real_T to ``dtype`` and back, exactly like
         :meth:`DataType.quantize` does in the simulation."""
@@ -297,8 +321,12 @@ class CGenerator:
             if isinstance(b, PortProxy):
                 codes.append(_pass_through(Emitter(self, i)))
             else:
+                before = set(self.states)
                 codes.append(TEMPLATES[b.type_id](Emitter(self, i)))
+                block_states = [k for k in self.states if k not in before]
             code = codes[-1]
+            if m.enable[i]:
+                self._gate(i, code, [] if isinstance(b, PortProxy) else block_states)
             if code.outputs:
                 rounding, overflow = b.quantization()
                 for p, dtype in enumerate(m.out_types[i]):

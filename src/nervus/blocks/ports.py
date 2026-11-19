@@ -102,6 +102,10 @@ class Subsystem(Block):
     A subsystem can be **masked**: it then has its own parameters (e.g. ``displacement``) that the blocks inside
     use in their expressions, so several copies of the same component can have different values.
 
+    With *enable_port* the subsystem gets an extra last input, **enable**. While it is ≤ 0 nothing inside
+    runs: outputs and discrete states are held and continuous states stop. With *when_enabled* = ``reset``
+    the discrete states return to their initial values each time the subsystem is enabled again.
+
     Its inputs and outputs are the In and Out blocks inside, in the order of their *port* numbers. Subsystems
     structure a model the way functions structure code: one subsystem per ECU function (e.g. "idle control",
     "fuel", "ignition"). Parameters inside can use the model workspace.
@@ -110,7 +114,16 @@ class Subsystem(Block):
     type_id = "ports.subsystem"
     label = "Subsystem"
     category = CATEGORY
-    PARAMS = ()
+    PARAMS = (
+        Param("enable_port", False, ParamKind.BOOL, "Add an enable input: the subsystem only runs while it is > 0"),
+        Param(
+            "when_enabled",
+            "held",
+            ParamKind.CHOICE,
+            "Discrete states when the subsystem is enabled again",
+            choices=("held", "reset"),
+        ),
+    )
 
     def __init__(self, name: str = "", system: Diagram | None = None, **params: Any) -> None:
         from nervus.core.workspace import Workspace
@@ -151,8 +164,12 @@ class Subsystem(Block):
         except ParameterError:
             return sorted((b for b in self.system.blocks if isinstance(b, Outport)), key=lambda b: b.params["port"])
 
+    @property
+    def has_enable(self) -> bool:
+        return bool(self.params.get("enable_port", False))
+
     def num_inputs(self) -> int:
-        return len(self.inports())
+        return len(self.inports()) + (1 if self.has_enable else 0)
 
     def num_outputs(self) -> int:
         return len(self.outports())

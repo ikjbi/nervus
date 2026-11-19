@@ -25,6 +25,21 @@ Double-click it to open it. The breadcrumb bar shows the path back to the model:
 Lines crossing the selection boundary become **In**/**Out** ports. Undo works across levels and opens the
 subsystem where the change is undone.
 
+## Enabled subsystems
+
+Tick *enable_port* in a subsystem's Properties to give it an extra last input, **⏻ enable**. While the
+enable is ≤ 0 nothing inside runs: outputs and discrete states are held, and continuous states stop. Typical
+use: a function that only runs in one operating mode, with the enable coming from a State Chart's mode output.
+
+| *when_enabled* | Discrete states when enabled again |
+|---|---|
+| `held` (default) | continue from where they stopped |
+| `reset` | restart from their initial values |
+
+The enable is decided once per time step (when the blocks inside execute) and held during solver
+sub-steps. The generated C wraps the subsystem's blocks in `if (enabled)` and resets their states the same
+way, which the test suite checks against the simulation with zero tolerance.
+
 ## Masks: reusable components with parameters
 
 A **masked** subsystem has its own parameters, like a function's arguments. The blocks inside use them in

@@ -155,7 +155,8 @@ tests/
 - [x] GUI: double-click to open a subsystem, breadcrumb navigation, "Create Subsystem from Selection"
 - [ ] Atomic subsystems with their own sample time (one ECU task = one atomic subsystem)
 - [ ] Masks: parameter dialog and icon text for a subsystem; mask parameters as local workspace
-- [ ] Enabled, triggered and function-call subsystems (task scheduling, event-driven code)
+- [x] Enabled subsystems (held or reset states; C code)
+- [ ] Triggered and function-call subsystems (task scheduling, event-driven code)
 - [ ] Variant subsystems (choose an implementation by a workspace variable, e.g. engine type)
 - [ ] Reusable component libraries (a subsystem saved to a library file and linked)
 
@@ -264,6 +265,33 @@ tests/
 - [x] Model Advisor: 10 rules (float equality, division, anti-windup, implicit sampling, chart reachability, ...)
 - [ ] Packaging: PyPI release, standalone installers (PyInstaller / Briefcase) for macOS, Windows and Linux
 - [ ] Versioned docs, release notes; publish docs to GitHub Pages
+
+## Phase 20 – Electrical and physical modelling
+*Acausal (equation-based) components connected by physical wires, like Simscape Electrical.*
+- [ ] Electrical network solver: components with pins, Kirchhoff's laws assembled automatically (modified nodal
+      analysis), solved together with the block diagram (DAE)
+- [ ] Basic components: resistor, capacitor, inductor, voltage and current sources (controlled by signals),
+      ground, ideal switch, diode
+- [ ] Sensors: voltage and current measurement as signals
+- [ ] Automotive electrics: battery (open-circuit voltage map + internal resistance), DC motor, H-bridge with PWM
+      (averaged), solenoid / injector, relay coil, glow plug, alternator
+- [ ] Throttle body and electronic throttle with a real DC motor and H-bridge instead of a first-order lag
+- [ ] Other physical domains on the same solver: rotational mechanics (inertia, spring, damper, gear), thermal
+      (heat capacity, conduction, convection), hydraulic/fluid basics
+- [ ] Editor: physical ports and wires drawn differently from signal lines; component library; examples and
+      tutorials (battery + starter motor, electronic throttle)
+
+## Phase 21 – CAN bus networks
+*Several ECUs exchanging messages over a simulated bus.*
+- [ ] CAN bus block: frames with IDs, periods and DLC from DBC files; arbitration by priority; bit timing and bus
+      load; transmission delay
+- [ ] ECU nodes as subsystems with CAN Rx/Tx ports; periodic and event-triggered transmission
+- [ ] Rest-bus simulation: generate the messages of ECUs that are not modelled, from the DBC file
+- [ ] Gateways between buses (e.g. powertrain and body CAN)
+- [ ] Fault injection: lost frames, delays, wrong values, bus-off; checksums and alive counters (AUTOSAR E2E
+      style) with C code
+- [ ] Bus trace view (frames over time) and export to standard log formats (ASC/BLF)
+- [ ] Connect to real hardware through `python-can` (PEAK, Kvaser, Vector, SocketCAN) for HIL-style tests
 
 ## Safety note
 

@@ -24,6 +24,10 @@ class FlatGraph:
     """For each node, for each input port: (source node, output port)."""
     origin: list[Block] = field(default_factory=list)
     """The block each node came from (the In/Out block for port proxies)."""
+    enable: list[list[tuple[int, int]]] = field(default_factory=list)
+    """For each node, the enable signals (source node, port) of enclosing enabled subsystems (all must be > 0)."""
+    reset_on_enable: list[bool] = field(default_factory=list)
+    """For each node: reset its discrete state when an enclosing subsystem is enabled again."""
 
 
 def flatten(diagram: Diagram) -> FlatGraph:
@@ -36,6 +40,7 @@ def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, in
     """Add the nodes of ``diagram``; returns block id -> node index for this level (subsystems excluded)."""
     node: dict[int, int] = {}
     subs: dict[int, tuple[Subsystem, dict[int, int]]] = {}
+    spans: dict[int, range] = {}
     for b in diagram.blocks:
         name = prefix + b.name
         if isinstance(b, Subsystem):
@@ -43,7 +48,9 @@ def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, in
                 b.validate_ports()
             except ParameterError as exc:
                 raise ModelError(f"{name}: {exc}", (name,)) from exc
+            first = len(g.blocks)
             subs[id(b)] = (b, _add(b.system, name + "/", g, top=False))
+            spans[id(b)] = range(first, len(g.blocks))
             continue
         if not top and isinstance(b, Inport | Outport):
             proxy = PortProxy(name)
@@ -54,6 +61,8 @@ def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, in
             g.inputs.append([None] * b.num_inputs())
         g.names.append(name)
         g.origin.append(b)
+        g.enable.append([])
+        g.reset_on_enable.append(False)
         node[id(b)] = len(g.blocks) - 1
 
     def source(b: Block, port: int) -> tuple[int, int]:
@@ -69,6 +78,13 @@ def _add(diagram: Diagram, prefix: str, g: FlatGraph, top: bool) -> dict[int, in
         return node[id(b)], port
 
     for c in diagram.connections:
+        if isinstance(c.dst, Subsystem) and c.dst.has_enable and c.dst_port == len(c.dst.inports()):
+            src = source(c.src, c.src_port)  # the enable input gates every block inside
+            reset = c.dst.params["when_enabled"] == "reset"
+            for k in spans[id(c.dst)]:
+                g.enable[k].append(src)
+                g.reset_on_enable[k] = g.reset_on_enable[k] or reset
+            continue
         d_node, d_port = dest(c.dst, c.dst_port)
         g.inputs[d_node][d_port] = source(c.src, c.src_port)
     if not top:
