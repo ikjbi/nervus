@@ -14,6 +14,9 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Linear analysis (`nervus.analysis`): linearize between In and Out blocks around initial or trimmed
+  states, transfer function, poles, DC gain, Bode, gain/phase margins, step response; Analysis → Linear
+  Analysis dialog (Ctrl+L).
 - Example and tutorial: idle speed control on a mean-value engine model (throttle flow, manifold, cylinder
   flow, torque, crankshaft) with PI control, AC feed-forward, requirement tests and C code.
 - A2L (ASAM MCD-2 MC) file with every C code generation: parameters as CHARACTERISTICs with units/limits from

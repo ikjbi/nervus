@@ -17,6 +17,7 @@ On macOS use ⌘ where *Ctrl* is listed.
 | Stop simulation | Ctrl+. |
 | Simulation settings | Ctrl+E |
 | Generate C code | Ctrl+B |
+| Linear analysis | Ctrl+L |
 | Run all test cases | Ctrl+T |
 | Data Inspector | Ctrl+I |
 | Zoom in / out | Ctrl++ / Ctrl+- or Ctrl + wheel |

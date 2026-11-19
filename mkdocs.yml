@@ -29,6 +29,7 @@ nav:
       - Workspace and calibrations: workspace.md
       - Subsystems: subsystems.md
       - State machines: statecharts.md
+      - Linear analysis: analysis.md
       - C code generation: codegen.md
       - Test cases and results: testing.md
       - In-app help pages:
@@ -38,6 +39,7 @@ nav:
           - Workspace and calibrations: app-help/workspace.md
           - Subsystems: app-help/subsystems.md
           - State machines: app-help/statecharts.md
+          - Linear analysis: app-help/analysis.md
           - C code generation: app-help/codegen.md
           - Test cases and the Data Inspector: app-help/testing.md
           - "Tutorial: idle speed control": app-help/tutorial_idle.md

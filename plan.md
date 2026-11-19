@@ -231,9 +231,10 @@ tests/
 - [ ] Tutorial series: "Learn engine control with Nervus" (first: idle speed control)
 
 ## Phase 16 – Control design and analysis tools
-- [ ] Linearise a model around an operating point (state-space / transfer function)
-- [ ] Trim: find steady states
-- [ ] Bode, Nyquist, step and pole-zero plots; stability margins
+- [x] Linearise a model around an operating point (state-space / transfer function)
+- [x] Trim: find steady states
+- [x] Bode and step plots; poles, DC gain, stability margins
+- [ ] Nyquist and pole-zero plots, root locus, closed-loop analysis from the model
 - [ ] PID auto-tuning against a linearised plant
 - [ ] Scripting console in the GUI (Python, with the model and results in scope)
 

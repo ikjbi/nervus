@@ -103,6 +103,21 @@ def main() -> None:
             grab(inspector, "data-inspector.png")
             inspector.close()
             win.diagnostics_dock.raise_()
+
+            # Linear analysis of a textbook open loop.
+            from nervus import Diagram
+            from nervus.blocks import Inport, Outport, TransferFunction
+
+            ol = Diagram("open_loop")
+            u = ol.add(Inport(port=1), name="u")
+            g = ol.add(TransferFunction(numerator=[10.0], denominator=[0.1, 1.1, 1.0, 0.0]), name="L")
+            ol.chain(u, g, ol.add(Outport(port=1), name="y"))
+            win.diagram_model.set_diagram(ol)
+            adlg = win.show_analysis()
+            adlg.resize(980, 680)
+            adlg.run()
+            grab(adlg, "analysis.png")
+            adlg.close()
             win.files.open(ROOT / "examples" / "throttle_pi.nervus")
             win.show_help_for_type("control.discrete_pid")
             assert win._help is not None

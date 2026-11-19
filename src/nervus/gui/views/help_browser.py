@@ -51,6 +51,7 @@ HELP_PAGES = [
     ("workspace", "Workspace and calibrations"),
     ("subsystems", "Subsystems"),
     ("statecharts", "State machines"),
+    ("analysis", "Linear analysis"),
     ("codegen", "C code generation"),
     ("testing", "Test cases and the Data Inspector"),
     ("tutorial_idle", "Tutorial: idle speed control"),
