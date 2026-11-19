@@ -129,3 +129,29 @@ def test_fixed_point_sensor() -> None:
     assert np.max(np.abs(res["fixed_minus_double"])) <= 2**-6
     assert np.allclose(np.mod(res["filtered_fix"] * 64, 1), 0)
     assert set(np.unique(res["over_150kPa"])) <= {0.0, 1.0}
+
+
+def test_engine_library_example() -> None:
+    from nervus.io.model_file import _block_dict
+    from nervus.library import load_library
+    from nervus.testing import run_tests
+
+    mod = _import("engine_library")
+    d = load(EXAMPLES / "engine_comparison.nervus")
+    assert not d.link_warnings
+    assert {b.library_link.component for b in d.blocks if getattr(b, "library_link", None)} == {
+        "mean_value_engine",
+        "throttle_actuator",
+    }
+    assert all(r.passed for r in run_tests(d))
+    res = simulate(d, 4.9)
+    assert res["engine_2_0l/to_rpm"][-1] < res["engine_1_6l/to_rpm"][-1]  # same air, more friction
+    # The committed library matches the components the example builds.
+    lib = load_library(EXAMPLES / "library" / "engine_parts.nervlib")
+    for make in (mod.mean_value_engine, mod.throttle_actuator):
+        fresh = make()
+        stored = _block_dict(lib.block(fresh.name))
+        built = _block_dict(fresh)
+        stored.pop("meta", None)
+        built.pop("meta", None)
+        assert stored == built, f"examples/library is stale: run examples/engine_library.py ({fresh.name})"

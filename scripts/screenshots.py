@@ -201,6 +201,15 @@ def main() -> None:
             grab(win, "library-linked.png")
             win.library.remove_library(lib_path.resolve())
 
+            # Library example: two linked engines, and the inside of one.
+            win.files.open(ROOT / "examples" / "engine_comparison.nervus")
+            win.view.fit()
+            grab(win.view, "engine-comparison.png")
+            win.diagram_model.enter(win.diagram_model.root.block("engine_1_6l"))
+            win.view.fit()
+            grab(win.view, "engine-component.png")
+            win.diagram_model.up()
+
             # Data types shown on the wires.
             win.files.open(ROOT / "examples" / "fixed_point_sensor.nervus")
             win.act_types.setChecked(True)

@@ -54,6 +54,30 @@ and libraries can be moved or shared as a whole (for example in git). It also st
 subsystem, so the model still opens and simulates when the library is missing. You then get a warning in
 the Diagnostics panel.
 
+## Example: two engines from one component
+
+`examples/engine_library.py` builds `examples/library/engine_parts.nervlib` with two masked components: a
+**mean-value engine** (throttle body, intake manifold, cylinders, torque and crankshaft) and a **throttle
+actuator**. `examples/engine_comparison.nervus` uses each component twice, to compare a 1.6 l and a 2.0 l
+engine with the same throttle steps. Only the mask values differ: `displacement` and the inertia `J`.
+
+![Two linked engines and their actuators](images/engine-comparison.png)
+
+Inside, the component uses its mask parameters like workspace variables: the Gain `1 / J`, and the
+*parameters* of its Python Function blocks (`[eta_vol, displacement]`, read as `p[0]`, `p[1]` in the code):
+
+![Inside the mean-value engine component](images/engine-component.png)
+
+![Engine speed of both engines](images/blocks/engine_comparison.png)
+
+At the same throttle opening the larger engine runs *slower*: the throttle limits how much air gets in, and
+the larger engine has more friction. Open the library, change the friction model in `net_torque`, save, and
+reopen the comparison model: both engines use the new model.
+
+```bash
+uv run python examples/engine_library.py
+```
+
 ## In Python
 
 ```python

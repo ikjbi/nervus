@@ -14,6 +14,10 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Example `engine_library.py`: a mean-value engine and a throttle actuator as masked library components,
+  used twice in `engine_comparison.nervus` to compare a 1.6 l and a 2.0 l engine.
+- Python Function blocks have a *parameters* vector (`p[0]`, `p[1]`, ...) that can use workspace and mask
+  variables.
 - Component libraries: `.nervlib` files whose subsystems are reusable components; linked copies are updated
   from the library when a model opens, keep their own mask values, are read-only inside, and fall back to the
   saved copy when the library is missing. Library panel, Save Subsystem to Library, Break Link, Update

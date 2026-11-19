@@ -154,7 +154,7 @@ tests/
 - [x] Subsystem block with Inport/Outport blocks; flattened at compile time
 - [x] GUI: double-click to open a subsystem, breadcrumb navigation, "Create Subsystem from Selection"
 - [ ] Atomic subsystems with their own sample time (one ECU task = one atomic subsystem)
-- [ ] Masks: parameter dialog and icon text for a subsystem; mask parameters as local workspace
+- [x] Masks: parameter dialog and icon text for a subsystem; mask parameters as local workspace (nested, C code)
 - [x] Enabled subsystems (held or reset states; C code)
 - [x] Triggered subsystems (rising/falling/either edge, combined with enable; C code)
 - [ ] Function-call subsystems (task scheduling from a chart or scheduler block)
@@ -225,7 +225,7 @@ tests/
 ## Phase 15 – Automotive and ECU learning library
 - [x] Mean-value engine model: throttle and intake manifold, air mass flow, torque production, crank dynamics
       (example `idle_speed_control.py`)
-- [ ] Turn the engine model into reusable library subsystems (needs component libraries, Phase 9)
+- [x] Turn the engine model into reusable library subsystems (`examples/library/engine_parts.nervlib`)
 - [ ] Fuel control: injector model, lambda (AFR) closed-loop control, short and long term fuel trim
 - [ ] Ignition timing from speed/load maps, knock retard
 - [x] Idle speed control (PI + base opening + AC feed-forward), with tutorial

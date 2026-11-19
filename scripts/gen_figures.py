@@ -867,6 +867,30 @@ def can_frame() -> plt.Figure:
     return fig
 
 
+@figure("engine_comparison")
+def engine_comparison() -> plt.Figure:
+    from nervus import load
+
+    d = load(Path(__file__).parent.parent / "examples" / "engine_comparison.nervus")
+    res = simulate(d)
+    fig, ax = plt.subplots(figsize=(6.4, 3.0))
+    for name, color, label in (("engine_1_6l", C1, "1.6 l"), ("engine_2_0l", C2, "2.0 l")):
+        rpm = res[f"{name}/to_rpm"]
+        ax.plot(res.t, rpm, color=color, label=f"{label} engine", lw=2)
+        ax.text(res.t[-1] + 0.1, rpm[-1], label, color=INK, va="center", fontsize=9)
+    for t_ev, text in ((2.0, "throttle 3° → 6°"), (5.0, "+15 N·m load")):
+        ax.axvline(t_ev, color=INK, ls=":", lw=1)
+        ax.text(t_ev + 0.08, 2350, text, color=INK, fontsize=9, va="top")
+    ax.set_xlim(0, 8.7)
+    ax.set_ylim(600, 2400)
+    ax.set_xlabel("time [s]")
+    ax.set_ylabel("engine speed [rpm]")
+    ax.set_title("Same library component, two parameter sets", color=INK, fontsize=10)
+    ax.legend(loc="upper left", fontsize=9)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

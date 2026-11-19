@@ -1,0 +1,1091 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "engine_comparison",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 8.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": 0.01,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "alpha_step",
+      "value": 6.0,
+      "description": "Throttle angle after the step",
+      "unit": "°"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "throttle_cmd",
+      "type": "sources.step",
+      "params": {
+        "time": 2.0,
+        "initial": 3.0,
+        "final": "alpha_step",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "load",
+      "type": "sources.step",
+      "params": {
+        "time": 5.0,
+        "initial": 0.0,
+        "final": 15.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          460.0,
+          130.0
+        ]
+      }
+    },
+    {
+      "name": "rpm_scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          1020.0,
+          40.0
+        ]
+      }
+    },
+    {
+      "name": "actuator_1_6l",
+      "type": "ports.subsystem",
+      "params": {
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          220.0,
+          0.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "command_deg",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "lag",
+            "type": "continuous.transfer_function",
+            "params": {
+              "numerator": [
+                1.0
+              ],
+              "denominator": "[tau, 1]"
+            },
+            "meta": {
+              "position": [
+                150.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "angle_deg",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                300.0,
+                0.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "command_deg",
+            "src_port": 0,
+            "dst": "lag",
+            "dst_port": 0
+          },
+          {
+            "src": "lag",
+            "src_port": 0,
+            "dst": "angle_deg",
+            "dst_port": 0
+          }
+        ]
+      },
+      "mask": {
+        "variables": [
+          {
+            "name": "tau",
+            "value": 0.03,
+            "description": "Time constant of the throttle motor and plate",
+            "unit": "s"
+          }
+        ],
+        "icon": "Throttle\\nactuator",
+        "description": "Electronic throttle as a first-order lag"
+      },
+      "link": {
+        "library": "library/engine_parts.nervlib",
+        "component": "throttle_actuator"
+      }
+    },
+    {
+      "name": "engine_1_6l",
+      "type": "ports.subsystem",
+      "params": {
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          640.0,
+          0.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "throttle_deg",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "load_torque",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "throttle_flow",
+            "type": "user.python_function",
+            "params": {
+              "code": "def f(t, alpha_deg, p_im):\n    \"\"\"Air mass flow through the throttle [kg/s]. p = [max throttle area m^2]\"\"\"\n    p_amb, T, R, gamma, cd = 101325.0, 293.0, 287.0, 1.4, 0.8\n    area = p[0] * (1 - math.cos(math.radians(max(alpha_deg, 0.0)))) + 4e-6\n    pr = min(max(p_im / p_amb, 0.0), 1.0)\n    if pr < 0.528:  # choked flow\n        psi = 0.6847\n    else:\n        psi = math.sqrt(2 * gamma / (gamma - 1) * (pr ** (2 / gamma) - pr ** ((gamma + 1) / gamma)))\n    return cd * area * p_amb / math.sqrt(R * T) * psi\n",
+              "num_inputs": 2,
+              "num_outputs": 1,
+              "output_width": -1,
+              "parameters": "[throttle_area]"
+            },
+            "meta": {
+              "position": [
+                150.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "cylinder_flow",
+            "type": "user.python_function",
+            "params": {
+              "code": "def f(t, p_im, omega):\n    \"\"\"Air mass flow into the cylinders [kg/s]. p = [eta_vol, displacement m^3]\"\"\"\n    R, T = 287.0, 293.0\n    return p[0] * p_im * p[1] * max(omega, 0.0) / (4 * math.pi * R * T)\n",
+              "num_inputs": 2,
+              "num_outputs": 1,
+              "output_width": -1,
+              "parameters": "[eta_vol, displacement]"
+            },
+            "meta": {
+              "position": [
+                450.0,
+                150.0
+              ]
+            }
+          },
+          {
+            "name": "manifold_net_flow",
+            "type": "math.sum",
+            "params": {
+              "signs": "+-",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                300.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "R_T_over_V",
+            "type": "math.gain",
+            "params": {
+              "gain": "287 * 293 / V_im",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                450.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "p_intake",
+            "type": "continuous.integrator",
+            "params": {
+              "initial": 30000.0,
+              "upper": 101325.0,
+              "lower": 1000.0
+            },
+            "meta": {
+              "position": [
+                600.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "net_torque",
+            "type": "user.python_function",
+            "params": {
+              "code": "def f(t, m_cyl, omega, load):\n    \"\"\"Net crankshaft torque [N·m]. p = [eta_th, displacement m^3]\"\"\"\n    q_lhv, afr = 44e6, 14.7\n    omega = max(omega, 10.0)\n    combustion = p[0] * q_lhv * (m_cyl / afr) / omega\n    friction = (10.0 + 0.02 * omega) * p[1] / 1.6e-3  # friction grows with engine size\n    return combustion - friction - load\n",
+              "num_inputs": 3,
+              "num_outputs": 1,
+              "output_width": -1,
+              "parameters": "[eta_th, displacement]"
+            },
+            "meta": {
+              "position": [
+                600.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "1/J",
+            "type": "math.gain",
+            "params": {
+              "gain": "1 / J",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                750.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "omega",
+            "type": "continuous.integrator",
+            "params": {
+              "initial": 83.7758040957278,
+              "upper": "inf",
+              "lower": 0.0
+            },
+            "meta": {
+              "position": [
+                900.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "to_rpm",
+            "type": "math.gain",
+            "params": {
+              "gain": 9.549296585513721,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                1050.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "rpm",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                1200.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "p_im",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            },
+            "meta": {
+              "position": [
+                900.0,
+                0.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "throttle_deg",
+            "src_port": 0,
+            "dst": "throttle_flow",
+            "dst_port": 0
+          },
+          {
+            "src": "p_intake",
+            "src_port": 0,
+            "dst": "throttle_flow",
+            "dst_port": 1
+          },
+          {
+            "src": "p_intake",
+            "src_port": 0,
+            "dst": "cylinder_flow",
+            "dst_port": 0
+          },
+          {
+            "src": "omega",
+            "src_port": 0,
+            "dst": "cylinder_flow",
+            "dst_port": 1
+          },
+          {
+            "src": "throttle_flow",
+            "src_port": 0,
+            "dst": "manifold_net_flow",
+            "dst_port": 0
+          },
+          {
+            "src": "cylinder_flow",
+            "src_port": 0,
+            "dst": "manifold_net_flow",
+            "dst_port": 1
+          },
+          {
+            "src": "manifold_net_flow",
+            "src_port": 0,
+            "dst": "R_T_over_V",
+            "dst_port": 0
+          },
+          {
+            "src": "R_T_over_V",
+            "src_port": 0,
+            "dst": "p_intake",
+            "dst_port": 0
+          },
+          {
+            "src": "cylinder_flow",
+            "src_port": 0,
+            "dst": "net_torque",
+            "dst_port": 0
+          },
+          {
+            "src": "omega",
+            "src_port": 0,
+            "dst": "net_torque",
+            "dst_port": 1
+          },
+          {
+            "src": "load_torque",
+            "src_port": 0,
+            "dst": "net_torque",
+            "dst_port": 2
+          },
+          {
+            "src": "net_torque",
+            "src_port": 0,
+            "dst": "1/J",
+            "dst_port": 0
+          },
+          {
+            "src": "1/J",
+            "src_port": 0,
+            "dst": "omega",
+            "dst_port": 0
+          },
+          {
+            "src": "omega",
+            "src_port": 0,
+            "dst": "to_rpm",
+            "dst_port": 0
+          },
+          {
+            "src": "to_rpm",
+            "src_port": 0,
+            "dst": "rpm",
+            "dst_port": 0
+          },
+          {
+            "src": "p_intake",
+            "src_port": 0,
+            "dst": "p_im",
+            "dst_port": 0
+          }
+        ]
+      },
+      "mask": {
+        "variables": [
+          {
+            "name": "displacement",
+            "value": 0.0016,
+            "description": "Swept volume of all cylinders",
+            "unit": "m³"
+          },
+          {
+            "name": "V_im",
+            "value": 0.002,
+            "description": "Intake manifold volume",
+            "unit": "m³"
+          },
+          {
+            "name": "J",
+            "value": 0.15,
+            "description": "Crankshaft and flywheel inertia",
+            "unit": "kg·m²"
+          },
+          {
+            "name": "eta_vol",
+            "value": 0.85,
+            "description": "Volumetric efficiency",
+            "unit": "-"
+          },
+          {
+            "name": "eta_th",
+            "value": 0.3,
+            "description": "Thermal efficiency",
+            "unit": "-"
+          },
+          {
+            "name": "throttle_area",
+            "value": 0.0028,
+            "description": "Throttle plate area when fully open",
+            "unit": "m²"
+          }
+        ],
+        "icon": "Mean-value\\nengine",
+        "description": "Four-stroke petrol engine (mean-value model): throttle [°], load [N·m] → rpm, p_im [Pa]"
+      },
+      "link": {
+        "library": "library/engine_parts.nervlib",
+        "component": "mean_value_engine"
+      }
+    },
+    {
+      "name": "p_im_1_6l",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          1020.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "actuator_2_0l",
+      "type": "ports.subsystem",
+      "params": {
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          220.0,
+          260.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "command_deg",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "lag",
+            "type": "continuous.transfer_function",
+            "params": {
+              "numerator": [
+                1.0
+              ],
+              "denominator": "[tau, 1]"
+            },
+            "meta": {
+              "position": [
+                150.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "angle_deg",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                300.0,
+                0.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "command_deg",
+            "src_port": 0,
+            "dst": "lag",
+            "dst_port": 0
+          },
+          {
+            "src": "lag",
+            "src_port": 0,
+            "dst": "angle_deg",
+            "dst_port": 0
+          }
+        ]
+      },
+      "mask": {
+        "variables": [
+          {
+            "name": "tau",
+            "value": 0.03,
+            "description": "Time constant of the throttle motor and plate",
+            "unit": "s"
+          }
+        ],
+        "icon": "Throttle\\nactuator",
+        "description": "Electronic throttle as a first-order lag"
+      },
+      "link": {
+        "library": "library/engine_parts.nervlib",
+        "component": "throttle_actuator"
+      }
+    },
+    {
+      "name": "engine_2_0l",
+      "type": "ports.subsystem",
+      "params": {
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          640.0,
+          260.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "throttle_deg",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "load_torque",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "throttle_flow",
+            "type": "user.python_function",
+            "params": {
+              "code": "def f(t, alpha_deg, p_im):\n    \"\"\"Air mass flow through the throttle [kg/s]. p = [max throttle area m^2]\"\"\"\n    p_amb, T, R, gamma, cd = 101325.0, 293.0, 287.0, 1.4, 0.8\n    area = p[0] * (1 - math.cos(math.radians(max(alpha_deg, 0.0)))) + 4e-6\n    pr = min(max(p_im / p_amb, 0.0), 1.0)\n    if pr < 0.528:  # choked flow\n        psi = 0.6847\n    else:\n        psi = math.sqrt(2 * gamma / (gamma - 1) * (pr ** (2 / gamma) - pr ** ((gamma + 1) / gamma)))\n    return cd * area * p_amb / math.sqrt(R * T) * psi\n",
+              "num_inputs": 2,
+              "num_outputs": 1,
+              "output_width": -1,
+              "parameters": "[throttle_area]"
+            },
+            "meta": {
+              "position": [
+                150.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "cylinder_flow",
+            "type": "user.python_function",
+            "params": {
+              "code": "def f(t, p_im, omega):\n    \"\"\"Air mass flow into the cylinders [kg/s]. p = [eta_vol, displacement m^3]\"\"\"\n    R, T = 287.0, 293.0\n    return p[0] * p_im * p[1] * max(omega, 0.0) / (4 * math.pi * R * T)\n",
+              "num_inputs": 2,
+              "num_outputs": 1,
+              "output_width": -1,
+              "parameters": "[eta_vol, displacement]"
+            },
+            "meta": {
+              "position": [
+                450.0,
+                150.0
+              ]
+            }
+          },
+          {
+            "name": "manifold_net_flow",
+            "type": "math.sum",
+            "params": {
+              "signs": "+-",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                300.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "R_T_over_V",
+            "type": "math.gain",
+            "params": {
+              "gain": "287 * 293 / V_im",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                450.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "p_intake",
+            "type": "continuous.integrator",
+            "params": {
+              "initial": 30000.0,
+              "upper": 101325.0,
+              "lower": 1000.0
+            },
+            "meta": {
+              "position": [
+                600.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "net_torque",
+            "type": "user.python_function",
+            "params": {
+              "code": "def f(t, m_cyl, omega, load):\n    \"\"\"Net crankshaft torque [N·m]. p = [eta_th, displacement m^3]\"\"\"\n    q_lhv, afr = 44e6, 14.7\n    omega = max(omega, 10.0)\n    combustion = p[0] * q_lhv * (m_cyl / afr) / omega\n    friction = (10.0 + 0.02 * omega) * p[1] / 1.6e-3  # friction grows with engine size\n    return combustion - friction - load\n",
+              "num_inputs": 3,
+              "num_outputs": 1,
+              "output_width": -1,
+              "parameters": "[eta_th, displacement]"
+            },
+            "meta": {
+              "position": [
+                600.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "1/J",
+            "type": "math.gain",
+            "params": {
+              "gain": "1 / J",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                750.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "omega",
+            "type": "continuous.integrator",
+            "params": {
+              "initial": 83.7758040957278,
+              "upper": "inf",
+              "lower": 0.0
+            },
+            "meta": {
+              "position": [
+                900.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "to_rpm",
+            "type": "math.gain",
+            "params": {
+              "gain": 9.549296585513721,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                1050.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "rpm",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                1200.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "p_im",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            },
+            "meta": {
+              "position": [
+                900.0,
+                0.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "throttle_deg",
+            "src_port": 0,
+            "dst": "throttle_flow",
+            "dst_port": 0
+          },
+          {
+            "src": "p_intake",
+            "src_port": 0,
+            "dst": "throttle_flow",
+            "dst_port": 1
+          },
+          {
+            "src": "p_intake",
+            "src_port": 0,
+            "dst": "cylinder_flow",
+            "dst_port": 0
+          },
+          {
+            "src": "omega",
+            "src_port": 0,
+            "dst": "cylinder_flow",
+            "dst_port": 1
+          },
+          {
+            "src": "throttle_flow",
+            "src_port": 0,
+            "dst": "manifold_net_flow",
+            "dst_port": 0
+          },
+          {
+            "src": "cylinder_flow",
+            "src_port": 0,
+            "dst": "manifold_net_flow",
+            "dst_port": 1
+          },
+          {
+            "src": "manifold_net_flow",
+            "src_port": 0,
+            "dst": "R_T_over_V",
+            "dst_port": 0
+          },
+          {
+            "src": "R_T_over_V",
+            "src_port": 0,
+            "dst": "p_intake",
+            "dst_port": 0
+          },
+          {
+            "src": "cylinder_flow",
+            "src_port": 0,
+            "dst": "net_torque",
+            "dst_port": 0
+          },
+          {
+            "src": "omega",
+            "src_port": 0,
+            "dst": "net_torque",
+            "dst_port": 1
+          },
+          {
+            "src": "load_torque",
+            "src_port": 0,
+            "dst": "net_torque",
+            "dst_port": 2
+          },
+          {
+            "src": "net_torque",
+            "src_port": 0,
+            "dst": "1/J",
+            "dst_port": 0
+          },
+          {
+            "src": "1/J",
+            "src_port": 0,
+            "dst": "omega",
+            "dst_port": 0
+          },
+          {
+            "src": "omega",
+            "src_port": 0,
+            "dst": "to_rpm",
+            "dst_port": 0
+          },
+          {
+            "src": "to_rpm",
+            "src_port": 0,
+            "dst": "rpm",
+            "dst_port": 0
+          },
+          {
+            "src": "p_intake",
+            "src_port": 0,
+            "dst": "p_im",
+            "dst_port": 0
+          }
+        ]
+      },
+      "mask": {
+        "variables": [
+          {
+            "name": "displacement",
+            "value": 0.002,
+            "description": "Swept volume of all cylinders",
+            "unit": "m³"
+          },
+          {
+            "name": "V_im",
+            "value": 0.002,
+            "description": "Intake manifold volume",
+            "unit": "m³"
+          },
+          {
+            "name": "J",
+            "value": 0.2,
+            "description": "Crankshaft and flywheel inertia",
+            "unit": "kg·m²"
+          },
+          {
+            "name": "eta_vol",
+            "value": 0.85,
+            "description": "Volumetric efficiency",
+            "unit": "-"
+          },
+          {
+            "name": "eta_th",
+            "value": 0.3,
+            "description": "Thermal efficiency",
+            "unit": "-"
+          },
+          {
+            "name": "throttle_area",
+            "value": 0.0028,
+            "description": "Throttle plate area when fully open",
+            "unit": "m²"
+          }
+        ],
+        "icon": "Mean-value\\nengine",
+        "description": "Four-stroke petrol engine (mean-value model): throttle [°], load [N·m] → rpm, p_im [Pa]"
+      },
+      "link": {
+        "library": "library/engine_parts.nervlib",
+        "component": "mean_value_engine"
+      }
+    },
+    {
+      "name": "p_im_2_0l",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          1020.0,
+          380.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "throttle_cmd",
+      "src_port": 0,
+      "dst": "actuator_1_6l",
+      "dst_port": 0
+    },
+    {
+      "src": "actuator_1_6l",
+      "src_port": 0,
+      "dst": "engine_1_6l",
+      "dst_port": 0
+    },
+    {
+      "src": "load",
+      "src_port": 0,
+      "dst": "engine_1_6l",
+      "dst_port": 1
+    },
+    {
+      "src": "engine_1_6l",
+      "src_port": 0,
+      "dst": "rpm_scope",
+      "dst_port": 0
+    },
+    {
+      "src": "engine_1_6l",
+      "src_port": 1,
+      "dst": "p_im_1_6l",
+      "dst_port": 0
+    },
+    {
+      "src": "throttle_cmd",
+      "src_port": 0,
+      "dst": "actuator_2_0l",
+      "dst_port": 0
+    },
+    {
+      "src": "actuator_2_0l",
+      "src_port": 0,
+      "dst": "engine_2_0l",
+      "dst_port": 0
+    },
+    {
+      "src": "load",
+      "src_port": 0,
+      "dst": "engine_2_0l",
+      "dst_port": 1
+    },
+    {
+      "src": "engine_2_0l",
+      "src_port": 0,
+      "dst": "rpm_scope",
+      "dst_port": 1
+    },
+    {
+      "src": "engine_2_0l",
+      "src_port": 1,
+      "dst": "p_im_2_0l",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "both engines settle after the throttle step",
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "engine_1_6l/to_rpm",
+          "lower": 500.0,
+          "upper": 4000.0,
+          "t_from": 1.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "engine_2_0l/to_rpm",
+          "lower": 500.0,
+          "upper": 4000.0,
+          "t_from": 1.0
+        }
+      ]
+    }
+  ]
+}

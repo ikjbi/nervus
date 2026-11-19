@@ -30,6 +30,10 @@ class PythonFunction(Block):
     output (a tuple if there are several). Values may be scalars or arrays. ``np`` (NumPy) and ``math`` are
     available.
 
+    *parameters* is a vector of values the code reads as ``p[0]``, ``p[1]``, ... Like any numeric parameter it
+    can be an expression of workspace or mask variables, e.g. ``[eta_vol, displacement]``, so the same code can
+    be reused with different values (and calibrated).
+
     The function must be *stateless*: its output may only depend on ``t`` and the inputs. Use Unit Delay or
     Integrator blocks for memory.
 
@@ -52,13 +56,15 @@ class PythonFunction(Block):
             "Width of each output (-1 = same as input 0, or 1)",
             min=-1,
         ),
+        Param("parameters", [], ParamKind.ARRAY, "Values available in the code as p[0], p[1], ..."),
     )
 
     def validate_params(self) -> None:
         self._fn = self._compile()
 
     def _compile(self) -> Callable[..., Any]:
-        namespace: dict[str, Any] = {"np": np, "math": math}
+        p = np.asarray(self.params.get("parameters", []), dtype=float).ravel()
+        namespace: dict[str, Any] = {"np": np, "math": math, "p": p}
         try:
             exec(
                 compile(self.params["code"], f"<{self.name or 'PythonFunction'}>", "exec"),
