@@ -172,15 +172,18 @@ def build() -> Diagram:
             "air_fuel_ratio": (1240, 200),
             "lambda_cyl": (1400, 200),
             "lambda": (1560, 120),
-            "exhaust_sample": (0, 560),
-            "exhaust_delay": (120, 560),
-            "deviation": (240, 560),
-            "sensor_lag": (360, 560),
-            "lambda_sensor": (480, 560),
-            "STFT": (920, 520),
-            "LTFT": (920, 620),
+            # The exhaust path runs back from the cylinders to the ECU, right to left (flipped blocks).
+            "exhaust_sample": (1400, 600),
+            "exhaust_delay": (1240, 600),
+            "deviation": (1080, 600),
+            "sensor_lag": (920, 600),
+            "lambda_sensor": (760, 600),
+            "STFT": (920, 470),
+            "LTFT": (1080, 470),
         },
     )
+    for name in ("exhaust_sample", "exhaust_delay", "deviation", "sensor_lag", "lambda_sensor"):
+        d.block(name).meta["flipped"] = True
     d.tests = [
         TestCase(
             "vacuum leak learned by the LTFT",

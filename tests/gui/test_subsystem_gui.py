@@ -182,3 +182,36 @@ def test_context_menus(window) -> None:  # type: ignore[no-untyped-def]
     menu.actions()[0].trigger()
     assert not window.diagram_model.diagram.connections
     assert any("Layout" in t for t in texts(window.context_menu(None)))
+
+
+def test_flip_blocks(window) -> None:  # type: ignore[no-untyped-def]
+    ed = window.editor
+    c = ed.add_block("sources.constant", QPointF(0, 0))
+    g = ed.add_block("math.gain", QPointF(300, 0))
+    ed.connect_ports(c, 0, g, 0)
+    item = window.scene._item(g)
+    left_in = item.in_ports[0].scene_anchor().x()
+    assert ed.flip_blocks([g])
+    assert g.meta["flipped"] is True
+    item = window.scene._item(g)
+    assert item.in_ports[0].scene_anchor().x() > left_in + item.size[0] - 1  # the input moved to the right side
+    wire = next(iter(window.scene.wires.values()))
+    assert wire.path().elementCount() >= 3  # routed around to the right side
+    ed.undo_stack.undo()
+    assert "flipped" not in g.meta
+    from nervus.io import dumps, loads
+
+    ed.undo_stack.redo()
+    assert loads(dumps(window.diagram_model.root)).block(g.name).meta["flipped"] is True
+
+
+def test_shortcuts_are_unique(window) -> None:  # type: ignore[no-untyped-def]
+    from PySide6.QtGui import QAction
+
+    seen: dict[str, str] = {}
+    for action in window.findChildren(QAction):
+        for seq in action.shortcuts():
+            key = seq.toString()
+            if key:
+                assert key not in seen or seen[key] == action.text(), f"{key}: {seen.get(key)} and {action.text()}"
+                seen[key] = action.text()

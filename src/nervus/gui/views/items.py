@@ -25,7 +25,7 @@ def snap(v: float) -> float:
 
 
 class PortItem(QGraphicsItem):
-    """A port on the side of a block. Inputs are on the left, outputs on the right."""
+    """A port on the side of a block. Inputs are on the left, outputs on the right (swapped when flipped)."""
 
     def __init__(self, block_item: BlockItem, is_input: bool, index: int) -> None:
         super().__init__(block_item)
@@ -41,6 +41,11 @@ class PortItem(QGraphicsItem):
     def block(self) -> Block:
         return self.block_item.block
 
+    @property
+    def direction(self) -> int:
+        """Direction the signal flows through this port: +1 = to the right, -1 = to the left (flipped block)."""
+        return -1 if self.block_item.flipped else 1
+
     def boundingRect(self) -> QRectF:
         s = PORT_SIZE + 6  # generous hit area
         return QRectF(-s / 2, -s / 2, s, s)
@@ -54,6 +59,8 @@ class PortItem(QGraphicsItem):
             pts = [QPointF(-h, -h), QPointF(h * 0.6, 0), QPointF(-h, h)]
         else:
             pts = [QPointF(-h * 0.6, -h), QPointF(h, 0), QPointF(-h * 0.6, h)]
+        if self.direction < 0:
+            pts = [QPointF(-p.x(), p.y()) for p in pts]
         color = t.color("accent") if self.hover else t.color("port")
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(color)
@@ -69,7 +76,8 @@ class PortItem(QGraphicsItem):
 
     def scene_anchor(self) -> QPointF:
         """Where wires attach, in scene coordinates."""
-        return self.mapToScene(QPointF(PORT_SIZE / 2 if not self.is_input else -PORT_SIZE / 2, 0))
+        outward = (-1 if self.is_input else 1) * self.direction
+        return self.mapToScene(QPointF(outward * PORT_SIZE / 2, 0))
 
 
 class BlockItem(QGraphicsItem):
@@ -116,7 +124,10 @@ class BlockItem(QGraphicsItem):
                 p.scene().removeItem(p)
         self.in_ports = [PortItem(self, True, i) for i in range(self.block.num_inputs())]
         self.out_ports = [PortItem(self, False, i) for i in range(self.block.num_outputs())]
-        for ports, x in ((self.in_ports, -PORT_SIZE / 2), (self.out_ports, self._w + PORT_SIZE / 2)):
+        left, right = -PORT_SIZE / 2, self._w + PORT_SIZE / 2
+        if self.flipped:
+            left, right = right, left
+        for ports, x in ((self.in_ports, left), (self.out_ports, right)):
             for i, p in enumerate(ports):
                 p.setPos(x, self._h * (i + 1) / (len(ports) + 1))
         self.setToolTip(f"{self.block.label} ({self.block.type_id})\nDouble-click to edit · F1 for help")
@@ -125,6 +136,11 @@ class BlockItem(QGraphicsItem):
     def boundingRect(self) -> QRectF:
         # Room for the name label under the block.
         return QRectF(-PORT_SIZE, -2, self._w + 2 * PORT_SIZE, self._h + 22)
+
+    @property
+    def flipped(self) -> bool:
+        """Flipped blocks have their inputs on the right and outputs on the left (for feedback paths)."""
+        return bool(self.block.meta.get("flipped", False))
 
     def body_rect(self) -> QRectF:
         return QRectF(0, 0, self._w, self._h)
@@ -174,9 +190,12 @@ class BlockItem(QGraphicsItem):
         painter.setFont(small)
         painter.setPen(t.color("text_secondary"))
         sub = self.block
+        left, right = Qt.AlignmentFlag.AlignLeft, Qt.AlignmentFlag.AlignRight
+        if self.flipped:
+            left, right = right, left
         for ports, items, align, dx in (
-            (sub.inports(), self.in_ports, Qt.AlignmentFlag.AlignLeft, 6),  # type: ignore[attr-defined]
-            (sub.outports(), self.out_ports, Qt.AlignmentFlag.AlignRight, -6),  # type: ignore[attr-defined]
+            (sub.inports(), self.in_ports, left, 6 if not self.flipped else -6),  # type: ignore[attr-defined]
+            (sub.outports(), self.out_ports, right, -6 if not self.flipped else 6),  # type: ignore[attr-defined]
         ):
             for port_block, item in zip(ports, items, strict=False):
                 y = item.pos().y()
@@ -265,7 +284,7 @@ class WireItem(QGraphicsPathItem):
         self.update_path()
 
     def update_path(self) -> None:
-        self.setPath(route(self.src.scene_anchor(), self.dst.scene_anchor()))
+        self.setPath(route(self.src.scene_anchor(), self.dst.scene_anchor(), self.src.direction, self.dst.direction))
 
     def boundingRect(self) -> QRectF:
         r = super().boundingRect()
@@ -321,10 +340,28 @@ class WireItem(QGraphicsPathItem):
         self.update()
 
 
-def route(a: QPointF, b: QPointF) -> QPainterPath:
-    """Orthogonal route from an output anchor ``a`` to an input anchor ``b``."""
-    path = QPainterPath(a)
+def route(a: QPointF, b: QPointF, a_dir: int = 1, b_dir: int = 1) -> QPainterPath:
+    """Orthogonal route from an output anchor ``a`` to an input anchor ``b``.
+
+    ``a_dir``/``b_dir`` are the signal directions at the ports (+1 = to the right, -1 = flipped block).
+    """
     stub = 10.0
+    if a_dir < 0 and b_dir < 0:  # both flipped: route the mirror image
+        mirrored = route(QPointF(-a.x(), a.y()), QPointF(-b.x(), b.y()))
+        path = QPainterPath(a)
+        for k in range(1, mirrored.elementCount()):
+            el = mirrored.elementAt(k)
+            path.lineTo(-el.x, el.y)
+        return path
+    path = QPainterPath(a)
+    if a_dir != b_dir:
+        # Out of one side and into the same side of the other block (typical for a flipped feedback block):
+        # go past both, then turn back.
+        x = max(a.x(), b.x()) + 2 * stub if a_dir > 0 else min(a.x(), b.x()) - 2 * stub
+        path.lineTo(x, a.y())
+        path.lineTo(x, b.y())
+        path.lineTo(b)
+        return path
     if b.x() - a.x() >= 2 * stub:
         mx = snap((a.x() + b.x()) / 2)
         path.lineTo(mx, a.y())

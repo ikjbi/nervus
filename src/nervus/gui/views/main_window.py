@@ -202,6 +202,9 @@ class MainWindow(QMainWindow):
             None,
             "Add the selected subsystem to a component library",
         )
+        self.act_flip = self._action(
+            "&Flip Block", self.flip_selection, "Ctrl+Shift+F", "Swap the inputs and outputs sides (for feedback paths)"
+        )
         self.act_types = self._action("Show &Data Types", self.refresh_types, None, "Label wires with their data type")
         self.act_types.setCheckable(True)
         self.act_up = self._action("&Up to Parent", self.diagram_model.up, "Ctrl+Up", "Leave this subsystem")
@@ -234,7 +237,7 @@ class MainWindow(QMainWindow):
         self.act_advisor = self._action(
             "Model &Advisor…", self.show_advisor, "Ctrl+Shift+A", "Check the model for risky modelling practices"
         )
-        self.act_help = self._action("Nervus &Help", self.show_help, K.HelpContents, "Open the help", "help")
+        self.act_help = self._action("Nervus &Help", self.show_help, "Ctrl+?", "Open the help", "help")
         self.act_block_help = self._action("Help for Selected &Block", self.show_block_help, Qt.Key.Key_F1)
         self.act_about = self._action("&About Nervus", self.about)
 
@@ -257,6 +260,7 @@ class MainWindow(QMainWindow):
         m.addAction(self.act_select_all)
         m.addSeparator()
         m.addAction(self.act_create_subsystem)
+        m.addAction(self.act_flip)
         m.addAction(self.act_save_to_library)
         m.addAction(self.act_layout)
         m = mb.addMenu("&View")
@@ -809,6 +813,7 @@ class MainWindow(QMainWindow):
                     menu.addAction(self.act_codegen)
             menu.addSeparator()
             menu.addActions([self.act_cut, self.act_copy, self.act_delete])
+            menu.addAction(self.act_flip)
             menu.addAction(self.act_create_subsystem)
         elif target is not None:  # a wire
             menu.addAction("Delete Wire", lambda: self.editor.delete([], [target]))  # type: ignore[list-item]
@@ -820,6 +825,9 @@ class MainWindow(QMainWindow):
             if self.diagram_model.diagram.parent is not None:
                 menu.addAction(self.act_up)
         return menu
+
+    def flip_selection(self) -> None:
+        self.editor.flip_blocks(self.scene.selected_blocks())
 
     def rename_block(self, block: Block) -> None:
         name, ok = QInputDialog.getText(self, "Rename block", "New name:", text=block.name)

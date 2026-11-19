@@ -241,7 +241,8 @@ class DiagramScene(QGraphicsScene):
         if self._temp_wire is not None and self._wire_from is not None:
             a = self._wire_from.scene_anchor()
             b = event.scenePos()
-            path = route(a, b) if not self._wire_from.is_input else route(b, a)
+            d = self._wire_from.direction
+            path = route(a, b, d, 1) if not self._wire_from.is_input else route(b, a, 1, d)
             self._temp_wire.setPath(path)
             event.accept()
             return

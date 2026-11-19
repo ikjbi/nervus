@@ -20,6 +20,7 @@ from nervus.gui.controllers.commands import (
     Command,
     ConnectCommand,
     CreateSubsystemCommand,
+    FlipBlocksCommand,
     MoveBlocksCommand,
     RemoveCommand,
     RenameCommand,
@@ -47,6 +48,7 @@ _DIAGRAM_EDITS = (
     SetParamsCommand,
     MoveBlocksCommand,
     CreateSubsystemCommand,
+    FlipBlocksCommand,
 )
 """Commands that change the shown diagram (refused inside linked library subsystems)."""
 
@@ -110,6 +112,10 @@ class EditorController(QObject):
     def delete(self, blocks: list[Block], connections: list[Connection]) -> None:
         if blocks or connections:
             self._push(RemoveCommand(self.model, blocks, connections))
+
+    def flip_blocks(self, blocks: list[Block]) -> bool:
+        """Flip blocks left-right (undoable)."""
+        return bool(blocks) and self._push(FlipBlocksCommand(self.model, blocks))
 
     def move_blocks(self, moves: list[tuple[Block, QPointF, QPointF]]) -> None:
         moves = [(b, o, n) for b, o, n in moves if o != n]

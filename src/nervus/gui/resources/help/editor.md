@@ -44,6 +44,15 @@ Right-click a block, a wire or the empty canvas for the actions that fit it:
 Right-clicking a block that is part of a selection keeps the selection, so *Delete* or *Create Subsystem*
 act on all selected blocks.
 
+## Flipping blocks for feedback paths
+
+Feedback paths, such as a sensor signal going back to the controller, are easier to read when they run from
+right to left. Select blocks and press **Ctrl+Shift+F** (**Edit → Flip Block**, or right-click → *Flip Block*):
+their inputs move to the right side and their outputs to the left. Flipping only changes the drawing, and
+it is saved with the model.
+
+In Python, set `block.meta["flipped"] = True`.
+
 ## Editing parameters
 
 Numeric fields accept:

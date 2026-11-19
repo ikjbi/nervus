@@ -147,11 +147,12 @@ def build_vehicle() -> Subsystem:
             "1/m": (450, 0),
             "speed": (600, 0),
             "v_out": (900, 0),
-            "v_squared": (300, 150),
+            # Road loads are fed back from the speed, right to left (flipped blocks).
+            "v_squared": (600, 150),
             "F_aero": (450, 150),
-            "v_x10": (150, 260),
-            "rolling_onset": (300, 260),
-            "F_roll": (450, 260),
+            "v_x10": (600, 260),
+            "rolling_onset": (450, 260),
+            "F_roll": (300, 260),
             "distance": (750, 120),
             "distance_m": (900, 120),
             "wheel_power": (450, 400),
@@ -161,6 +162,8 @@ def build_vehicle() -> Subsystem:
             "power_W": (900, 500),
         },
     )
+    for name in ("v_squared", "F_aero", "v_x10", "rolling_onset", "F_roll"):
+        d.block(name).meta["flipped"] = True
     return Subsystem(system=d)
 
 

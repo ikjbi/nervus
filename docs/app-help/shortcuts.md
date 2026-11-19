@@ -11,6 +11,7 @@ On macOS use ⌘ where *Ctrl* is listed.
 | Delete selection | Delete or Backspace |
 | Select all | Ctrl+A |
 | Create subsystem from selection | Ctrl+G |
+| Flip the selected blocks | Ctrl+Shift+F |
 | Auto layout | Ctrl+Shift+L |
 | Up to the parent system | Ctrl+Up |
 | Run simulation | Ctrl+R or F5 |

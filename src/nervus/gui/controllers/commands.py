@@ -411,3 +411,25 @@ class SetLinkCommand(Command):
 
     def revert(self) -> None:
         self._apply(self.old)
+
+
+class FlipBlocksCommand(Command):
+    """Flip blocks left-right (inputs on the right, outputs on the left), e.g. for feedback paths."""
+
+    def __init__(self, model: DiagramModel, blocks: list[Block]) -> None:
+        super().__init__(f"Flip {len(blocks)} block{'s' if len(blocks) != 1 else ''}")
+        self.model, self.blocks = model, list(blocks)
+
+    def _toggle(self) -> None:
+        for b in self.blocks:
+            if b.meta.get("flipped"):
+                b.meta.pop("flipped")
+            else:
+                b.meta["flipped"] = True
+            self.model.paramsChanged.emit(b)
+
+    def do(self) -> None:
+        self._toggle()
+
+    def revert(self) -> None:
+        self._toggle()

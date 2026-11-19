@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- On Linux and Windows, Help and Help for Selected Block were both on F1, so F1 did nothing; Help is now Ctrl+?.
 - Test checks failed to notice NaN/inf: a bounds check passed on a diverged signal. Checks now fail.
 - `generate_c` for an atomic subsystem ignored its own sample time.
 - Out blocks could be scheduled before the block driving them, so generated C output last step's value.
@@ -16,6 +17,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Flip blocks (Ctrl+Shift+F): inputs on the right and outputs on the left, for feedback paths; saved with the model.
+  The lambda and drive-cycle examples use it.
 - Example and tutorial: a car with a driver model on the ECE-15 urban drive cycle (driver and vehicle
   subsystems, road loads, wheel energy, effect of mass).
 - Right-click menus on blocks, subsystems, wires and the canvas (rename, open, mask, variants, library, code,
