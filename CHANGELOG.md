@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Example `circuits.py` and tutorial: rectifier (from a netlist), relay driver with freewheeling diode, buck
+  converter, Sallen-Key filter.
 - SPICE-like electronics: Shockley diode (Zener, LED), BJT, MOSFET and op-amp solved with Newton-Raphson
   (junction limiting), E/G controlled sources, sparse solving for big circuits, `nervus.circuit` operating
   point and DC sweep, SPICE netlist import/export (File menu, `nervus.spice`).

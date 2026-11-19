@@ -304,13 +304,21 @@ class PhysicalNetwork:
         if self.n_inputs == 0 or self.n_outputs == 0:
             self.instant_outputs = []
             return
+        # Many states and inputs over a wide range: in a circuit with transistors or switches an input may only
+        # matter once it is large enough to turn a device on.
         rng = np.random.default_rng(0)
-        x = self.x0 + rng.normal(0.0, 0.5, self.x0.size)
         changed = np.zeros(self.n_outputs, dtype=bool)
-        base = self.outputs(x, np.zeros(self.n_inputs))
-        for _ in range(3):
-            y = self.outputs(x, rng.uniform(-2.0, 2.0, self.n_inputs))
-            changed |= ~np.isclose(y, base, rtol=1e-9, atol=1e-12)
+        for scale in (0.5, 5.0, 50.0):
+            for _ in range(4):
+                x = self.x0 + rng.normal(0.0, scale / 5, self.x0.size)
+                try:
+                    base = self.outputs(x, np.zeros(self.n_inputs))
+                    for amp in (1.0, scale):
+                        y = self.outputs(x, rng.uniform(-amp, amp, self.n_inputs))
+                        changed |= ~np.isclose(y, base, rtol=1e-9, atol=1e-12)
+                except SimulationError:
+                    continue  # an extreme probe that does not converge says nothing about the structure
+        self._last = None
         self.instant_outputs = [k for k in range(self.n_outputs) if changed[k]]
 
 

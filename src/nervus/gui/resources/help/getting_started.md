@@ -57,4 +57,8 @@ The `examples` folder in the repository has complete models you can open with **
 | `drive_cycle.nervus` | a car with a driver model on the ECE-15 drive cycle (tutorial) |
 | `engine_modes.nervus` | engine operating modes as a State Chart: crank, idle, run, fuel cut-off, stall |
 | `gear_shift.nervus` | gear-shift logic of an automatic gearbox on a car with a hill (tutorial) |
+| `rectifier.nervus` | half-wave rectifier with a smoothing capacitor, from a SPICE netlist (tutorial) |
+| `relay_driver.nervus` | a transistor switching a relay coil, with its freewheeling diode (tutorial) |
+| `buck_converter.nervus` | a 12 V → 5 V switching regulator (tutorial) |
+| `active_filter.nervus` | an op-amp Sallen-Key low-pass filter, 1 kHz (tutorial) |
 | `obd_ecu.nervus` | an engine ECU with trouble codes that answers OBD-II tools (`python -m nervus.obd simulate`) |

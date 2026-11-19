@@ -1,0 +1,274 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "buck_converter",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 0.005,
+    "solver": "BDF",
+    "step": null,
+    "max_step": 2e-06,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": false
+  },
+  "workspace": [],
+  "blocks": [
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "V_in",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": 12.0,
+        "controlled": false
+      },
+      "meta": {
+        "position": [
+          170.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "S1",
+      "type": "electrical.switch",
+      "params": {
+        "R_on": 0.05,
+        "G_off": 1e-08
+      },
+      "meta": {
+        "position": [
+          340.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "pwm_20kHz",
+      "type": "sources.pulse",
+      "params": {
+        "amplitude": 1.0,
+        "period": 5e-05,
+        "duty": 42.0,
+        "delay": 0.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          510.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "D1",
+      "type": "electrical.diode",
+      "params": {
+        "Vf": 0.4,
+        "R_on": 0.02,
+        "G_off": 1e-08
+      },
+      "meta": {
+        "position": [
+          680.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "L1",
+      "type": "electrical.inductor",
+      "params": {
+        "L": 0.0001,
+        "i0": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "C1",
+      "type": "electrical.capacitor",
+      "params": {
+        "C": 0.0001,
+        "v0": 0.0
+      },
+      "meta": {
+        "position": [
+          170.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "R_load",
+      "type": "electrical.resistor",
+      "params": {
+        "R": 5.0
+      },
+      "meta": {
+        "position": [
+          340.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "V(out)",
+      "type": "electrical.voltage_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          510.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          680.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "vout",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          0.0,
+          240.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "pwm_20kHz",
+      "src_port": 0,
+      "dst": "S1",
+      "dst_port": 0
+    },
+    {
+      "src": "V(out)",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "V(out)",
+      "src_port": 0,
+      "dst": "vout",
+      "dst_port": 0
+    }
+  ],
+  "links": [
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "V_in",
+      "b_port": "n"
+    },
+    {
+      "a": "V_in",
+      "a_port": "p",
+      "b": "S1",
+      "b_port": "p"
+    },
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "D1",
+      "b_port": "p"
+    },
+    {
+      "a": "S1",
+      "a_port": "n",
+      "b": "D1",
+      "b_port": "n"
+    },
+    {
+      "a": "S1",
+      "a_port": "n",
+      "b": "L1",
+      "b_port": "p"
+    },
+    {
+      "a": "L1",
+      "a_port": "n",
+      "b": "C1",
+      "b_port": "p"
+    },
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "C1",
+      "b_port": "n"
+    },
+    {
+      "a": "L1",
+      "a_port": "n",
+      "b": "R_load",
+      "b_port": "p"
+    },
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "R_load",
+      "b_port": "n"
+    },
+    {
+      "a": "L1",
+      "a_port": "n",
+      "b": "V(out)",
+      "b_port": "p"
+    },
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "V(out)",
+      "b_port": "n"
+    }
+  ],
+  "tests": [
+    {
+      "name": "about 5 V out",
+      "description": "Duty cycle 42 % of 12 V, minus the losses: the output settles near 5 V",
+      "stop_time": 0.005,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "vout",
+          "lower": 4.3,
+          "upper": 5.3,
+          "t_from": 0.003,
+          "t_to": 0.005
+        }
+      ]
+    }
+  ]
+}

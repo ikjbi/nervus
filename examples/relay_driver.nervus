@@ -1,0 +1,302 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "relay_driver",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 0.02,
+    "solver": "BDF",
+    "step": null,
+    "max_step": 2e-05,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [],
+  "blocks": [
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "battery",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": 12.0,
+        "controlled": false
+      },
+      "meta": {
+        "position": [
+          170.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "ecu_output",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": 12.0,
+        "controlled": true
+      },
+      "meta": {
+        "position": [
+          340.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "command",
+      "type": "sources.pulse",
+      "params": {
+        "amplitude": 5.0,
+        "period": 0.02,
+        "duty": 50.0,
+        "delay": 0.002,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          510.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "R_base",
+      "type": "electrical.resistor",
+      "params": {
+        "R": 2200.0
+      },
+      "meta": {
+        "position": [
+          680.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "coil_R",
+      "type": "electrical.resistor",
+      "params": {
+        "R": 80.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "coil_L",
+      "type": "electrical.inductor",
+      "params": {
+        "L": 0.1,
+        "i0": 0.0
+      },
+      "meta": {
+        "position": [
+          170.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "Q1",
+      "type": "semiconductors.bjt",
+      "params": {
+        "type": "NPN",
+        "Is": 1e-14,
+        "BF": 150.0,
+        "BR": 1.0
+      },
+      "meta": {
+        "position": [
+          340.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "D_flyback",
+      "type": "semiconductors.diode",
+      "params": {
+        "Is": 2.5e-09,
+        "N": 1.75,
+        "BV": "inf",
+        "IBV": 0.001
+      },
+      "meta": {
+        "position": [
+          510.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "V(col)",
+      "type": "electrical.voltage_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          680.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          0.0,
+          240.0
+        ]
+      }
+    },
+    {
+      "name": "collector",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          170.0,
+          240.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "command",
+      "src_port": 0,
+      "dst": "ecu_output",
+      "dst_port": 0
+    },
+    {
+      "src": "V(col)",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "V(col)",
+      "src_port": 0,
+      "dst": "collector",
+      "dst_port": 0
+    }
+  ],
+  "links": [
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "battery",
+      "b_port": "n"
+    },
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "ecu_output",
+      "b_port": "n"
+    },
+    {
+      "a": "ecu_output",
+      "a_port": "p",
+      "b": "R_base",
+      "b_port": "p"
+    },
+    {
+      "a": "battery",
+      "a_port": "p",
+      "b": "coil_R",
+      "b_port": "p"
+    },
+    {
+      "a": "coil_R",
+      "a_port": "n",
+      "b": "coil_L",
+      "b_port": "p"
+    },
+    {
+      "a": "coil_L",
+      "a_port": "n",
+      "b": "Q1",
+      "b_port": "c"
+    },
+    {
+      "a": "R_base",
+      "a_port": "n",
+      "b": "Q1",
+      "b_port": "b"
+    },
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "Q1",
+      "b_port": "e"
+    },
+    {
+      "a": "coil_L",
+      "a_port": "n",
+      "b": "D_flyback",
+      "b_port": "p"
+    },
+    {
+      "a": "battery",
+      "a_port": "p",
+      "b": "D_flyback",
+      "b_port": "n"
+    },
+    {
+      "a": "coil_L",
+      "a_port": "n",
+      "b": "V(col)",
+      "b_port": "p"
+    },
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "V(col)",
+      "b_port": "n"
+    }
+  ],
+  "tests": [
+    {
+      "name": "collector clamped by the freewheeling diode",
+      "description": "When the transistor switches off, the coil's current flows through the diode: V(col) stays below 13 V",
+      "stop_time": 0.02,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "collector",
+          "lower": -0.5,
+          "upper": 13.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "collector",
+          "lower": 0.0,
+          "upper": 0.4,
+          "t_from": 0.005,
+          "t_to": 0.011
+        }
+      ]
+    }
+  ]
+}

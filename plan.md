@@ -302,7 +302,7 @@ tests/
 - [x] Analyses: DC operating point, DC sweep, AC small-signal (Bode of a circuit), transient with switching
 - [x] Sparse matrices for circuits with hundreds of nodes; time-step control at switching events
 - [x] SPICE netlist import/export (`.cir`/`.net`: R, C, L, V, I, D, Q, M, E, G, .model, .tran, .ac, .dc)
-- [ ] Examples: rectifier with smoothing capacitor, transistor relay driver, buck converter, op-amp filter,
+- [x] Examples: rectifier with smoothing capacitor, transistor relay driver, buck converter, op-amp filter,
       battery charging; comparison with LTspice results
 
 ## Phase 21 – CAN bus networks

@@ -256,3 +256,21 @@ def test_obd_ecu_example() -> None:
     results = run_tests(d)
     assert all(r.passed for r in results), [r.summary() for r in results]
     assert [t.name for t in load(EXAMPLES / "obd_ecu.nervus").tests] == [t.name for t in d.tests]
+
+
+def test_circuit_examples() -> None:
+    import math
+
+    from nervus.analysis import linearize
+    from nervus.testing import run_tests
+
+    mod = _import("circuits")
+    for build in (mod.rectifier, mod.relay_driver, mod.buck_converter):
+        d = build()
+        results = run_tests(d)
+        assert all(r.passed for r in results), [r.summary() for r in results]
+        assert [t.name for t in load(EXAMPLES / f"{d.name}.nervus").tests] == [t.name for t in d.tests]
+    kick = simulate(mod.relay_driver(flyback=False))
+    assert 55.0 < kick["V(col)"].max() < 65.0  # clamped only by the transistor's breakdown
+    _w, mag, _ = linearize(mod.active_filter()).bode(np.array([2 * math.pi * 1000.0]))
+    assert mag[0] == pytest.approx(-3.01, abs=0.05)

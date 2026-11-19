@@ -108,5 +108,9 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   cut-off, stall), with calibratable thresholds and scenario test cases. See [State machines](statecharts.md).
 - `gear_shift.py`: the shift logic of an automatic gearbox (shift maps, a gear chart, kickdown) on a car with
   engine, gearbox and road grade. See the [tutorial](tutorials/gear-shift.md).
+- `circuits.py`: four electronic circuits as in LTspice: a rectifier read from a SPICE netlist, a relay driver
+  with and without its freewheeling diode, a buck converter and an active filter (`rectifier.nervus`,
+  `relay_driver.nervus`, `buck_converter.nervus`, `active_filter.nervus`). See the
+  [tutorial](tutorials/circuits.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

@@ -1095,6 +1095,50 @@ def diagnostic_monitor() -> plt.Figure:
     return fig
 
 
+@figure("circuits")
+def circuits() -> plt.Figure:
+    sys.path.insert(0, str(Path(__file__).parent.parent / "examples"))
+    import circuits as ex  # type: ignore[import-not-found]
+
+    from nervus.analysis import linearize
+
+    fig, ((a1, a2), (a3, a4)) = plt.subplots(2, 2, figsize=(8.6, 5.6))
+    r = simulate(ex.rectifier())
+    a1.plot(r.t * 1e3, r["V(in)"], color=C1, lw=1.5, label="V(in)")
+    a1.plot(r.t * 1e3, r["V(out)"], color=C2, lw=2, label="V(out)")
+    a1.set_title("Rectifier with smoothing capacitor", color=INK, fontsize=10)
+    a1.set_xlabel("time [ms]")
+    a1.set_ylabel("V")
+    a1.set_ylim(-11, 15)
+    a1.legend(loc="upper right", ncol=2, fontsize=8)
+    for k, (fly, color, label) in enumerate(((True, C3, "with flyback diode"), (False, C2, "without"))):
+        rr = simulate(ex.relay_driver(flyback=fly))
+        a2.plot(rr.t * 1e3, rr["V(col)"], color=color, lw=2 - k * 0.5, label=label)
+    a2.set_title("Relay driver: collector voltage", color=INK, fontsize=10)
+    a2.set_xlabel("time [ms]")
+    a2.set_ylabel("V")
+    a2.legend(loc="upper left", fontsize=8)
+    b = simulate(ex.buck_converter())
+    a3.plot(b.t * 1e3, b["V(out)"], color=C1, lw=1.5)
+    a3.axhline(0.42 * 12, color=INK, ls=":", lw=1)
+    a3.text(0.2, 0.42 * 12 + 0.25, "D · V_in = 5.04 V", color=INK, fontsize=8)
+    a3.set_title("Buck converter 12 V → 5 V (20 kHz)", color=INK, fontsize=10)
+    a3.set_xlabel("time [ms]")
+    a3.set_ylabel("V(out) [V]")
+    lin = linearize(ex.active_filter())
+    w, mag, _ = lin.bode(2 * np.pi * np.logspace(1, 5, 300))
+    a4.semilogx(w / (2 * np.pi), mag, color=C3, lw=2)
+    a4.axhline(-3, color=INK, ls=":", lw=1)
+    a4.axvline(1000, color=INK, ls=":", lw=1)
+    a4.text(1100, -10, "−3 dB at 1 kHz", color=INK, fontsize=8)
+    a4.set_title("Sallen-Key low-pass: Bode magnitude", color=INK, fontsize=10)
+    a4.set_xlabel("frequency [Hz]")
+    a4.set_ylabel("gain [dB]")
+    a4.set_ylim(-60, 5)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

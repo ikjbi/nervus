@@ -1,0 +1,236 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "active_filter",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 0.005,
+    "solver": "auto",
+    "step": null,
+    "max_step": 1e-05,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [],
+  "blocks": [
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "V_in",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": 12.0,
+        "controlled": true
+      },
+      "meta": {
+        "position": [
+          170.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "u",
+      "type": "ports.inport",
+      "params": {
+        "port": 1,
+        "value": 0.0,
+        "sample_time": -1.0,
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          340.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "R1",
+      "type": "electrical.resistor",
+      "params": {
+        "R": 10000.0
+      },
+      "meta": {
+        "position": [
+          510.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "R2",
+      "type": "electrical.resistor",
+      "params": {
+        "R": 10000.0
+      },
+      "meta": {
+        "position": [
+          680.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "C1",
+      "type": "electrical.capacitor",
+      "params": {
+        "C": 2.2507907903927653e-08,
+        "v0": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "C2",
+      "type": "electrical.capacitor",
+      "params": {
+        "C": 1.1253953951963826e-08,
+        "v0": 0.0
+      },
+      "meta": {
+        "position": [
+          170.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "U1",
+      "type": "semiconductors.opamp",
+      "params": {
+        "A": 100000.0,
+        "Vpos": 12.0,
+        "Vneg": -12.0
+      },
+      "meta": {
+        "position": [
+          340.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "V(out)",
+      "type": "electrical.voltage_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          510.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "y",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          680.0,
+          120.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "u",
+      "src_port": 0,
+      "dst": "V_in",
+      "dst_port": 0
+    },
+    {
+      "src": "V(out)",
+      "src_port": 0,
+      "dst": "y",
+      "dst_port": 0
+    }
+  ],
+  "links": [
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "V_in",
+      "b_port": "n"
+    },
+    {
+      "a": "V_in",
+      "a_port": "p",
+      "b": "R1",
+      "b_port": "p"
+    },
+    {
+      "a": "R1",
+      "a_port": "n",
+      "b": "R2",
+      "b_port": "p"
+    },
+    {
+      "a": "R1",
+      "a_port": "n",
+      "b": "C1",
+      "b_port": "p"
+    },
+    {
+      "a": "R2",
+      "a_port": "n",
+      "b": "C2",
+      "b_port": "p"
+    },
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "C2",
+      "b_port": "n"
+    },
+    {
+      "a": "R2",
+      "a_port": "n",
+      "b": "U1",
+      "b_port": "plus"
+    },
+    {
+      "a": "C1",
+      "a_port": "n",
+      "b": "U1",
+      "b_port": "minus"
+    },
+    {
+      "a": "C1",
+      "a_port": "n",
+      "b": "U1",
+      "b_port": "out"
+    },
+    {
+      "a": "C1",
+      "a_port": "n",
+      "b": "V(out)",
+      "b_port": "p"
+    },
+    {
+      "a": "gnd",
+      "a_port": "p",
+      "b": "V(out)",
+      "b_port": "n"
+    }
+  ],
+  "tests": []
+}
