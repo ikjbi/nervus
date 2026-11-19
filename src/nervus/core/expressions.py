@@ -165,6 +165,12 @@ def parse_value(text: str, names: Mapping[str, Any] | None = None) -> Any:
         raise ValueError("division by zero") from exc
 
 
+def _nested(value: Any) -> str:
+    if isinstance(value, list):
+        return "[" + ", ".join(_nested(x) for x in value) + "]"
+    return format_value(value)
+
+
 def format_value(value: Any) -> str:
     """Format a parameter value for display/editing, so that ``parse_value(format_value(v)) == v``."""
 
@@ -175,6 +181,8 @@ def format_value(value: Any) -> str:
             return "inf" if value > 0 else "-inf"
         return repr(value) if not value.is_integer() else str(value)
     if isinstance(value, list):
+        if value and all(isinstance(r, list) and r and isinstance(r[0], list) for r in value):  # 3-D and more
+            return "[" + ", ".join(_nested(r) for r in value) + "]"
         if value and all(isinstance(r, list) for r in value):
             return "[" + "; ".join(" ".join(format_value(x) for x in r) for r in value) + "]"
         return "[" + ", ".join(format_value(x) for x in value) + "]"

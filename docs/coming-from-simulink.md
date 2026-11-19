@@ -58,18 +58,18 @@ maps Simulink names to Nervus names.
 | Constant, Step, Ramp, Sine Wave, Pulse Generator, Clock | same names | Sine frequency in rad/s, as in Simulink |
 | From Workspace | From Workspace | arrays or a CSV file |
 | Gain, Sum, Product, Abs, Saturation, Math Function | same names | Sum signs as `"+-"`, Product ops as `"*/"` |
-| Integrator, Derivative, Transfer Fcn, State-Space | same names | Integrator: limits and external reset; Derivative is filtered (see its help) |
+| Integrator, Derivative, Transfer Fcn, State-Space | same names | Integrator: limits, external reset, x0 input, saturation port; Derivative is filtered (see its help) |
 | Unit Delay, Zero-Order Hold, Discrete-Time Integrator, Discrete Transfer Fcn | same names | Discrete-Time Integrator has an external reset |
 | PID Controller (continuous/discrete) | PID Controller, Discrete PID Controller | parallel form, filter coefficient N, anti-windup |
 | Scope, To Workspace, Terminator, Stop Simulation, Assertion | same names | |
 | Mux, Demux, Switch | same names | Switch control input is the middle port |
 | 1-D / 2-D Lookup Table | 1-D Lookup Table, 2-D Lookup Table | interpolation `linear`/`nearest`/`flat`; extrapolation `clip`/`linear` |
-| Prelookup, Interpolation Using Prelookup | Prelookup, Interpolation using Prelookup | 1-D and 2-D tables over shared axes |
+| Prelookup, Interpolation Using Prelookup | Prelookup, Interpolation using Prelookup | 1-D to 4-D tables over shared axes (n-D lookup) |
 | Relational Operator, Logical Operator, Compare To Constant | same names | booleans are 1.0 / 0.0 |
 | Relay, Dead Zone, Rate Limiter, Quantizer | same names | Relay and Rate Limiter run at a discrete rate |
 | Delay / Integer Delay, Counter Limited, Detect Rise/Fall | Integer Delay, Counter, Edge Detect | |
 | Discrete Filter (first order), Moving Average, debouncing | Discrete Filter (PT1), Moving Average, Debounce | |
-| MinMax, Bias, Ground, Data Type Conversion | same names | |
+| MinMax, Bias, Ground, Data Type Conversion, IC | same names (IC: Initial Condition) | |
 
 ## Differences
 

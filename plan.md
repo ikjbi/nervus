@@ -149,7 +149,7 @@ tests/
       Debounce (signal must hold for N samples), Discrete Filter (first-order low-pass), Moving Average
 - [x] Ground, MinMax, Bias
 - [x] Data Type Conversion; Prelookup + Interpolation using Prelookup (1-D and 2-D, with C code)
-- [ ] Initial Condition block; lookup tables with more than 2 dimensions
+- [x] Initial Condition block; lookup tables with more than 2 dimensions (Interpolation using Prelookup, up to 4-D)
 - [x] Figures, equations and help for every new block
 
 ## Phase 9 – Hierarchy: subsystems, masks, conditional execution, variants
@@ -202,7 +202,7 @@ tests/
       limits, PID limits/clamping), direction-aware events and a chattering (Zeno) guard
 - [x] Discrete-Time Integrator external reset (rising/falling/either/level), with C code
 - [x] Continuous Integrator external reset (rising/falling/either/level, exact with zero crossings, solver restart)
-- [ ] Integrator saturation output port and external initial condition
+- [x] Integrator saturation output port and external initial condition
 - [ ] Algebraic loop solver (optional), with warnings
 - [x] Clamped continuous PID at its limit: sliding mode with a boundary layer (it chattered, or stayed clamped too
       long); blocks are told when the Zeno guard switches them to `sliding`; no derivative-filter dynamics with D = 0

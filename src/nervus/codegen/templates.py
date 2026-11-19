@@ -324,6 +324,21 @@ def _unit_delay(e: Emitter) -> BlockCode:
     return BlockCode(out, upd)
 
 
+@template("routing.initial_condition")
+def _initial_condition(e: Emitter) -> BlockCode:
+    value = np.broadcast_to(np.asarray(e.block.params["value"], dtype=float).ravel(), (e.w(),))
+    first = e.state("first", [1.0], "1 until the first step has run")
+    vals = [c_float(float(v)) for v in value]
+    out = [
+        f"if ({first}[0] != 0.0) {{",
+        *[f"    {e.y(0, str(k))} = {v};" for k, v in enumerate(vals)],
+        "} else {",
+        *[f"    {x}" for x in e.each(e.w(), lambda ix: [f"{e.y(0, ix)} = {e.u(0, ix)};"])],
+        "}",
+    ]
+    return BlockCode(out, [f"{first}[0] = 0.0;"])
+
+
 @template("discrete.rate_transition")
 def _rate_transition(e: Emitter) -> BlockCode:
     if e.block.params["direction"] == "fast_to_slow":
@@ -595,42 +610,45 @@ def _prelookup(e: Emitter) -> BlockCode:
 def _interpolation(e: Emitter) -> BlockCode:
     tab_arr = e.block._table()  # type: ignore[attr-defined]
     tab = e.param("table", tab_arr.ravel(), typed=True)  # row-major
+    shape = tab_arr.shape
+    n = len(shape)
+    strides = [int(np.prod(shape[d + 1 :])) for d in range(n)]
 
-    def index(port: int, ix: str, n: int) -> str:
+    def index(port: int, ix: str, size: int) -> str:
         # The index comes from a Prelookup (an integer stored as real_T); clamp it like the simulation does.
-        return f"(uint32_T)fmin(fmax({e.u(port, ix)}, 0.0), {float(n - 2)})"
+        return f"(uint32_T)fmin(fmax({e.u(port, ix)}, 0.0), {float(size - 2)})"
 
-    if tab_arr.ndim == 1:
-        n = tab_arr.size
+    if n == 1:
 
         def body1(ix: str) -> list[str]:
             return [
                 "{",
-                f"    uint32_T k = {index(0, ix, n)};",
+                f"    uint32_T k = {index(0, ix, shape[0])};",
                 f"    real_T f = {e.u(1, ix)};",
                 f"    {e.y(0, ix)} = {e.at(tab, 'k')} + f * ({e.at(tab, 'k + 1u')} - {e.at(tab, 'k')});",
                 "}",
             ]
 
         return BlockCode(e.each(e.w(), body1))
-    nr, nc = tab_arr.shape
 
-    def t(i: str, j: str) -> str:
-        return e.at(tab, f"({i}) * {nc}u + ({j})")
+    def body(ix: str) -> list[str]:
+        lines = ["{"]
+        for d in range(n):
+            lines.append(f"    uint32_T k{d + 1} = {index(2 * d, ix, shape[d])};")
+            lines.append(f"    real_T f{d + 1} = {e.u(2 * d + 1, ix)};")
+        lines.append(f"    uint32_T base = {' + '.join(f'k{d + 1} * {strides[d]}u' for d in range(n))};")
+        terms = []
+        for corner in range(1 << n):  # the same corners, weights and order as the simulation
+            ups = [(corner >> (n - 1 - d)) & 1 for d in range(n)]
+            weight = " * ".join(f"f{d + 1}" if up else f"(1.0 - f{d + 1})" for d, up in enumerate(ups))
+            offset = sum(strides[d] * up for d, up in enumerate(ups))
+            terms.append(f"{weight} * {e.at(tab, f'base + {offset}u' if offset else 'base')}")
+        lines.append(f"    {e.y(0, ix)} = {terms[0]}")
+        lines += [f"        + {t}" for t in terms[1:]]
+        lines[-1] += ";"
+        return [*lines, "}"]
 
-    def body2(ix: str) -> list[str]:
-        return [
-            "{",
-            f"    uint32_T r = {index(0, ix, nr)};",
-            f"    real_T fr = {e.u(1, ix)};",
-            f"    uint32_T c = {index(2, ix, nc)};",
-            f"    real_T fc = {e.u(3, ix)};",
-            f"    {e.y(0, ix)} = (1.0 - fr) * (1.0 - fc) * {t('r', 'c')} + (1.0 - fr) * fc * {t('r', 'c + 1u')}",
-            f"        + fr * (1.0 - fc) * {t('r + 1u', 'c')} + fr * fc * {t('r + 1u', 'c + 1u')};",
-            "}",
-        ]
-
-    return BlockCode(e.each(e.w(), body2))
+    return BlockCode(e.each(e.w(), body))
 
 
 @template("lookup.table_2d")

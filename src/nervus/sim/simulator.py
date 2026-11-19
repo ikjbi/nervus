@@ -312,6 +312,8 @@ def _simulate_compiled(
     opts = replace(base, **{k: v for k, v in overrides.items() if v is not None})
     opts.validate()
     model.reset()
+    for b in model.blocks:
+        b.t_start = opts.t_start
     model._coverage = None
     if coverage is not None:
         model.start_coverage(coverage)

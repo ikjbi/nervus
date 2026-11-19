@@ -153,3 +153,31 @@ class DataTypeConversion(_Routing):
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
         return [u[0].copy()]  # the conversion itself is applied by the simulator from output_type
+
+
+@register
+class InitialCondition(_Routing):
+    """Outputs *value* at the start of the simulation, then passes its input through:
+
+    $$ y(t_0) = \\mathrm{value}, \\qquad y(t) = u(t) \\quad \\mathrm{for}\\ t > t_0 $$
+
+    Use it to give a signal a defined value in the first step, for example a feedback signal that would
+    otherwise start at the wrong value, or a sensor value before the first measurement. In generated C the
+    block keeps a flag that is cleared after the first step.
+    """
+
+    type_id = "routing.initial_condition"
+    label = "Initial Condition"
+    category = "Signal Attributes"
+    CAN_BE_CONSTANT = False
+    PARAMS = (Param("value", 0.0, ParamKind.ARRAY, "Output at the start time"),)
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        n = np.asarray(self.params["value"]).size
+        return [n if n > 1 else in_widths[0]]
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        w = self.out_widths[0]
+        if t <= self.t_start + 1e-12 * max(1.0, abs(self.t_start)):
+            return [np.broadcast_to(np.asarray(self.params["value"], dtype=float).ravel(), (w,)).copy()]
+        return [np.broadcast_to(u[0], (w,)).copy()]

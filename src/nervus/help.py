@@ -98,7 +98,9 @@ def block_help_markdown(cls: type[Block], heading_level: int = 2) -> str:
         ports.append("no inputs")
     if cls.NUM_OUTPUTS == 0:
         ports.append("no outputs")
-    if cls.direct_feedthrough is not Block.direct_feedthrough:
+    if cls.feedthrough_ports is not Block.feedthrough_ports:
+        feed = "only some inputs (see above)"
+    elif cls.direct_feedthrough is not Block.direct_feedthrough:
         feed = "depends on parameters"
     else:
         feed = "yes" if cls.DIRECT_FEEDTHROUGH else "no"

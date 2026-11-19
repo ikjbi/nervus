@@ -89,6 +89,9 @@ class Block:
     that is what breaks algebraic loops."""
     DEFAULT_SAMPLE_TIME: ClassVar[SampleTime] = INHERITED
     """Used when the block has no ``sample_time`` parameter."""
+    CAN_BE_CONSTANT: ClassVar[bool] = True
+    """``False``: the block never becomes a constant block, even if all its inputs are constant (e.g. an Initial
+    Condition, whose output changes after the first step)."""
     LOGS_INPUTS: ClassVar[bool] = False
     TYPE_RULE: ClassVar[str] = "inherit"
     """How output data types are chosen when the block has no ``output_type`` parameter (or it is
@@ -123,6 +126,8 @@ class Block:
         self.out_widths: list[int] = []
         self.resolved_sample_time: SampleTime | None = None
         """Set by the compiler: the sample time after inheritance is resolved."""
+        self.t_start = 0.0
+        """Set by the simulator: the start time of the simulation."""
         self.sliding = False
         """Set by the simulator when the system chatters along one of this block's discontinuities (Zeno guard):
         the block may then use a smooth version of its switch."""
@@ -327,6 +332,11 @@ class Block:
     def direct_feedthrough(self) -> bool:
         """Whether outputs depend directly on inputs. Called after :meth:`configure`."""
         return self.DIRECT_FEEDTHROUGH
+
+    def feedthrough_ports(self) -> list[int]:
+        """The input ports that ``outputs`` reads directly (all of them for a direct-feedthrough block). Override
+        when only some ports feed through, e.g. an Integrator's initial-condition input but not its input."""
+        return list(range(self.num_inputs())) if self.direct_feedthrough() else []
 
     def initial_continuous_state(self) -> Array:
         return EMPTY

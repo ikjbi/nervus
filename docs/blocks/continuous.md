@@ -20,6 +20,11 @@ solver restarts from there: ``rising`` (reset goes from ≤ 0 to > 0), ``falling
 (held at *initial* while reset ≠ 0). Variable-step solvers stop exactly at the edge (zero crossing).
 Typical use: restart an integral when a mode starts, e.g. the fuel consumed since the engine started.
 
+*initial_source* ``external`` adds an input **x0** (the last port): the initial value comes from that
+signal at the start and at every reset, e.g. a temperature that starts at the measured ambient
+temperature. *saturation_port* adds a second output: +1 at the upper limit, −1 at the lower limit, 0
+in between (e.g. to tell a controller that its integral is saturated).
+
 ### Parameters
 
 | Name | Default | Unit | Description |
@@ -28,8 +33,10 @@ Typical use: restart an integral when a mode starts, e.g. the fuel consumed sinc
 | `upper` | inf |  | Upper saturation limit |
 | `lower` | -inf |  | Lower saturation limit |
 | `external_reset` | `'none'` |  | Add a reset input that sets the state back to the initial value — one of `none`, `rising`, `falling`, `either`, `level` |
+| `initial_source` | `'internal'` |  | Where the initial value comes from: the parameter, or an extra input x0 — one of `internal`, `external` |
+| `saturation_port` | `False` |  | Add an output: +1 at the upper limit, -1 at the lower |
 
-*Direct feedthrough:* no
+*Direct feedthrough:* only some inputs (see above)
 
 ---
 

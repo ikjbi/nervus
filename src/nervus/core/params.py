@@ -75,8 +75,8 @@ class Param:
             return bool(value)
         if kind is ParamKind.ARRAY:
             arr = np.array(value, dtype=np.float64)
-            if arr.ndim > 2:
-                raise ParameterError(f"parameter '{self.name}' must be a scalar, vector or matrix")
+            if arr.ndim > 4:
+                raise ParameterError(f"parameter '{self.name}' has more than 4 dimensions")
             return arr
         if kind is ParamKind.CHOICE:
             s = str(value)

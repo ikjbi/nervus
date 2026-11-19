@@ -97,18 +97,23 @@ With ``clip`` extrapolation, *f* stays in [0, 1]; with ``linear`` it continues o
 
 `lookup.interpolation` · Lookup Tables
 
-Interpolates a 1-D or 2-D *table* at the index and fraction from Prelookup blocks.
+Interpolates an n-D *table* (1 to 4 dimensions) at the index and fraction from Prelookup blocks.
 
-Inputs: ``k1, f1`` (1-D) or ``k1, f1, k2, f2`` (2-D, rows then columns). The result is the same as a
-1-D/2-D Lookup Table with linear interpolation over the same breakpoints:
+Inputs: ``k1, f1`` (1-D), ``k1, f1, k2, f2`` (2-D, rows then columns), and so on: one Prelookup per
+dimension. In 2-D the result is the same as a 2-D Lookup Table with linear interpolation over the same
+breakpoints:
 
 $$ y = (1-f_1)(1-f_2)\,T_{k_1,k_2} + (1-f_1) f_2\,T_{k_1,k_2+1} + f_1 (1-f_2)\,T_{k_1+1,k_2} + f_1 f_2\,T_{k_1+1,k_2+1} $$
+
+With more dimensions the same rule weights all $2^n$ corners of the cell around the input. ECUs use 3-D
+maps for example for a base value over speed × load, with a third axis such as coolant temperature or
+the camshaft position. A 3-D *table* is a nested list: ``table[i][j][k]``.
 
 ### Parameters
 
 | Name | Default | Unit | Description |
 |---|---|---|---|
-| `dimensions` | `1` |  | Number of table dimensions (1 or 2) |
+| `dimensions` | `1` |  | Number of table dimensions (1 to 4) |
 | `table` | `[0.0, 1.0, 4.0]` |  | Table values (1-D: one per breakpoint; 2-D: rows × columns) |
 | `output_type` | `'double'` |  | Output data type: inherit, double, single, boolean, int8…uint32, fixdt(signed, bits, fraction) |
 

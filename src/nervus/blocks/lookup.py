@@ -213,31 +213,39 @@ class Prelookup(Block):
 
 @register
 class Interpolation(Block):
-    """Interpolates a 1-D or 2-D *table* at the index and fraction from Prelookup blocks.
+    """Interpolates an n-D *table* (1 to 4 dimensions) at the index and fraction from Prelookup blocks.
 
-    Inputs: ``k1, f1`` (1-D) or ``k1, f1, k2, f2`` (2-D, rows then columns). The result is the same as a
-    1-D/2-D Lookup Table with linear interpolation over the same breakpoints:
+    Inputs: ``k1, f1`` (1-D), ``k1, f1, k2, f2`` (2-D, rows then columns), and so on: one Prelookup per
+    dimension. In 2-D the result is the same as a 2-D Lookup Table with linear interpolation over the same
+    breakpoints:
 
     $$ y = (1-f_1)(1-f_2)\\,T_{k_1,k_2} + (1-f_1) f_2\\,T_{k_1,k_2+1} + f_1 (1-f_2)\\,T_{k_1+1,k_2} + f_1 f_2\\,T_{k_1+1,k_2+1} $$
+
+    With more dimensions the same rule weights all $2^n$ corners of the cell around the input. ECUs use 3-D
+    maps for example for a base value over speed × load, with a third axis such as coolant temperature or
+    the camshaft position. A 3-D *table* is a nested list: ``table[i][j][k]``.
     """
 
     type_id = "lookup.interpolation"
     label = "Interpolation using Prelookup"
     category = CATEGORY
+    MAX_DIMENSIONS = 4
     PARAMS = (
-        Param("dimensions", 1, ParamKind.INT, "Number of table dimensions (1 or 2)", min=1, max=2),
+        Param("dimensions", 1, ParamKind.INT, "Number of table dimensions (1 to 4)", min=1, max=4),
         Param("table", [0.0, 1.0, 4.0], ParamKind.ARRAY, "Table values (1-D: one per breakpoint; 2-D: rows × columns)"),
         output_type_param("double"),
     )
 
     def _table(self) -> Array:
         tab = np.asarray(self.params["table"], dtype=float)
-        return tab.ravel() if self.params["dimensions"] == 1 else np.atleast_2d(tab)
+        n = int(self.params["dimensions"])
+        return tab.ravel() if n == 1 else tab
 
     def validate_params(self) -> None:
         tab = self._table()
-        if self.params["dimensions"] == 2 and tab.ndim != 2:
-            raise ParameterError("a 2-D table needs rows × columns")
+        n = int(self.params["dimensions"])
+        if tab.ndim != n:
+            raise ParameterError(f"a {n}-D table needs {n} nested levels, got {tab.ndim}")
         if min(tab.shape) < 2:
             raise ParameterError("the table needs at least 2 points in every dimension")
 
@@ -245,7 +253,7 @@ class Interpolation(Block):
         return 2 * int(self.params["dimensions"])
 
     def input_names(self) -> list[str]:
-        return ["k1", "f1", "k2", "f2"][: self.num_inputs()]
+        return [f"{c}{d + 1}" for d in range(int(self.params["dimensions"])) for c in "kf"]
 
     def output_widths(self, in_widths: list[Width]) -> list[Width]:
         return [broadcast_widths(in_widths)]
@@ -253,19 +261,16 @@ class Interpolation(Block):
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
         tab = self._table()
         w = self.out_widths[0]
-
-        def idx(k: Array, n: int) -> npt.NDArray[np.intp]:
-            return np.clip(np.broadcast_to(k, (w,)).astype(np.intp), 0, n - 2)
-
-        if self.params["dimensions"] == 1:
-            k, f = idx(u[0], tab.size), np.broadcast_to(u[1], (w,))
-            return [tab[k] + f * (tab[k + 1] - tab[k])]
-        i, fr = idx(u[0], tab.shape[0]), np.broadcast_to(u[1], (w,))
-        j, fc = idx(u[2], tab.shape[1]), np.broadcast_to(u[3], (w,))
-        y = (
-            (1 - fr) * (1 - fc) * tab[i, j]
-            + (1 - fr) * fc * tab[i, j + 1]
-            + fr * (1 - fc) * tab[i + 1, j]
-            + fr * fc * tab[i + 1, j + 1]
-        )
+        n = tab.ndim
+        ks = [np.clip(np.broadcast_to(u[2 * d], (w,)).astype(np.intp), 0, tab.shape[d] - 2) for d in range(n)]
+        fs = [np.broadcast_to(u[2 * d + 1], (w,)) for d in range(n)]
+        y = np.zeros(w)
+        for corner in range(1 << n):  # every corner of the cell, weighted by the fractions
+            weight = np.ones(w)
+            ix = []
+            for d in range(n):
+                up = (corner >> (n - 1 - d)) & 1
+                weight = weight * (fs[d] if up else 1 - fs[d])
+                ix.append(ks[d] + up)
+            y = y + weight * tab[tuple(ix)]
         return [np.asarray(y, dtype=float)]

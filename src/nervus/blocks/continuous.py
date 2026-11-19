@@ -41,6 +41,11 @@ class Integrator(_Continuous):
     solver restarts from there: ``rising`` (reset goes from ≤ 0 to > 0), ``falling``, ``either``, or ``level``
     (held at *initial* while reset ≠ 0). Variable-step solvers stop exactly at the edge (zero crossing).
     Typical use: restart an integral when a mode starts, e.g. the fuel consumed since the engine started.
+
+    *initial_source* ``external`` adds an input **x0** (the last port): the initial value comes from that
+    signal at the start and at every reset, e.g. a temperature that starts at the measured ambient
+    temperature. *saturation_port* adds a second output: +1 at the upper limit, −1 at the lower limit, 0
+    in between (e.g. to tell a controller that its integral is saturated).
     """
 
     type_id = "continuous.integrator"
@@ -57,6 +62,14 @@ class Integrator(_Continuous):
             "Add a reset input that sets the state back to the initial value",
             choices=("none", "rising", "falling", "either", "level"),
         ),
+        Param(
+            "initial_source",
+            "internal",
+            ParamKind.CHOICE,
+            "Where the initial value comes from: the parameter, or an extra input x0",
+            choices=("internal", "external"),
+        ),
+        Param("saturation_port", False, ParamKind.BOOL, "Add an output: +1 at the upper limit, -1 at the lower"),
     )
 
     def validate_params(self) -> None:
@@ -67,21 +80,38 @@ class Integrator(_Continuous):
     def _reset(self) -> str:
         return str(self.params.get("external_reset", "none"))
 
+    @property
+    def _external_x0(self) -> bool:
+        return self.params.get("initial_source", "internal") == "external"
+
     def num_inputs(self) -> int:
-        return 1 if self._reset == "none" else 2
+        return 1 + (self._reset != "none") + self._external_x0
+
+    def num_outputs(self) -> int:
+        return 2 if self.params.get("saturation_port") else 1
 
     def input_names(self) -> list[str]:
-        return ["u"] if self._reset == "none" else ["u", f"reset ({self._reset})"]
+        return [
+            "u",
+            *([f"reset ({self._reset})"] if self._reset != "none" else []),
+            *(["x0"] if self._external_x0 else []),
+        ]
 
-    def _x0(self) -> Array:
-        x0 = np.broadcast_to(as_signal(self.params["initial"]), (self.out_widths[0],)).copy()
+    def feedthrough_ports(self) -> list[int]:
+        return [self.num_inputs() - 1] if self._external_x0 else []  # x0 sets the output in the first step
+
+    def _x0(self, u: Sequence[Array] | None = None) -> Array:
+        source = u[-1] if self._external_x0 and u is not None else as_signal(self.params["initial"])
+        x0 = np.broadcast_to(source, (self.out_widths[0],)).copy()
         return np.clip(x0, self.params["lower"], self.params["upper"])
+
+    def _at_start(self, t: float) -> bool:
+        return t <= self.t_start + 1e-12 * max(1.0, abs(self.t_start))
 
     def output_widths(self, in_widths: list[Width]) -> list[Width]:
         n = as_signal(self.params["initial"]).size
-        if n > 1:
-            return [n]
-        return [in_widths[0] if in_widths[0] is not None else 1]
+        w = n if n > 1 else in_widths[0] if in_widths[0] is not None else 1
+        return [w] * self.num_outputs()
 
     def initial_continuous_state(self) -> Array:
         """The integrator state, plus the reset input at the last major step (derivative 0) with a reset."""
@@ -95,10 +125,12 @@ class Integrator(_Continuous):
         self._limited = bool(np.isfinite(self.params["lower"]) or np.isfinite(self.params["upper"]))
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
-        x = xc[: self.out_widths[0]]
-        if not self._limited:
-            return [x.copy()]
-        return [np.minimum(np.maximum(x, self.params["lower"]), self.params["upper"])]
+        x = self._x0(u) if self._external_x0 and self._at_start(t) else xc[: self.out_widths[0]]
+        y = np.minimum(np.maximum(x, self.params["lower"]), self.params["upper"]) if self._limited else x.copy()
+        if not self.params.get("saturation_port"):
+            return [y]
+        sat = np.where(y >= self.params["upper"], 1.0, np.where(y <= self.params["lower"], -1.0, 0.0))
+        return [y, sat]
 
     def _rate(self, u: Sequence[Array], x: Array) -> Array:
         du = np.broadcast_to(u[0], x.shape).copy()
@@ -133,9 +165,15 @@ class Integrator(_Continuous):
         return np.concatenate(parts) if parts else None
 
     def major_step(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        w = self.out_widths[0]
+        if self._external_x0 and self._at_start(t):  # start from the x0 input
+            new = xc.copy()
+            new[:w] = self._x0(u)
+            if self._reset != "none":
+                new[w] = float(np.ravel(u[1])[0])
+            return new
         if self._reset == "none":
             return None
-        w = self.out_widths[0]
         r, prev = float(np.ravel(u[1])[0]), float(xc[w])
         rising, falling = prev <= 0 < r, prev > 0 >= r
         fire = {"rising": rising, "falling": falling, "either": rising or falling, "level": r != 0}[self._reset]
@@ -144,7 +182,7 @@ class Integrator(_Continuous):
         new = xc.copy()
         new[w] = r
         if fire:
-            new[:w] = self._x0()
+            new[:w] = self._x0(u)
         return new
 
     def coverage_outcomes(self) -> list[str]:

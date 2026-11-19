@@ -51,7 +51,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **1-D Lookup Table**: 1-D lookup table (a calibration *curve*): maps the input through a table of points.
 - **2-D Lookup Table**: 2-D lookup table (a calibration *map*), e.g. ignition advance over engine speed and load.
 - **Prelookup**: Breakpoint search on its own: finds the interval index *k* and the fraction *f* of the input.
-- **Interpolation using Prelookup**: Interpolates a 1-D or 2-D *table* at the index and fraction from Prelookup blocks.
+- **Interpolation using Prelookup**: Interpolates an n-D *table* (1 to 4 dimensions) at the index and fraction from Prelookup blocks.
 
 ## [Math Operations](math-operations.md)
 
@@ -73,6 +73,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 - **Rate Transition**: Passes a signal between two rates (two ECU tasks) in a way that is deterministic on an RTOS.
 - **Data Type Conversion**: Converts the input to another data type, e.g. a sensor value to ``int16`` or a controller output to
+- **Initial Condition**: Outputs *value* at the start of the simulation, then passes its input through:
 
 ## [Signal Routing](signal-routing.md)
 

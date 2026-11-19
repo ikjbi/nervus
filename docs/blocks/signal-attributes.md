@@ -63,3 +63,25 @@ $$ Q = \mathrm{round}\left(\frac{u - \mathrm{bias}}{\mathrm{slope}}\right), \qqu
 *Direct feedthrough:* yes
 
 ---
+
+## Initial Condition
+
+`routing.initial_condition` · Signal Attributes
+
+Outputs *value* at the start of the simulation, then passes its input through:
+
+$$ y(t_0) = \mathrm{value}, \qquad y(t) = u(t) \quad \mathrm{for}\ t > t_0 $$
+
+Use it to give a signal a defined value in the first step, for example a feedback signal that would
+otherwise start at the wrong value, or a sensor value before the first measurement. In generated C the
+block keeps a flag that is cleared after the first step.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `value` | `0.0` |  | Output at the start time |
+
+*Direct feedthrough:* yes
+
+---

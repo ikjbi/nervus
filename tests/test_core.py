@@ -37,7 +37,7 @@ class TestParams:
         np.testing.assert_array_equal(p.coerce([[1, 2], [3, 4]]), [[1, 2], [3, 4]])
         assert p.coerce(["inf", 1.0])[0] == math.inf
         with pytest.raises(ParameterError):
-            p.coerce(np.zeros((2, 2, 2)))
+            p.coerce(np.zeros((2, 2, 2, 2, 2)))  # up to 4-D (n-D lookup tables)
 
     def test_choice(self) -> None:
         p = Param("c", "a", ParamKind.CHOICE, choices=("a", "b"))

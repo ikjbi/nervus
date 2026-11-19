@@ -175,7 +175,9 @@
         "initial": 5.0,
         "upper": 90.0,
         "lower": 0.0,
-        "external_reset": "none"
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
       },
       "meta": {
         "position": [

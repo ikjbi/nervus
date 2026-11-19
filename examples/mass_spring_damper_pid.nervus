@@ -102,7 +102,9 @@
         "initial": 0.0,
         "upper": "inf",
         "lower": "-inf",
-        "external_reset": "none"
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
       },
       "meta": {
         "position": [
@@ -118,7 +120,9 @@
         "initial": 0.0,
         "upper": "inf",
         "lower": "-inf",
-        "external_reset": "none"
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
       },
       "meta": {
         "position": [

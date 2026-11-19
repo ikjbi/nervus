@@ -45,7 +45,12 @@ class LowPass(Block):
 
 - **Pure functions.** Never store simulation state on `self`. Use `xc` (continuous) or `xd` (discrete).
 - **Direct feedthrough**: set `DIRECT_FEEDTHROUGH = False` only if `outputs` does not read `u`. Getting this
-  wrong breaks the execution order.
+  wrong breaks the execution order. If only some inputs feed through (an Integrator's `x0` input, but not
+  `u`), override `feedthrough_ports()` to return those port indices.
+- **State jumps**: `major_step()` may return a new continuous state at a major step (an integrator reset);
+  the solver restarts from it. `self.t_start` is the simulation start time.
+- **Never constant**: set `CAN_BE_CONSTANT = False` if the output changes over time even with constant
+  inputs (like Initial Condition); otherwise the block is computed once.
 - **Widths**: override `output_widths` if the output width is not "broadcast of the inputs". Override
   `configure` to validate widths, and raise `ValueError` with a clear message.
 - **Discrete blocks** need a `sample_time` parameter (`ParamKind.SAMPLE_TIME`) and implement `update`.

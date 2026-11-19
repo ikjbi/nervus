@@ -378,9 +378,11 @@ def compile_diagram(
             raise ModelError(f"{names[i]}: {exc}", (names[i],)) from exc
 
     out_t = _propagate_types(blocks, inputs, names)
-    feedthrough = [b.direct_feedthrough() for b in blocks]
+    ft_ports = [set(b.feedthrough_ports()) for b in blocks]
+    feedthrough = [bool(p) for p in ft_ports]
     gating = [[*e, *[(s, p) for s, p, _ in tr]] for e, tr in zip(graph.enable, graph.trigger, strict=True)]
-    order = _sort(blocks, inputs, feedthrough, names, gating)
+    ft_inputs = [[src for k, src in enumerate(inputs[i]) if k in ft_ports[i]] for i in range(len(blocks))]
+    order = _sort(blocks, ft_inputs, feedthrough, names, gating)
 
     # Re-index everything into execution order.
     pos = {old: new for new, old in enumerate(order)}
@@ -608,6 +610,8 @@ def _resolve_sample_times(
             if not known:
                 continue
             new = _combine(known)
+            if new.is_constant and not b.CAN_BE_CONSTANT:
+                new = CONTINUOUS
             if new != sts[i]:
                 sts[i] = new
                 changed = True
