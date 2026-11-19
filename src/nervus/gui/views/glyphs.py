@@ -71,6 +71,8 @@ _GLYPHS: dict[str, Callable[[Block], str]] = {
     "routing.switch": lambda b: "switch",
     "user.python_function": lambda b: "f(u)",
     "sources.ground": lambda b: "⏚ 0",
+    "can.unpack": lambda b: "CAN ▸\n" + (b.params["message"] or "unpack"),
+    "can.pack": lambda b: "▸ CAN\n" + (b.params["message"] or "pack"),
     "routing.datatype_conversion": lambda b: "→ " + b.params["output_type"],
     "ports.inport": lambda b: str(b.params["port"]),
     "ports.outport": lambda b: str(b.params["port"]),

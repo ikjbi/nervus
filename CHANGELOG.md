@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- CAN: DBC files (optional `cantools`), CAN Pack and CAN Unpack blocks (Intel/Motorola, signed, factor/offset,
+  rounding and saturation), bit-exact C code; file pickers and message suggestions in the editor.
 - Data types: double, single, boolean, int8…uint32 and fixed point (`fixdt`), with rounding and overflow modes;
   type propagation; bit-true simulation; Data Type Conversion block; `output_type` on In, Constant, Gain, Sum,
   Product, Bias and lookup tables; View → Show Data Types.

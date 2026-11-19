@@ -64,6 +64,8 @@ class Diagram:
         self.workspace = Workspace()
         """Named parameters that block parameters can refer to (``Gain(gain="Kp")``). Only the top-level
         diagram's workspace is used; subsystems see their model's workspace."""
+        self.source_path: str | None = None
+        """The file this model was loaded from or saved to (used to resolve relative file paths)."""
         self.tests: list[Any] = []
         """Test cases (:class:`nervus.core.testcase.TestCase`) stored with the model."""
         self.parent: Block | None = None

@@ -24,6 +24,7 @@ dependencies = [
 [project.optional-dependencies]
 gui = ["PySide6>=6.7", "pyqtgraph>=0.13", "matplotlib>=3.8"]
 plot = ["matplotlib>=3.8"]
+can = ["cantools>=39"]
 
 [project.scripts]
 nervus = "nervus.gui.app:main"
@@ -40,6 +41,7 @@ dev = [
     "mypy>=1.11",
     "pre-commit>=3.8",
     "pytest-qt>=4.4",
+    "cantools>=39",
     "pytest-timeout>=2.4.0",
 ]
 docs = [
@@ -76,7 +78,7 @@ warn_return_any = false
 files = ["src/nervus"]
 
 [[tool.mypy.overrides]]
-module = ["scipy.*", "pandas.*", "pyqtgraph.*"]
+module = ["scipy.*", "pandas.*", "pyqtgraph.*", "cantools.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

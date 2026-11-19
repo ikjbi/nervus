@@ -1,0 +1,24 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: ECU GATEWAY
+
+BO_ 256 EngineData: 8 ECU
+ SG_ EngineSpeed : 0|16@1+ (0.25,0) [0|16383.75] "rpm" GATEWAY
+ SG_ CoolantTemp : 16|8@1+ (1,-40) [-40|215] "degC" GATEWAY
+ SG_ ThrottlePos : 24|10@1+ (0.1,0) [0|100] "%" GATEWAY
+ SG_ EngineTorque : 34|12@1- (0.5,0) [-1024|1023.5] "Nm" GATEWAY
+ SG_ MIL_On : 46|1@1+ (1,0) [0|1] "" GATEWAY
+
+BO_ 512 VehicleData: 8 GATEWAY
+ SG_ VehicleSpeed : 7|16@0+ (0.01,0) [0|655.35] "km/h" ECU
+ SG_ AccelPedal : 23|8@0+ (0.4,0) [0|102] "%" ECU
+ SG_ LongAccel : 31|12@0- (0.01,0) [-20.48|20.47] "m/s2" ECU
+ SG_ BrakePressed : 35|1@0+ (1,0) [0|1] "" ECU
+
+CM_ BO_ 256 "Engine status from the engine ECU, every 10 ms";
+CM_ SG_ 256 EngineSpeed "Crankshaft speed";
+CM_ SG_ 512 VehicleSpeed "Vehicle speed (Motorola byte order)";

@@ -124,11 +124,19 @@ def migrate(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
+class _Source:
+    path: str | None = None
+
+
+_SOURCE = _Source()
+
+
 def from_dict(data: dict[str, Any]) -> Diagram:
     if data.get("format") != FORMAT:
         raise ModelError("not a Nervus model file (missing 'format': 'nervus-model')")
     data = migrate(dict(data))
     d = Diagram(str(data.get("name", "untitled")))
+    d.source_path = _SOURCE.path
     d.meta = dict(data.get("meta", {}))
     try:
         d.settings = SimulationSettings.from_dict(dict(data.get("settings", {})))
@@ -196,6 +204,7 @@ def save(diagram: Diagram, path: str | Path) -> Path:
     p = Path(path)
     if not p.suffix:
         p = p.with_suffix(FILE_EXTENSION)
+    diagram.source_path = str(p.resolve())
     tmp = p.with_name(p.name + ".tmp")
     tmp.write_text(dumps(diagram), encoding="utf-8")
     tmp.replace(p)  # atomic: never leave a half-written model file
@@ -203,4 +212,14 @@ def save(diagram: Diagram, path: str | Path) -> Path:
 
 
 def load(path: str | Path) -> Diagram:
-    return loads(Path(path).read_text(encoding="utf-8"))
+    text = Path(path).read_text(encoding="utf-8")
+    data = json.loads(text) if text.strip().startswith("{") else None
+    if isinstance(data, dict) and data.get("format") == FORMAT:
+        # Set the source path before building blocks, so relative file parameters (e.g. DBC files) resolve.
+        _SOURCE.path = str(Path(path).resolve())
+    try:
+        d = loads(text)
+    finally:
+        _SOURCE.path = None
+    d.source_path = str(Path(path).resolve())
+    return d

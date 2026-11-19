@@ -2,6 +2,11 @@
 
 This reference is generated from the block source code (`scripts/gen_block_reference.py`).
 
+## [CAN](can.md)
+
+- **CAN Unpack**: Decodes a CAN frame: the input is the 8 data bytes (a vector of width 8), and there is one output per
+- **CAN Pack**: Encodes a CAN frame: one input per signal (physical units), output = the 8 data bytes (``uint8``).
+
 ## [Continuous](continuous.md)
 
 - **Integrator**: Integrates its input:

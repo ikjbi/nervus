@@ -215,6 +215,29 @@ class PropertyPanel(QWidget):
             box.addWidget(edit)
             box.addWidget(apply, 0, Qt.AlignmentFlag.AlignRight)
             return host
+        if p.kind is ParamKind.STR and self.block is not None and self.block.suggestions(p.name):
+            combo = QComboBox()
+            combo.setEditable(True)
+            combo.addItems(self.block.suggestions(p.name))
+            combo.setCurrentText(str(value))
+            line_edit = combo.lineEdit()
+            if line_edit is not None:
+                line_edit.editingFinished.connect(lambda name=p.name, c=combo: self._apply(name, c.currentText()))
+            combo.activated.connect(lambda _i, name=p.name, c=combo: self._apply(name, c.currentText()))
+            return combo
+        if p.kind is ParamKind.STR and p.name.endswith("_file"):
+            host = QWidget()
+            row = QHBoxLayout(host)
+            row.setContentsMargins(0, 0, 0, 0)
+            path_edit = QLineEdit(str(value))
+            browse = QPushButton("…")
+            browse.setFixedWidth(30)
+            browse.setToolTip("Choose a file")
+            path_edit.editingFinished.connect(lambda name=p.name, le=path_edit: self._apply(name, le.text().strip()))
+            browse.clicked.connect(lambda _c=False, name=p.name, le=path_edit: self._browse(name, le))
+            row.addWidget(path_edit, 1)
+            row.addWidget(browse)
+            return host
         line = QLineEdit(value if isinstance(value, str) else format_value(value))
         if p.kind is ParamKind.ARRAY:
             line.setPlaceholderText("e.g. 2, [1 2 3], [1 0; 0 1], 2*pi, Kp")
@@ -252,6 +275,14 @@ class PropertyPanel(QWidget):
         if self._updating or self.block is None:
             return
         self.controller.set_params(self.block, {name: value})
+
+    def _browse(self, name: str, edit: QLineEdit) -> None:
+        from PySide6.QtWidgets import QFileDialog
+
+        path, _ = QFileDialog.getOpenFileName(self, f"Choose {name.replace('_', ' ')}", edit.text())
+        if path:
+            edit.setText(path)
+            self._apply(name, path)
 
     def _show_error(self, edit: QLineEdit, message: str) -> None:
         edit.setProperty("invalid", True)

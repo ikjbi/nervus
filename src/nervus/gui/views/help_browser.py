@@ -52,6 +52,7 @@ HELP_PAGES = [
     ("subsystems", "Subsystems"),
     ("datatypes", "Data types and fixed point"),
     ("statecharts", "State machines"),
+    ("can", "CAN communication"),
     ("analysis", "Linear analysis"),
     ("codegen", "C code generation"),
     ("testing", "Test cases and the Data Inspector"),

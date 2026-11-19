@@ -716,4 +716,74 @@ def _state_chart(e: Emitter) -> BlockCode:
     return BlockCode(lines)
 
 
+# ---------------------------------------------------------------------------- CAN
+
+
+def _can_words(u: str, need_le: bool, need_be: bool) -> list[str]:
+    """Assemble the frame into 64-bit words: ``le`` (Intel byte order) and/or ``be`` (Motorola)."""
+    decl = ", ".join(n for n, need in (("le = 0u", need_le), ("be = 0u", need_be)) if need)
+    body = []
+    if need_le:
+        body.append("    le |= b << (8 * k);")
+    if need_be:
+        body.append("    be |= b << (56 - 8 * k);")
+    return [
+        f"uint64_T {decl};",
+        "int k;",
+        "for (k = 0; k < 8; k++) {",
+        f"    uint64_T b = (uint64_T)((uint8_T){u}[k]);",
+        *body,
+        "}",
+    ]
+
+
+def _mask(length: int) -> str:
+    return "0xFFFFFFFFFFFFFFFFu" if length >= 64 else f"0x{(1 << length) - 1:X}u"
+
+
+@template("can.unpack")
+def _can_unpack(e: Emitter) -> BlockCode:
+    sigs = e.block._signals  # type: ignore[attr-defined]
+    need_le, need_be = any(x.little_endian for x in sigs), any(not x.little_endian for x in sigs)
+    lines = ["{", *[f"    {x}" for x in _can_words(e.u_var(0), need_le, need_be)]]
+    for p, s in enumerate(sigs):
+        word = "le" if s.little_endian else "be"
+        lines.append(f"    {{ /* {s.name} */")
+        lines.append(f"        uint64_T raw = ({word} >> {s.shift}) & {_mask(s.length)};")
+        if s.signed:
+            lines.append(
+                f"        real_T v = (raw & ((uint64_T)1u << {s.length - 1})) ? "
+                f"(real_T)((int64_T)raw - ((int64_T)1 << {s.length})) : (real_T)raw;"
+            )
+        else:
+            lines.append("        real_T v = (real_T)raw;")
+        lines.append(f"        {e.y(p, '0')} = v * {c_float(s.factor)} + {c_float(s.offset)};")
+        lines.append("    }")
+    lines.append("}")
+    return BlockCode(lines)
+
+
+@template("can.pack")
+def _can_pack(e: Emitter) -> BlockCode:
+    sigs = e.block._signals  # type: ignore[attr-defined]
+    lines = ["{", "    uint64_T le = 0u, be = 0u;", "    int k;"]
+    for p, s in enumerate(sigs):
+        lo, hi = (-(1 << (s.length - 1)), (1 << (s.length - 1)) - 1) if s.signed else (0, (1 << s.length) - 1)
+        word = "le" if s.little_endian else "be"
+        lines += [
+            f"    {{ /* {s.name} */",
+            f"        real_T r = round(({e.u(p, '0')} - {c_float(s.offset)}) / {c_float(s.factor)});",
+            f"        if (r > {c_float(float(hi))}) {{ r = {c_float(float(hi))}; }} else if (r < {c_float(float(lo))}) {{ r = {c_float(float(lo))}; }}",
+            f"        {word} |= (((uint64_T)(int64_T)r) & {_mask(s.length)}) << {s.shift};",
+            "    }",
+        ]
+    lines += [
+        "    for (k = 0; k < 8; k++) {",
+        f"        {e.y(0, 'k')} = (real_T)((le >> (8 * k)) & 0xFFu) + (real_T)((be >> (56 - 8 * k)) & 0xFFu);",
+        "    }",
+        "}",
+    ]
+    return BlockCode(lines)
+
+
 __all__ = ["as_signal"]

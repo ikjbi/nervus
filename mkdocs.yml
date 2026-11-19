@@ -30,6 +30,7 @@ nav:
       - Subsystems: subsystems.md
       - Data types and fixed point: datatypes.md
       - State machines: statecharts.md
+      - CAN communication: can.md
       - Linear analysis: analysis.md
       - C code generation: codegen.md
       - Test cases and results: testing.md
@@ -41,6 +42,7 @@ nav:
           - Subsystems: app-help/subsystems.md
           - Data types and fixed point: app-help/datatypes.md
           - State machines: app-help/statecharts.md
+          - CAN communication: app-help/can.md
           - Linear analysis: app-help/analysis.md
           - C code generation: app-help/codegen.md
           - Test cases and the Data Inspector: app-help/testing.md
@@ -53,6 +55,7 @@ nav:
       - Idle speed control: tutorials/idle-speed-control.md
   - Block reference:
       - Overview: blocks/index.md
+      - CAN: blocks/can.md
       - Sources: blocks/sources.md
       - Math Operations: blocks/math-operations.md
       - Lookup Tables: blocks/lookup-tables.md

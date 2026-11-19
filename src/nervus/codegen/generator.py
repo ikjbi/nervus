@@ -380,6 +380,8 @@ class CGenerator:
             "typedef uint16_t uint16_T;",
             "typedef int32_t int32_T;",
             "typedef uint32_t uint32_T;",
+            "typedef int64_t int64_T;",
+            "typedef uint64_t uint64_T;",
             "",
             f"#define {pfx.upper()}_BASE_PERIOD ({c_float(base)}) /* seconds between calls to {pfx}_step() */",
             "",

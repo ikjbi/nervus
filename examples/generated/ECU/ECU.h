@@ -16,6 +16,8 @@ typedef int16_t int16_T;
 typedef uint16_t uint16_T;
 typedef int32_t int32_T;
 typedef uint32_t uint32_T;
+typedef int64_t int64_T;
+typedef uint64_t uint64_T;
 
 #define ECU_BASE_PERIOD (0.01) /* seconds between calls to ECU_step() */
 

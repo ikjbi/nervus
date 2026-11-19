@@ -826,6 +826,47 @@ def datatype_conversion() -> plt.Figure:
     return fig
 
 
+@figure("can_frame")
+def can_frame() -> plt.Figure:
+    from matplotlib.patches import Rectangle
+
+    from nervus.can import load_dbc
+
+    msg = load_dbc(ROOT / "examples" / "data" / "vehicle.dbc")["EngineData"]
+    colors = [C1, C2, C3, C4, "#e87ba4"]
+    fig, ax = plt.subplots(figsize=(9.0, 3.4))
+    ax.set_xlim(-0.6, 8.4)
+    ax.set_ylim(-2.3, 8.6)
+    ax.invert_yaxis()
+    ax.axis("off")
+    owner: dict[int, int] = {}
+    for k, s in enumerate(msg.signals):
+        for b in range(s.length):
+            owner[s.start + b] = k  # Intel signals: consecutive bits from the start bit
+    for byte in range(8):
+        ax.text(-0.35, byte + 0.5, f"byte {byte}", ha="right", va="center", fontsize=8, color=INK)
+        for bit in range(8):
+            n = byte * 8 + bit
+            x = 7 - bit  # bit 7 on the left, as in DBC editors
+            k = owner.get(n)
+            fc = colors[k % len(colors)] + "55" if k is not None else "none"
+            ax.add_patch(Rectangle((x, byte), 1, 1, fc=fc, ec=INK, lw=0.6))
+            ax.text(x + 0.5, byte + 0.5, str(n), ha="center", va="center", fontsize=7, color=INK)
+    for k, s in enumerate(msg.signals):
+        ax.text(
+            8.3,
+            0.5 + k * 1.1,
+            f"■ {s.name}: start {s.start}, {s.length} bits, ×{s.factor:g} {s.offset:+g} {s.unit}",
+            color=colors[k % len(colors)],
+            fontsize=9,
+            va="center",
+        )
+    ax.set_xlim(-0.6, 15.5)
+    ax.text(4, -0.9, "EngineData (0x100): Intel byte order, bit numbers per byte", ha="center", color=INK, fontsize=10)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

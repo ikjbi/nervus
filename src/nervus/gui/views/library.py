@@ -21,6 +21,7 @@ CATEGORY_ORDER = [
     "Lookup Tables",
     "Logic and Bit Operations",
     "State Machines",
+    "CAN",
     "Discontinuities",
     "Signal Routing",
     "Signal Attributes",

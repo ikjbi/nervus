@@ -279,6 +279,10 @@ class Block:
             return [None] * n
         return [common_type(known)] * n
 
+    def suggestions(self, param: str) -> list[str]:
+        """Values to offer for a text parameter in the editor (e.g. the messages of a DBC file)."""
+        return []
+
     def quantization(self) -> tuple[str, str]:
         """(rounding, overflow) used when the block's outputs are converted to their data type."""
         return (self.params.get("rounding", "nearest"), self.params.get("overflow", "saturate"))

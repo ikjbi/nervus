@@ -3,6 +3,7 @@
 Importing this package registers every block, so they can be created by ``type_id`` from model files.
 """
 
+from nervus.blocks.can_blocks import CanPack, CanUnpack
 from nervus.blocks.chart import StateChart
 from nervus.blocks.continuous import Derivative, Integrator, StateSpace, TransferFunction
 from nervus.blocks.control import PID, DiscretePID
@@ -34,6 +35,8 @@ __all__ = [
     "Abs",
     "Assertion",
     "Bias",
+    "CanPack",
+    "CanUnpack",
     "Clock",
     "CompareToConstant",
     "Constant",
