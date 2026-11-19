@@ -202,7 +202,7 @@ class BlockItem(QGraphicsItem):
             painter.drawText(
                 rect.adjusted(6, 0, -18, -2),
                 Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft,
-                f"◆ {sub.active_variant}",
+                f"◆ {getattr(sub, 'active_variant', '')}",
             )
         icon = getattr(sub, "mask_icon", "")
         if icon:
