@@ -34,7 +34,7 @@ from nervus.blocks import (
 from nervus.core.layout import auto_layout
 
 HERE = Path(__file__).parent
-KPA_PER_COUNT = 250.0 / 4095.0 * (5.0 / 4.0)  # 0.5–4.5 V spans 20–270 kPa; 12-bit ADC on 0–5 V
+KPA_PER_COUNT = 250.0 / 4095.0 * (5.0 / 4.0)  # 0.5 to 4.5 V spans 20 to 270 kPa; 12-bit ADC on 0 to 5 V
 
 
 def build() -> Diagram:

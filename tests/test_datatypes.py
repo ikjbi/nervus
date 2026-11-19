@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from nervus import Diagram, ModelError, ParameterError, compile_diagram, simulate
+from nervus import Diagram, ParameterError, compile_diagram, simulate
 from nervus.blocks import (
     CompareToConstant,
     Constant,
@@ -115,4 +115,4 @@ def test_continuous_blocks_stay_double() -> None:
 def test_invalid_type_parameter() -> None:
     with pytest.raises(ParameterError):
         Gain(output_type="int128")
-    assert DOUBLE.is_double and not ModelError.__subclasses__() == []
+    assert DOUBLE.is_double

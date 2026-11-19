@@ -85,7 +85,8 @@
       "type": "math.gain",
       "params": {
         "gain": 1.0,
-        "multiplication": "elementwise"
+        "multiplication": "elementwise",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [
@@ -129,7 +130,8 @@
       "type": "math.gain",
       "params": {
         "gain": 0.5,
-        "multiplication": "elementwise"
+        "multiplication": "elementwise",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [
@@ -143,7 +145,8 @@
       "type": "math.gain",
       "params": {
         "gain": 2.0,
-        "multiplication": "elementwise"
+        "multiplication": "elementwise",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [

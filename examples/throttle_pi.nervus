@@ -129,7 +129,8 @@
       "type": "math.gain",
       "params": {
         "gain": "k_act",
-        "multiplication": "elementwise"
+        "multiplication": "elementwise",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [
@@ -157,7 +158,8 @@
       "type": "math.gain",
       "params": {
         "gain": "1/tau",
-        "multiplication": "elementwise"
+        "multiplication": "elementwise",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [

@@ -33,9 +33,9 @@ void ECU_step(void)
 
     /* outputs */
     /* target_deg (In) */
-    ECU_B.target_deg[0] = ECU_U.target_deg[0];
+    ECU_B.target_deg[0] = (real_T)ECU_U.target_deg[0];
     /* tps_deg (In) */
-    ECU_B.tps_deg[0] = ECU_U.tps_deg[0];
+    ECU_B.tps_deg[0] = (real_T)ECU_U.tps_deg[0];
     /* tps_sample (Zero-Order Hold) */
     ECU_B.tps_sample[0] = ECU_B.tps_deg[0];
     /* error (Sum) */

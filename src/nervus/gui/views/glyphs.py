@@ -13,10 +13,7 @@ from nervus.core.expressions import format_value
 def _num(v: object) -> str:
     if isinstance(v, np.ndarray) and v.size == 1:
         v = float(v.ravel()[0])
-    if isinstance(v, float):
-        s = f"{v:.4g}"
-    else:
-        s = v if isinstance(v, str) else format_value(v)
+    s = f"{v:.4g}" if isinstance(v, float) else v if isinstance(v, str) else format_value(v)
     return s if len(s) <= 10 else s[:9] + "…"
 
 

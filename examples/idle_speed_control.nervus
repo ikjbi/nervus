@@ -84,7 +84,8 @@
       "params": {
         "port": 1,
         "value": "rpm_idle",
-        "sample_time": -1.0
+        "sample_time": -1.0,
+        "output_type": "double"
       },
       "meta": {
         "position": [
@@ -111,7 +112,8 @@
             "params": {
               "port": 1,
               "value": 0.0,
-              "sample_time": -1.0
+              "sample_time": -1.0,
+              "output_type": "double"
             },
             "meta": {
               "position": [
@@ -137,7 +139,8 @@
             "name": "rpm_error",
             "type": "math.sum",
             "params": {
-              "signs": "-+"
+              "signs": "-+",
+              "output_type": "inherit"
             },
             "meta": {
               "position": [
@@ -172,7 +175,8 @@
             "name": "base_opening",
             "type": "math.bias",
             "params": {
-              "bias": "alpha_base"
+              "bias": "alpha_base",
+              "output_type": "inherit"
             },
             "meta": {
               "position": [
@@ -200,7 +204,8 @@
             "params": {
               "port": 2,
               "value": 0.0,
-              "sample_time": -1.0
+              "sample_time": -1.0,
+              "output_type": "double"
             },
             "meta": {
               "position": [
@@ -215,7 +220,8 @@
             "params": {
               "port": 3,
               "value": 0.0,
-              "sample_time": -1.0
+              "sample_time": -1.0,
+              "output_type": "double"
             },
             "meta": {
               "position": [
@@ -229,7 +235,8 @@
             "type": "math.gain",
             "params": {
               "gain": "alpha_ac",
-              "multiplication": "elementwise"
+              "multiplication": "elementwise",
+              "output_type": "inherit"
             },
             "meta": {
               "position": [
@@ -242,7 +249,8 @@
             "name": "throttle_sum",
             "type": "math.sum",
             "params": {
-              "signs": "++"
+              "signs": "++",
+              "output_type": "inherit"
             },
             "meta": {
               "position": [
@@ -365,7 +373,8 @@
       "name": "manifold_net_flow",
       "type": "math.sum",
       "params": {
-        "signs": "+-"
+        "signs": "+-",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [
@@ -379,7 +388,8 @@
       "type": "math.gain",
       "params": {
         "gain": "287 * 293 / V_im",
-        "multiplication": "elementwise"
+        "multiplication": "elementwise",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [
@@ -456,7 +466,8 @@
       "type": "math.gain",
       "params": {
         "gain": "1 / J_engine",
-        "multiplication": "elementwise"
+        "multiplication": "elementwise",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [
@@ -485,7 +496,8 @@
       "type": "math.gain",
       "params": {
         "gain": 9.549296585513721,
-        "multiplication": "elementwise"
+        "multiplication": "elementwise",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [
