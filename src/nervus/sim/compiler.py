@@ -114,6 +114,11 @@ class CompiledModel:
             if kind is Kind.CONTINUOUS and type(b).zero_crossings is not _Block.zero_crossings
         ]
         self.n_zero_crossings = -1  # determined on first evaluation
+        self._jumpers = [
+            (i, b, sl, self.inputs[i])
+            for i, b, _k, _r, sl, _inp in self._plan
+            if sl.stop > sl.start and type(b).major_step is not _Block.major_step
+        ]
         self._enabled = [True] * len(self.blocks)  # the block ran at its last execution
         self._en_prev = [True] * len(self.blocks)  # its enable was on at its last execution
         self._trig_prev: list[list[float | None]] = [[None] * len(tr) for tr in self.trigger]
@@ -255,6 +260,29 @@ class CompiledModel:
     @property
     def has_zero_crossings(self) -> bool:
         return bool(self._zc_blocks)
+
+    def apply_major_step(self, t: float, xc: Array, probe: float | None = None) -> tuple[Array, bool]:
+        """Let blocks change their continuous state at a major step (e.g. an integrator reset).
+
+        ``probe``: right after a zero crossing the signals sit exactly on zero; decide with the inputs a tiny
+        step ``probe`` later (the side the signal is moving to)."""
+        if not self._jumpers:
+            return xc, False
+        if probe:
+            dx = self.derivatives(t, xc) if xc.size else xc
+            self.eval_outputs(t + probe, xc + probe * dx, None)
+        changed = False
+        y = self.y
+        for i, b, sl, inputs in self._jumpers:
+            new = b.major_step(t, [y[s][p] for s, p in inputs], xc[sl], self.xd[i])
+            if new is not None and not np.array_equal(new, xc[sl]):
+                if not changed:
+                    xc = xc.copy()
+                xc[sl] = new
+                changed = True
+        if probe:
+            self.eval_outputs(t, xc, None)
+        return xc, changed
 
     def zero_crossing_values(self, t: float, xc: Array) -> Array:
         """All zero-crossing signals at (t, xc), with discrete outputs held. Infinite limits are ignored."""

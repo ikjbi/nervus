@@ -101,7 +101,8 @@
       "params": {
         "initial": 0.0,
         "upper": "inf",
-        "lower": "-inf"
+        "lower": "-inf",
+        "external_reset": "none"
       },
       "meta": {
         "position": [
@@ -116,7 +117,8 @@
       "params": {
         "initial": 0.0,
         "upper": "inf",
-        "lower": "-inf"
+        "lower": "-inf",
+        "external_reset": "none"
       },
       "meta": {
         "position": [

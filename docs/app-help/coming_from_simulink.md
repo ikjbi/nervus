@@ -29,6 +29,7 @@ maps Simulink names to Nervus names.
 | Enabled Subsystem (held / reset) | Subsystem with *enable_port* and *when_enabled* |
 | Triggered Subsystem (rising / falling / either) | Subsystem with *trigger* |
 | Atomic Subsystem with a sample time | Subsystem with *sample_time* (one ECU task) |
+| Rate Transition, "single-tasking" / "multitasking" code | Rate Transition block; `generate_c(..., tasks=True)` for one function per task |
 | Variant Subsystem, variant conditions | Variants…: conditions such as `ENGINE == 2` |
 | Library (`.slx` library), library links | Component libraries (`.nervlib`), linked subsystems (*Libraries*) |
 | Flip block (Ctrl+I) | Flip Block (Ctrl+Shift+F) |
@@ -56,7 +57,7 @@ maps Simulink names to Nervus names.
 | Constant, Step, Ramp, Sine Wave, Pulse Generator, Clock | same names | Sine frequency in rad/s, as in Simulink |
 | From Workspace | From Workspace | arrays or a CSV file |
 | Gain, Sum, Product, Abs, Saturation, Math Function | same names | Sum signs as `"+-"`, Product ops as `"*/"` |
-| Integrator, Derivative, Transfer Fcn, State-Space | same names | Derivative is filtered (see its help) |
+| Integrator, Derivative, Transfer Fcn, State-Space | same names | Integrator: limits and external reset; Derivative is filtered (see its help) |
 | Unit Delay, Zero-Order Hold, Discrete-Time Integrator, Discrete Transfer Fcn | same names | Discrete-Time Integrator has an external reset |
 | PID Controller (continuous/discrete) | PID Controller, Discrete PID Controller | parallel form, filter coefficient N, anti-windup |
 | Scope, To Workspace, Terminator, Stop Simulation, Assertion | same names | |

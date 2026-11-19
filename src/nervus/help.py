@@ -137,3 +137,22 @@ def reference_pages() -> dict[str, str]:
         pages[f"{slug}.md"] = "\n".join(body)
     pages["index.md"] = "\n".join(index)
     return pages
+
+
+# Pages written once for GitHub (docs/) and converted for the in-app help: GitHub name -> in-app name.
+SHARED_PAGES = {
+    "concepts.md": "concepts.md",
+    "coming-from-simulink.md": "coming_from_simulink.md",
+    "model-files.md": "model_files.md",
+}
+
+
+def docs_page_for_app(markdown: str) -> str:
+    """Convert a GitHub docs page for the in-app help: block figures are bundled, screenshots are not, and links
+    to other pages become plain text (the Help window has its own page list)."""
+    import re
+
+    s = re.sub(r"!\[[^\]]*\]\(images/blocks/([^)]+)\)", r"![](figures/\1)", markdown)
+    s = re.sub(r"!\[[^\]]*\]\((\.\./)?images/[^)]+\)\n\n?", "", s)
+    s = re.sub(r"\[([^\]]+)\]\((?!https?:)[^)]+\.md(#[^)]*)?\)", r"*\1*", s)
+    return s.replace("!!! note", "**Note:**").replace("!!! warning", "**Warning:**")

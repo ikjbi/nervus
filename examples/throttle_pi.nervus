@@ -174,7 +174,8 @@
       "params": {
         "initial": 5.0,
         "upper": 90.0,
-        "lower": 0.0
+        "lower": 0.0,
+        "external_reset": "none"
       },
       "meta": {
         "position": [

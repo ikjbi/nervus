@@ -22,6 +22,11 @@ def main() -> None:
     for name, text in reference_pages().items():
         (OUT / name).write_text(text.rstrip() + "\n", encoding="utf-8")
     print(f"wrote {len(list(OUT.glob('*.md')))} pages to {OUT}")
+    from nervus.help import SHARED_PAGES, docs_page_for_app
+
+    for docs_name, app_name in SHARED_PAGES.items():  # written for GitHub, converted for the app
+        text = (ROOT / "docs" / docs_name).read_text(encoding="utf-8")
+        (HELP_SRC / app_name).write_text(docs_page_for_app(text), encoding="utf-8")
     HELP_OUT.mkdir(parents=True, exist_ok=True)
     for page in HELP_SRC.glob("*.md"):
         shutil.copy(page, HELP_OUT / page.name)

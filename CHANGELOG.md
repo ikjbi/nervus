@@ -23,6 +23,9 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Continuous Integrator: *external_reset* input (rising, falling, either, level). Variable-step solvers stop
+  exactly at the reset edge and restart from the initial value. Blocks can make their state jump at a major
+  step (`Block.major_step`).
 - Workspace variables have a data type (`int16`, `fixdt(1,16,7)`, ...) and a calibratable flag (Type and Cal.
   columns). Typed parameters are stored as integers in C and scaled where they are read (scalars, lookup
   tables, breakpoints); the simulation uses the stored values (bit-true); the A2L file has the matching record

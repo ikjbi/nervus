@@ -15,6 +15,11 @@ where y₀ is *initial*.
 The output is limited to [*lower*, *upper*]. At a limit the integration stops (no wind-up).
 A vector *initial* gives a vector integrator; a scalar *initial* expands to the input width.
 
+*external_reset* adds a second input, **reset**. When it fires, the state jumps back to *initial* and the
+solver restarts from there: ``rising`` (reset goes from ≤ 0 to > 0), ``falling``, ``either``, or ``level``
+(held at *initial* while reset ≠ 0). Variable-step solvers stop exactly at the edge (zero crossing).
+Typical use: restart an integral when a mode starts, e.g. the fuel consumed since the engine started.
+
 ### Parameters
 
 | Name | Default | Unit | Description |
@@ -22,6 +27,7 @@ A vector *initial* gives a vector integrator; a scalar *initial* expands to the 
 | `initial` | `0.0` |  | Initial condition |
 | `upper` | inf |  | Upper saturation limit |
 | `lower` | -inf |  | Lower saturation limit |
+| `external_reset` | `'none'` |  | Add a reset input that sets the state back to the initial value — one of `none`, `rising`, `falling`, `either`, `level` |
 
 *Direct feedthrough:* no
 

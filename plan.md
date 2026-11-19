@@ -201,7 +201,8 @@ tests/
 - [x] Zero-crossing detection with frozen modes (Saturation, Switch, Abs, Dead Zone, comparisons, Integrator
       limits, PID limits/clamping), direction-aware events and a chattering (Zeno) guard
 - [x] Discrete-Time Integrator external reset (rising/falling/either/level), with C code
-- [ ] Continuous Integrator external reset (needs a solver restart) and saturation ports
+- [x] Continuous Integrator external reset (rising/falling/either/level, exact with zero crossings, solver restart)
+- [ ] Integrator saturation output port and external initial condition
 - [ ] Algebraic loop solver (optional), with warnings
 - [x] Clamped continuous PID at its limit: sliding mode with a boundary layer (it chattered, or stayed clamped too
       long); blocks are told when the Zeno guard switches them to `sliding`; no derivative-filter dynamics with D = 0

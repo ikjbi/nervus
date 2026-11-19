@@ -36,6 +36,11 @@ class Integrator(_Continuous):
 
     The output is limited to [*lower*, *upper*]. At a limit the integration stops (no wind-up).
     A vector *initial* gives a vector integrator; a scalar *initial* expands to the input width.
+
+    *external_reset* adds a second input, **reset**. When it fires, the state jumps back to *initial* and the
+    solver restarts from there: ``rising`` (reset goes from ≤ 0 to > 0), ``falling``, ``either``, or ``level``
+    (held at *initial* while reset ≠ 0). Variable-step solvers stop exactly at the edge (zero crossing).
+    Typical use: restart an integral when a mode starts, e.g. the fuel consumed since the engine started.
     """
 
     type_id = "continuous.integrator"
@@ -45,11 +50,32 @@ class Integrator(_Continuous):
         Param("initial", 0.0, ParamKind.ARRAY, "Initial condition"),
         Param("upper", math.inf, ParamKind.FLOAT, "Upper saturation limit"),
         Param("lower", -math.inf, ParamKind.FLOAT, "Lower saturation limit"),
+        Param(
+            "external_reset",
+            "none",
+            ParamKind.CHOICE,
+            "Add a reset input that sets the state back to the initial value",
+            choices=("none", "rising", "falling", "either", "level"),
+        ),
     )
 
     def validate_params(self) -> None:
         if self.params["lower"] > self.params["upper"]:
             raise ParameterError("lower limit must be <= upper limit")
+
+    @property
+    def _reset(self) -> str:
+        return str(self.params.get("external_reset", "none"))
+
+    def num_inputs(self) -> int:
+        return 1 if self._reset == "none" else 2
+
+    def input_names(self) -> list[str]:
+        return ["u"] if self._reset == "none" else ["u", f"reset ({self._reset})"]
+
+    def _x0(self) -> Array:
+        x0 = np.broadcast_to(as_signal(self.params["initial"]), (self.out_widths[0],)).copy()
+        return np.clip(x0, self.params["lower"], self.params["upper"])
 
     def output_widths(self, in_widths: list[Width]) -> list[Width]:
         n = as_signal(self.params["initial"]).size
@@ -58,8 +84,9 @@ class Integrator(_Continuous):
         return [in_widths[0] if in_widths[0] is not None else 1]
 
     def initial_continuous_state(self) -> Array:
-        x0 = np.broadcast_to(as_signal(self.params["initial"]), (self.out_widths[0],)).copy()
-        return np.clip(x0, self.params["lower"], self.params["upper"])
+        """The integrator state, plus the reset input at the last major step (derivative 0) with a reset."""
+        x0 = self._x0()
+        return x0 if self._reset == "none" else np.concatenate([x0, [0.0]])
 
     def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
         super().configure(in_widths, out_widths)
@@ -68,31 +95,57 @@ class Integrator(_Continuous):
         self._limited = bool(np.isfinite(self.params["lower"]) or np.isfinite(self.params["upper"]))
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        x = xc[: self.out_widths[0]]
         if not self._limited:
-            return [xc.copy()]
-        return [np.minimum(np.maximum(xc, self.params["lower"]), self.params["upper"])]
+            return [x.copy()]
+        return [np.minimum(np.maximum(x, self.params["lower"]), self.params["upper"])]
 
-    def derivatives(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+    def _rate(self, u: Sequence[Array], x: Array) -> Array:
+        du = np.broadcast_to(u[0], x.shape).copy()
+        if self._reset == "level" and float(np.ravel(u[1])[0]) != 0:
+            return np.zeros_like(x)  # held at the initial value while the reset is active
         if not self._limited:
-            return u[0] if u[0].shape == xc.shape else np.broadcast_to(u[0], xc.shape).copy()
-        du = np.broadcast_to(u[0], xc.shape).copy()
+            return du
         if self.mode is not None:  # frozen: held at a limit (+1/-1) or free (0)
             du[self.mode != 0] = 0.0
             return du
-        du[(xc >= self.params["upper"]) & (du > 0)] = 0.0
-        du[(xc <= self.params["lower"]) & (du < 0)] = 0.0
+        du[(x >= self.params["upper"]) & (du > 0)] = 0.0
+        du[(x <= self.params["lower"]) & (du < 0)] = 0.0
         return du
 
+    def derivatives(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        w = self.out_widths[0]
+        du = self._rate(u, xc[:w])
+        return du if self._reset == "none" else np.concatenate([du, [0.0]])
+
     def zero_crossings(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
-        if not self._limited:
+        x = xc[: self.out_widths[0]]
+        parts = []
+        if self._limited:
+            lo, hi = self.params["lower"], self.params["upper"]
+            parts.append(np.broadcast_to(u[0], x.shape))  # leaving a limit: the input changes sign
+            if np.isfinite(hi):
+                parts.append(x - hi)
+            if np.isfinite(lo):
+                parts.append(x - lo)
+        if self._reset != "none":
+            parts.append(np.ravel(u[1])[:1])  # stop exactly where the reset signal crosses zero
+        return np.concatenate(parts) if parts else None
+
+    def major_step(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
+        if self._reset == "none":
             return None
-        lo, hi = self.params["lower"], self.params["upper"]
-        parts = [np.broadcast_to(u[0], xc.shape)]  # leaving a limit: the input changes sign
-        if np.isfinite(hi):
-            parts.append(xc - hi)
-        if np.isfinite(lo):
-            parts.append(xc - lo)
-        return np.concatenate(parts)
+        w = self.out_widths[0]
+        r, prev = float(np.ravel(u[1])[0]), float(xc[w])
+        rising, falling = prev <= 0 < r, prev > 0 >= r
+        fire = {"rising": rising, "falling": falling, "either": rising or falling, "level": r != 0}[self._reset]
+        if not fire and r == prev:
+            return None
+        new = xc.copy()
+        new[w] = r
+        if fire:
+            new[:w] = self._x0()
+        return new
 
     def coverage_outcomes(self) -> list[str]:
         p = self.params
@@ -120,9 +173,10 @@ class Integrator(_Continuous):
         if not self._limited:
             return None
         lo, hi = self.params["lower"], self.params["upper"]
-        tol = 1e-9 * max(1.0, float(np.max(np.abs(np.nan_to_num(xc)))) if xc.size else 1.0)
-        du = np.broadcast_to(u[0], xc.shape)
-        return np.where((xc >= hi - tol) & (du >= 0), 1.0, np.where((xc <= lo + tol) & (du <= 0), -1.0, 0.0))
+        x = xc[: self.out_widths[0]]
+        tol = 1e-9 * max(1.0, float(np.max(np.abs(np.nan_to_num(x)))) if x.size else 1.0)
+        du = np.broadcast_to(u[0], x.shape)
+        return np.where((x >= hi - tol) & (du >= 0), 1.0, np.where((x <= lo + tol) & (du <= 0), -1.0, 0.0))
 
 
 @register

@@ -57,7 +57,7 @@ maps Simulink names to Nervus names.
 | Constant, Step, Ramp, Sine Wave, Pulse Generator, Clock | same names | Sine frequency in rad/s, as in Simulink |
 | From Workspace | From Workspace | arrays or a CSV file |
 | Gain, Sum, Product, Abs, Saturation, Math Function | same names | Sum signs as `"+-"`, Product ops as `"*/"` |
-| Integrator, Derivative, Transfer Fcn, State-Space | same names | Derivative is filtered (see its help) |
+| Integrator, Derivative, Transfer Fcn, State-Space | same names | Integrator: limits and external reset; Derivative is filtered (see its help) |
 | Unit Delay, Zero-Order Hold, Discrete-Time Integrator, Discrete Transfer Fcn | same names | Discrete-Time Integrator has an external reset |
 | PID Controller (continuous/discrete) | PID Controller, Discrete PID Controller | parallel form, filter coefficient N, anti-windup |
 | Scope, To Workspace, Terminator, Stop Simulation, Assertion | same names | |

@@ -365,6 +365,9 @@ def _run_fixed(
         t = min(t0 + k * h, tf)
         hits = sched.hits(t)
         model.eval_outputs(t, x, hits, init=(k == 0))
+        x, jumped = model.apply_major_step(t, x)
+        if jumped:  # e.g. an integrator reset: recompute the continuous outputs from the new state
+            model.eval_outputs(t, x, None)
         log.record(t)
         model.collect_coverage(t, hits)
         if progress:
@@ -406,6 +409,7 @@ def _run_variable(
     x = model.xc0.copy()
     t = t0
     first = True
+    after_event = False
     n_major = 0
     while True:
         hits = sched.hits(t)
@@ -413,6 +417,9 @@ def _run_variable(
             zc.unfreeze()
         model.eval_outputs(t, x, hits, init=first)
         first = False
+        x, jumped = model.apply_major_step(t, x, probe=1e-8 * span if after_event else None)
+        if jumped:  # e.g. an integrator reset: the solver restarts from the new state below
+            model.eval_outputs(t, x, None)
         log.record(t)
         model.collect_coverage(t, hits)
         n_major += 1
@@ -468,6 +475,7 @@ def _run_variable(
             model.eval_outputs(float(ts[j]), ys[:, j], None)
             log.record(float(ts[j]))
         x = ys[:, -1].copy()
+        after_event = fired is not None
         if fired is not None and zc is not None:
             t = float(ts[-1])
             zc.fired(fired, t, x)

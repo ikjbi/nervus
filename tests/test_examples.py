@@ -51,6 +51,18 @@ def test_block_reference_is_up_to_date() -> None:
         assert (docs / name).read_text(encoding="utf-8") == text.rstrip() + "\n", f"docs/blocks/{name} is stale"
 
 
+def test_shared_pages_are_up_to_date() -> None:
+    """Concepts, Coming from Simulink and Model files are written in docs/ and converted for the app."""
+    from nervus.help import SHARED_PAGES, docs_page_for_app
+
+    help_dir = EXAMPLES.parent / "src" / "nervus" / "gui" / "resources" / "help"
+    for docs_name, app_name in SHARED_PAGES.items():
+        expected = docs_page_for_app((EXAMPLES.parent / "docs" / docs_name).read_text(encoding="utf-8"))
+        assert (help_dir / app_name).read_text(encoding="utf-8") == expected, (
+            f"run scripts/gen_block_reference.py ({app_name})"
+        )
+
+
 def test_app_help_copies_are_up_to_date() -> None:
     """docs/app-help mirrors the in-app help. Regenerate with: uv run python scripts/gen_block_reference.py"""
     src = EXAMPLES.parent / "src" / "nervus" / "gui" / "resources" / "help"
