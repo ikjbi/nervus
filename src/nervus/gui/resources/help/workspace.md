@@ -35,6 +35,29 @@ Expressions may use `+ - * / ** %`, the functions `sqrt`, `exp`, `log`, `sin`, `
 constants `pi`, `e`, `inf`, `true` and `false`. Comparisons (`==`, `!=`, `<`, `<=`, `>`, `>=`) and `and`, `or`, `not` give 1 (true)
 or 0 (false), so `Kp * (MODE == 2)` works. The MATLAB spellings `~=`, `&&`, `||` and `~` are accepted too.
 
+## Calibration maps over shared axes
+
+ECU software is full of curves and maps over the same few axes: engine speed, load, coolant temperature.
+For one map, use a **1-D** or **2-D Lookup Table**. When several maps share an axis, use a **Prelookup**
+block per axis and an **Interpolation using Prelookup** block per map: the breakpoint search runs once, and
+every map reuses its result (index *k* and fraction *f*).
+
+![Prelookup and Interpolation](figures/prelookup.png)
+
+Put the axes and tables in the workspace, so they can be calibrated and swapped with parameter sets:
+
+```python
+d.workspace["speed_axis"] = [800, 1500, 3000, 6000]  # rpm
+d.workspace["load_axis"] = [0.2, 0.5, 1.0]
+d.workspace["ign_map"] = [[10, 8, 5], [20, 16, 10], [30, 25, 18], [35, 30, 22]]  # ° before TDC
+speed = d.add(Prelookup(breakpoints="speed_axis"))
+load = d.add(Prelookup(breakpoints="load_axis"))
+ign = d.add(Interpolation(dimensions=2, table="ign_map"))  # inputs: k1, f1, k2, f2
+```
+
+The result is identical to a 2-D Lookup Table with linear interpolation, in the simulation and in the
+generated C. Hover over the Interpolation block's ports to see which input is which.
+
 ## Parameter sets (calibrations)
 
 A **parameter set** is a file (`.nervcal`) with values for some or all of the variables:

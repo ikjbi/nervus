@@ -21,7 +21,7 @@ from nervus.blocks.discrete import (
     ZeroOrderHold,
 )
 from nervus.blocks.logic import CompareToConstant, LogicalOperator, RelationalOperator
-from nervus.blocks.lookup import Lookup1D, Lookup2D
+from nervus.blocks.lookup import Interpolation, Lookup1D, Lookup2D, Prelookup
 from nervus.blocks.math_ops import Abs, Bias, Gain, MathFunction, MinMax, Product, Saturation, Sum
 from nervus.blocks.ports import Inport, Outport, Subsystem
 from nervus.blocks.registry import block_types, categories, create_block, get_block_class, register
@@ -57,6 +57,7 @@ __all__ = [
     "Inport",
     "IntegerDelay",
     "Integrator",
+    "Interpolation",
     "LogicalOperator",
     "Lookup1D",
     "Lookup2D",
@@ -65,6 +66,7 @@ __all__ = [
     "MovingAverage",
     "Mux",
     "Outport",
+    "Prelookup",
     "Product",
     "Pulse",
     "PythonFunction",

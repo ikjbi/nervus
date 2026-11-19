@@ -16,11 +16,12 @@ Panels can be moved, closed and reopened from the **View** menu.
 
 - **Select**: click, or drag a rectangle on empty canvas. Shift-click adds to the selection.
 - **Move**: drag. Blocks snap to a 10-pixel grid.
-- **Rename**: edit *Name* in the Properties panel. Names must be unique.
+- **Rename**: edit *Name* in the Properties panel, or right-click → *Rename…*. Names must be unique.
 - **Delete**: Delete or Backspace.
 - **Copy / cut / paste**: ⌘C / ⌘X / ⌘V (Ctrl on Windows and Linux). Lines between copied blocks are
   copied too.
-- **Double-click**: opens the Properties panel, or the plot window for a Scope.
+- **Double-click**: opens a subsystem, the plot window of a Scope, or the Properties panel for other blocks.
+- **Flip**: Ctrl+Shift+F swaps the input and output sides (see below).
 
 ## Lines (signals)
 
@@ -28,7 +29,9 @@ Panels can be moved, closed and reopened from the **View** menu.
   input and drag backwards to an output.
 - An output can feed many inputs (a dot marks the branch). An input has exactly one source. Connecting a
   new line to an input that is already used replaces the old line.
-- Click a line to select it; Delete removes it.
+- Click a line to select it; Delete (or right-click → *Delete Wire*) removes it.
+- **Hover over a port** to see which input it is, e.g. *input 2: reset (rising)* on a Discrete-Time
+  Integrator with an external reset, or *k1*, *f1* on an Interpolation block.
 
 ## Right-click menus
 
@@ -64,6 +67,7 @@ Numeric fields accept:
 | `[1 2 3]` or `[1, 2, 3]` | vectors |
 | `[1 2; 3 4]` | matrices (rows separated by `;`, as in MATLAB) |
 | `Kp`, `1/tau`, `2*Kp` | workspace variables and expressions of them |
+| `Kp * (MODE == 2)`, `A > 1 && B ~= 0` | comparisons and logic give 1 or 0 (MATLAB `~=`, `&&`, `\|\|`, `~` work too) |
 
 Press Enter or leave the field to apply. If a value is invalid the field turns red and the old value is
 kept.

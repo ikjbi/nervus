@@ -169,3 +169,103 @@ class Lookup2D(Block):
             + fr * fc * tab[i + 1, j + 1]
         )
         return [np.asarray(y, dtype=float)]
+
+
+@register
+class Prelookup(Block):
+    """Breakpoint search on its own: finds the interval index *k* and the fraction *f* of the input.
+
+    ![Prelookup and Interpolation](figures/prelookup.png)
+
+    For an input between breakpoints $x_k$ and $x_{k+1}$:
+
+    $$ f = \\frac{u - x_k}{x_{k+1} - x_k} $$
+
+    Output 0 is *k* (0-based), output 1 is *f*. Feed both into one or more **Interpolation** blocks. ECUs
+    calibrate many maps over the same axes (engine speed, load); searching the axis once and sharing the
+    result saves time on the processor, and the A2L file can declare the axis as a shared axis.
+
+    With ``clip`` extrapolation, *f* stays in [0, 1]; with ``linear`` it continues outside.
+    """
+
+    type_id = "lookup.prelookup"
+    label = "Prelookup"
+    category = CATEGORY
+    NUM_OUTPUTS = 2
+    PARAMS = (
+        Param("breakpoints", [0.0, 1.0, 2.0], ParamKind.ARRAY, "Axis points (strictly increasing)"),
+        Param("extrapolation", "clip", ParamKind.CHOICE, "Outside the breakpoints", choices=EXTRAPOLATION),
+    )
+
+    def _bp(self) -> Array:
+        return np.asarray(self.params["breakpoints"], dtype=float).ravel()
+
+    def validate_params(self) -> None:
+        _check_breakpoints(self._bp(), "breakpoints")
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [in_widths[0], in_widths[0]]
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        i, f = locate(u[0], self._bp(), "linear", self.params["extrapolation"])
+        return [np.asarray(i, dtype=float), np.asarray(f, dtype=float)]
+
+
+@register
+class Interpolation(Block):
+    """Interpolates a 1-D or 2-D *table* at the index and fraction from Prelookup blocks.
+
+    Inputs: ``k1, f1`` (1-D) or ``k1, f1, k2, f2`` (2-D, rows then columns). The result is the same as a
+    1-D/2-D Lookup Table with linear interpolation over the same breakpoints:
+
+    $$ y = (1-f_1)(1-f_2)\\,T_{k_1,k_2} + (1-f_1) f_2\\,T_{k_1,k_2+1} + f_1 (1-f_2)\\,T_{k_1+1,k_2} + f_1 f_2\\,T_{k_1+1,k_2+1} $$
+    """
+
+    type_id = "lookup.interpolation"
+    label = "Interpolation using Prelookup"
+    category = CATEGORY
+    PARAMS = (
+        Param("dimensions", 1, ParamKind.INT, "Number of table dimensions (1 or 2)", min=1, max=2),
+        Param("table", [0.0, 1.0, 4.0], ParamKind.ARRAY, "Table values (1-D: one per breakpoint; 2-D: rows × columns)"),
+        output_type_param("double"),
+    )
+
+    def _table(self) -> Array:
+        tab = np.asarray(self.params["table"], dtype=float)
+        return tab.ravel() if self.params["dimensions"] == 1 else np.atleast_2d(tab)
+
+    def validate_params(self) -> None:
+        tab = self._table()
+        if self.params["dimensions"] == 2 and tab.ndim != 2:
+            raise ParameterError("a 2-D table needs rows × columns")
+        if min(tab.shape) < 2:
+            raise ParameterError("the table needs at least 2 points in every dimension")
+
+    def num_inputs(self) -> int:
+        return 2 * int(self.params["dimensions"])
+
+    def input_names(self) -> list[str]:
+        return ["k1", "f1", "k2", "f2"][: self.num_inputs()]
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [broadcast_widths(in_widths)]
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        tab = self._table()
+        w = self.out_widths[0]
+
+        def idx(k: Array, n: int) -> npt.NDArray[np.intp]:
+            return np.clip(np.broadcast_to(k, (w,)).astype(np.intp), 0, n - 2)
+
+        if self.params["dimensions"] == 1:
+            k, f = idx(u[0], tab.size), np.broadcast_to(u[1], (w,))
+            return [tab[k] + f * (tab[k + 1] - tab[k])]
+        i, fr = idx(u[0], tab.shape[0]), np.broadcast_to(u[1], (w,))
+        j, fc = idx(u[2], tab.shape[1]), np.broadcast_to(u[3], (w,))
+        y = (
+            (1 - fr) * (1 - fc) * tab[i, j]
+            + (1 - fr) * fc * tab[i, j + 1]
+            + fr * (1 - fc) * tab[i + 1, j]
+            + fr * fc * tab[i + 1, j + 1]
+        )
+        return [np.asarray(y, dtype=float)]

@@ -113,10 +113,12 @@ class Block:
         self.expressions: dict[str, str] = {}
         """Parameters given as expressions of workspace variables, by parameter name. ``params`` holds their
         most recently resolved values (or the defaults until the block is resolved)."""
+        self._unresolved: set[str] = set()
         for p in self.PARAMS:
             self.params[p.name] = p.coerce(p.default)
             self._assign(p, params.get(p.name, p.default))
-        self.validate_params()
+        if not self._unresolved:  # otherwise validated when the expressions are resolved (see resolve())
+            self.validate_params()
         self.in_widths: list[int] = []
         self.out_widths: list[int] = []
         self.resolved_sample_time: SampleTime | None = None
@@ -160,9 +162,12 @@ class Block:
                     self.params[p.name] = p.coerce(resolved)
                 else:  # lenient: resolve now if possible; unknown variables are reported by Diagram.check()
                     ns = self._namespace()
+                    unresolved: set[str] = getattr(self, "_unresolved", set())
+                    unresolved.add(p.name)
                     if ns is not None:
                         with contextlib.suppress(ValueError):
                             self.params[p.name] = p.coerce(parse_value(value, ns))
+                            unresolved.discard(p.name)
                 self.expressions[p.name] = value.strip()
                 return
             except ValueError as exc:
@@ -201,6 +206,7 @@ class Block:
                 self.params[name] = spec.coerce(parse_value(expr, namespace))
             except ValueError as exc:
                 raise ParameterError(f"parameter '{name}' = {expr!r}: {exc}") from exc
+        self._unresolved = set()
         self.validate_params()
 
     def validate_params(self) -> None:

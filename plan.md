@@ -148,7 +148,8 @@ tests/
 - [x] Integer Delay (z⁻ⁿ), Memory, Counter (free-running / limited), Edge Detect (rising/falling/either),
       Debounce (signal must hold for N samples), Discrete Filter (first-order low-pass), Moving Average
 - [x] Ground, MinMax, Bias
-- [ ] Initial Condition, Data Type Conversion (once Phase 13 lands), n-D lookup tables, Prelookup + Interpolation
+- [x] Data Type Conversion; Prelookup + Interpolation using Prelookup (1-D and 2-D, with C code)
+- [ ] Initial Condition block; lookup tables with more than 2 dimensions
 - [x] Figures, equations and help for every new block
 
 ## Phase 9 – Hierarchy: subsystems, masks, conditional execution, variants
@@ -265,7 +266,7 @@ tests/
 ## Phase 18 – Interoperability
 - [ ] FMI 2.0/3.0: import FMUs as blocks (`fmpy`), export models as FMUs
 - [ ] Import a subset of Simulink `.slx`/`.mdl` (useful for comparing against work models)
-- [ ] Export results to MAT files (`scipy.io`) for MATLAB users
+- [x] Export results to MAT files (`scipy.io`) for MATLAB users (`SimResult.to_mat`)
 
 ## Phase 19 – Quality, testing and release
 - [x] Model coverage: decision outcomes of switches, comparisons, limits, lookups and charts; HTML report;

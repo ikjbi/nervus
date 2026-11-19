@@ -553,6 +553,70 @@ def _lookup1d(e: Emitter) -> BlockCode:
     return BlockCode(e.each(e.w(), body))
 
 
+@template("lookup.prelookup")
+def _prelookup(e: Emitter) -> BlockCode:
+    bp_arr = e.block._bp()  # type: ignore[attr-defined]
+    bp = e.param("breakpoints", bp_arr)
+
+    def body(ix: str) -> list[str]:
+        return [
+            "{",
+            "    uint32_T k;",
+            "    real_T f;",
+            *[
+                f"    {x}"
+                for x in _locate_c(e.u(0, ix), bp, bp_arr.size, "linear", e.block.params["extrapolation"], "k", "f")
+            ],
+            f"    {e.y(0, ix)} = (real_T)k;",
+            f"    {e.y(1, ix)} = f;",
+            "}",
+        ]
+
+    return BlockCode(e.each(e.w(), body))
+
+
+@template("lookup.interpolation")
+def _interpolation(e: Emitter) -> BlockCode:
+    tab_arr = e.block._table()  # type: ignore[attr-defined]
+    tab = e.param("table", tab_arr.ravel())  # row-major
+
+    def index(port: int, ix: str, n: int) -> str:
+        # The index comes from a Prelookup (an integer stored as real_T); clamp it like the simulation does.
+        return f"(uint32_T)fmin(fmax({e.u(port, ix)}, 0.0), {float(n - 2)})"
+
+    if tab_arr.ndim == 1:
+        n = tab_arr.size
+
+        def body1(ix: str) -> list[str]:
+            return [
+                "{",
+                f"    uint32_T k = {index(0, ix, n)};",
+                f"    real_T f = {e.u(1, ix)};",
+                f"    {e.y(0, ix)} = {tab}[k] + f * ({tab}[k + 1u] - {tab}[k]);",
+                "}",
+            ]
+
+        return BlockCode(e.each(e.w(), body1))
+    nr, nc = tab_arr.shape
+
+    def t(i: str, j: str) -> str:
+        return f"{tab}[({i}) * {nc}u + ({j})]"
+
+    def body2(ix: str) -> list[str]:
+        return [
+            "{",
+            f"    uint32_T r = {index(0, ix, nr)};",
+            f"    real_T fr = {e.u(1, ix)};",
+            f"    uint32_T c = {index(2, ix, nc)};",
+            f"    real_T fc = {e.u(3, ix)};",
+            f"    {e.y(0, ix)} = (1.0 - fr) * (1.0 - fc) * {t('r', 'c')} + (1.0 - fr) * fc * {t('r', 'c + 1u')}",
+            f"        + fr * (1.0 - fc) * {t('r + 1u', 'c')} + fr * fc * {t('r + 1u', 'c + 1u')};",
+            "}",
+        ]
+
+    return BlockCode(e.each(e.w(), body2))
+
+
 @template("lookup.table_2d")
 def _lookup2d(e: Emitter) -> BlockCode:
     r_arr, c_arr, t_arr = e.block._data()  # type: ignore[attr-defined]

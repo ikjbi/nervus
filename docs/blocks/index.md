@@ -50,6 +50,8 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 - **1-D Lookup Table**: 1-D lookup table (a calibration *curve*): maps the input through a table of points.
 - **2-D Lookup Table**: 2-D lookup table (a calibration *map*), e.g. ignition advance over engine speed and load.
+- **Prelookup**: Breakpoint search on its own: finds the interval index *k* and the fraction *f* of the input.
+- **Interpolation using Prelookup**: Interpolates a 1-D or 2-D *table* at the index and fraction from Prelookup blocks.
 
 ## [Math Operations](math-operations.md)
 

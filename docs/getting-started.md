@@ -97,3 +97,10 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   requirement tests and C code. See the [tutorial](tutorials/idle-speed-control.md).
 - `throttle_ecu.py`: the throttle controller as an ECU subsystem, with generated C and A2L.
 - `coolant_fan.py`: radiator fan on/off control with a filtered sensor, a hysteresis relay and a lookup table.
+- `fixed_point_sensor.py`: a sensor signal path in fixed-point data types, bit-true in simulation and C.
+- `engine_library.py`: a mean-value engine and a throttle actuator as masked components in a library, used
+  twice in `engine_comparison.nervus`. See [Component libraries](libraries.md).
+- `lambda_control.py`: closed-loop lambda control with short- and long-term fuel trims. See the
+  [tutorial](tutorials/lambda-control.md).
+- `drive_cycle.py`: a car with a driver model on the ECE-15 urban drive cycle. See the
+  [tutorial](tutorials/drive-cycle.md).

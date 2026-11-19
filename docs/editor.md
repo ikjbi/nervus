@@ -24,6 +24,57 @@ Dark mode follows the system setting, or choose it under **View → Theme**:
 
 ![The editor in dark mode](images/editor-dark.png)
 
+## Blocks
+
+- **Select**: click, or drag a rectangle on empty canvas. Shift-click adds to the selection.
+- **Move**: drag. Blocks snap to a 10-pixel grid.
+- **Rename**: edit *Name* in the Properties panel, or right-click → *Rename…*. Names must be unique.
+- **Delete**: Delete or Backspace.
+- **Copy / cut / paste**: ⌘C / ⌘X / ⌘V (Ctrl on Windows and Linux). Lines between copied blocks are
+  copied too.
+- **Double-click**: opens a subsystem, the plot window of a Scope, or the Properties panel for other blocks.
+- **Flip**: Ctrl+Shift+F swaps the input and output sides (see below).
+
+## Lines (signals)
+
+- Drag from an **output port** (right side, ▸) to an **input port** (left side). You can also start from an
+  input and drag backwards to an output.
+- An output can feed many inputs (a dot marks the branch). An input has exactly one source. Connecting a
+  new line to an input that is already used replaces the old line.
+- Click a line to select it; Delete (or right-click → *Delete Wire*) removes it.
+- **Hover over a port** to see which input it is, e.g. *input 2: reset (rising)* on a Discrete-Time
+  Integrator with an external reset, or *k1*, *f1* on an Interpolation block.
+
+## Editing parameters
+
+Numeric fields accept:
+
+| You type | Meaning |
+|---|---|
+| `0.5`, `-1e-3` | numbers |
+| `2*pi`, `1/0.05`, `sqrt(2)` | arithmetic; `pi`, `e`, `inf` are known |
+| `[1 2 3]` or `[1, 2, 3]` | vectors |
+| `[1 2; 3 4]` | matrices (rows separated by `;`, as in MATLAB) |
+| `Kp`, `1/tau`, `2*Kp` | workspace variables and expressions of them |
+| `Kp * (MODE == 2)`, `A > 1 && B ~= 0` | comparisons and logic give 1 or 0 (MATLAB `~=`, `&&`, `\|\|`, `~` work too) |
+
+Press Enter or leave the field to apply. If a value is invalid the field turns red and the old value is
+kept.
+
+## Tidying up
+
+**Edit → Auto Layout** (⇧⌘L / Ctrl+Shift+L) arranges the blocks of the shown diagram from left to right
+in signal-flow order. It can be undone like any other edit.
+
+## Undo
+
+Every change, including moves, can be undone with ⌘Z and redone with ⇧⌘Z (Ctrl+Z / Ctrl+Y).
+
+## Zoom and pan
+
+- **Zoom**: ⌘/Ctrl + mouse wheel, trackpad pinch, or ⌘+ / ⌘−. **Fit to window**: ⌘0.
+- **Pan**: two-finger scroll on a trackpad, the middle mouse button, or hold **Space** and drag.
+
 ## Right-click menus
 
 Right-click a block, a wire or the empty canvas for the actions that fit it:

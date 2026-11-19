@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- Blocks with a parameter given as a not-yet-resolved workspace expression were validated with the default
+  value (e.g. a 2-D Interpolation with `table="ign_map"` failed); they are now validated once resolved.
 - On Linux and Windows, Help and Help for Selected Block were both on F1, so F1 did nothing; Help is now Ctrl+?.
 - Test checks failed to notice NaN/inf: a bounds check passed on a diverged signal. Checks now fail.
 - `generate_c` for an atomic subsystem ignored its own sample time.
@@ -17,6 +19,12 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Prelookup and Interpolation using Prelookup blocks (1-D/2-D maps over shared axes), with C code.
+- Documentation: a feature overview in the README, the docs home page and the in-app Getting started page;
+  in-app pages *Concepts*, *Coming from Simulink* (rewritten: masks, variants, libraries, tasks, codegen,
+  verification) and *Model files*; the GitHub editor page now has all sections of the in-app one; calibration
+  maps over shared axes; all examples listed. Tests keep the Help window, the GitHub navigation and the
+  example lists complete.
 - Discrete-Time Integrator: *external_reset* input (rising, falling, either, level); identical C code.
 - Port tooltips show input names (e.g. "input 2: reset (rising)").
 - Flip blocks (Ctrl+Shift+F): inputs on the right and outputs on the left, for feedback paths; saved with the model.

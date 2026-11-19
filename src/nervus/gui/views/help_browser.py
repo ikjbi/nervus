@@ -46,6 +46,7 @@ class HelpText(QTextBrowser):
 
 HELP_PAGES = [
     ("getting_started", "Getting started"),
+    ("concepts", "Concepts"),
     ("editor", "Using the editor"),
     ("simulation", "Running simulations"),
     ("workspace", "Workspace and calibrations"),
@@ -62,6 +63,8 @@ HELP_PAGES = [
     ("tutorial_idle", "Tutorial: idle speed control"),
     ("tutorial_lambda", "Tutorial: lambda control"),
     ("tutorial_drive_cycle", "Tutorial: drive cycle"),
+    ("coming_from_simulink", "Coming from Simulink"),
+    ("model_files", "Model files"),
     ("shortcuts", "Keyboard shortcuts"),
 ]
 

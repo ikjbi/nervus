@@ -20,6 +20,21 @@ tool for designing, simulating and eventually generating C code for that kind of
   see below).
 - **Git-friendly model files**: plain JSON that can be diffed and reviewed.
 
+## What Nervus can do
+
+| Area | Features | Guide |
+|---|---|---|
+| Editor | block library, drag and drop, wires, undo, copy/paste, right-click menus, flip blocks, auto layout, light/dark theme, F1 help for every block | [Editor](docs/editor.md) |
+| Simulation | continuous, discrete and multirate models; fixed-step and variable-step solvers; zero-crossing detection; stop and assertion blocks | [Concepts](docs/concepts.md) |
+| Parameters | model workspace with units and limits, expressions, parameter sets (`.nervcal`), parameter sweeps from Python | [Workspace](docs/workspace.md) |
+| Structure | subsystems, masks, enabled/triggered subsystems, atomic tasks with their own period, variants, component libraries | [Subsystems](docs/subsystems.md), [Libraries](docs/libraries.md) |
+| Logic | State Chart block (states, transitions, guards, timers) | [State machines](docs/statecharts.md) |
+| ECU code | C code generation (multirate, calibratable parameters, A2L file, HTML report), fixed-point data types, software-in-the-loop check | [C code](docs/codegen.md), [Data types](docs/datatypes.md) |
+| Testing | test cases stored with the model, Test Manager, Data Inspector, results files, model coverage, Model Advisor | [Testing](docs/testing.md), [Verification](docs/verification.md) |
+| Analysis | linearisation, trim, Bode, stability margins, step response | [Analysis](docs/analysis.md) |
+| Vehicle networks | CAN Pack/Unpack with DBC files; OBD-II live data and trouble codes from a real car | [CAN](docs/can.md), [OBD-II](docs/obd.md) |
+| Learning | examples and tutorials: idle speed control, lambda control and fuel trims, a car on a drive cycle | [Tutorials](docs/tutorials/idle-speed-control.md) |
+
 ## Installation (development)
 
 Nervus uses [uv](https://docs.astral.sh/uv/) to manage the environment.

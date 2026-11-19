@@ -367,6 +367,34 @@ def pid_structure() -> plt.Figure:
     return fig
 
 
+@figure("prelookup")
+def prelookup() -> plt.Figure:
+    fig, ax = schematic(8.4, 3.6, (0, 13), (-0.6, 4.8))
+    ax.text(0.1, 3.0, "engine\nspeed", fontsize=10, color=INK, va="center")
+    arrow(ax, (1.3, 3.0), (2.4, 3.0))
+    box(ax, 2.4, 2.3, 2.6, 1.4, "Prelookup\nspeed axis", color=C1, size=10)
+    ax.text(0.1, 0.6, "load", fontsize=10, color=INK, va="center")
+    arrow(ax, (1.3, 0.6), (2.4, 0.6))
+    box(ax, 2.4, -0.1, 2.6, 1.4, "Prelookup\nload axis", color=C2, size=10)
+    for y_from, color, label in ((3.0, C1, "k₁, f₁"), (0.6, C2, "k₂, f₂")):
+        ax.text(5.6, y_from + 0.15, label, fontsize=10, color=INK, ha="center", va="bottom")
+        for y_to in (3.6, 1.4):
+            arrow(ax, (5.0, y_from), (7.6, y_to + (0.25 if y_from > 2 else -0.25)), color=color)
+    box(ax, 7.6, 3.0, 3.0, 1.2, "Interpolation\nignition map", size=10)
+    box(ax, 7.6, 0.8, 3.0, 1.2, "Interpolation\nfuel map", size=10)
+    arrow(ax, (10.6, 3.6), (12.0, 3.6), text="advance")
+    arrow(ax, (10.6, 1.4), (12.0, 1.4), text="fuel")
+    ax.text(
+        6.5,
+        4.6,
+        "each axis is searched once; every map over the same axes reuses k and f",
+        ha="center",
+        color=INK,
+        fontsize=10,
+    )
+    return fig
+
+
 @figure("pid_anti_windup")
 def pid_anti_windup() -> plt.Figure:
     def response(aw: str):  # type: ignore[no-untyped-def]
