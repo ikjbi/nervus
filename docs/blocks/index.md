@@ -56,10 +56,12 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **Voltage Sensor**: Measures the voltage $v_p - v_n$ as a signal (ideal: no current flows into it).
 - **Current Sensor**: Measures the current flowing through it from ``p`` to ``n`` as a signal. Put it in series, like an
 - **Switch**: A switch controlled by a signal: closed (resistance *R_on*) while the input is ≥ 0.5, open (conductance
-- **Diode**: A piecewise-linear diode: conducts from ``p`` (anode) to ``n`` (cathode) when the voltage exceeds the
+- **Ideal Diode**: A piecewise-linear diode: conducts from ``p`` (anode) to ``n`` (cathode) when the voltage exceeds the
 - **Battery**: A battery: open-circuit voltage from its state of charge, and an internal resistance:
 - **H-Bridge (PWM)**: An H-bridge driving a motor with PWM, as an average model: the output voltage is the duty cycle times
 - **DC Motor**: A permanent-magnet DC motor: electrical port ``p``/``n``, mechanical port ``shaft``:
+- **Voltage-Controlled Voltage Source**: A voltage-controlled voltage source (SPICE element E): $v_p - v_n = gain\,(v_{cp} - v_{cn})$. No current
+- **Voltage-Controlled Current Source**: A voltage-controlled current source (SPICE element G): the current $gm\,(v_{cp} - v_{cn})$ flows from
 
 ## [Logic and Bit Operations](logic-and-bit-operations.md)
 
@@ -103,6 +105,13 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **Speed Sensor**: Measures the angular velocity of a flange (against the reference) as a signal, in rad/s.
 - **Angle Sensor**: Measures the angle of a flange (the integral of its speed) as a signal, in rad. *phi0*: the angle at
 - **Torque Sensor**: Measures the torque transmitted through it from ``a`` to ``b`` (a stiff shaft between the two).
+
+## [Semiconductors](semiconductors.md)
+
+- **Diode**: A diode with the Shockley equation, like SPICE's diode model:
+- **Bipolar Transistor**: A bipolar transistor (Ebers-Moll transport model), NPN or PNP. Ports ``c`` (collector), ``b`` (base),
+- **MOSFET**: A MOSFET (SPICE level 1, square law), N- or P-channel. Ports ``d`` (drain), ``g`` (gate), ``s`` (source);
+- **Op-Amp**: An operational amplifier: high gain, and the output limited to its supply rails:
 
 ## [Signal Attributes](signal-attributes.md)
 

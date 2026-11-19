@@ -23,6 +23,9 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- SPICE-like electronics: Shockley diode (Zener, LED), BJT, MOSFET and op-amp solved with Newton-Raphson
+  (junction limiting), E/G controlled sources, sparse solving for big circuits, `nervus.circuit` operating
+  point and DC sweep, SPICE netlist import/export (File menu, `nervus.spice`).
 - Drawing circuits in the editor: physical ports in domain colours, links dragged between them (undo,
   delete, context menu), Connection Ports for physical ports on subsystems, symbols for physical blocks.
 - Physical modelling: electrical, rotational and thermal components with physical ports joined by links

@@ -43,6 +43,10 @@ GROUND = -1
 GMIN = 1e-12
 """A tiny conductance from every node to the reference, so a floating node does not make the system singular."""
 MAX_MODE_ITERATIONS = 25
+MAX_NEWTON_ITERATIONS = 150
+NEWTON_RELTOL, NEWTON_VNTOL = 1e-6, 1e-9
+SPARSE_ABOVE = 80
+"""Use a sparse solver for networks with more unknowns than this."""
 
 DOMAINS = {
     "electrical": ("voltage", "V", "current", "A"),
@@ -60,6 +64,19 @@ class Stamper:
         self.A = np.zeros((size, size))
         self.b = np.zeros(size)
         self.A[np.arange(n_nodes), np.arange(n_nodes)] = GMIN
+        self.guess: Solution | None = None
+        """The previous Newton iterate: nonlinear components linearize around it (``None``: first iteration)."""
+        self.limited = False
+        """A component limited its step this iteration (SPICE's "noncon"): the iteration has not converged."""
+
+    def limit(self, requested: float, limited: float) -> float:
+        """Record a step limit (if ``limited`` differs from ``requested``) and return the limited value."""
+        if abs(limited - requested) > 1e-12:
+            self.limited = True
+        return limited
+
+    def across_guess(self, node: int) -> float:
+        return 0.0 if self.guess is None else self.guess.across(node)
 
     def add(self, row: int, col: int, value: float) -> None:
         """Add ``value`` at (row, col); rows/cols of nodes are node indices, of branches ``n + k`` (see below)."""
@@ -121,6 +138,8 @@ class PhysicalBlock(Block):
     N_BRANCHES: ClassVar[int] = 0
     REFERENCE: ClassVar[bool] = False
     """A reference (ground) component: its port is the network's reference node."""
+    NONLINEAR: ClassVar[bool] = False
+    """Its stamp depends on ``Stamper.guess``: the network iterates (Newton) until the solution converges."""
 
     def physical_ports(self) -> list[tuple[str, str]]:
         return list(self.PORTS)
@@ -187,28 +206,68 @@ class PhysicalNetwork:
     n_nodes: int = 0
     n_branches: int = 0
     node_names: list[str] = field(default_factory=list)
+    port_nodes: dict[str, int] = field(default_factory=dict)
+    """Node of every port, by ``"block.port"`` (``GROUND`` for the reference)."""
     x0: Array = field(default_factory=lambda: np.zeros(0))
     n_inputs: int = 0
     n_outputs: int = 0
     instant_outputs: list[int] = field(default_factory=list)
     """Outputs that depend directly on input signals (computed by the algebraic node)."""
+    _last: Solution | None = None
+    """The last solution of a nonlinear network: the starting point of the next Newton iteration."""
 
     def solve(self, x: Array, u: Array) -> Solution:
-        for _ in range(MAX_MODE_ITERATIONS):
+        """Solve the network for states ``x`` and inputs ``u``. Nonlinear components (transistors, diodes)
+        are linearized around the previous iterate (Newton-Raphson), starting from the last solution; components
+        with modes are iterated until their modes are consistent."""
+        nonlinear = any(m.block.NONLINEAR for m in self.members)
+        size = self.n_nodes + self.n_branches
+        guess = self._last if (nonlinear and self._last is not None and self._last.z.size == size) else None
+        sol: Solution | None = None
+        limit = MAX_NEWTON_ITERATIONS if nonlinear else MAX_MODE_ITERATIONS
+        for _ in range(limit):
             s = Stamper(self.n_nodes, self.n_branches)
+            s.guess = guess
             for m in self.members:
                 m.block.stamp(s, m.nodes, m.branches, x[m.states], u[m.inputs].tolist())
-            try:
-                z = np.linalg.solve(s.A, s.b)
-            except np.linalg.LinAlgError as exc:
-                raise SimulationError(self._singular_message(), tuple(m.path for m in self.members)) from exc
-            sol = Solution(np.asarray(z, dtype=float), self.n_nodes)
+            z = self._linear_solve(s)
+            sol = Solution(z, self.n_nodes)
             changed = False
             for m in self.members:
                 changed = m.block.update_mode(sol, m.nodes, m.branches) or changed
-            if not changed:
-                return sol
-        return sol  # modes still changing: use the last solution (a chattering diode)
+            converged = True
+            if nonlinear:
+                prev = guess.z if guess is not None else np.zeros(size)
+                converged = not s.limited and bool(np.all(np.abs(z - prev) <= NEWTON_RELTOL * np.abs(z) + NEWTON_VNTOL))
+                guess = sol
+            if converged and not changed:
+                break
+        else:
+            if nonlinear:
+                raise SimulationError(
+                    f"the circuit {self.name} did not converge (Newton iteration); check for a missing resistor or "
+                    "a source that drives a semiconductor directly",
+                    tuple(m.path for m in self.members),
+                )
+        assert sol is not None
+        if nonlinear:
+            self._last = sol
+        return sol
+
+    def _linear_solve(self, s: Stamper) -> Array:
+        try:
+            if s.A.shape[0] > SPARSE_ABOVE:
+                from scipy.sparse import csc_matrix
+                from scipy.sparse.linalg import spsolve
+
+                z = spsolve(csc_matrix(s.A), s.b)
+                if not np.all(np.isfinite(z)):
+                    raise np.linalg.LinAlgError("singular")
+            else:
+                z = np.linalg.solve(s.A, s.b)
+        except (np.linalg.LinAlgError, RuntimeError) as exc:
+            raise SimulationError(self._singular_message(), tuple(m.path for m in self.members)) from exc
+        return np.asarray(z, dtype=float)
 
     def _singular_message(self) -> str:
         return (
@@ -413,11 +472,13 @@ def build_networks(
                 r = find((i, port))
                 if r in ground_roots:
                     nodes.append(GROUND)
-                    continue
-                if r not in node_of:
+                elif r in node_of:
+                    nodes.append(node_of[r])
+                else:
                     node_of[r] = len(net.node_names)
                     net.node_names.append(f"{names[r[0]]}.{r[1]}")
-                nodes.append(node_of[r])
+                    nodes.append(node_of[r])
+                net.port_nodes[f"{names[i]}.{port}"] = nodes[-1]
             x = b.physical_states()
             ni, no, nb = b.num_inputs(), b.num_outputs(), b.n_branches()
             net.members.append(
@@ -458,3 +519,24 @@ def build_networks(
 def _describe(net: PhysicalNetwork) -> dict[str, Any]:
     """For debugging: the members and nodes of a network."""
     return {"nodes": net.node_names, "members": [(m.path, m.nodes) for m in net.members]}
+
+
+VT = 0.025852
+"""Thermal voltage kT/q at 27 °C [V], as in SPICE."""
+
+
+def junction_limit(v_new: float, v_old: float, nvt: float, vcrit: float) -> float:
+    """SPICE's pnjlim: limit a junction voltage step so the exponential does not overshoot during Newton."""
+    if v_new > vcrit and abs(v_new - v_old) > 2 * nvt:
+        if v_old > 0:
+            arg = 1 + (v_new - v_old) / nvt
+            return v_old + nvt * np.log(arg) if arg > 0 else vcrit
+        return nvt * np.log(v_new / nvt)
+    return v_new
+
+
+def exp_junction(v: float, i_s: float, nvt: float) -> tuple[float, float]:
+    """Current and conductance of an ideal junction, i = Is (e^(v/nVt) - 1), with the exponent capped."""
+    arg = min(v / nvt, 80.0)
+    e = np.exp(arg)
+    return i_s * (e - 1.0), i_s * e / nvt

@@ -23,6 +23,8 @@ from nervus.blocks.discrete import (
     ZeroOrderHold,
 )
 from nervus.blocks.electrical import (
+    VCCS,
+    VCVS,
     Battery,
     Capacitor,
     CurrentSensor,
@@ -64,12 +66,17 @@ from nervus.blocks.physical_ports import ConnectionPort
 from nervus.blocks.ports import Inport, Outport, Subsystem
 from nervus.blocks.registry import block_types, categories, create_block, get_block_class, register
 from nervus.blocks.routing import DataTypeConversion, Demux, InitialCondition, Mux, Switch
+from nervus.blocks.semiconductors import BJT, MOSFET, OpAmp, SemiconductorDiode
 from nervus.blocks.sinks import Assertion, Scope, StopSimulation, Terminator, ToWorkspace
 from nervus.blocks.sources import Clock, Constant, FromWorkspace, Ground, Pulse, Ramp, Sine, Step
 from nervus.blocks.user import PythonFunction
 
 __all__ = [
+    "BJT",
+    "MOSFET",
     "PID",
+    "VCCS",
+    "VCVS",
     "Abs",
     "AngleSensor",
     "Assertion",
@@ -122,6 +129,7 @@ __all__ = [
     "MovingAverage",
     "Mux",
     "ObdResponder",
+    "OpAmp",
     "Outport",
     "Prelookup",
     "Product",
@@ -139,6 +147,7 @@ __all__ = [
     "RotationalSpring",
     "Saturation",
     "Scope",
+    "SemiconductorDiode",
     "Sine",
     "SpeedSensor",
     "SpeedSource",

@@ -54,6 +54,70 @@ controlled sources (*controlled* = on) turn signals into voltages, currents, tor
 controller built from signal blocks can drive a physical plant: a PI controller that reads a Speed Sensor and
 sets a Voltage Source driving a DC Motor.
 
+## Electronic circuits: semiconductors, like SPICE
+
+The **Semiconductors** library has SPICE-like device models: **Diode** (Shockley equation, with reverse
+breakdown for Zener diodes; LEDs with their own Is and N), **Bipolar Transistor** (NPN/PNP, Ebers-Moll),
+**MOSFET** (N/P, SPICE level 1) and **Op-Amp** (high gain, output limited to its rails). The **Ideal Diode** in
+the Electrical library is a faster piecewise-linear switch.
+
+These devices are nonlinear, so the network is solved the way SPICE does it: around the last solution each
+device is replaced by a conductance and a current source (its *companion model*), the linear system is solved,
+and this is repeated (Newton-Raphson) until the solution no longer changes. Junction voltages are limited between
+iterations (SPICE's *pnjlim*), so the exponentials converge from any starting point. For a diode:
+
+$$ i = I_s\left(e^{v/(N V_T)} - 1\right) \quad\Rightarrow\quad i \approx i_0 + g_0 (v - v_0), \qquad g_0 = \frac{I_s}{N V_T} e^{v_0/(N V_T)} $$
+
+Circuits with more than 80 unknowns are solved with sparse matrices, so circuits with hundreds of nodes stay
+fast. The voltage-controlled sources **E** and **G** of SPICE are the blocks *Voltage-Controlled Voltage/Current
+Source*.
+
+## Analyses
+
+| SPICE | Nervus |
+|---|---|
+| `.tran` (transient) | an ordinary simulation (▶ Run, or `simulate`) |
+| `.op` (operating point) | `nervus.circuit.operating_point(model)`: every node voltage at the steady state |
+| `.dc` (DC sweep) | `nervus.circuit.dc_sweep(model, "Vin", "V", values, ["vout"])` |
+| `.ac` (small-signal) | Linear Analysis: an In block on a controlled source, an Out block on a sensor → Bode plot |
+
+```python
+from nervus.circuit import dc_sweep, operating_point
+
+op = operating_point(model)
+print(op.table())  # R1.n  0.6291, D1.p 0.6291, ...
+curve = dc_sweep(model, "Vin", "V", np.linspace(0, 5, 51), ["vd"])
+```
+
+## SPICE netlists (LTspice)
+
+**File → Import SPICE Netlist…** opens a netlist as a model, and **Export SPICE Netlist…** writes one. In
+LTspice, *View → SPICE Netlist* shows the netlist of a schematic; save it as a `.cir` file. Nervus reads
+R, C, L, V, I (DC, `SIN`, `PULSE`), D, Q, M, E and G, `.model`, `.param` and `.tran`. Every node gets a Voltage
+Sensor named like SPICE's probes, so `res["V(out)"]` is the voltage of node `out`:
+
+```
+* Half-wave rectifier with a smoothing capacitor
+V1 in 0 SIN(0 10 50)
+D1 in out D1N4007
+C1 out 0 100u
+R1 out 0 1k
+.model D1N4007 D(IS=7n N=1.8 BV=1000 IBV=5u)
+.tran 50u 100m
+.end
+```
+
+```python
+from nervus.spice import read_netlist, write_netlist
+
+d = read_netlist("rectifier.cir")
+res = simulate(d)  # V(out): about 9 V with 1.8 V of ripple
+write_netlist(d, "back.cir")
+```
+
+The rise and fall times of `PULSE` sources are ignored (ideal edges), subcircuits (`.subckt`) and behavioural
+sources (`B`) are not read yet; a list of elements that were left out is shown after the import.
+
 ## How it is solved
 
 Ports that are linked share a **node**. At every node the through values add up to zero (Kirchhoff's current

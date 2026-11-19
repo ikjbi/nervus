@@ -235,7 +235,7 @@ class Diode(_Electrical):
     """
 
     type_id = "electrical.diode"
-    label = "Diode"
+    label = "Ideal Diode"
     PARAMS = (
         Param("Vf", 0.6, ParamKind.FLOAT, "Forward voltage", "V"),
         Param("R_on", 0.01, ParamKind.FLOAT, "Resistance when conducting", "Ω"),
@@ -394,3 +394,44 @@ class DCMotor(PhysicalBlock):
         v = sol.across(nodes[0]) - sol.across(nodes[1])
         w = sol.across(nodes[2])
         return np.array([(v - p["R"] * x[0] - p["k"] * w) / p["L"]])
+
+
+@register
+class VCVS(_Electrical):
+    """A voltage-controlled voltage source (SPICE element E): $v_p - v_n = gain\\,(v_{cp} - v_{cn})$. No current
+    flows into the control ports."""
+
+    type_id = "electrical.vcvs"
+    label = "Voltage-Controlled Voltage Source"
+    N_BRANCHES = 1
+    PORTS = (("p", "electrical"), ("n", "electrical"), ("cp", "electrical"), ("cn", "electrical"))
+    PARAMS = (Param("gain", 1.0, ParamKind.FLOAT, "Voltage gain"),)
+
+    def stamp(self, s: Stamper, nodes: list[int], branches: list[int], x: Array, u: Sequence[float]) -> None:
+        p, n, cp, cn = nodes
+        g, r = float(self.params["gain"]), s.branch(branches[0])
+        s.add(r, p, 1.0)
+        s.add(r, n, -1.0)
+        s.add(r, cp, -g)
+        s.add(r, cn, g)
+        s.add(p, r, 1.0)
+        s.add(n, r, -1.0)
+
+
+@register
+class VCCS(_Electrical):
+    """A voltage-controlled current source (SPICE element G): the current $gm\\,(v_{cp} - v_{cn})$ flows from
+    ``p`` through the source to ``n``."""
+
+    type_id = "electrical.vccs"
+    label = "Voltage-Controlled Current Source"
+    PORTS = (("p", "electrical"), ("n", "electrical"), ("cp", "electrical"), ("cn", "electrical"))
+    PARAMS = (Param("gm", 1e-3, ParamKind.FLOAT, "Transconductance", "S"),)
+
+    def stamp(self, s: Stamper, nodes: list[int], branches: list[int], x: Array, u: Sequence[float]) -> None:
+        p, n, cp, cn = nodes
+        gm = float(self.params["gm"])
+        s.add(p, cp, gm)
+        s.add(p, cn, -gm)
+        s.add(n, cp, -gm)
+        s.add(n, cn, gm)

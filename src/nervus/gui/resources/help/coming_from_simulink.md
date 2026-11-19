@@ -36,6 +36,7 @@ maps Simulink names to Nervus names.
 | Flip block (Ctrl+I), rotate block (Ctrl+R) | Flip Block (Ctrl+Shift+F), Rotate Block (Ctrl+Shift+R) |
 | Stateflow chart | State Chart block with a text definition (*State machines*) |
 | Simscape (Electrical, rotational mechanics, thermal) | physical blocks joined by links (*Physical modelling*) |
+| LTspice / SPICE netlists | File → Import SPICE Netlist…, `nervus.spice` |
 | MATLAB Function block | Python Function block (with a *parameters* vector) |
 | S-Function | a Python `Block` subclass (*Writing blocks*) |
 

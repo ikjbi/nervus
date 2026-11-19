@@ -141,7 +141,7 @@ A switch controlled by a signal: closed (resistance *R_on*) while the input is �
 
 ---
 
-## Diode
+## Ideal Diode
 
 `electrical.diode` · Electrical
 
@@ -224,6 +224,40 @@ friction. The armature current is a state.
 | `R` | `1.0` | Ω | Armature resistance |
 | `L` | `0.001` | H | Armature inductance |
 | `k` | `0.05` | N·m/A | Torque and back-EMF constant |
+
+*Direct feedthrough:* yes · no inputs, no outputs
+
+---
+
+## Voltage-Controlled Voltage Source
+
+`electrical.vcvs` · Electrical
+
+A voltage-controlled voltage source (SPICE element E): $v_p - v_n = gain\,(v_{cp} - v_{cn})$. No current
+flows into the control ports.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `gain` | `1.0` |  | Voltage gain |
+
+*Direct feedthrough:* yes · no inputs, no outputs
+
+---
+
+## Voltage-Controlled Current Source
+
+`electrical.vccs` · Electrical
+
+A voltage-controlled current source (SPICE element G): the current $gm\,(v_{cp} - v_{cn})$ flows from
+``p`` through the source to ``n``.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `gm` | `0.001` | S | Transconductance |
 
 *Direct feedthrough:* yes · no inputs, no outputs
 

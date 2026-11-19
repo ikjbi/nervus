@@ -173,6 +173,12 @@ class MainWindow(QMainWindow):
         self.act_open = self._action("&Open…", self.open_file, K.Open, "Open a model", "open")
         self.act_save = self._action("&Save", self.save_file, K.Save, "Save the model", "save")
         self.act_save_as = self._action("Save &As…", self.save_file_as, K.SaveAs, "Save under a new name")
+        self.act_import_spice = self._action(
+            "Import SPICE Netlist…", self.import_spice, None, "Open a .cir/.net netlist (e.g. from LTspice)"
+        )
+        self.act_export_spice = self._action(
+            "Export SPICE Netlist…", self.export_spice, None, "Write the circuit of this model as a netlist"
+        )
         self.act_quit = self._action("&Quit", self.close, K.Quit)
         self.act_undo = self.editor.undo_stack.createUndoAction(self, "&Undo")
         self.act_undo.setShortcut(K.Undo)
@@ -275,6 +281,8 @@ class MainWindow(QMainWindow):
         self.recent_menu = m.addMenu("Open &Recent")
         m.addSeparator()
         m.addActions([self.act_save, self.act_save_as])
+        m.addSeparator()
+        m.addActions([self.act_import_spice, self.act_export_spice])
         m.addSeparator()
         m.addActions([self.act_add_library, self.act_refresh_links])
         m.addSeparator()
@@ -679,6 +687,45 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"Saved {self.diagram_model.title}")
             return True
         return self.save_file_as() if self.diagram_model.file_path is None else False
+
+    def import_spice(self, path: str | None = None) -> bool:
+        """Open a SPICE netlist as a new (unsaved) model."""
+        from PySide6.QtWidgets import QFileDialog
+
+        from nervus.spice import read_netlist
+
+        if path is None:
+            if not self._confirm_discard():
+                return False
+            path, _ = QFileDialog.getOpenFileName(
+                self, "Import SPICE netlist", "", "SPICE netlists (*.cir *.net *.sp *.txt);;All files (*)"
+            )
+            if not path:
+                return False
+        try:
+            model = read_netlist(path)
+        except (NervusError, OSError) as exc:
+            QMessageBox.warning(self, "Nervus", f"Cannot read {path}:\n{exc}")
+            return False
+        self.diagram_model.set_diagram(model)
+        skipped = model.meta.get("spice_skipped")
+        self.status_label.setText(
+            f"Imported {Path(path).name}" + (f" — not supported, left out: {', '.join(skipped)}" if skipped else "")
+        )
+        return True
+
+    def export_spice(self, path: str | None = None) -> bool:
+        from PySide6.QtWidgets import QFileDialog
+
+        from nervus.spice import write_netlist
+
+        if path is None:
+            path, _ = QFileDialog.getSaveFileName(self, "Export SPICE netlist", "circuit.cir", "SPICE netlists (*.cir)")
+            if not path:
+                return False
+        write_netlist(self.diagram_model.root, path)
+        self.status_label.setText(f"Wrote {path}")
+        return True
 
     def save_file_as(self) -> bool:
         path, _ = QFileDialog.getSaveFileName(self, "Save model", self.diagram_model.title, FILE_FILTER)
