@@ -300,7 +300,8 @@ tests/
 - [x] ELM327 adapter client (USB/Bluetooth serial): initialise, query supported PIDs, poll PIDs
 - [x] Record a drive into a result file (`.nervres`) / CSV: replay as test inputs, compare with models in the
       Data Inspector
-- [ ] Read and clear diagnostic trouble codes (modes 03/04/07), freeze frame (mode 02), VIN (mode 09)
+- [x] Read diagnostic trouble codes (stored 03, pending 07, permanent 0A), freeze frame (02), VIN (09);
+      clearing (04) deliberately left out: it resets the emissions readiness monitors
 - [ ] OBD over a CAN interface (`python-can`, ISO-TP / ISO 15765-4) without an ELM327
 - [ ] Editor: Tools → Record from OBD-II… with live plots
 - [ ] OBD responder in models: a simulated ECU that answers OBD requests (to test diagnostic tools)

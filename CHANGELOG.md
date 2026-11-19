@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- OBD-II: read stored, pending and permanent trouble codes (with descriptions of common codes), freeze frame
+  values and the VIN; `python -m nervus.obd dtc`. Clearing codes is deliberately not supported.
 - Example `engine_library.py`: a mean-value engine and a throttle actuator as masked library components,
   used twice in `engine_comparison.nervus` to compare a 1.6 l and a 2.0 l engine.
 - Python Function blocks have a *parameters* vector (`p[0]`, `p[1]`, ...) that can use workspace and mask

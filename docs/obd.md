@@ -13,7 +13,7 @@ Use it to:
 - check that your plant model behaves like your car.
 
 !!! note "Read-only"
-    Nervus only sends standard *read* requests (mode 01). It never writes to or reprograms the car's ECUs.
+    Nervus only sends standard *read* requests (modes 01, 02, 03, 07, 09 and 0A). It never clears codes, writes to, or reprograms the car's ECUs.
 
 ## Setup
 
@@ -30,6 +30,39 @@ Turn the ignition on (or start the engine) before connecting.
 
 Open `drive.nervres` with **File → Open Result** in the Data Inspector, or save it as CSV with
 `--out drive.csv`.
+
+## Trouble codes, freeze frame and VIN
+
+```bash
+uv run python -m nervus.obd dtc --port /dev/tty.usbserial-1110
+```
+
+```text
+VIN: WVWZZZ1KZAW000001
+stored trouble codes: 2
+  P0133  O2 sensor slow response (bank 1 sensor 1)
+  P0300  Random/multiple cylinder misfire detected
+pending trouble codes: none
+permanent trouble codes: none
+freeze frame: rpm=1726, speed=50, coolant_temp=83, engine_load=40.4
+```
+
+| Kind | OBD mode | Meaning |
+|---|---|---|
+| stored | 03 | Confirmed faults; these switch on the check-engine lamp (MIL) |
+| pending | 07 | Seen in the current or last drive cycle, not yet confirmed |
+| permanent | 0A | Stay until the ECU itself sees the fault is gone; a tool cannot clear them |
+| freeze frame | 02 | Snapshot of live values when the first code was stored |
+
+A code such as **P0133** reads as: letter = system (**P**owertrain, **C**hassis, **B**ody, network **U**),
+first digit 0/2 = generic SAE code (1/3 = manufacturer specific), then the subsystem (1 = air/fuel metering,
+3 = ignition/misfire, 4 = emissions, ...) and the fault number. Nervus knows the descriptions of common generic
+codes; look up others in the SAE J2012 list or your car's service information.
+
+Nervus does **not clear** trouble codes (mode 04): clearing also resets the readiness monitors that an
+emissions inspection checks. Use your car's diagnostic tool for that, once the cause is fixed.
+
+In Python: `elm.trouble_codes("stored")`, `elm.freeze_frame(PIDS["rpm"])`, `elm.vin()`.
 
 ## How a PID is decoded
 
@@ -78,5 +111,4 @@ rpm_input = Signal(drive.t, drive["rpm"], "linear")  # use as a test-case input
 ```
 
 Over an ELM327 each PID takes roughly 30–100 ms, so polling 4 PIDs gives a few samples per second. Planned
-next (see the plan, Phase 22): trouble codes and freeze frames, OBD directly over a CAN interface, and a live
-recording window in the editor.
+next (see the plan, Phase 22): OBD directly over a CAN interface, and a live recording window in the editor.

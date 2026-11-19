@@ -2,7 +2,19 @@ import numpy as np
 import pytest
 
 from nervus.core import Signal
-from nervus.obd import PIDS, Elm327, ObdError, _main, parse_response, record, supported_from_bitmask
+from nervus.obd import (
+    PIDS,
+    Elm327,
+    ObdError,
+    _main,
+    decode_dtc,
+    describe_dtc,
+    parse_dtcs,
+    parse_response,
+    parse_vin,
+    record,
+    supported_from_bitmask,
+)
 
 
 class FakeCar:
@@ -101,3 +113,53 @@ def test_unsupported_and_no_answer() -> None:
 def test_cli_lists_pids(capsys) -> None:  # type: ignore[no-untyped-def]
     assert _main(["pids"]) == 0
     assert "rpm" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("text", "codes"),
+    [
+        ("43 01 33 00 00 00 00", ["P0133"]),  # non-CAN, one line
+        ("43 01 33 04 20 C1 23\r43 00 00 00 00 00 00", ["P0133", "P0420", "U0123"]),  # non-CAN, two lines
+        ("43 02 01 33 04 20", ["P0133", "P0420"]),  # CAN with count
+        ("43 00", []),  # CAN, no codes
+        ("NO DATA", []),
+        ("47 01 01 71", ["P0171"]),
+    ],
+)
+def test_parse_dtcs(text: str, codes: list[str]) -> None:
+    mode = 7 if text.startswith("47") else 3
+    assert parse_dtcs(text, mode) == codes
+
+
+def test_decode_and_describe_dtc() -> None:
+    assert decode_dtc(bytes([0x01, 0x33])) == "P0133"
+    assert decode_dtc(bytes([0x41, 0x23])) == "C0123"
+    assert decode_dtc(bytes([0x92, 0x34])) == "B1234"
+    assert describe_dtc("P0420").startswith("Catalyst")
+    assert describe_dtc("P1234") == "manufacturer-specific powertrain code"
+    assert describe_dtc("U0100") == "generic (SAE) network code"
+
+
+def test_parse_vin_can_multiframe() -> None:
+    vin = "WVWZZZ1KZAW000001"
+    data = bytes([0x49, 0x02, 0x01]) + vin.encode()
+    chunks = [data[:6], data[6:13], data[13:]]
+    text = "014\r" + "\r".join(f"{k}: " + " ".join(f"{b:02X}" for b in c) for k, c in enumerate(chunks))
+    assert parse_vin(text) == vin
+    assert parse_vin("NO DATA") is None
+
+
+def test_elm_trouble_codes_and_freeze_frame() -> None:
+    class Car(FakeCar):
+        def write(self, data: bytes) -> int:
+            cmd = data.decode().strip().upper()
+            replies = {"03": "43 02 01 33 03 00", "07": "47 00", "0A": "4A 00", "020C00": "42 0C 00 1A F8"}
+            if cmd in replies:
+                self.buffer += (replies[cmd] + "\r\r>").encode()
+                return len(data)
+            return super().write(data)
+
+    elm = Elm327(Car())
+    assert elm.trouble_codes() == ["P0133", "P0300"]
+    assert elm.trouble_codes("pending") == []
+    assert elm.freeze_frame(PIDS["rpm"]) == 1726.0

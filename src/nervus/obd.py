@@ -10,7 +10,12 @@ test input::
     uv run python -m nervus.obd record --port /dev/tty.usbserial-1110 \\
         --pids rpm,speed,coolant_temp,throttle --duration 120 --out drive.nervres
 
-Nervus only sends standard *read* requests (mode 01). It never writes to or reprograms the car's ECUs.
+Nervus also reads **trouble codes** (stored, pending and permanent), the freeze frame and the VIN::
+
+    uv run python -m nervus.obd dtc --port /dev/tty.usbserial-1110
+
+Nervus only sends standard *read* requests (modes 01, 02, 03, 07, 09, 0A). It never clears codes (mode 04
+also resets the emissions readiness monitors), writes to, or reprograms the car's ECUs.
 """
 
 from __future__ import annotations
@@ -110,6 +115,104 @@ def supported_from_bitmask(base: int, data: bytes) -> set[int]:
     return {base + k + 1 for k in range(32) if bits & (1 << (31 - k))}
 
 
+# ---------------------------------------------------------------------------- trouble codes, VIN
+
+DTC_LETTERS = "PCBU"  # powertrain, chassis, body, network
+DTC_DESCRIPTIONS = {
+    "P0101": "Mass air flow sensor range/performance",
+    "P0113": "Intake air temperature sensor high input",
+    "P0118": "Engine coolant temperature sensor high input",
+    "P0128": "Coolant temperature below thermostat regulating temperature",
+    "P0133": "O2 sensor slow response (bank 1 sensor 1)",
+    "P0171": "System too lean (bank 1)",
+    "P0172": "System too rich (bank 1)",
+    "P0300": "Random/multiple cylinder misfire detected",
+    "P0301": "Cylinder 1 misfire detected",
+    "P0302": "Cylinder 2 misfire detected",
+    "P0303": "Cylinder 3 misfire detected",
+    "P0304": "Cylinder 4 misfire detected",
+    "P0335": "Crankshaft position sensor circuit",
+    "P0401": "Exhaust gas recirculation flow insufficient",
+    "P0420": "Catalyst system efficiency below threshold (bank 1)",
+    "P0442": "Evaporative emission system small leak",
+    "P0455": "Evaporative emission system large leak",
+    "P0500": "Vehicle speed sensor",
+    "P0505": "Idle air control system",
+    "P0562": "System voltage low",
+}
+
+
+def decode_dtc(two_bytes: bytes) -> str:
+    """``b"\x01\x33"`` -> ``"P0133"`` (SAE J2012: 2 bits letter, 2 bits digit, 3 hex digits)."""
+    a, b = two_bytes[0], two_bytes[1]
+    return f"{DTC_LETTERS[a >> 6]}{(a >> 4) & 0x3}{a & 0xF:X}{b >> 4:X}{b & 0xF:X}"
+
+
+def describe_dtc(code: str) -> str:
+    """A short description for common generic codes; otherwise the code's category."""
+    if code in DTC_DESCRIPTIONS:
+        return DTC_DESCRIPTIONS[code]
+    system = {"P": "powertrain", "C": "chassis", "B": "body", "U": "network"}[code[0]]
+    kind = "generic (SAE)" if code[1] in "02" else "manufacturer-specific"
+    return f"{kind} {system} code"
+
+
+def _hex_bytes(text: str) -> list[bytes]:
+    """The data bytes of each reply line. Handles CAN multi-frame replies (``0: 49 02 01 ...``) and skips the
+    byte-count line before them."""
+    lines = []
+    for line in text.replace("\r", "\n").split("\n"):
+        line = line.strip().upper()
+        if not line or line.startswith(("SEARCHING", ">")) or "NO DATA" in line:
+            continue
+        if len(line) >= 2 and line[1] == ":" and line[0] in "0123456789ABCDEF":
+            line = line[2:]  # CAN frame index
+        compact = line.replace(" ", "")
+        if len(compact) <= 3:
+            continue  # byte count of a multi-frame reply
+        try:
+            lines.append(bytes.fromhex(compact[: (len(compact) // 2) * 2]))
+        except ValueError:
+            continue
+    return lines
+
+
+def parse_dtcs(text: str, mode: int = 3) -> list[str]:
+    """Trouble codes in a reply to mode 03 (stored), 07 (pending) or 0A (permanent).
+
+    Non-CAN cars answer ``43 01 33 00 00 00 00`` (three codes per line, padded with 0000); CAN cars add the
+    number of codes: ``43 02 01 33 04 20``.
+    """
+    head = 0x40 + mode
+    lines = _hex_bytes(text)
+    data = b"".join(lines)
+    if not data or head not in data:
+        return []
+    codes: list[str] = []
+    if len(lines) == 1 or lines[0][0] != head or any(len(x) != 7 for x in lines):  # CAN: header, count, codes
+        body = data[data.index(head) + 1 :]
+        if len(body) % 2 == 1:
+            count, body = body[0], body[1:]
+            body = body[: 2 * count]
+        pairs = [body[k : k + 2] for k in range(0, len(body) - 1, 2)]
+    else:  # non-CAN: every line is 43 + three codes
+        pairs = [x[k : k + 2] for x in lines for k in (1, 3, 5)]
+    for pair in pairs:
+        if pair != b"\x00\x00":
+            codes.append(decode_dtc(pair))
+    return codes
+
+
+def parse_vin(text: str) -> str | None:
+    """The 17-character vehicle identification number in a reply to mode 09 PID 02."""
+    data = b"".join(_hex_bytes(text))
+    k = data.find(b"\x49\x02")
+    if k < 0:
+        return None
+    chars = "".join(chr(c) for c in data[k + 2 :] if 48 <= c <= 90)  # 0-9 and A-Z
+    return chars[-17:] if len(chars) >= 17 else None
+
+
 class Transport(Protocol):
     def write(self, data: bytes) -> object: ...
 
@@ -168,6 +271,22 @@ class Elm327:
             return None
         return float(pid.decode(data[: pid.n_bytes]))
 
+    def trouble_codes(self, kind: str = "stored") -> list[str]:
+        """Diagnostic trouble codes: ``stored`` (mode 03, these light the MIL), ``pending`` (07, seen once but
+        not confirmed) or ``permanent`` (0A, cannot be cleared by a tool)."""
+        mode = {"stored": 3, "pending": 7, "permanent": 0x0A}[kind]
+        return parse_dtcs(self.command(f"{mode:02X}"), mode)
+
+    def freeze_frame(self, pid: Pid, frame: int = 0) -> float | None:
+        """The value of ``pid`` stored when the first trouble code was set (mode 02)."""
+        data = parse_response(self.command(f"02{pid.pid:02X}{frame:02X}"), 2, pid.pid)
+        if data is None or len(data) < pid.n_bytes + 1:
+            return None
+        return float(pid.decode(data[1 : 1 + pid.n_bytes]))  # the first byte is the frame number
+
+    def vin(self) -> str | None:
+        return parse_vin(self.command("0902"))
+
 
 def record(
     elm: Elm327,
@@ -216,6 +335,8 @@ def _main(argv: Sequence[str] | None = None) -> int:
     sub.add_parser("pids", help="list the PIDs Nervus can decode")
     sp = sub.add_parser("supported", help="ask the car which PIDs it supports")
     sp.add_argument("--port", required=True)
+    dp = sub.add_parser("dtc", help="read trouble codes (stored, pending, permanent), freeze frame and VIN")
+    dp.add_argument("--port", required=True)
     rp = sub.add_parser("record", help="record PIDs to a .nervres or .csv file")
     rp.add_argument("--port", required=True)
     rp.add_argument("--pids", default="rpm,speed,coolant_temp,throttle,engine_load")
@@ -229,6 +350,17 @@ def _main(argv: Sequence[str] | None = None) -> int:
         return 0
     elm = Elm327(SerialTransport(args.port))
     supported = elm.initialize()
+    if args.cmd == "dtc":
+        print(f"VIN: {elm.vin() or 'not reported'}")
+        for kind in ("stored", "pending", "permanent"):
+            codes = elm.trouble_codes(kind)
+            print(f"{kind} trouble codes: {len(codes) or 'none'}")
+            for code in codes:
+                print(f"  {code}  {describe_dtc(code)}")
+        frame = {name: elm.freeze_frame(PIDS[name]) for name in ("rpm", "speed", "coolant_temp", "engine_load")}
+        if any(v is not None for v in frame.values()):
+            print("freeze frame: " + ", ".join(f"{k}={v:g}" for k, v in frame.items() if v is not None))
+        return 0
     if args.cmd == "supported":
         for n in sorted(supported):
             known = BY_NUMBER.get(n)
