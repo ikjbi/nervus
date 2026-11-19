@@ -158,7 +158,7 @@ tests/
 - [x] Enabled subsystems (held or reset states; C code)
 - [x] Triggered subsystems (rising/falling/either edge, combined with enable; C code)
 - [ ] Function-call subsystems (task scheduling from a chart or scheduler block)
-- [ ] Variant subsystems (choose an implementation by a workspace variable, e.g. engine type)
+- [x] Variant subsystems (conditions on workspace variables, default variant, Variants dialog, C code of the active variant)
 - [ ] Reusable component libraries (a subsystem saved to a library file and linked)
 
 ## Phase 10 – Test cases, scenarios and results

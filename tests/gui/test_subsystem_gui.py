@@ -102,3 +102,31 @@ def test_mask_editing_with_undo(window) -> None:  # type: ignore[no-untyped-def]
     ed.undo_stack.undo()
     assert float(g.params["gain"]) == 4.0
     assert not ed.set_mask(sub, [{"name": "K", "value": "undefined_thing"}], "", "")
+
+
+def test_variants_editing_with_undo(window) -> None:  # type: ignore[no-untyped-def]
+    ed = window.editor
+    c = ed.add_block("sources.constant", QPointF(0, 0), value=1.0)
+    g = ed.add_block("math.gain", QPointF(150, 0), gain=2.0)
+    sc = ed.add_block("sinks.scope", QPointF(300, 0))
+    ed.connect_ports(c, 0, g, 0)
+    ed.connect_ports(g, 0, sc, 0)
+    sub = ed.create_subsystem([g])
+    original = sub.system
+    assert ed.set_variants(sub, [(None, "petrol", ""), (None, "diesel", "")], "petrol")
+    assert list(sub.variants) == ["petrol", "diesel"]
+    diesel = sub.variants["diesel"].system
+    assert diesel is not original
+    window.scene.select_blocks([sub.name])
+    assert "variant" in window.properties._editors
+    window.diagram_model.enter(sub)
+    assert ed.activate_variant(sub, "diesel")
+    assert sub.system is diesel and window.diagram_model.diagram is not original  # left the inactive variant
+    ed.undo_stack.undo()
+    assert sub.active_variant == "petrol"
+    ed.undo_stack.undo()
+    assert not sub.variants and sub.system is original
+    assert not ed.set_variants(sub, [(None, "a", ""), (None, "a", "")], "a")
+    window.diagram_model.root.workspace["ENGINE"] = 2
+    assert ed.set_variants(sub, [(None, "petrol", "ENGINE == 1"), (None, "diesel", "ENGINE == 2")], "petrol")
+    assert sub.active_variant == "diesel"  # chosen by the condition

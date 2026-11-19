@@ -26,6 +26,7 @@ from nervus.gui.controllers.commands import (
     SetSettingsCommand,
     SetTestsCommand,
     SetVariableCommand,
+    SetVariantsCommand,
 )
 from nervus.gui.models.diagram_model import DiagramModel, block_position
 
@@ -154,6 +155,54 @@ class EditorController(QObject):
             return False
         state: dict[str, Any] = {"variables": variables, "icon": icon, "description": description}
         return self._push(SetMaskCommand(self.model, subsystem, state))
+
+    def set_variants(self, subsystem: Block, rows: list[tuple[str | None, str, str]], active: str) -> bool:
+        """Replace a subsystem's variants. ``rows`` are (existing variant name or None for a new copy of the
+        active variant, name, condition). An empty list removes the variants and keeps the active diagram."""
+        from nervus.blocks.ports import Variant
+        from nervus.io.model_file import system_from_dict, system_to_dict
+
+        sub: Any = subsystem
+        names = [name.strip() for _old, name, _cond in rows]
+        if any(not n for n in names) or len(set(names)) != len(names):
+            self.errorOccurred.emit(f"{sub.name}: variant names must be unique and not empty")
+            return False
+        if rows and active not in names:
+            self.errorOccurred.emit(f"{sub.name}: the active variant {active!r} is not in the list")
+            return False
+        variants: dict[str, Variant] = {}
+        for old, name, cond in rows:
+            if old is not None and old in sub.variants:
+                system = sub.variants[old].system
+            else:
+                system = system_from_dict(system_to_dict(sub.system), sub.system.name)
+            variants[name.strip()] = Variant(system, cond.strip())
+        state: dict[str, Any] = {
+            "variants": variants,
+            "active": active,
+            "system": variants[active].system if rows else sub.system,
+        }
+        if rows:  # check the conditions and ports before changing anything
+            from nervus.blocks.ports import check_variant_ports, choose_variant
+
+            try:
+                check_variant_ports(variants, active)
+                if subsystem.diagram is not None:
+                    state["active"] = choose_variant(variants, subsystem.diagram.namespace(), active)
+                    state["system"] = variants[state["active"]].system
+            except (NervusError, ValueError) as exc:
+                self.errorOccurred.emit(f"{sub.name}: {exc}")
+                return False
+        return self._push(SetVariantsCommand(self.model, subsystem, state, f"Edit variants of {sub.name}"))
+
+    def activate_variant(self, subsystem: Block, name: str) -> bool:
+        from nervus.gui.controllers.commands import variant_state
+
+        state = variant_state(subsystem)
+        if name == state["active"] or name not in state["variants"]:
+            return False
+        state["active"] = name
+        return self._push(SetVariantsCommand(self.model, subsystem, state, f"Activate variant {name}"))
 
     def set_mask_value(self, subsystem: Block, name: str, value: object) -> bool:
         from nervus.gui.controllers.commands import mask_state

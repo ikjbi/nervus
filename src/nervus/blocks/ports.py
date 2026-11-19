@@ -9,12 +9,16 @@ Those top-level ports become the input and output structs of generated C code.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any
+
+import numpy as np
 
 from nervus.blocks.registry import register
 from nervus.core.block import Block, Width
 from nervus.core.diagram import Diagram
 from nervus.core.errors import ParameterError
+from nervus.core.expressions import parse_value
 from nervus.core.params import Param, ParamKind, output_type_param
 from nervus.core.sample_time import CONTINUOUS
 from nervus.core.types import Array, as_signal
@@ -96,12 +100,64 @@ def _ports(diagram: Diagram, cls: type[Block]) -> list[Block]:
     return ports
 
 
+@dataclass
+class Variant:
+    """One implementation of a variant subsystem."""
+
+    system: Diagram
+    condition: str = ""
+    """Expression of workspace variables, e.g. ``ENGINE == 2``; empty = the default variant."""
+
+
+def choose_variant(variants: dict[str, Variant], namespace: dict[str, Any], current: str) -> str:
+    """The variant to activate: the one whose condition is true, else the default (empty condition). Without
+    any conditions, ``current`` (chosen by hand) is kept."""
+    if not variants or not any(v.condition.strip() for v in variants.values()):
+        return current
+    true, default = [], []
+    for name, v in variants.items():
+        if not v.condition.strip():
+            default.append(name)
+            continue
+        try:
+            value = parse_value(v.condition, namespace)
+        except ValueError as exc:
+            raise ParameterError(f"variant {name!r}: condition {v.condition!r}: {exc}") from exc
+        if np.all(np.asarray(value) != 0):
+            true.append(name)
+    if len(true) > 1:
+        raise ParameterError(f"several variant conditions are true: {', '.join(true)}")
+    chosen = true or default
+    if not chosen:
+        raise ParameterError("no variant condition is true and there is no default variant (empty condition)")
+    return chosen[0]
+
+
+def check_variant_ports(variants: dict[str, Variant], active: str) -> None:
+    """All variants must have the same number of In and Out blocks as the active one."""
+    if active not in variants:
+        return
+    ref = variants[active].system
+    ins, outs = len(_ports(ref, Inport)), len(_ports(ref, Outport))
+    for name, v in variants.items():
+        n_in, n_out = len(_ports(v.system, Inport)), len(_ports(v.system, Outport))
+        if (n_in, n_out) != (ins, outs):
+            raise ParameterError(
+                f"variant {name!r} has {n_in} inputs and {n_out} outputs, but the active variant "
+                f"{active!r} has {ins} and {outs}: all variants need the same ports"
+            )
+
+
 @register
 class Subsystem(Block):
     """A block that contains its own diagram. Double-click it in the editor to open it.
 
     A subsystem can be **masked**: it then has its own parameters (e.g. ``displacement``) that the blocks inside
     use in their expressions, so several copies of the same component can have different values.
+
+    A subsystem can have **variants**: alternative implementations with the same inputs and outputs, e.g. a
+    petrol and a diesel engine model. Each variant can have a condition such as ``ENGINE == 2`` on workspace
+    variables; the one whose condition is true is simulated and turned into C code.
 
     With *enable_port* the subsystem gets an extra last input, **enable**. While it is ≤ 0 nothing inside
     runs: outputs and discrete states are held and continuous states stop. With *when_enabled* = ``reset``
@@ -150,6 +206,72 @@ class Subsystem(Block):
         self.mask_icon = ""
         """Text shown on the block when it is masked (e.g. "Engine\\n1.6 l")."""
         self.mask_description = ""
+        self.variants: dict[str, Variant] = {}
+        """Alternative implementations (empty = no variants). ``system`` is the active one's diagram."""
+        self.active_variant = ""
+
+    # ------------------------------------------------------------------ variants
+
+    @property
+    def has_variants(self) -> bool:
+        return bool(self.variants)
+
+    def add_variant(self, name: str, system: Diagram | None = None, condition: str = "") -> Diagram:
+        """Add an implementation named ``name`` (a copy of the active one if ``system`` is None).
+
+        The first call turns the current diagram into a variant too (named after ``active_variant``, or
+        ``"default"``). ``condition`` is an expression such as ``ENGINE == 2``; see :meth:`select_variant`.
+        """
+        name = name.strip()
+        if not name:
+            raise ParameterError("a variant needs a name")
+        if not self.variants:
+            self.active_variant = self.active_variant or "default"
+            self.variants[self.active_variant] = Variant(self.system)
+        if name in self.variants:
+            raise ParameterError(f"there is already a variant named {name!r}")
+        if system is None:
+            from nervus.io.model_file import system_from_dict, system_to_dict
+
+            system = system_from_dict(system_to_dict(self.system), self.system.name)
+        system.parent = self
+        self.variants[name] = Variant(system, condition)
+        return system
+
+    def remove_variant(self, name: str) -> None:
+        """Remove a variant. Removing the active one activates the first remaining variant."""
+        if name not in self.variants:
+            raise KeyError(name)
+        if len(self.variants) == 1:
+            raise ParameterError("cannot remove the only variant")
+        del self.variants[name]
+        if name == self.active_variant:
+            self.activate(next(iter(self.variants)))
+
+    def activate(self, name: str) -> None:
+        """Make variant ``name`` the one that is simulated, edited and turned into code."""
+        if name not in self.variants:
+            raise ParameterError(f"{self.name}: no variant named {name!r} (have: {', '.join(self.variants)})")
+        self.active_variant = name
+        self.system = self.variants[name].system
+        self.system.parent = self
+
+    def select_variant(self, namespace: dict[str, Any]) -> str:
+        """Activate the variant whose condition is true with the workspace values in ``namespace``.
+
+        Variants without a condition are the *default*: used when no condition is true. If no variant has a
+        condition at all, the active variant is kept (chosen by hand). It is an error if several conditions are
+        true, or none is and there is no default.
+        """
+        chosen = choose_variant(self.variants, namespace, self.active_variant)
+        if chosen != self.active_variant:
+            self.activate(chosen)
+        return chosen
+
+    def resolve(self, namespace: dict[str, Any]) -> None:
+        if self.variants:
+            self.select_variant(namespace)
+        super().resolve(namespace)
 
     @property
     def is_masked(self) -> bool:
@@ -204,6 +326,7 @@ class Subsystem(Block):
     def validate_ports(self) -> None:
         _ports(self.system, Inport)
         _ports(self.system, Outport)
+        check_variant_ports(self.variants, self.active_variant)
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
         raise RuntimeError("subsystems are flattened before simulation")

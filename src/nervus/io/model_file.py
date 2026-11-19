@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any
 
 import nervus.blocks  # noqa: F401  (registers the standard blocks)
+from nervus.blocks.ports import Variant
 from nervus.blocks.registry import get_block_class
 from nervus.core.block import Block
 from nervus.core.diagram import Diagram
@@ -83,6 +84,15 @@ def _block_dict(b: Block) -> dict[str, Any]:
                 "icon": getattr(b, "mask_icon", ""),
                 "description": getattr(b, "mask_description", ""),
             }
+        variants = getattr(b, "variants", None)
+        if variants:
+            active = getattr(b, "active_variant", "")
+            d["active_variant"] = active
+            d["variants"] = [
+                {"name": name, "condition": v.condition}
+                | ({} if name == active else {"system": system_to_dict(v.system)})
+                for name, v in variants.items()
+            ]
     return d
 
 
@@ -164,6 +174,14 @@ def from_dict(data: dict[str, Any]) -> Diagram:
     return d
 
 
+def system_from_dict(data: dict[str, Any], name: str = "system", prefix: str = "") -> Diagram:
+    """Build a (sub)system diagram from :func:`system_to_dict` output."""
+    inner = Diagram(name)
+    inner.meta = dict(data.get("meta", {}))
+    _fill_system(inner, data, prefix)
+    return inner
+
+
 def _fill_system(d: Diagram, data: dict[str, Any], prefix: str) -> None:
     for entry in data.get("blocks", []):
         name = entry.get("name", "")
@@ -182,6 +200,15 @@ def _fill_system(d: Diagram, data: dict[str, Any], prefix: str) -> None:
                     block.mask_icon = str(entry["mask"].get("icon", ""))  # type: ignore[attr-defined]
                     block.mask_description = str(entry["mask"].get("description", ""))  # type: ignore[attr-defined]
                 _fill_system(inner, entry["system"], path + "/")
+                if entry.get("variants"):
+                    active = str(entry.get("active_variant", ""))
+                    block.active_variant = active  # type: ignore[attr-defined]
+                    for v in entry["variants"]:
+                        vname = str(v["name"])
+                        system = inner if vname == active else system_from_dict(v["system"], name, f"{path}[{vname}]/")
+                        system.parent = block
+                        block.variants[vname] = Variant(system, str(v.get("condition", "")))  # type: ignore[attr-defined]
+                    block.activate(active)  # type: ignore[attr-defined]
             else:
                 block = cls(name, **entry.get("params", {}))
         except ParameterError as exc:

@@ -41,6 +41,7 @@ def _parse(p: Param, text: str) -> Any:
 class PropertyPanel(QWidget):
     helpRequested = Signal(str)  # type_id
     editMaskRequested = Signal(object)  # Subsystem
+    editVariantsRequested = Signal(object)  # Subsystem
 
     def __init__(self, model: DiagramModel, controller: EditorController, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -165,6 +166,20 @@ class PropertyPanel(QWidget):
             button = QPushButton("Edit Mask…" if masked else "Create Mask…")
             button.clicked.connect(lambda _c=False: self.editMaskRequested.emit(b))
             self.form.addRow("", button)
+            variants = getattr(b, "variants", {})
+            if variants:
+                combo = QComboBox()
+                combo.addItems(list(variants))
+                combo.setCurrentText(getattr(b, "active_variant", ""))
+                if any(v.condition for v in variants.values()):
+                    combo.setEnabled(False)
+                    combo.setToolTip("Chosen by the variant conditions and the model workspace")
+                combo.currentTextChanged.connect(lambda name: self.controller.activate_variant(b, name))
+                self.form.addRow("variant", combo)
+                self._editors["variant"] = combo
+            vbutton = QPushButton("Variants…" if variants else "Create Variants…")
+            vbutton.clicked.connect(lambda _c=False: self.editVariantsRequested.emit(b))
+            self.form.addRow("", vbutton)
         for p in b.PARAMS:
             editor = self._editor_for(p, b.param_source(p.name))
             label = QLabel(p.name + (f" [{p.unit}]" if p.unit else ""))

@@ -31,6 +31,10 @@ The block shows the expression on the canvas. When a variable changes, every blo
 Expressions are evaluated again each time the model is simulated. A variable that is still used by a block
 cannot be deleted.
 
+Expressions may use `+ - * / ** %`, the functions `sqrt`, `exp`, `log`, `sin`, `cos`, `abs` and the
+constants `pi`, `e`, `inf`, `true` and `false`. Comparisons (`==`, `!=`, `<`, `<=`, `>`, `>=`) and `and`, `or`, `not` give 1 (true)
+or 0 (false), so `Kp * (MODE == 2)` works. The MATLAB spellings `~=`, `&&`, `||` and `~` are accepted too.
+
 ## Parameter sets (calibrations)
 
 A **parameter set** is a file (`.nervcal`) with values for some or all of the variables:

@@ -352,3 +352,43 @@ def mask_state(subsystem: Block) -> dict[str, Any]:
         "icon": subsystem.mask_icon,  # type: ignore[attr-defined]
         "description": subsystem.mask_description,  # type: ignore[attr-defined]
     }
+
+
+def variant_state(subsystem: Block) -> dict[str, Any]:
+    """Snapshot of a subsystem's variants (the diagrams themselves are shared, not copied)."""
+    from nervus.blocks.ports import Variant
+
+    return {
+        "variants": {k: Variant(v.system, v.condition) for k, v in subsystem.variants.items()},  # type: ignore[attr-defined]
+        "active": subsystem.active_variant,  # type: ignore[attr-defined]
+        "system": subsystem.system,  # type: ignore[attr-defined]
+    }
+
+
+class SetVariantsCommand(Command):
+    """Add, remove, rename or switch the variants of a subsystem."""
+
+    def __init__(self, model: DiagramModel, subsystem: Block, new: dict[str, Any], text: str) -> None:
+        super().__init__(text)
+        self.model, self.subsystem = model, subsystem
+        self.old = variant_state(subsystem)
+        self.new = new
+
+    def _apply(self, state: dict[str, Any]) -> None:
+        sub = self.subsystem
+        sub.variants = dict(state["variants"])  # type: ignore[attr-defined]
+        if sub.variants:  # type: ignore[attr-defined]
+            for v in sub.variants.values():  # type: ignore[attr-defined]
+                v.system.parent = sub
+            sub.activate(state["active"])  # type: ignore[attr-defined]
+        else:
+            sub.active_variant = ""  # type: ignore[attr-defined]
+            sub.system = state["system"]  # type: ignore[attr-defined]
+            sub.system.parent = sub  # type: ignore[attr-defined]
+        self.model.variants_changed(sub)
+
+    def do(self) -> None:
+        self._apply(self.new)
+
+    def revert(self) -> None:
+        self._apply(self.old)

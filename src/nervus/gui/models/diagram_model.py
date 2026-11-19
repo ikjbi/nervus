@@ -249,6 +249,19 @@ class DiagramModel(QObject):
                     b.resolve(ns)
         self.paramsChanged.emit(subsystem)
 
+    def variants_changed(self, subsystem: Block) -> None:
+        """A subsystem's variants or active variant changed. If the editor shows a diagram that is no longer
+        active (inside an inactive variant), go back up to the subsystem."""
+        d: Diagram | None = self._diagram
+        while d is not None and d.parent is not None:
+            owner = d.parent
+            if getattr(owner, "variants", None) and getattr(owner, "system", None) is not d:
+                if owner.diagram is not None:
+                    self.show(owner.diagram)
+                break
+            d = owner.diagram
+        self.paramsChanged.emit(subsystem)
+
     def set_tests(self, tests: list[Any]) -> None:
         self._root.tests = list(tests)
         self.testsChanged.emit()

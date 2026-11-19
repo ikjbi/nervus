@@ -163,6 +163,24 @@ def main() -> None:
             win.view.fit()
             grab(win.view, "subsystem-gated.png")
 
+            # Variant subsystem: the Variants dialog.
+            md2, sub2 = masked_example()
+            sub2.mask_icon = ""
+            sub2.active_variant = "petrol"
+            sub2.add_variant("diesel", condition="ENGINE == 2")
+            sub2.variants["petrol"].condition = "ENGINE == 1"
+            md2.workspace["ENGINE"] = 1
+            win.diagram_model.set_diagram(md2)
+            win.scene.select_blocks(["combustion"])
+            win.view.fit()
+            grab(win, "variants-properties.png")
+            from nervus.gui.views.variant_dialog import VariantDialog
+
+            vdlg = VariantDialog(sub2, win)
+            vdlg.show()
+            grab(vdlg, "variants-dialog.png")
+            vdlg.close()
+
             # Data types shown on the wires.
             win.files.open(ROOT / "examples" / "fixed_point_sensor.nervus")
             win.act_types.setChecked(True)

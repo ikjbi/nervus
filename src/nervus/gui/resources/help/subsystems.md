@@ -63,6 +63,32 @@ their discrete versions. A subsystem can have both an enable and a trigger input
 enable, then trigger). It then runs on an edge only while it is enabled. The generated C checks the edge the
 same way, and the tests compare it with the simulation with zero tolerance.
 
+## Variant subsystems: several implementations of one component
+
+A subsystem can have **variants**: alternative implementations with the same inputs and outputs. Typical
+uses: a petrol and a diesel engine model, a simple and a detailed sensor model, or the controller for two
+vehicle versions. Only the active variant is simulated and turned into C code.
+
+Select a subsystem and press **Create Variants…** (or **Variants…**) in the Properties panel:
+
+- **Add (copy of active)** creates a new variant as a copy of the active one; open the subsystem and change it.
+- **Condition** chooses the variant from model workspace variables, e.g. `ENGINE == 2`. Comparisons
+  (`==`, `!=`/`~=`, `<`, `<=`, `>`, `>=`) and `and`/`&&`, `or`/`||`, `not`/`~` are allowed. A variant with an
+  empty condition is the **default**, used when no condition is true. It is an error if several conditions
+  are true at once.
+- Without any conditions, you pick the **active variant** by hand.
+
+The block shows the active variant (◆ petrol). Opening the subsystem shows and edits the active variant;
+switch variants to edit another. A parameter sweep can switch variants too:
+`simulate(model, 10, params={"ENGINE": 2})`.
+
+```python
+engine = Subsystem(system=petrol_engine)
+engine.active_variant = "petrol"
+engine.add_variant("diesel", diesel_engine, condition="ENGINE == 2")
+engine.variants["petrol"].condition = "ENGINE == 1"
+```
+
 ## Masks: reusable components with parameters
 
 A **masked** subsystem has its own parameters, like a function's arguments. The blocks inside use them in

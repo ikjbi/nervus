@@ -195,6 +195,15 @@ class BlockItem(QGraphicsItem):
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
                 text,
             )
+        if getattr(sub, "variants", None):
+            small = QFont(painter.font())
+            small.setPointSizeF(max(6.0, small.pointSizeF() - 1))
+            painter.setFont(small)
+            painter.drawText(
+                rect.adjusted(6, 0, -18, -2),
+                Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft,
+                f"◆ {sub.active_variant}",
+            )
         icon = getattr(sub, "mask_icon", "")
         if icon:
             big = QFont(painter.font())

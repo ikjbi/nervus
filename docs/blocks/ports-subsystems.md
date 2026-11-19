@@ -49,6 +49,10 @@ A block that contains its own diagram. Double-click it in the editor to open it.
 A subsystem can be **masked**: it then has its own parameters (e.g. ``displacement``) that the blocks inside
 use in their expressions, so several copies of the same component can have different values.
 
+A subsystem can have **variants**: alternative implementations with the same inputs and outputs, e.g. a
+petrol and a diesel engine model. Each variant can have a condition such as ``ENGINE == 2`` on workspace
+variables; the one whose condition is true is simulated and turned into C code.
+
 With *enable_port* the subsystem gets an extra last input, **enable**. While it is ≤ 0 nothing inside
 runs: outputs and discrete states are held and continuous states stop. With *when_enabled* = ``reset``
 the discrete states return to their initial values each time the subsystem is enabled again.

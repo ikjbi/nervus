@@ -39,6 +39,10 @@ In the editor, the canvas shows the expression (e.g. `Kp`) instead of the number
 
 ![The throttle example: blocks refer to workspace variables](images/workspace.png)
 
+Expressions may use `+ - * / ** %`, the functions `sqrt`, `exp`, `log`, `sin`, `cos`, `abs` and the
+constants `pi`, `e`, `inf`, `true` and `false`. Comparisons (`==`, `!=`, `<`, `<=`, `>`, `>=`) and `and`, `or`, `not` give 1 (true)
+or 0 (false), so `Kp * (MODE == 2)` works. The MATLAB spellings `~=`, `&&`, `||` and `~` are accepted too.
+
 ## Parameter sets
 
 ```python

@@ -14,7 +14,17 @@ import re
 from collections.abc import Callable, Mapping
 from typing import Any
 
+import numpy as np
+
 _NAMES = {"pi": math.pi, "e": math.e, "inf": math.inf, "Inf": math.inf, "nan": math.nan, "true": 1.0, "false": 0.0}
+_COMPARE: dict[type[ast.cmpop], Callable[[Any, Any], Any]] = {
+    ast.Eq: operator.eq,
+    ast.NotEq: operator.ne,
+    ast.Lt: operator.lt,
+    ast.LtE: operator.le,
+    ast.Gt: operator.gt,
+    ast.GtE: operator.ge,
+}
 _BINOPS: dict[type[ast.operator], Callable[[Any, Any], Any]] = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
@@ -34,7 +44,10 @@ _FUNCS: dict[str, Callable[[Any], Any]] = {
 
 
 def _matlab_to_python(text: str) -> str:
-    """``[1 2; 3 4]`` -> ``[[1, 2], [3, 4]]``. Only applies to a single bracketed literal."""
+    """``[1 2; 3 4]`` -> ``[[1, 2], [3, 4]]`` (only for a single bracketed literal); MATLAB ``~=``, ``&&``,
+    ``||`` and ``~`` -> Python ``!=``, ``and``, ``or``, ``not``."""
+    text = text.replace("~=", "!=").replace("&&", " and ").replace("||", " or ")
+    text = re.sub(r"~(?!=)", " not ", text).strip()
     s = text.strip()
     if not (s.startswith("[") and s.endswith("]")) or s.count("[") != 1:
         return text
@@ -82,6 +95,25 @@ def _eval(node: ast.AST, names: Mapping[str, Any] | None = None) -> Any:
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub | ast.UAdd):
         v = _eval(node.operand, names)
         return -v if isinstance(node.op, ast.USub) else v
+    if isinstance(node, ast.Compare) and all(type(op) in _COMPARE for op in node.ops):
+        # Comparisons give 1.0 (true) or 0.0 (false), element-wise for arrays; chains like 0 < x < 3 work.
+        left = _eval(node.left, names)
+        result: Any = 1.0
+        for op, right_node in zip(node.ops, node.comparators, strict=True):
+            right = _eval(right_node, names)
+            result = np.logical_and(result, _COMPARE[type(op)](np.asarray(left), np.asarray(right)))
+            left = right
+        return float(result) if np.ndim(result) == 0 else np.asarray(result, dtype=float)
+    if isinstance(node, ast.BoolOp):
+        values = [np.asarray(_eval(v, names)) != 0 for v in node.values]
+        combine = np.logical_and if isinstance(node.op, ast.And) else np.logical_or
+        result = values[0]
+        for v in values[1:]:
+            result = combine(result, v)
+        return float(result) if np.ndim(result) == 0 else np.asarray(result, dtype=float)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        v = np.asarray(_eval(node.operand, names)) == 0
+        return float(v) if np.ndim(v) == 0 else np.asarray(v, dtype=float)
     if isinstance(node, ast.BinOp) and type(node.op) in _BINOPS:
         return _BINOPS[type(node.op)](_eval(node.left, names), _eval(node.right, names))
     if isinstance(node, ast.List | ast.Tuple):
@@ -95,8 +127,6 @@ def _eval(node: ast.AST, names: Mapping[str, Any] | None = None) -> Any:
     ):
         return _FUNCS[node.func.id](_eval(node.args[0], names))
     if isinstance(node, ast.Subscript):
-        import numpy as np
-
         base = np.asarray(_eval(node.value, names), dtype=float)
         index = _eval(node.slice, names)
         idx = tuple(int(i) for i in index) if isinstance(index, list) else int(index)
@@ -105,7 +135,6 @@ def _eval(node: ast.AST, names: Mapping[str, Any] | None = None) -> Any:
 
 
 def _as_operand(value: Any) -> Any:
-    import numpy as np
 
     if isinstance(value, list | tuple):
         return np.asarray(value, dtype=float)
@@ -138,7 +167,6 @@ def parse_value(text: str, names: Mapping[str, Any] | None = None) -> Any:
 
 def format_value(value: Any) -> str:
     """Format a parameter value for display/editing, so that ``parse_value(format_value(v)) == v``."""
-    import numpy as np
 
     if isinstance(value, np.ndarray):
         value = value.tolist()
