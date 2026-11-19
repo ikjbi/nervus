@@ -122,3 +122,10 @@ def test_idle_ecu_generates_c() -> None:
     inputs = {"engine_rpm": 800 + 60 * np.sin(k / 25.0), "target_rpm": 800.0, "ac_request": (k > 200).astype(float)}
     res = back_to_back(d.block("ECU"), inputs, 400)
     assert res.passed, res.summary()
+
+
+def test_fixed_point_sensor() -> None:
+    res = _import("fixed_point_sensor").main()
+    assert np.max(np.abs(res["fixed_minus_double"])) <= 2**-6
+    assert np.allclose(np.mod(res["filtered_fix"] * 64, 1), 0)
+    assert set(np.unique(res["over_150kPa"])) <= {0.0, 1.0}

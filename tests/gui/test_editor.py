@@ -153,3 +153,28 @@ def test_file_controller_roundtrip(qtbot, qsettings, tmp_path: Path) -> None:  #
     assert files.recent_files() == [(tmp_path / "m.nervus").resolve()]
     with qtbot.waitSignal(files.errorOccurred):
         assert not files.open(tmp_path / "missing.nervus")
+
+
+def test_datatype_labels_and_param(qtbot, qsettings) -> None:  # type: ignore[no-untyped-def]
+    from nervus.gui.theme import ThemeManager
+    from nervus.gui.views.main_window import MainWindow
+
+    ThemeManager.instance().apply()
+    w = MainWindow(qsettings)
+    try:
+        ed = w.editor
+        c = ed.add_block("sources.constant", QPointF(0, 0), value=3.7)
+        dtc = ed.add_block("routing.datatype_conversion", QPointF(150, 0), output_type="int8")
+        g = ed.add_block("math.gain", QPointF(300, 0))
+        ed.connect_ports(c, 0, dtc, 0)
+        ed.connect_ports(dtc, 0, g, 0)
+        ed.connect_ports(g, 0, ed.add_block("sinks.scope", QPointF(450, 0)), 0)
+        w.act_types.setChecked(True)
+        w.refresh_types()
+        labels = sorted(wire.type_label for wire in w.scene.wires.values())
+        assert labels == ["", "int8", "int8"]  # constant is double; conversion and gain carry int8
+        assert ed.set_params(g, {"output_type": "fixdt(1, 16, 8)"})
+        assert not ed.set_params(g, {"output_type": "int7"})
+    finally:
+        w.editor.undo_stack.setClean()
+        w.close()

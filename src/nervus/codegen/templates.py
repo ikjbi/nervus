@@ -22,7 +22,9 @@ def _inport(e: Emitter) -> BlockCode:
     from nervus.codegen.generator import c_identifier
 
     field = c_identifier(e.path)
-    return BlockCode(e.each(e.w(), lambda ix: [f"{e.y(0, ix)} = {e.gen.prefix}_U.{field}[{ix}];"]))
+    dtype = e.gen.model.out_types[e.i][0]
+    scale = f" * {c_float(dtype.slope)} + {c_float(dtype.bias)}" if dtype.is_fixed and not dtype.is_integer else ""
+    return BlockCode(e.each(e.w(), lambda ix: [f"{e.y(0, ix)} = (real_T){e.gen.prefix}_U.{field}[{ix}]{scale};"]))
 
 
 @template("ports.outport")
@@ -30,7 +32,25 @@ def _outport(e: Emitter) -> BlockCode:
     from nervus.codegen.generator import c_identifier
 
     field = c_identifier(e.path)
-    return BlockCode(e.each(e.in_widths[0], lambda ix: [f"{e.gen.prefix}_Y.{field}[{ix}] = {e.u(0, ix)};"]))
+    s, p = e.gen.model.inputs[e.i][0]
+    dtype = e.gen.model.out_types[s][p]
+    if dtype.is_double:
+        return BlockCode(e.each(e.in_widths[0], lambda ix: [f"{e.gen.prefix}_Y.{field}[{ix}] = {e.u(0, ix)};"]))
+    if dtype.is_fixed and not dtype.is_integer:
+
+        def conv(ix: str) -> str:
+            return f"({dtype.c_type})round(({e.u(0, ix)} - {c_float(dtype.bias)}) / {c_float(dtype.slope)})"
+    else:
+
+        def conv(ix: str) -> str:
+            return f"({dtype.c_type}){e.u(0, ix)}"
+
+    return BlockCode(e.each(e.in_widths[0], lambda ix: [f"{e.gen.prefix}_Y.{field}[{ix}] = {conv(ix)};"]))
+
+
+@template("routing.datatype_conversion")
+def _dtc(e: Emitter) -> BlockCode:
+    return BlockCode(e.each(e.w(), lambda ix: [f"{e.y(0, ix)} = {e.u(0, ix)};"]))  # quantized afterwards
 
 
 @template("sinks.scope", "sinks.to_workspace", "sinks.terminator", "sinks.stop", "sinks.assertion")

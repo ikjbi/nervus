@@ -37,6 +37,7 @@ class RelationalOperator(Block):
     type_id = "logic.relational"
     label = "Relational Operator"
     category = CATEGORY
+    TYPE_RULE = "boolean"
     NUM_INPUTS = 2
     PARAMS = (Param("operator", "<=", ParamKind.CHOICE, "Comparison", choices=tuple(_RELATIONS)),)
 
@@ -61,6 +62,7 @@ class CompareToConstant(Block):
     type_id = "logic.compare_to_constant"
     label = "Compare To Constant"
     category = CATEGORY
+    TYPE_RULE = "boolean"
     PARAMS = (
         Param("operator", ">=", ParamKind.CHOICE, "Comparison", choices=tuple(_RELATIONS)),
         Param("constant", 0.0, ParamKind.FLOAT, "Constant to compare with"),
@@ -98,6 +100,7 @@ class LogicalOperator(Block):
     type_id = "logic.logical"
     label = "Logical Operator"
     category = CATEGORY
+    TYPE_RULE = "boolean"
     PARAMS = (
         Param("operator", "AND", ParamKind.CHOICE, "Operation", choices=_LOGIC),
         Param("num_inputs", 2, ParamKind.INT, "Number of inputs (NOT has 1)", min=1),

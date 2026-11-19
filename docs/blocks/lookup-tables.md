@@ -26,6 +26,7 @@ Each element of a vector input is looked up separately.
 | `table` | `[0.0, 1.0, 4.0]` |  | Output value at each breakpoint |
 | `interpolation` | `'linear'` |  | Between breakpoints — one of `linear`, `nearest`, `flat` |
 | `extrapolation` | `'clip'` |  | Outside the breakpoints — one of `clip`, `linear` |
+| `output_type` | `'double'` |  | Output data type: inherit, double, single, boolean, int8…uint32, fixdt(signed, bits, fraction) |
 
 *Direct feedthrough:* yes
 
@@ -57,6 +58,7 @@ extrapolation work as in the 1-D table.
 | `table` | `[[0.0, 1.0], [1.0, 2.0]]` |  | Table: rows × columns |
 | `interpolation` | `'linear'` |  | Between breakpoints — one of `linear`, `nearest` |
 | `extrapolation` | `'clip'` |  | Outside the breakpoints — one of `clip`, `linear` |
+| `output_type` | `'double'` |  | Output data type: inherit, double, single, boolean, int8…uint32, fixdt(signed, bits, fraction) |
 
 *Direct feedthrough:* yes
 

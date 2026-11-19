@@ -800,6 +800,32 @@ def idle_speed_control() -> plt.Figure:
     return fig
 
 
+@figure("datatype_conversion")
+def datatype_conversion() -> plt.Figure:
+    from nervus.core.datatypes import parse_datatype
+
+    t = np.linspace(0, 1, 2000)
+    u = 160 * np.sin(2 * np.pi * t)
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(9.6, 3.0))
+    i8 = parse_datatype("int8")
+    a1.plot(t, u, color=INK, ls="--", lw=1.2, label="input (double)")
+    a1.plot(t, i8.quantize(u), color=C1, label="int8, saturate")
+    a1.plot(t, i8.quantize(u, overflow="wrap"), color=C2, lw=1.4, label="int8, wrap")
+    a1.set_title("Overflow: int8 holds -128 … 127", color=INK, fontsize=10)
+    a1.set_xlabel("time [s]")
+    a1.legend(loc="lower left", fontsize=8)
+    x = np.linspace(0, 1, 2000)
+    v = 0.37 * np.sin(2 * np.pi * x) + 0.4
+    fx = parse_datatype("fixdt(0, 8, 4)")
+    a2.plot(x, v, color=INK, ls="--", lw=1.2, label="input (double)")
+    a2.plot(x, fx.quantize(v), color=C1, label="fixdt(0, 8, 4): steps of 1/16")
+    a2.set_title("Resolution: fixed point with 4 fraction bits", color=INK, fontsize=10)
+    a2.set_xlabel("time [s]")
+    a2.legend(loc="lower left", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

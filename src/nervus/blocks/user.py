@@ -40,6 +40,7 @@ class PythonFunction(Block):
     type_id = "user.python_function"
     label = "Python Function"
     category = CATEGORY
+    TYPE_RULE = "double"
     PARAMS = (
         Param("code", _DEFAULT_CODE, ParamKind.CODE, "Python source defining f(t, u0, ...)"),
         Param("num_inputs", 1, ParamKind.INT, "Number of inputs", min=0),

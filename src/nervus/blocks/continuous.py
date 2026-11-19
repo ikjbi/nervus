@@ -21,6 +21,7 @@ CATEGORY = "Continuous"
 class _Continuous(Block):
     category = CATEGORY
     DEFAULT_SAMPLE_TIME = CONTINUOUS
+    TYPE_RULE = "double"
 
 
 @register

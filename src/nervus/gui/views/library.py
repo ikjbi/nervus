@@ -23,6 +23,7 @@ CATEGORY_ORDER = [
     "State Machines",
     "Discontinuities",
     "Signal Routing",
+    "Signal Attributes",
     "User-Defined",
 ]
 

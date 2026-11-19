@@ -1,0 +1,321 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "fixed_point_sensor",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 2.0,
+    "solver": "rk4",
+    "step": 0.001,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [],
+  "blocks": [
+    {
+      "name": "true_pressure_kPa",
+      "type": "sources.sine",
+      "params": {
+        "amplitude": 60.0,
+        "frequency": 9.42477796076938,
+        "phase": 0.0,
+        "bias": 100.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "kPa_to_counts",
+      "type": "math.gain",
+      "params": {
+        "gain": 13.104000000000001,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          320,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "sensor_offset",
+      "type": "math.bias",
+      "params": {
+        "bias": -262.08000000000004,
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          160,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "adc_counts",
+      "type": "routing.datatype_conversion",
+      "params": {
+        "output_type": "uint16",
+        "rounding": "floor",
+        "overflow": "saturate"
+      },
+      "meta": {
+        "position": [
+          480,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "adc_sample",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          640,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "scale_dbl",
+      "type": "math.gain",
+      "params": {
+        "gain": 0.0763125763125763,
+        "multiplication": "elementwise",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          800,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "kPa_dbl",
+      "type": "math.bias",
+      "params": {
+        "bias": 20.0,
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          960,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "filtered_dbl",
+      "type": "discrete.filter",
+      "params": {
+        "time_constant": 0.05,
+        "initial": 0.0,
+        "sample_time": -1.0
+      },
+      "meta": {
+        "position": [
+          1120,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "scale_fix",
+      "type": "math.gain",
+      "params": {
+        "gain": 0.0763125763125763,
+        "multiplication": "elementwise",
+        "output_type": "fixdt(0, 16, 6)"
+      },
+      "meta": {
+        "position": [
+          800,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "kPa_fix",
+      "type": "math.bias",
+      "params": {
+        "bias": 20.0,
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          960,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "filtered_fix",
+      "type": "discrete.filter",
+      "params": {
+        "time_constant": 0.05,
+        "initial": 0.0,
+        "sample_time": -1.0
+      },
+      "meta": {
+        "position": [
+          1120,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "over_150kPa",
+      "type": "logic.compare_to_constant",
+      "params": {
+        "operator": ">",
+        "constant": 150.0
+      },
+      "meta": {
+        "position": [
+          1280,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "fixed_minus_double",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          1280,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          1440,
+          0.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "true_pressure_kPa",
+      "src_port": 0,
+      "dst": "sensor_offset",
+      "dst_port": 0
+    },
+    {
+      "src": "sensor_offset",
+      "src_port": 0,
+      "dst": "kPa_to_counts",
+      "dst_port": 0
+    },
+    {
+      "src": "kPa_to_counts",
+      "src_port": 0,
+      "dst": "adc_counts",
+      "dst_port": 0
+    },
+    {
+      "src": "adc_counts",
+      "src_port": 0,
+      "dst": "adc_sample",
+      "dst_port": 0
+    },
+    {
+      "src": "adc_sample",
+      "src_port": 0,
+      "dst": "scale_dbl",
+      "dst_port": 0
+    },
+    {
+      "src": "scale_dbl",
+      "src_port": 0,
+      "dst": "kPa_dbl",
+      "dst_port": 0
+    },
+    {
+      "src": "kPa_dbl",
+      "src_port": 0,
+      "dst": "filtered_dbl",
+      "dst_port": 0
+    },
+    {
+      "src": "adc_sample",
+      "src_port": 0,
+      "dst": "scale_fix",
+      "dst_port": 0
+    },
+    {
+      "src": "scale_fix",
+      "src_port": 0,
+      "dst": "kPa_fix",
+      "dst_port": 0
+    },
+    {
+      "src": "kPa_fix",
+      "src_port": 0,
+      "dst": "filtered_fix",
+      "dst_port": 0
+    },
+    {
+      "src": "filtered_fix",
+      "src_port": 0,
+      "dst": "over_150kPa",
+      "dst_port": 0
+    },
+    {
+      "src": "filtered_fix",
+      "src_port": 0,
+      "dst": "fixed_minus_double",
+      "dst_port": 0
+    },
+    {
+      "src": "filtered_dbl",
+      "src_port": 0,
+      "dst": "fixed_minus_double",
+      "dst_port": 1
+    },
+    {
+      "src": "filtered_dbl",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "filtered_fix",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "fixed_minus_double",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    }
+  ],
+  "tests": []
+}

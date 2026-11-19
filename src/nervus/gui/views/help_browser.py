@@ -50,6 +50,7 @@ HELP_PAGES = [
     ("simulation", "Running simulations"),
     ("workspace", "Workspace and calibrations"),
     ("subsystems", "Subsystems"),
+    ("datatypes", "Data types and fixed point"),
     ("statecharts", "State machines"),
     ("analysis", "Linear analysis"),
     ("codegen", "C code generation"),

@@ -15,7 +15,7 @@ from nervus.blocks.registry import register
 from nervus.core.block import Block, Width
 from nervus.core.diagram import Diagram
 from nervus.core.errors import ParameterError
-from nervus.core.params import Param, ParamKind
+from nervus.core.params import Param, ParamKind, output_type_param
 from nervus.core.sample_time import CONTINUOUS
 from nervus.core.types import Array, as_signal
 
@@ -40,6 +40,7 @@ class Inport(Block):
         Param("port", 1, ParamKind.INT, "Port number (1, 2, ...)", min=1),
         Param("value", 0.0, ParamKind.ARRAY, "Value used when simulating the model on its own (top level)"),
         Param("sample_time", -1.0, ParamKind.SAMPLE_TIME, "Sample time of the external input (-1 = inherit)", "s"),
+        output_type_param("double"),
     )
 
     def __init__(self, name: str = "", **params: Any) -> None:

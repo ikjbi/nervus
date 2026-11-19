@@ -223,6 +223,7 @@ class Counter(_Discrete):
 
     type_id = "discrete.counter"
     label = "Counter"
+    TYPE_RULE = "double"
     DIRECT_FEEDTHROUGH = False
     PARAMS = (
         Param("limit", 255.0, ParamKind.FLOAT, "Largest value", min=1.0),
@@ -260,6 +261,7 @@ class EdgeDetect(_Discrete):
 
     type_id = "discrete.edge_detect"
     label = "Edge Detect"
+    TYPE_RULE = "boolean"
     PARAMS = (
         Param("direction", "rising", ParamKind.CHOICE, "Which edge", choices=("rising", "falling", "either")),
         Param("initial", 0.0, ParamKind.FLOAT, "Previous input before the first sample (0 or 1)"),
@@ -295,6 +297,7 @@ class Debounce(_Discrete):
 
     type_id = "discrete.debounce"
     label = "Debounce"
+    TYPE_RULE = "boolean"
     PARAMS = (
         Param("on_samples", 3, ParamKind.INT, "Samples the input must be true to switch on", min=1),
         Param("off_samples", 3, ParamKind.INT, "Samples the input must be false to switch off", min=1),

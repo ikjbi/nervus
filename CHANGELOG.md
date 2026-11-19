@@ -14,6 +14,11 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Data types: double, single, boolean, int8…uint32 and fixed point (`fixdt`), with rounding and overflow modes;
+  type propagation; bit-true simulation; Data Type Conversion block; `output_type` on In, Constant, Gain, Sum,
+  Product, Bias and lookup tables; View → Show Data Types.
+- Generated C: typed input/output structs and quantization helpers matching the simulation bit for bit.
+- Example: fixed-point pressure sensor chain compared with double.
 - Linear analysis (`nervus.analysis`): linearize between In and Out blocks around initial or trimmed
   states, transfer function, poles, DC gain, Bode, gain/phase margins, step response; Analysis → Linear
   Analysis dialog (Ctrl+L).

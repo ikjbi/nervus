@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from nervus import __version__
-from nervus.core import Block, Diagram
+from nervus.core import Block, Diagram, NervusError
 from nervus.core.expressions import format_value, parse_value
 from nervus.gui.controllers import (
     CLIPBOARD_MIME,
@@ -76,6 +76,12 @@ class MainWindow(QMainWindow):
         self.test_panel = TestManagerPanel(self.diagram_model, self.editor, self.tests)
         self._inspector: DataInspector | None = None
         self.scopes: dict[int, ScopeWindow] = {}
+        from PySide6.QtCore import QTimer
+
+        self._types_timer = QTimer(self)
+        self._types_timer.setSingleShot(True)
+        self._types_timer.setInterval(300)
+        self._types_timer.timeout.connect(self.refresh_types)
         self._help: HelpBrowser | None = None
 
         self.breadcrumb = QWidget()
@@ -175,6 +181,8 @@ class MainWindow(QMainWindow):
         self.act_create_subsystem = self._action(
             "Create &Subsystem from Selection", self.create_subsystem, "Ctrl+G", "Group the selected blocks"
         )
+        self.act_types = self._action("Show &Data Types", self.refresh_types, None, "Label wires with their data type")
+        self.act_types.setCheckable(True)
         self.act_up = self._action("&Up to Parent", self.diagram_model.up, "Ctrl+Up", "Leave this subsystem")
         self.act_layout = self._action(
             "Auto &Layout", self.auto_layout, "Ctrl+Shift+L", "Arrange the blocks of this diagram left to right"
@@ -227,6 +235,7 @@ class MainWindow(QMainWindow):
         m = mb.addMenu("&View")
         m.addActions([self.act_zoom_in, self.act_zoom_out, self.act_fit])
         m.addAction(self.act_up)
+        m.addAction(self.act_types)
         m.addSeparator()
         for dock in (
             self.library_dock,
@@ -322,6 +331,7 @@ class MainWindow(QMainWindow):
         self.diagram_model.settingsChanged.connect(self._sync_settings_widgets)
         self.diagram_model.diagramReset.connect(self._on_reset)
         self.diagram_model.currentChanged.connect(self._on_current_changed)
+        self.diagram_model.changed.connect(lambda: self.act_types.isChecked() and self._types_timer.start())
         self.diagram_model.blockRenamed.connect(self._on_renamed)
         self.files.errorOccurred.connect(lambda msg: QMessageBox.warning(self, "Nervus", msg))
         self.codegen.errorOccurred.connect(self._codegen_error)
@@ -345,6 +355,27 @@ class MainWindow(QMainWindow):
         dlg = AnalysisDialog(self.diagram_model.root, self)
         dlg.show()
         return dlg
+
+    def refresh_types(self) -> None:
+        """Compile the model and label wires that carry a non-double data type (View → Show Data Types)."""
+        if not self.act_types.isChecked():
+            self.scene.set_type_labels({})
+            return
+        from nervus.sim import compile_diagram
+
+        try:
+            m = compile_diagram(self.diagram_model.root)
+        except NervusError:
+            self.status_label.setText("Data types are shown once the model compiles (see Diagnostics).")
+            return
+        labels: dict[tuple[str, int], str] = {}
+        for i, ts in enumerate(m.out_types):
+            for p, t in enumerate(ts):
+                if not t.is_double:
+                    labels[(m.names[i], p)] = t.short_name
+                    origin = m.origin[i]  # In blocks inside subsystems appear as their own path
+                    labels[(self.diagram_model.path_of(origin), p)] = t.short_name
+        self.scene.set_type_labels(labels)
 
     def _open_test_result(self, name: str) -> None:
         res = self.tests.results.get(name)

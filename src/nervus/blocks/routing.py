@@ -8,7 +8,7 @@ import numpy as np
 
 from nervus.blocks.registry import register
 from nervus.core.block import Block, Width, broadcast_widths
-from nervus.core.params import Param, ParamKind
+from nervus.core.params import Param, ParamKind, output_type_param
 from nervus.core.types import Array
 
 CATEGORY = "Signal Routing"
@@ -81,6 +81,7 @@ class Switch(_Routing):
     type_id = "routing.switch"
     label = "Switch"
     NUM_INPUTS = 3
+    TYPE_INPUTS = (0, 2)  # the control input does not determine the output type
     PARAMS = (
         Param(
             "criterion",
@@ -117,3 +118,32 @@ class Switch(_Routing):
 
     def compute_mode(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array | None:
         return np.array([1.0 if self._passed(u) else 0.0])
+
+
+@register
+class DataTypeConversion(_Routing):
+    """Converts the input to another data type, e.g. a sensor value to ``int16`` or a controller output to
+    fixed point.
+
+    ![Converting a signal to int8 and to fixed point](figures/datatype_conversion.png)
+
+    The real-world value is kept as well as the type allows:
+
+    $$ Q = \\mathrm{round}\\left(\\frac{u - \\mathrm{bias}}{\\mathrm{slope}}\\right), \\qquad y = \\mathrm{slope} \\cdot Q + \\mathrm{bias} $$
+
+    *rounding*: ``nearest`` (half away from zero), ``floor``, ``ceil`` or ``zero`` (truncate). *overflow*:
+    ``saturate`` limits to the type's range; ``wrap`` wraps around like C integer arithmetic. For example
+    ``int8`` turns 3.6 into 4, and 200 into 127 (saturate) or -56 (wrap).
+    """
+
+    type_id = "routing.datatype_conversion"
+    label = "Data Type Conversion"
+    category = "Signal Attributes"
+    PARAMS = (
+        output_type_param("int16"),
+        Param("rounding", "nearest", ParamKind.CHOICE, "Rounding", choices=("nearest", "floor", "ceil", "zero")),
+        Param("overflow", "saturate", ParamKind.CHOICE, "Out-of-range values", choices=("saturate", "wrap")),
+    )
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        return [u[0].copy()]  # the conversion itself is applied by the simulator from output_type

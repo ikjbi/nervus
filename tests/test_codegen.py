@@ -284,3 +284,36 @@ def test_outport_added_first_is_ordered_after_its_driver(tmp_path) -> None:  # t
     d.connect(z, d.add(Outport(port=3), name="w"))
     res = back_to_back(d, {"u": np.arange(10.0), "v": np.arange(10.0)}, 10, tolerance=0.0, folder=tmp_path)
     assert res.passed, res.summary()
+
+
+def test_data_types_bit_true(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Integer and fixed-point signals: the generated C matches the simulation bit for bit."""
+    from nervus.blocks import DataTypeConversion
+
+    d = Diagram("typed")
+    u = d.add(Inport(port=1, output_type="int16"), name="sensor_raw")
+    z = d.add(ZeroOrderHold(sample_time=0.01), name="z")
+    scale = d.add(Gain(gain=0.0123, output_type="fixdt(1, 16, 7)"), name="scaled")
+    acc = d.add(Sum(signs="++", output_type="int8"), name="acc")  # saturating int8 sum
+    wrap = d.add(DataTypeConversion(output_type="uint8", overflow="wrap", rounding="floor"), name="wrapped")
+    temp = d.add(DataTypeConversion(output_type="fixdt(0, 8, 0.5, -40)"), name="temp")
+    cmp_ = d.add(CompareToConstant(operator=">", constant=10.0), name="hot")
+    d.chain(u, z, scale)
+    d.connect(scale, (acc, 0))
+    d.connect(z, (acc, 1))
+    d.chain(scale, wrap)
+    d.chain(scale, temp)
+    d.chain(temp, cmp_)
+    for k, (blk, name) in enumerate(((acc, "y_acc"), (wrap, "y_wrap"), (temp, "y_temp"), (cmp_, "y_hot"))):
+        d.connect(blk, d.add(Outport(port=k + 1), name=name))
+    rng = np.random.default_rng(7)
+    raw = np.round(rng.uniform(-40000, 40000, 200))  # outside int16 too: saturates at the input
+    res = back_to_back(d, {"sensor_raw": raw}, 200, tolerance=0.0, folder=tmp_path)
+    assert res.passed, res.summary()
+    code = generate_c(d)
+    h = code.files["typed.h"]
+    assert "int16_T sensor_raw[1];" in h and "int8_T y_acc[1];" in h and "uint8_T y_temp[1];" in h
+    assert "boolean_T y_hot[1];" in h
+    # Saturation really happened, and the fixed-point temperature has 0.5 resolution with -40 offset.
+    assert res.python["y_acc"].max() == 127.0 and res.python["y_acc"].min() == -128.0
+    assert np.all(np.mod(res.python["y_temp"] + 40, 0.5) == 0)

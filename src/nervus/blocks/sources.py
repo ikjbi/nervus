@@ -11,7 +11,7 @@ import numpy as np
 from nervus.blocks.registry import register
 from nervus.core.block import Block, Width
 from nervus.core.errors import ParameterError
-from nervus.core.params import Param, ParamKind
+from nervus.core.params import Param, ParamKind, output_type_param
 from nervus.core.sample_time import CONSTANT, CONTINUOUS
 from nervus.core.types import Array, as_signal
 
@@ -39,6 +39,7 @@ class Constant(_Source):
     PARAMS = (
         Param("value", 1.0, ParamKind.ARRAY, "Output value"),
         Param("sample_time", math.inf, ParamKind.SAMPLE_TIME, "inf = constant", "s"),
+        output_type_param("double"),
     )
 
     def output_widths(self, in_widths: list[Width]) -> list[Width]:

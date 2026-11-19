@@ -20,6 +20,7 @@ $$ y_i = k_i\,u_i \qquad\qquad y = K\,u $$
 |---|---|---|---|
 | `gain` | `1.0` |  | Gain value (scalar, vector or matrix) |
 | `multiplication` | `'elementwise'` |  | Multiplication — one of `elementwise`, `matrix` |
+| `output_type` | `'inherit'` |  | Output data type: inherit, double, single, boolean, int8…uint32, fixdt(signed, bits, fraction) |
 
 *Direct feedthrough:* yes
 
@@ -43,6 +44,7 @@ $$ y = \sum_i s_i\,u_i, \quad s_i \in \{+1, -1\} $$
 | Name | Default | Unit | Description |
 |---|---|---|---|
 | `signs` | `'++'` |  | One + or - per input |
+| `output_type` | `'inherit'` |  | Output data type: inherit, double, single, boolean, int8…uint32, fixdt(signed, bits, fraction) |
 
 *Direct feedthrough:* yes
 
@@ -63,6 +65,7 @@ $$ y = \prod_i u_i^{\,p_i}, \quad p_i \in \{+1, -1\} $$
 | Name | Default | Unit | Description |
 |---|---|---|---|
 | `ops` | `'**'` |  | One * or / per input |
+| `output_type` | `'inherit'` |  | Output data type: inherit, double, single, boolean, int8…uint32, fixdt(signed, bits, fraction) |
 
 *Direct feedthrough:* yes
 
@@ -127,6 +130,7 @@ Adds a constant: ``y = u + bias``.
 | Name | Default | Unit | Description |
 |---|---|---|---|
 | `bias` | `0.0` |  | Value added to the input |
+| `output_type` | `'inherit'` |  | Output data type: inherit, double, single, boolean, int8…uint32, fixdt(signed, bits, fraction) |
 
 *Direct feedthrough:* yes
 

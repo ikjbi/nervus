@@ -208,6 +208,8 @@ class WireItem(QGraphicsPathItem):
         self.connection = connection
         self.src, self.dst = src, dst
         self.hover = False
+        self.type_label = ""
+        """Data type shown next to the wire (empty: not shown, e.g. for double)."""
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         self.setAcceptHoverEvents(True)
         self.setZValue(0)
@@ -215,6 +217,10 @@ class WireItem(QGraphicsPathItem):
 
     def update_path(self) -> None:
         self.setPath(route(self.src.scene_anchor(), self.dst.scene_anchor()))
+
+    def boundingRect(self) -> QRectF:
+        r = super().boundingRect()
+        return r.adjusted(0, -16, 140, 0) if self.type_label else r
 
     def shape(self) -> QPainterPath:
         stroker = QPainterPathStroker()
@@ -241,6 +247,17 @@ class WireItem(QGraphicsPathItem):
         painter.setBrush(QBrush(color))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawPolygon(QPolygonF([end, end + QPointF(-7, -4), end + QPointF(-7, 4)]))
+        if self.type_label:
+            start = self.src.scene_anchor()
+            f = QFont(painter.font())
+            f.setPointSizeF(8)
+            painter.setFont(f)
+            painter.setPen(t.color("accent"))
+            painter.drawText(
+                QRectF(start.x() + 4, start.y() - 15, 140, 12), Qt.AlignmentFlag.AlignLeft, self.type_label
+            )
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QBrush(color))
         # Branch dot where an output fans out to several inputs.
         scene: DiagramScene | None = self.scene()  # type: ignore[assignment]
         if scene is not None and scene.fanout(self.connection) > 1:

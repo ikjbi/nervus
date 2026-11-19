@@ -28,6 +28,7 @@ from nervus import __version__
 from nervus.blocks.ports import Inport, Outport, PortProxy
 from nervus.codegen.a2l import generate_a2l
 from nervus.core.block import Block
+from nervus.core.datatypes import DOUBLE, DataType
 from nervus.core.diagram import Diagram
 from nervus.core.errors import ModelError
 from nervus.sim.compiler import CompiledModel, Kind, compile_diagram
@@ -189,6 +190,7 @@ class CGenerator:
         self.cnames = self._unique_cnames(model.names)
         self.params: dict[str, _Field] = {}
         self.states: dict[str, _Field] = {}
+        self.quantizers: dict[str, str] = {}  # C function name -> definition
 
     @staticmethod
     def _unique_cnames(names: list[str]) -> list[str]:
@@ -203,6 +205,37 @@ class CGenerator:
                 seen[c] = 0
             out.append(c)
         return out
+
+    def quantizer(self, dtype: DataType, rounding: str = "nearest", overflow: str = "saturate") -> str:
+        """Name of a generated C function that converts a real_T to ``dtype`` and back, exactly like
+        :meth:`DataType.quantize` does in the simulation."""
+        name = f"nv_q_{c_identifier(dtype.name).strip('_')}_{rounding}_{overflow}".replace("__", "_")
+        if name in self.quantizers:
+            return name
+        if dtype.kind == "single":
+            body = ["    return (real_T)(real32_T)x;"]
+        elif dtype.kind == "boolean":
+            body = ["    return (x != 0.0) ? 1.0 : 0.0;"]
+        else:
+            rnd = {"nearest": "round", "floor": "floor", "ceil": "ceil", "zero": "trunc"}[rounding]
+            lo, hi = c_float(float(dtype.stored_min)), c_float(float(dtype.stored_max))
+            body = [f"    real_T q = {rnd}((x - {c_float(dtype.bias)}) / {c_float(dtype.slope)});"]
+            if overflow == "wrap":
+                span = c_float(float(dtype.stored_max - dtype.stored_min + 1))
+                body += [f"    q = fmod(q - {lo}, {span});", f"    if (q < 0.0) {{ q += {span}; }}", f"    q += {lo};"]
+            else:
+                body += [f"    if (q > {hi}) {{ q = {hi}; }} else if (q < {lo}) {{ q = {lo}; }}"]
+            body += [f"    return q * {c_float(dtype.slope)} + {c_float(dtype.bias)};"]
+        self.quantizers[name] = "\n".join(
+            [
+                f"/* {dtype.name}, rounding {rounding}, overflow {overflow} */",
+                f"static real_T {name}(real_T x)",
+                "{",
+                *body,
+                "}",
+            ]
+        )
+        return name
 
     def signal_var(self, block: int, port: int) -> str:
         return f"{self.prefix}_B.{self.cnames[block]}" + (f"_o{port}" if len(self.model.out_widths[block]) > 1 else "")
@@ -255,6 +288,17 @@ class CGenerator:
                 codes.append(_pass_through(Emitter(self, i)))
             else:
                 codes.append(TEMPLATES[b.type_id](Emitter(self, i)))
+            code = codes[-1]
+            if code.outputs:
+                rounding, overflow = b.quantization()
+                for p, dtype in enumerate(m.out_types[i]):
+                    if dtype.is_double:
+                        continue
+                    fn = self.quantizer(dtype, rounding, overflow)
+                    var, w = self.signal_var(i, p), m.out_widths[i][p]
+                    code.outputs.append(
+                        f"for (i = 0; i < {w}; i++) {{ {var}[i] = {fn}({var}[i]); }} /* {dtype.name} */"
+                    )
 
         inputs = [(i, b) for i, b in enumerate(m.blocks) if isinstance(b, Inport)]
         outputs = [(i, b) for i, b in enumerate(m.blocks) if isinstance(b, Outport)]
@@ -262,6 +306,10 @@ class CGenerator:
         outputs.sort(key=lambda x: x[1].params["port"])
         in_fields = [(c_identifier(m.names[i]), m.out_widths[i][0]) for i, _ in inputs]
         out_fields = [(c_identifier(m.names[i]), m.in_widths[i][0]) for i, _ in outputs]
+        self.io_types = {c_identifier(m.names[i]): m.out_types[i][0] for i, _ in inputs}
+        for i, _ in outputs:
+            s, p = m.inputs[i][0]
+            self.io_types[c_identifier(m.names[i])] = m.out_types[s][p]
 
         header = self._header(in_fields, out_fields, base_period, steps)
         source = self._source(codes, steps, base_period)
@@ -292,13 +340,17 @@ class CGenerator:
             " */",
         ]
 
-    @staticmethod
-    def _struct(name: str, fields: list[tuple[str, int, str]]) -> list[str]:
+    def _struct(self, name: str, fields: list[tuple[str, int, str]]) -> list[str]:
         lines = ["typedef struct {"]
         if not fields:
             lines.append("    real_T dummy[1]; /* (empty) */")
         for fname, size, comment in fields:
-            lines.append(f"    real_T {fname}[{size}];" + (f" /* {comment} */" if comment else ""))
+            dtype = getattr(self, "io_types", {}).get(fname) if name.endswith(("_U_t", "_Y_t")) else None
+            ctype = dtype.c_type if dtype is not None else "real_T"
+            note = comment or (dtype.name if dtype is not None and not dtype.is_double else "")
+            if dtype is not None and dtype.is_fixed and not dtype.is_integer:
+                note = f"{dtype.name}: value = {dtype.slope:g} * stored + {dtype.bias:g}"
+            lines.append(f"    {ctype} {fname}[{size}];" + (f" /* {note} */" if note else ""))
         lines.append(f"}} {name};")
         return lines
 
@@ -320,6 +372,13 @@ class CGenerator:
             "#include <stdint.h>",
             "",
             "typedef double real_T;",
+            "typedef float real32_T;",
+            "typedef uint8_t boolean_T;",
+            "typedef int8_t int8_T;",
+            "typedef uint8_t uint8_T;",
+            "typedef int16_t int16_T;",
+            "typedef uint16_t uint16_T;",
+            "typedef int32_t int32_T;",
             "typedef uint32_t uint32_T;",
             "",
             f"#define {pfx.upper()}_BASE_PERIOD ({c_float(base)}) /* seconds between calls to {pfx}_step() */",
@@ -398,6 +457,7 @@ class CGenerator:
             f"{pfx}_B_t {pfx}_B;",
             f"{pfx}_DW_t {pfx}_DW;",
             "",
+            *[f"{q}\n" for q in self.quantizers.values()],
         ]
         if multirate:
             lines += [
@@ -523,23 +583,51 @@ class CGenerator:
 </body></html>
 """
 
+    def _sil_copy_in(self, pfx: str, n: str, w: int) -> list[str]:
+        """double values -> typed input (quantized exactly like the simulation's In block)."""
+        dtype = self.io_types.get(n, DOUBLE)
+        if dtype.is_double:
+            return [f"        memcpy({pfx}_U.{n}, v, sizeof({pfx}_U.{n}));"]
+        q = self.quantizer(dtype)
+        to_stored = (
+            f"({dtype.c_type})(({q}(v[i]) - {c_float(dtype.bias)}) / {c_float(dtype.slope)})"
+            if dtype.is_fixed
+            else f"({dtype.c_type}){q}(v[i])"
+        )
+        return [f"        {{ int i; for (i = 0; i < {w}; i++) {{ {pfx}_U.{n}[i] = {to_stored}; }} }}"]
+
+    def _sil_copy_out(self, pfx: str, n: str, w: int) -> list[str]:
+        dtype = self.io_types.get(n, DOUBLE)
+        if dtype.is_double:
+            return [f"        memcpy(v, {pfx}_Y.{n}, sizeof({pfx}_Y.{n}));"]
+        value = (
+            f"(double){pfx}_Y.{n}[i] * {c_float(dtype.slope)} + {c_float(dtype.bias)}"
+            if dtype.is_fixed
+            else f"(double){pfx}_Y.{n}[i]"
+        )
+        return [f"        {{ int i; for (i = 0; i < {w}; i++) {{ v[i] = {value}; }} }}"]
+
     def _sil(self, ins: list[tuple[str, int]], outs: list[tuple[str, int]]) -> str:
         """Accessors used by the software-in-the-loop harness (not needed on the ECU)."""
         pfx = self.prefix
         lines = [
             *self._banner(f"{pfx}_sil.c: accessors for software-in-the-loop testing"),
             f'#include "{pfx}.h"',
+            "#include <math.h>",
             "#include <string.h>",
             "",
+            "@QUANTIZERS@",
         ]
         lines += ["void nervus_sil_set_input(int k, const double *v)", "{", "    switch (k) {"]
         for k, (n, _w) in enumerate(ins):
-            lines.append(f"    case {k}: memcpy({pfx}_U.{n}, v, sizeof({pfx}_U.{n})); break;")
+            lines += [f"    case {k}:", *self._sil_copy_in(pfx, n, _w), "        break;"]
         lines += ["    default: break;", "    }", "}", ""]
         lines += ["void nervus_sil_get_output(int k, double *v)", "{", "    switch (k) {"]
         for k, (n, _w) in enumerate(outs):
-            lines.append(f"    case {k}: memcpy(v, {pfx}_Y.{n}, sizeof({pfx}_Y.{n})); break;")
+            lines += [f"    case {k}:", *self._sil_copy_out(pfx, n, _w), "        break;"]
         lines += ["    default: break;", "    }", "}", ""]
+        defs = "\n\n".join(q for name, q in self.quantizers.items() if any(name in line for line in lines))
+        lines = [defs if line == "@QUANTIZERS@" else line for line in lines]
         lines += [
             f"void nervus_sil_initialize(void) {{ {pfx}_initialize(); }}",
             f"void nervus_sil_step(void) {{ {pfx}_step(); }}",

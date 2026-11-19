@@ -163,6 +163,32 @@ class PropertyPanel(QWidget):
             cb.setChecked(bool(value))
             cb.toggled.connect(lambda v, name=p.name: self._apply(name, v))
             return cb
+        if p.kind is ParamKind.DATATYPE:
+            combo = QComboBox()
+            combo.setEditable(True)
+            combo.addItems(
+                [
+                    "inherit",
+                    "double",
+                    "single",
+                    "boolean",
+                    "int8",
+                    "uint8",
+                    "int16",
+                    "uint16",
+                    "int32",
+                    "uint32",
+                    "fixdt(1, 16, 8)",
+                    "fixdt(0, 16, 4)",
+                ]
+            )
+            combo.setCurrentText(str(value))
+            combo.setToolTip(p.description)
+            line_edit = combo.lineEdit()
+            if line_edit is not None:
+                line_edit.editingFinished.connect(lambda name=p.name, c=combo: self._apply(name, c.currentText()))
+            combo.activated.connect(lambda _i, name=p.name, c=combo: self._apply(name, c.currentText()))
+            return combo
         if p.kind is ParamKind.CHOICE:
             combo = QComboBox()
             combo.addItems(list(p.choices))

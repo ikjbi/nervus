@@ -16,6 +16,7 @@ Outputs a constant value (scalar or vector).
 |---|---|---|---|
 | `value` | `1.0` |  | Output value |
 | `sample_time` | inf | s | inf = constant |
+| `output_type` | `'double'` |  | Output data type: inherit, double, single, boolean, int8…uint32, fixdt(signed, bits, fraction) |
 
 *Direct feedthrough:* yes · no inputs
 

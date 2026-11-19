@@ -90,6 +90,11 @@ class Block:
     DEFAULT_SAMPLE_TIME: ClassVar[SampleTime] = INHERITED
     """Used when the block has no ``sample_time`` parameter."""
     LOGS_INPUTS: ClassVar[bool] = False
+    TYPE_RULE: ClassVar[str] = "inherit"
+    """How output data types are chosen when the block has no ``output_type`` parameter (or it is
+    ``inherit``): ``inherit`` (the common type of the inputs), ``double`` or ``boolean``."""
+    TYPE_INPUTS: ClassVar[tuple[int, ...] | None] = None
+    """Which inputs the type is inherited from (``None``: all)."""
     """Sinks like Scope set this so the result object can look up their input signals."""
 
     def __init__(self, name: str = "", **params: Any) -> None:
@@ -251,6 +256,32 @@ class Block:
         if self.num_inputs() == 0:
             return [1] * self.num_outputs()
         return [broadcast_widths(in_widths)] * self.num_outputs()
+
+    def output_types(self, in_types: list[Any]) -> list[Any]:
+        """Data types of the outputs (:class:`~nervus.core.datatypes.DataType`) given the input types
+        (``None`` = not known yet). Called repeatedly until the types settle, like :meth:`output_widths`."""
+        from nervus.core.datatypes import BOOLEAN, DOUBLE, common_type, parse_datatype
+
+        n = self.num_outputs()
+        if "output_type" in self.params:
+            explicit = parse_datatype(self.params["output_type"])
+            if explicit is not None:
+                return [explicit] * n
+        if self.TYPE_RULE == "double":
+            return [DOUBLE] * n
+        if self.TYPE_RULE == "boolean":
+            return [BOOLEAN] * n
+        if self.num_inputs() == 0:
+            return [DOUBLE] * n
+        picked = [in_types[k] for k in (self.TYPE_INPUTS or range(len(in_types))) if k < len(in_types)]
+        known = [t for t in picked if t is not None]
+        if not known:
+            return [None] * n
+        return [common_type(known)] * n
+
+    def quantization(self) -> tuple[str, str]:
+        """(rounding, overflow) used when the block's outputs are converted to their data type."""
+        return (self.params.get("rounding", "nearest"), self.params.get("overflow", "saturate"))
 
     def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
         """Called once before simulation with the resolved widths. Raise ``ValueError`` if they are invalid."""

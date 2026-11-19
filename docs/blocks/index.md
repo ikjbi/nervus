@@ -62,6 +62,10 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **Out**: An output port. Inside a subsystem it is the subsystem's output number *port*; at the top level it is an
 - **Subsystem**: A block that contains its own diagram. Double-click it in the editor to open it.
 
+## [Signal Attributes](signal-attributes.md)
+
+- **Data Type Conversion**: Converts the input to another data type, e.g. a sensor value to ``int16`` or a controller output to
+
 ## [Signal Routing](signal-routing.md)
 
 - **Mux**: Combines its inputs into one vector signal, in port order.

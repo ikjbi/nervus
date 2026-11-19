@@ -17,6 +17,7 @@ struct.
 | `port` | `1` |  | Port number (1, 2, ...) |
 | `value` | `0.0` |  | Value used when simulating the model on its own (top level) |
 | `sample_time` | -1 (inherited) | s | Sample time of the external input (-1 = inherit) |
+| `output_type` | `'double'` |  | Output data type: inherit, double, single, boolean, int8…uint32, fixdt(signed, bits, fraction) |
 
 *Direct feedthrough:* yes · no inputs
 

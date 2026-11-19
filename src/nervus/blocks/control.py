@@ -37,6 +37,7 @@ _PID_PARAMS = (
 
 class _PIDBase(Block):
     category = CATEGORY
+    TYPE_RULE = "double"
 
     def validate_params(self) -> None:
         p = self.params

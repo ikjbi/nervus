@@ -112,6 +112,7 @@ tests/
 - [ ] Obstacle-avoiding automatic wire routing (wires currently may pass behind blocks)
 - [x] Auto Layout command (left-to-right by signal flow), undoable
 - [ ] Rotate / flip blocks, resize blocks, nudge with arrow keys
+- [x] Show data types on the canvas (View → Show Data Types)
 - [ ] Show signal widths and sample-time colours on the canvas (like Simulink's "port data types" / "sample time colors")
 - [ ] Right-click context menus on blocks, wires and the canvas
 
@@ -202,11 +203,14 @@ tests/
       "accelerator mode")
 
 ## Phase 13 – Data types and fixed-point (required for ECU code)
-- [ ] Integer types (int8/16/32, uint8/16/32), boolean, single
-- [ ] Fixed-point with slope and bias scaling, overflow and saturation modes, rounding
-- [ ] Data type propagation and checking across the diagram
-- [ ] Simulation that matches the integer behaviour of the generated code bit for bit
+- [x] Integer types (int8/16/32, uint8/16/32), boolean, single
+- [x] Fixed-point with slope and bias scaling, overflow and saturation modes, rounding
+- [x] Data type propagation and checking across the diagram
+- [x] Simulation that matches the integer behaviour of the generated code bit for bit
 - [ ] Data dictionary: signal and parameter objects with type, unit, range, description
+- [ ] Integer-only arithmetic in generated code (no floating point between conversions), for targets without
+      an FPU
+- [ ] Typed parameters (e.g. int16 calibration maps) and typed A2L characteristics
 
 ## Phase 14 – State machines
 - [x] State chart block (a Stateflow-like subset): states, transitions, guards, entry/during/exit actions,

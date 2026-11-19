@@ -11,7 +11,12 @@ from nervus.core.expressions import format_value
 
 
 def _num(v: object) -> str:
-    s = v if isinstance(v, str) else format_value(v)
+    if isinstance(v, np.ndarray) and v.size == 1:
+        v = float(v.ravel()[0])
+    if isinstance(v, float):
+        s = f"{v:.4g}"
+    else:
+        s = v if isinstance(v, str) else format_value(v)
     return s if len(s) <= 10 else s[:9] + "…"
 
 
@@ -69,6 +74,7 @@ _GLYPHS: dict[str, Callable[[Block], str]] = {
     "routing.switch": lambda b: "switch",
     "user.python_function": lambda b: "f(u)",
     "sources.ground": lambda b: "⏚ 0",
+    "routing.datatype_conversion": lambda b: "→ " + b.params["output_type"],
     "ports.inport": lambda b: str(b.params["port"]),
     "ports.outport": lambda b: str(b.params["port"]),
     "math.minmax": lambda b: b.params["function"],

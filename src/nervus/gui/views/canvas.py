@@ -182,6 +182,15 @@ class DiagramScene(QGraphicsScene):
             if item.block.name in names or self.model.path_of(item.block) in names:
                 item.setSelected(True)
 
+    def set_type_labels(self, labels: dict[tuple[str, int], str]) -> None:
+        """Show data types on wires: ``labels[(source block path, port)] = "int16"``."""
+        for w in self.wires.values():
+            text = labels.get((self.model.path_of(w.connection.src), w.connection.src_port), "")
+            if text != w.type_label:
+                w.prepareGeometryChange()
+                w.type_label = text
+                w.update()
+
     def mark_errors(self, names: list[str] | tuple[str, ...]) -> None:
         """Outline blocks with errors (full paths). A subsystem is outlined if a block inside it has an error."""
         for item in self.blocks.values():

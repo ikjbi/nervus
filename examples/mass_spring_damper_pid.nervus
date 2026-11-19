@@ -35,7 +35,8 @@
       "name": "error",
       "type": "math.sum",
       "params": {
-        "signs": "+-"
+        "signs": "+-",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [
@@ -69,7 +70,8 @@
       "name": "forces",
       "type": "math.sum",
       "params": {
-        "signs": "+--"
+        "signs": "+--",
+        "output_type": "inherit"
       },
       "meta": {
         "position": [

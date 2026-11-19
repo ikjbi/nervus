@@ -161,8 +161,8 @@ Custom blocks can provide their own C template with `@nervus.codegen.template("m
 
 ## Current limitations
 
-- All signals are `double` (`real_T`). Integer and fixed-point code comes with Phase 13
-  ([roadmap](https://github.com/ikjbi/nervus/blob/main/plan.md)).
+- Integer and fixed-point types are supported at the interface and are bit-true (see
+  [Data types](datatypes.md)), but arithmetic between conversions is done in `double`.
 - Discrete blocks with a sample-time **offset** start in their first hit; their output before the
   first hit is 0 in the generated code.
 - MISRA C checking (cppcheck) and XCP (live measurement and calibration over CAN) are planned.

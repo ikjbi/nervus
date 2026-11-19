@@ -94,6 +94,7 @@ class Relay(Block):
     type_id = "discontinuities.relay"
     label = "Relay"
     category = CATEGORY
+    TYPE_RULE = "double"
     PARAMS = (
         Param("on_point", 1.0, ParamKind.FLOAT, "Switch on when u >= on_point"),
         Param("off_point", 0.0, ParamKind.FLOAT, "Switch off when u <= off_point"),

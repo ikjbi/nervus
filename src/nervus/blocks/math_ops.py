@@ -9,7 +9,7 @@ import numpy as np
 from nervus.blocks.registry import register
 from nervus.core.block import Block, Width, broadcast_widths
 from nervus.core.errors import ParameterError
-from nervus.core.params import Param, ParamKind
+from nervus.core.params import Param, ParamKind, output_type_param
 from nervus.core.types import Array, as_signal
 
 CATEGORY = "Math Operations"
@@ -43,6 +43,7 @@ class Gain(_Math):
             "Multiplication",
             choices=("elementwise", "matrix"),
         ),
+        output_type_param(),
     )
 
     def validate_params(self) -> None:
@@ -83,7 +84,7 @@ class Sum(_Math):
 
     type_id = "math.sum"
     label = "Sum"
-    PARAMS = (Param("signs", "++", ParamKind.STR, "One + or - per input"),)
+    PARAMS = (Param("signs", "++", ParamKind.STR, "One + or - per input"), output_type_param())
 
     def _signs(self) -> str:
         return self.params["signs"].replace("|", "").replace(" ", "")
@@ -114,7 +115,7 @@ class Product(_Math):
 
     type_id = "math.product"
     label = "Product"
-    PARAMS = (Param("ops", "**", ParamKind.STR, "One * or / per input"),)
+    PARAMS = (Param("ops", "**", ParamKind.STR, "One * or / per input"), output_type_param())
 
     def validate_params(self) -> None:
         s = self.params["ops"]
@@ -214,6 +215,7 @@ class MathFunction(_Math):
 
     type_id = "math.function"
     label = "Math Function"
+    TYPE_RULE = "double"
     PARAMS = (Param("function", "exp", ParamKind.CHOICE, "Function", choices=tuple(_FUNCTIONS)),)
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
@@ -267,7 +269,7 @@ class Bias(_Math):
 
     type_id = "math.bias"
     label = "Bias"
-    PARAMS = (Param("bias", 0.0, ParamKind.ARRAY, "Value added to the input"),)
+    PARAMS = (Param("bias", 0.0, ParamKind.ARRAY, "Value added to the input"), output_type_param())
 
     def output_widths(self, in_widths: list[Width]) -> list[Width]:
         return [broadcast_widths([in_widths[0], as_signal(self.params["bias"]).size])]

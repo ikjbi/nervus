@@ -371,6 +371,7 @@ class StateChart(Block):
     type_id = "charts.state_chart"
     label = "State Chart"
     category = "State Machines"
+    TYPE_RULE = "double"
     PARAMS = (
         Param("definition", DEFAULT_CHART, ParamKind.CODE, "The chart: inputs, outputs, states and transitions"),
         Param("state_output", True, ParamKind.BOOL, "Add an output with the number of the active state"),

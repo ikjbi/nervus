@@ -25,6 +25,7 @@ class ParamKind(StrEnum):
     STR = "str"
     CODE = "code"  # multi-line source code
     SAMPLE_TIME = "sample_time"
+    DATATYPE = "datatype"  # double, int16, fixdt(1,16,8), inherit, ...
 
 
 @dataclass(frozen=True)
@@ -84,6 +85,11 @@ class Param:
             return s
         if kind in (ParamKind.STR, ParamKind.CODE):
             return str(value)
+        if kind is ParamKind.DATATYPE:
+            from nervus.core.datatypes import parse_datatype
+
+            parse_datatype(str(value))  # validates
+            return str(value).strip()
         if kind is ParamKind.SAMPLE_TIME:
             from nervus.core.sample_time import SampleTime
 
@@ -92,6 +98,16 @@ class Param:
             st = SampleTime.from_value(value)
             return [st.period, st.offset] if st.offset else st.period
         raise AssertionError(kind)  # pragma: no cover
+
+
+def output_type_param(default: str = "inherit") -> Param:
+    """The standard *output_type* parameter (see :mod:`nervus.core.datatypes`)."""
+    return Param(
+        "output_type",
+        default,
+        ParamKind.DATATYPE,
+        "Output data type: inherit, double, single, boolean, int8…uint32, fixdt(signed, bits, fraction)",
+    )
 
 
 def to_jsonable(value: Any) -> Any:

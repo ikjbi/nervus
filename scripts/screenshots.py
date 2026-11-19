@@ -104,6 +104,15 @@ def main() -> None:
             inspector.close()
             win.diagnostics_dock.raise_()
 
+            # Data types shown on the wires.
+            win.files.open(ROOT / "examples" / "fixed_point_sensor.nervus")
+            win.act_types.setChecked(True)
+            win.refresh_types()
+            win.view.fit()
+            grab(win.view, "datatypes.png")
+            win.act_types.setChecked(False)
+            win.refresh_types()
+
             # Linear analysis of a textbook open loop.
             from nervus import Diagram
             from nervus.blocks import Inport, Outport, TransferFunction

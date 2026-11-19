@@ -10,7 +10,7 @@ import numpy.typing as npt
 from nervus.blocks.registry import register
 from nervus.core.block import Block, Width, broadcast_widths
 from nervus.core.errors import ParameterError
-from nervus.core.params import Param, ParamKind
+from nervus.core.params import Param, ParamKind, output_type_param
 from nervus.core.types import Array
 
 CATEGORY = "Lookup Tables"
@@ -72,6 +72,7 @@ class Lookup1D(Block):
         Param("table", [0.0, 1.0, 4.0], ParamKind.ARRAY, "Output value at each breakpoint"),
         Param("interpolation", "linear", ParamKind.CHOICE, "Between breakpoints", choices=INTERPOLATION),
         Param("extrapolation", "clip", ParamKind.CHOICE, "Outside the breakpoints", choices=EXTRAPOLATION),
+        output_type_param("double"),
     )
 
     def _data(self) -> tuple[Array, Array]:
@@ -117,6 +118,7 @@ class Lookup2D(Block):
         Param("table", [[0.0, 1.0], [1.0, 2.0]], ParamKind.ARRAY, "Table: rows × columns"),
         Param("interpolation", "linear", ParamKind.CHOICE, "Between breakpoints", choices=("linear", "nearest")),
         Param("extrapolation", "clip", ParamKind.CHOICE, "Outside the breakpoints", choices=EXTRAPOLATION),
+        output_type_param("double"),
     )
 
     def _data(self) -> tuple[Array, Array, Array]:

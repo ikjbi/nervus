@@ -23,6 +23,7 @@ from typing import Any
 import numpy as np
 
 from nervus.core.block import Block, Width
+from nervus.core.datatypes import DOUBLE, DataType
 from nervus.core.diagram import Diagram, Severity
 from nervus.core.errors import AlgebraicLoopError, ModelError, SimulationError
 from nervus.core.sample_time import CONSTANT, CONTINUOUS, SampleTime
@@ -61,6 +62,8 @@ class CompiledModel:
     xc_slices: list[slice]
     xc0: Array
     xd0: list[Array]
+    out_types: list[list[DataType]] = field(default_factory=list)
+    """Data type of each block output."""
     xd: list[Array] = field(default_factory=list)
     y: list[list[Array]] = field(default_factory=list)
     _validated: bool = False
@@ -91,6 +94,12 @@ class CompiledModel:
             (i, b, self.kinds[i], self.rate_index[i], self.xc_slices[i], self.inputs[i])
             for i, b in enumerate(self.blocks)
         ]
+        # Outputs that must be converted to a non-double data type: (block, [(port, type)], rounding, overflow)
+        self._quantize = {
+            i: ([(p, t) for p, t in enumerate(ts) if not t.is_double], *self.blocks[i].quantization())
+            for i, ts in enumerate(self.out_types)
+            if any(not t.is_double for t in ts)
+        }
         self._cont_states = [(i, b, sl, self.inputs[i]) for i, b, _k, _r, sl, _inp in self._plan if sl.stop > sl.start]
         from nervus.core.block import Block as _Block
 
@@ -128,6 +137,12 @@ class CompiledModel:
                 raise SimulationError(f"{name}: error computing outputs at t={t:g}: {exc}", (name,)) from exc
             if not validated:
                 out = self._check_outputs(i, out)
+            q = self._quantize.get(i)
+            if q is not None:
+                out = list(out)
+                ports, rounding, overflow = q
+                for p, dtype in ports:
+                    out[p] = dtype.quantize(out[p], rounding, overflow)
             y[i] = out
         self._validated = True
 
@@ -259,6 +274,7 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
         except (ValueError, TypeError) as exc:
             raise ModelError(f"{names[i]}: {exc}", (names[i],)) from exc
 
+    out_t = _propagate_types(blocks, inputs, names)
     feedthrough = [b.direct_feedthrough() for b in blocks]
     order = _sort(blocks, inputs, feedthrough, names)
 
@@ -270,6 +286,7 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
     inputs = [[(pos[s], p) for s, p in inputs[i]] for i in order]
     in_w = [in_w[i] for i in order]
     out_w = [out_w[i] for i in order]
+    out_t = [out_t[i] for i in order]
     feedthrough = [feedthrough[i] for i in order]
 
     sample_times = _resolve_sample_times(blocks, inputs)
@@ -322,6 +339,7 @@ def compile_diagram(diagram: Diagram, params: dict[str, Any] | None = None) -> C
         xc_slices=xc_slices,
         xc0=np.concatenate(xc_parts) if xc_parts else EMPTY,
         xd0=xd0,
+        out_types=out_t,
     )
     model.reset()
     return model
@@ -355,6 +373,27 @@ def _propagate_widths(blocks: list[Block], inputs: list[list[tuple[int, int]]], 
             if w is not None and w < 1:
                 raise ModelError(f"{n}: invalid output width {w}", (n,))
     return [[int(w) for w in ws if w is not None] for ws in out_w]
+
+
+def _propagate_types(
+    blocks: list[Block], inputs: list[list[tuple[int, int]]], names: list[str]
+) -> list[list[DataType]]:
+    """Resolve every output's data type (inherited types flow along the signals, also around loops)."""
+    out_t: list[list[DataType | None]] = [[None] * b.num_outputs() for b in blocks]
+    for _ in range(2 * len(blocks) + 5):
+        changed = False
+        for i, b in enumerate(blocks):
+            in_t = [out_t[s][p] for s, p in inputs[i]]
+            try:
+                new = list(b.output_types(in_t))
+            except (ValueError, TypeError) as exc:
+                raise ModelError(f"{names[i]}: {exc}", (names[i],)) from exc
+            if new != out_t[i]:
+                out_t[i] = new
+                changed = True
+        if not changed:
+            break
+    return [[t if t is not None else DOUBLE for t in ts] for ts in out_t]
 
 
 def _sort(

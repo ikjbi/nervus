@@ -24,7 +24,7 @@ from nervus.blocks.lookup import Lookup1D, Lookup2D
 from nervus.blocks.math_ops import Abs, Bias, Gain, MathFunction, MinMax, Product, Saturation, Sum
 from nervus.blocks.ports import Inport, Outport, Subsystem
 from nervus.blocks.registry import block_types, categories, create_block, get_block_class, register
-from nervus.blocks.routing import Demux, Mux, Switch
+from nervus.blocks.routing import DataTypeConversion, Demux, Mux, Switch
 from nervus.blocks.sinks import Assertion, Scope, StopSimulation, Terminator, ToWorkspace
 from nervus.blocks.sources import Clock, Constant, FromWorkspace, Ground, Pulse, Ramp, Sine, Step
 from nervus.blocks.user import PythonFunction
@@ -38,6 +38,7 @@ __all__ = [
     "CompareToConstant",
     "Constant",
     "Counter",
+    "DataTypeConversion",
     "DeadZone",
     "Debounce",
     "Demux",
