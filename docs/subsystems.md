@@ -113,6 +113,29 @@ engine.add_variant("diesel", diesel_engine, condition="ENGINE == 2")
 engine.variants["petrol"].condition = "ENGINE == 1"
 ```
 
+## Function-call subsystems
+
+Sometimes logic, not a clock, decides when a function runs: store a value each time the engine is switched
+off, or run a learning routine once per drive cycle. Set *trigger* to `function_call`: the subsystem then runs
+**once every time the trigger value changes**. The caller, usually a State Chart, increments a counter output
+whenever it wants the function to run:
+
+```text
+input u
+output calls = 0
+
+state low
+state high
+  entry: calls = calls + 1      # call the subsystem once, every time we enter "high"
+
+transition low -> high: u > 0.5
+transition high -> low: u < -0.5
+```
+
+Connect `calls` to the subsystem's trigger input (marked ƒ()). The subsystem runs in the same time step as the
+call, after the chart, and holds its outputs and states between calls. In generated C it becomes
+`if (call counter changed) { ... }` around its blocks.
+
 ## Masks: reusable components with parameters
 
 A **masked** subsystem has its own parameters, like a function's arguments. The blocks inside use them in

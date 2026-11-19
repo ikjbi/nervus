@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Function-call subsystems: *trigger* = `function_call` runs the subsystem once per change of the trigger
+  value, e.g. a call counter incremented by a State Chart; identical C code.
 - Continuous Integrator: *external_reset* input (rising, falling, either, level). Variable-step solvers stop
   exactly at the reset edge and restart from the initial value. Blocks can make their state jump at a major
   step (`Block.major_step`).

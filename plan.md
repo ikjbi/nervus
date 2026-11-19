@@ -159,7 +159,7 @@ tests/
 - [x] Masks: parameter dialog and icon text for a subsystem; mask parameters as local workspace (nested, C code)
 - [x] Enabled subsystems (held or reset states; C code)
 - [x] Triggered subsystems (rising/falling/either edge, combined with enable; C code)
-- [ ] Function-call subsystems (task scheduling from a chart or scheduler block)
+- [x] Function-call subsystems (trigger = function_call: one run per change of a call counter, e.g. from a chart)
 - [x] Variant subsystems (conditions on workspace variables, default variant, Variants dialog, C code of the active variant)
 - [x] Reusable component libraries (`.nervlib` files, linked subsystems updated on load, per-instance mask values)
 

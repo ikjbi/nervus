@@ -24,7 +24,7 @@ from nervus.core.sample_time import CONTINUOUS
 from nervus.core.types import Array, as_signal
 
 CATEGORY = "Ports & Subsystems"
-TRIGGER_EDGES = ("none", "rising", "falling", "either")
+TRIGGER_EDGES = ("none", "rising", "falling", "either", "function_call")
 
 
 @register
@@ -171,6 +171,10 @@ class Subsystem(Block):
     (``rising``: from ≤ 0 to > 0, ``falling``: from > 0 to ≤ 0, or ``either``). Between triggers its outputs
     and states are held. The trigger is checked each time the blocks inside would execute, so drive it with a
     discrete signal of the same rate. Blocks with continuous states are not allowed inside.
+
+    With *trigger* = ``function_call`` the subsystem runs once every time the trigger value **changes**. A State
+    Chart (or any logic) calls it by incrementing a counter output, e.g. ``calls = calls + 1`` in a state's entry
+    action: the subsystem then runs in the same time step, after the chart.
 
     Its inputs and outputs are the In and Out blocks inside, in the order of their *port* numbers. Subsystems
     structure a model the way functions structure code: one subsystem per ECU function (e.g. "idle control",

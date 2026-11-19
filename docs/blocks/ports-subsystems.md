@@ -66,6 +66,10 @@ With *trigger* the subsystem gets a last input, **trigger**, and runs only when 
 and states are held. The trigger is checked each time the blocks inside would execute, so drive it with a
 discrete signal of the same rate. Blocks with continuous states are not allowed inside.
 
+With *trigger* = ``function_call`` the subsystem runs once every time the trigger value **changes**. A State
+Chart (or any logic) calls it by incrementing a counter output, e.g. ``calls = calls + 1`` in a state's entry
+action: the subsystem then runs in the same time step, after the chart.
+
 Its inputs and outputs are the In and Out blocks inside, in the order of their *port* numbers. Subsystems
 structure a model the way functions structure code: one subsystem per ECU function (e.g. "idle control",
 "fuel", "ignition"). Parameters inside can use the model workspace.
@@ -77,7 +81,7 @@ structure a model the way functions structure code: one subsystem per ECU functi
 | `sample_time` | -1 (inherited) | s | Task period for the blocks inside that inherit theirs (-1 = no own rate) |
 | `enable_port` | `False` |  | Add an enable input: the subsystem only runs while it is > 0 |
 | `when_enabled` | `'held'` |  | Discrete states when the subsystem is enabled again — one of `held`, `reset` |
-| `trigger` | `'none'` |  | Add a trigger input: the subsystem only runs when it has this kind of edge — one of `none`, `rising`, `falling`, `either` |
+| `trigger` | `'none'` |  | Add a trigger input: the subsystem only runs when it has this kind of edge — one of `none`, `rising`, `falling`, `either`, `function_call` |
 
 *Direct feedthrough:* yes
 

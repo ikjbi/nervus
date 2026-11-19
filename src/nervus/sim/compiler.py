@@ -145,7 +145,10 @@ class CompiledModel:
                 continue
             rising = before <= 0 < now
             falling = before > 0 >= now
-            fired = rising if edge == "rising" else falling if edge == "falling" else rising or falling
+            if edge == "function_call":
+                fired = now != before  # every change of the call counter is one call
+            else:
+                fired = rising if edge == "rising" else falling if edge == "falling" else rising or falling
             on = on and fired
         return on
 

@@ -205,7 +205,7 @@ class BlockItem(QGraphicsItem):
                 y = item.pos().y()
                 box = QRectF(6 if dx > 0 else rect.width() / 2, y - 8, rect.width() / 2 - 8, 16)
                 painter.drawText(box, align | Qt.AlignmentFlag.AlignVCenter, port_block.name)
-        edge_marks = {"rising": "↑", "falling": "↓", "either": "↕"}
+        edge_marks = {"rising": "↑", "falling": "↓", "either": "↕", "function_call": "ƒ()"}
         for index, text in (
             (getattr(sub, "enable_index", None), "⏻ enable"),
             (getattr(sub, "trigger_index", None), f"{edge_marks.get(sub.params.get('trigger', ''), '')} trigger"),

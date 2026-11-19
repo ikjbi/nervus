@@ -28,6 +28,7 @@ maps Simulink names to Nervus names.
 | Mask, mask parameters, mask icon | Edit Mask…: mask parameters, icon text, description |
 | Enabled Subsystem (held / reset) | Subsystem with *enable_port* and *when_enabled* |
 | Triggered Subsystem (rising / falling / either) | Subsystem with *trigger* |
+| Function-Call Subsystem, called from Stateflow | Subsystem with *trigger* = `function_call`, called by incrementing a chart output |
 | Atomic Subsystem with a sample time | Subsystem with *sample_time* (one ECU task) |
 | Rate Transition, "single-tasking" / "multitasking" code | Rate Transition block; `generate_c(..., tasks=True)` for one function per task |
 | Variant Subsystem, variant conditions | Variants…: conditions such as `ENGINE == 2` |

@@ -291,7 +291,10 @@ class CGenerator:
             self.states[tr] = _Field(tr, 2, [0.0, 0.0], f"{m.names[i]}: [seen, last value] of its trigger")
             rising = f"(({dw}.{tr}[1] <= 0.0) && (tv > 0.0))"
             falling = f"(({dw}.{tr}[1] > 0.0) && (tv <= 0.0))"
-            fired = rising if edge == "rising" else falling if edge == "falling" else f"({rising} || {falling})"
+            if edge == "function_call":
+                fired = f"({dw}.{tr}[1] != tv)"  # every change of the call counter is one call
+            else:
+                fired = rising if edge == "rising" else falling if edge == "falling" else f"({rising} || {falling})"
             head += [
                 "    {",
                 f"        real_T tv = {self.signal_var(s, p)}[0];",
