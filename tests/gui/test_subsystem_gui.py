@@ -180,8 +180,8 @@ def test_context_menus(window) -> None:  # type: ignore[no-untyped-def]
     assert "Rename…" in texts(window.context_menu(c))
     wire = window.diagram_model.diagram.connections[0]
     menu = window.context_menu(wire)
-    assert texts(menu) == ["Delete Wire"]
-    menu.actions()[0].trigger()
+    assert texts(menu) == ["Name Signal…", "Delete Wire"]
+    menu.actions()[1].trigger()  # Delete Wire
     assert not window.diagram_model.diagram.connections
     assert any("Layout" in t for t in texts(window.context_menu(None)))
 
