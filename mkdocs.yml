@@ -61,6 +61,8 @@ nav:
           - "Tutorial: DC motor speed and position control": app-help/tutorial_dc_motor.md
           - "Tutorial: Level control of coupled water tanks": app-help/tutorial_coupled_tanks.md
           - "Tutorial: Balancing an inverted pendulum with state feedback": app-help/tutorial_inverted_pendulum.md
+          - "Tutorial: Engine operating modes": app-help/tutorial_engine_modes.md
+          - "Tutorial: Radiator fan control": app-help/tutorial_coolant_fan.md
           - "Tutorial: Idle speed control": app-help/tutorial_idle.md
           - "Tutorial: Lambda control and fuel trims": app-help/tutorial_lambda.md
           - "Tutorial: Ignition timing and knock control": app-help/tutorial_ignition.md
@@ -90,6 +92,8 @@ nav:
               - "Balancing an inverted pendulum with state feedback": tutorials/inverted-pendulum.md
       - Powertrain and engine control:
           - Engine management:
+              - "Engine operating modes": tutorials/engine-modes.md
+              - "Radiator fan control": tutorials/coolant-fan.md
               - "Idle speed control": tutorials/idle-speed-control.md
               - "Lambda control and fuel trims": tutorials/lambda-control.md
               - "Ignition timing and knock control": tutorials/ignition-knock.md

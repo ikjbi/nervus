@@ -25,7 +25,7 @@ from nervus.blocks import (
     Sum,
     ZeroOrderHold,
 )
-from nervus.core import Variable
+from nervus.core import Check, TestCase, Variable
 from nervus.core.layout import auto_layout
 
 
@@ -66,6 +66,14 @@ def build() -> Diagram:
     d.connect(temp, scope.in_port(0))
     d.connect(filt, scope.in_port(1))
     d.connect(fan, scope.in_port(2))
+    d.tests = [
+        TestCase(
+            "coolant stays below 100 °C",
+            "The fan holds the coolant below boiling (100 °C at the radiator cap's pressure is the limit used here)",
+            stop_time=600.0,
+            checks=[Check("bounds", "coolant_temp", {"upper": 100.0})],
+        )
+    ]
     return d
 
 

@@ -1,6 +1,6 @@
 # Tutorials
 
-16 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+18 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -40,6 +40,8 @@ ECU functions of a petrol engine and its transmission, as they run in production
 
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
+| [Engine operating modes](engine-modes.md) | beginner | 30 min | an ECU's mode logic as a State Chart: cranking, starter protection, idle, fuel cut-off, stall; calibration parameters in a chart; behaviour specified by test cases |
+| [Radiator fan control](coolant-fan.md) | beginner | 25 min | on/off control with hysteresis, a thermal model with a lookup table, sensor filtering and its delay, switching rate versus temperature swing |
 | [Idle speed control](idle-speed-control.md) | beginner | 45 min | how an ECU holds the idle speed: a mean-value engine model, a PI controller with feed-forward, requirements as test cases, C code |
 | [Lambda control and fuel trims](lambda-control.md) | intermediate | 45 min | why petrol engines run at lambda = 1, closed-loop fuel control with a lambda sensor, short- and long-term fuel trims (as read over OBD-II), an ECU task in an atomic subsystem |
 | [Ignition timing and knock control](ignition-knock.md) | intermediate | 30 min | spark advance from a speed/load map (2-D lookup table), knock and the knock limit, a knock controller that retards and recovers, noisy sensors |

@@ -79,6 +79,13 @@ TUTORIALS: list[Tutorial] = [
              "feedback, non-minimum-phase behaviour, redesigning a gain in the Console",
              ("inverted_pendulum.nervus",), ("dc-motor",)),
     # ------------------------------------------------------------------ engine
+    Tutorial("engine-modes", "Engine operating modes", _ENGINE, "Engine management", "beginner", 30,
+             "an ECU's mode logic as a State Chart: cranking, starter protection, idle, fuel cut-off, stall; "
+             "calibration parameters in a chart; behaviour specified by test cases", ("engine_modes.nervus",),
+             ("first-model",)),
+    Tutorial("coolant-fan", "Radiator fan control", _ENGINE, "Engine management", "beginner", 25,
+             "on/off control with hysteresis, a thermal model with a lookup table, sensor filtering and its "
+             "delay, switching rate versus temperature swing", ("coolant_fan.nervus",), ("first-model",)),
     Tutorial("idle-speed-control", "Idle speed control", _ENGINE, "Engine management", "beginner", 45,
              "how an ECU holds the idle speed: a mean-value engine model, a PI controller with feed-forward, "
              "requirements as test cases, C code", ("idle_speed_control.nervus",), ("first-model",), app_page="tutorial_idle"),

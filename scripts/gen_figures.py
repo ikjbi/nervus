@@ -1583,6 +1583,32 @@ def lab_inverted_pendulum() -> plt.Figure:
     return fig
 
 
+@figure("coolant_fan")
+def coolant_fan() -> plt.Figure:
+    d = _example("coolant_fan").build()
+    r = simulate(d, solver="rk4", step=0.01)
+    narrow = simulate(d, solver="rk4", step=0.01, params={"T_off": 97.0})
+    fig, (a0, a1, a2) = plt.subplots(3, 1, figsize=(6.4, 5.0), sharex=True, height_ratios=[0.7, 1.6, 0.8])
+    a0.plot(r.t, r["engine_load"], color=INK, lw=1.4)
+    a0.set_ylabel("load [%]")
+    a0.set_title("Radiator fan with 6 °C hysteresis: 12 switchings in 10 minutes", color=INK, fontsize=9)
+    a1.plot(r.t, r["coolant_temp"], color=C1, lw=1.6, label="coolant")
+    a1.plot(r.t, r["temp_filtered"], color=C3, lw=1.0, label="filtered sensor")
+    for y in (98, 92):
+        a1.axhline(y, color=GRID, ls=":", lw=1)
+    a1.set_ylabel("°C")
+    a1.legend(loc="lower right", fontsize=8)
+    a2.step(r.t, r["fan_on"], where="post", color=C2, lw=1.6, label="6 °C hysteresis")
+    a2.step(
+        narrow.t, np.ravel(narrow["fan_on"]) * 0.8 + 1.4, where="post", color=C4, lw=1.0, label="1 °C (36 switchings)"
+    )
+    a2.set_yticks([0, 1, 1.4, 2.2], ["off", "on", "off", "on"])
+    a2.legend(loc="center left", fontsize=7)
+    a2.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

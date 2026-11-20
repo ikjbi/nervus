@@ -79,4 +79,4 @@ Then press **▶** and compare the runs in the Data Inspector.
 
 ## Next
 
-That was the last tutorial on control engineering. Continue with powertrain and engine control: *Idle speed control*, or pick another one from the *tutorial overview*.
+That was the last tutorial on control engineering. Continue with powertrain and engine control: *Engine operating modes*, or pick another one from the *tutorial overview*.
