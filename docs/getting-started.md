@@ -124,5 +124,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   long-term fuel trims learned per load cell (Adaptive Map). See the [tutorial](tutorials/fuel-film.md).
 - `truck.py`: a 40 t truck with a heavy-duty diesel, a 12-speed AMT and an exhaust brake on a climb and a
   descent. See the [tutorial](tutorials/truck.md).
+- `can_network.py`: two CAN buses, a gateway, a rest-bus simulation, E2E protection and fault injection.
+  See the [tutorial](tutorials/can-network.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

@@ -1026,3 +1026,76 @@ def _diagnostic_monitor(e: Emitter) -> BlockCode:
         "}",
     ]
     return BlockCode(out, upd)
+
+
+def _e2e_crc_lines(byte: Callable[[str], str], data_id: int, crc_byte: int) -> list[str]:
+    """C statements computing ``crc`` (E2E CRC-8 SAE J1850) of the frame bytes ``byte("k")`` (real_T 0..255)."""
+    return [
+        "uint8_T crc = 0xFFu;",
+        "int k, j;",
+        f"uint8_T head[2] = {{0x{data_id & 0xFF:02X}u, 0x{(data_id >> 8) & 0xFF:02X}u}};",
+        "for (k = -2; k < 8; k++) {",
+        f"    if (k == {crc_byte}) {{ continue; }}",
+        f"    crc ^= (k < 0) ? head[k + 2] : (uint8_T){byte('k')};",
+        "    for (j = 0; j < 8; j++) {",
+        "        crc = (crc & 0x80u) ? (uint8_T)((crc << 1) ^ 0x1Du) : (uint8_T)(crc << 1);",
+        "    }",
+        "}",
+        "crc ^= 0xFFu;",
+    ]
+
+
+@template("can.e2e_protect")
+def _e2e_protect(e: Emitter) -> BlockCode:
+    b = e.block
+    cb, kb, did = int(b.params["counter_byte"]), int(b.params["crc_byte"]), int(b.params["data_id"])
+    x = e.state("counter", [0.0], f"{e.path}: E2E alive counter 0..14")
+    out = [
+        "{",
+        "    int i;",
+        "    for (i = 0; i < 8; i++) {",
+        f"        {e.y(0, 'i')} = {e.u(0, 'i')};",
+        "    }",
+        f"    {e.y(0, str(cb))} = (real_T)(((uint8_T){e.u(0, str(cb))} & 0xF0u) | (uint8_T){x}[0]);",
+        "    {",
+        *[f"        {line}" for line in _e2e_crc_lines(lambda ix: e.y(0, ix), did, kb)],
+        f"        {e.y(0, str(kb))} = (real_T)crc;",
+        "    }",
+        "}",
+    ]
+    upd = [f"{x}[0] = ({x}[0] >= 14.0) ? 0.0 : {x}[0] + 1.0;"]
+    return BlockCode(out, upd)
+
+
+@template("can.e2e_check")
+def _e2e_check(e: Emitter) -> BlockCode:
+    b = e.block
+    cb, kb, did = int(b.params["counter_byte"]), int(b.params["crc_byte"]), int(b.params["data_id"])
+    x = e.state("e2e", [-1.0, 0.0], f"{e.path}: last accepted counter (-1: none), counter of this sample")
+    status_lines = [
+        "{",
+        "    real_T status;",
+        f"    {x}[1] = -1.0;",
+        f"    if ({e.u(1, '0')} < 0.5) {{",
+        "        status = 1.0; /* no new data */",
+        "    } else {",
+        *[f"        {line}" for line in _e2e_crc_lines(lambda ix: e.u(0, ix), did, kb)],
+        f"        if ((uint8_T){e.u(0, str(kb))} != crc) {{",
+        "            status = 2.0; /* wrong CRC */",
+        "        } else {",
+        f"            int counter = (int)((uint8_T){e.u(0, str(cb))} & 0x0Fu);",
+        f"            {x}[1] = (real_T)counter;",
+        f"            if ({x}[0] < 0.0) {{",
+        "                status = 0.0;",
+        "            } else {",
+        f"                int delta = ((counter - (int){x}[0]) % 15 + 15) % 15;",
+        f"                status = (delta == 0) ? 3.0 : ((delta <= {int(b.params['max_delta'])}) ? 0.0 : 4.0);",
+        "            }",
+        "        }",
+        "    }",
+        f"    {e.y(0, '0')} = status;",
+        f"    {e.y(1, '0')} = (status == 0.0) ? 1.0 : 0.0;",
+        "}",
+    ]
+    upd = [f"if ({x}[1] >= 0.0) {{ {x}[0] = {x}[1]; }}"]
+    return BlockCode(status_lines, upd)

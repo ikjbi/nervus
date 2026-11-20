@@ -57,6 +57,8 @@ class CanMessage:
     signals: tuple[CanSignal, ...]
     comment: str = ""
     sender: str = ""
+    cycle_time: float | None = None
+    """Transmission period in seconds (the DBC attribute GenMsgCycleTime), if the DBC file has it."""
 
     def signal(self, name: str) -> CanSignal:
         for s in self.signals:
@@ -96,7 +98,10 @@ def load_dbc(path: str | Path) -> dict[str, CanMessage]:
             for s in m.signals
             if s.multiplexer_ids is None
         )
-        messages[m.name] = CanMessage(m.name, m.frame_id, m.length, sigs, m.comment or "", (m.senders or [""])[0])
+        cycle = m.cycle_time / 1000.0 if getattr(m, "cycle_time", None) else None
+        messages[m.name] = CanMessage(
+            m.name, m.frame_id, m.length, sigs, m.comment or "", (m.senders or [""])[0], cycle
+        )
     return messages
 
 

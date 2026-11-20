@@ -1302,6 +1302,60 @@ def truck() -> plt.Figure:
     return fig
 
 
+@figure("can_arbitration")
+def can_arbitration() -> plt.Figure:
+    from nervus.canbus import CanBus
+
+    b = CanBus("fig", bitrate=125_000)
+    queued = [(0.0, 0x300), (0.0, 0x100), (0.0, 0x200), (0.0012, 0x080), (0.0030, 0x100)]
+    for t, i in queued:
+        b.send(t, i, bytes(8))
+    b.receive(0.01, -1)
+    ids = sorted({i for _, i in queued})
+    colors = dict(zip(ids, (C1, C2, C3, C4), strict=False))
+    fig, ax = plt.subplots(figsize=(6.4, 2.6))
+    for f in b.trace:
+        row = ids.index(f.can_id)
+        ax.plot([f.queued * 1e3, f.start * 1e3], [row, row], color=GRID, lw=2, ls=":")
+        ax.broken_barh([(f.start * 1e3, (f.end - f.start) * 1e3)], (row - 0.3, 0.6), color=colors[f.can_id])
+        ax.plot(f.queued * 1e3, row, "v", color=INK, ms=6)
+    ax.set_yticks(range(len(ids)), [f"0x{i:03X}" for i in ids])
+    ax.invert_yaxis()
+    ax.set_xlabel("time [ms]  (▼ queued, dotted: waiting, bar: on the wire)")
+    ax.set_title("Arbitration at 125 kbit/s: the lowest identifier goes first", color=INK, fontsize=10)
+    fig.tight_layout()
+    return fig
+
+
+@figure("can_network")
+def can_network() -> plt.Figure:
+    from nervus import load
+
+    d = load(Path(__file__).parent.parent / "examples" / "can_network.nervus")
+    bad = simulate(d, 3.0)  # 20 % corrupted frames from 1 s
+    off = simulate(d, 3.0, params={"ecm_bus_off": 1.0, "corrupt_rate": 0.0, "corrupt_from": 2.0})
+    fig, (a0, a1, a2) = plt.subplots(3, 1, figsize=(6.4, 5.4), sharex=True, height_ratios=[2, 1, 1.4])
+    a0.plot(bad.t, bad["rpm"], color=GRID, lw=3, label="engine")
+    a0.plot(bad.t, bad["rpm_display"], color=C1, lw=1.3, label="cluster (E2E rejects corrupted frames)")
+    a0.axvspan(1.0, 3.0, color=C2, alpha=0.08)
+    a0.set_ylabel("rpm")
+    a0.legend(loc="lower left", fontsize=8)
+    a0.set_title("20 % corrupted frames from 1 s", color=INK, fontsize=9)
+    a1.step(bad.t, np.ravel(bad["e2e_status"]), where="post", color=C3, lw=1.0)
+    a1.set_yticks([0, 2, 4], ["ok", "CRC", "sequence"])
+    a1.set_title("E2E check status", color=INK, fontsize=9)
+    a2.plot(off.t, off["rpm"], color=GRID, lw=3)
+    a2.plot(off.t, off["rpm_display"], color=C1, lw=1.3)
+    a2.step(off.t, 1000 * np.ravel(off["u0100"]), where="post", color=C2, lw=1.5, label="U0100 pending (×1000)")
+    a2.axvline(2.0, color=INK, lw=0.8, ls="--")
+    a2.set_title("ECM bus-off at 2 s: 100 ms timeout, needle to 0", color=INK, fontsize=9)
+    a2.set_ylabel("rpm")
+    a2.legend(loc="center left", fontsize=8)
+    a2.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

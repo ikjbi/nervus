@@ -310,15 +310,15 @@ tests/
 
 ## Phase 21 – CAN bus networks
 *Several ECUs exchanging messages over a simulated bus.*
-- [ ] CAN bus block: frames with IDs, periods and DLC from DBC files; arbitration by priority; bit timing and bus
+- [x] CAN bus block: frames with IDs, periods and DLC from DBC files; arbitration by priority; bit timing and bus
       load; transmission delay
-- [ ] ECU nodes as subsystems with CAN Rx/Tx ports; periodic and event-triggered transmission
-- [ ] Rest-bus simulation: generate the messages of ECUs that are not modelled, from the DBC file
-- [ ] Gateways between buses (e.g. powertrain and body CAN)
-- [ ] Fault injection: lost frames, delays, wrong values, bus-off; checksums and alive counters (AUTOSAR E2E
+- [x] ECU nodes as subsystems with CAN Rx/Tx ports; periodic and event-triggered transmission
+- [x] Rest-bus simulation: generate the messages of ECUs that are not modelled, from the DBC file
+- [x] Gateways between buses (e.g. powertrain and body CAN)
+- [x] Fault injection: lost frames, delays, wrong values, bus-off; checksums and alive counters (AUTOSAR E2E
       style) with C code
-- [ ] Bus trace view (frames over time) and export to standard log formats (ASC/BLF)
-- [ ] Connect to real hardware through `python-can` (PEAK, Kvaser, Vector, SocketCAN) for HIL-style tests
+- [x] Bus trace view (frames over time) and export to standard log formats (ASC/BLF)
+- [x] Connect to real hardware through `python-can` (PEAK, Kvaser, Vector, SocketCAN) for HIL-style tests
 
 ## Phase 22 – OBD-II: read data from a real car
 *Record live data and trouble codes from a vehicle's OBD-II port and use them in models and tests.*

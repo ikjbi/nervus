@@ -1,0 +1,928 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "can_network",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 4.0,
+    "solver": "rk4",
+    "step": 0.001,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "corrupt_rate",
+      "value": 0.2,
+      "description": "Share of ECM frames with a flipped bit (fault injection)",
+      "unit": "-"
+    },
+    {
+      "name": "corrupt_from",
+      "value": 1.0,
+      "description": "When the ECM faults start",
+      "unit": "s"
+    },
+    {
+      "name": "comm_timeout",
+      "value": 0.1,
+      "description": "No valid EngineData for this long: communication lost",
+      "unit": "s"
+    },
+    {
+      "name": "ecm_bus_off",
+      "value": 0.0,
+      "description": "1: the ECM goes bus-off at corrupt_from",
+      "unit": "-"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "engine_rpm",
+      "type": "sources.sine",
+      "params": {
+        "amplitude": 800.0,
+        "frequency": 3.0,
+        "phase": 0.0,
+        "bias": 2500.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "coolant_temp",
+      "type": "sources.sine",
+      "params": {
+        "amplitude": 0.0,
+        "frequency": 1.0,
+        "phase": 0.0,
+        "bias": 90.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          90.0
+        ]
+      }
+    },
+    {
+      "name": "ECM",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": 0.01,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          300.0,
+          20.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "engine_rpm",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "coolant_temp",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                80.0
+              ]
+            }
+          },
+          {
+            "name": "pack",
+            "type": "can.pack",
+            "params": {
+              "dbc_file": "data/vehicle.dbc",
+              "message": "EngineData",
+              "signals": "EngineSpeed, CoolantTemp"
+            },
+            "meta": {
+              "position": [
+                160.0,
+                30.0
+              ]
+            }
+          },
+          {
+            "name": "e2e_protect",
+            "type": "can.e2e_protect",
+            "params": {
+              "data_id": 256,
+              "crc_byte": 6,
+              "counter_byte": 7,
+              "sample_time": -1.0
+            },
+            "meta": {
+              "position": [
+                320.0,
+                30.0
+              ]
+            }
+          },
+          {
+            "name": "can_tx",
+            "type": "can.transmit",
+            "params": {
+              "dbc_file": "data/vehicle.dbc",
+              "message": "EngineData",
+              "signals": "",
+              "bus": "powertrain",
+              "payload": "bytes",
+              "mode": "periodic",
+              "node": "ECM",
+              "drop": 0.0,
+              "delay": 0.0,
+              "corrupt": "corrupt_rate",
+              "bus_off": "ecm_bus_off",
+              "fault_time": "corrupt_from",
+              "sample_time": 0.01
+            },
+            "meta": {
+              "position": [
+                480.0,
+                30.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "engine_rpm",
+            "src_port": 0,
+            "dst": "pack",
+            "dst_port": 0
+          },
+          {
+            "src": "coolant_temp",
+            "src_port": 0,
+            "dst": "pack",
+            "dst_port": 1
+          },
+          {
+            "src": "pack",
+            "src_port": 0,
+            "dst": "e2e_protect",
+            "dst_port": 0
+          },
+          {
+            "src": "e2e_protect",
+            "src_port": 0,
+            "dst": "can_tx",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "rpm_sensor",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          140.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "rest_bus",
+      "type": "can.rest_bus",
+      "params": {
+        "dbc_file": "data/vehicle.dbc",
+        "nodes": "GATEWAY",
+        "values": "VehicleSpeed=50",
+        "bus": "powertrain",
+        "sample_time": 0.001
+      },
+      "meta": {
+        "position": [
+          300.0,
+          160.0
+        ]
+      }
+    },
+    {
+      "name": "gateway",
+      "type": "can.gateway",
+      "params": {
+        "from_bus": "powertrain",
+        "to_bus": "body",
+        "ids": "0x100, 0x200",
+        "sample_time": 0.001
+      },
+      "meta": {
+        "position": [
+          500.0,
+          90.0
+        ]
+      }
+    },
+    {
+      "name": "powertrain_can",
+      "type": "can.bus",
+      "params": {
+        "bus": "powertrain",
+        "bitrate": 500000.0,
+        "interface": "none",
+        "channel": "",
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          500.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "body_can",
+      "type": "can.bus",
+      "params": {
+        "bus": "body",
+        "bitrate": 125000.0,
+        "interface": "none",
+        "channel": "",
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          680.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "cluster",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": 0.01,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          680.0,
+          20.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "can_rx",
+            "type": "can.receive",
+            "params": {
+              "dbc_file": "data/vehicle.dbc",
+              "message": "EngineData",
+              "signals": "",
+              "bus": "body",
+              "payload": "bytes",
+              "sample_time": 0.01
+            },
+            "meta": {
+              "position": [
+                0.0,
+                40.0
+              ]
+            }
+          },
+          {
+            "name": "e2e_check",
+            "type": "can.e2e_check",
+            "params": {
+              "data_id": 256,
+              "crc_byte": 6,
+              "counter_byte": 7,
+              "max_delta": 2,
+              "sample_time": 0.01
+            },
+            "meta": {
+              "position": [
+                180.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "unpack",
+            "type": "can.unpack",
+            "params": {
+              "dbc_file": "data/vehicle.dbc",
+              "message": "EngineData",
+              "signals": "EngineSpeed"
+            },
+            "meta": {
+              "position": [
+                180.0,
+                120.0
+              ]
+            }
+          },
+          {
+            "name": "use_if_valid",
+            "type": "routing.switch",
+            "params": {
+              "criterion": "u1 >= threshold",
+              "threshold": 0.5
+            },
+            "meta": {
+              "position": [
+                360.0,
+                60.0
+              ]
+            }
+          },
+          {
+            "name": "last_good",
+            "type": "discrete.unit_delay",
+            "params": {
+              "initial": 0.0,
+              "sample_time": 0.01
+            },
+            "meta": {
+              "position": [
+                360.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "since_valid",
+            "type": "routing.switch",
+            "params": {
+              "criterion": "u1 >= threshold",
+              "threshold": 0.5
+            },
+            "meta": {
+              "position": [
+                360.0,
+                -100.0
+              ]
+            }
+          },
+          {
+            "name": "since_prev",
+            "type": "discrete.unit_delay",
+            "params": {
+              "initial": 0.0,
+              "sample_time": 0.01
+            },
+            "meta": {
+              "position": [
+                360.0,
+                -220.0
+              ]
+            }
+          },
+          {
+            "name": "plus_period",
+            "type": "math.bias",
+            "params": {
+              "bias": 0.01,
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                220.0,
+                -220.0
+              ]
+            }
+          },
+          {
+            "name": "zero",
+            "type": "sources.constant",
+            "params": {
+              "value": 0.0,
+              "sample_time": "inf",
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                180.0,
+                -120.0
+              ]
+            }
+          },
+          {
+            "name": "timeout",
+            "type": "logic.compare_to_constant",
+            "params": {
+              "operator": ">=",
+              "constant": "comm_timeout"
+            },
+            "meta": {
+              "position": [
+                520.0,
+                -100.0
+              ]
+            }
+          },
+          {
+            "name": "U0100",
+            "type": "diagnostics.monitor",
+            "params": {
+              "dtc": "U0100",
+              "threshold": 1.0,
+              "fail_step": 1.0,
+              "pass_step": 1.0,
+              "jump_down": true,
+              "confirm_cycles": 2,
+              "heal_cycles": 3,
+              "mil": true,
+              "enable_input": false,
+              "cycle_input": false,
+              "clear_input": false,
+              "sample_time": 0.01
+            },
+            "meta": {
+              "position": [
+                680.0,
+                -180.0
+              ]
+            }
+          },
+          {
+            "name": "needle",
+            "type": "routing.switch",
+            "params": {
+              "criterion": "u1 >= threshold",
+              "threshold": 0.5
+            },
+            "meta": {
+              "position": [
+                680.0,
+                60.0
+              ]
+            }
+          },
+          {
+            "name": "rpm_display",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                840.0,
+                60.0
+              ]
+            }
+          },
+          {
+            "name": "e2e_status",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            },
+            "meta": {
+              "position": [
+                360.0,
+                -300.0
+              ]
+            }
+          },
+          {
+            "name": "comm_lost",
+            "type": "ports.outport",
+            "params": {
+              "port": 3
+            },
+            "meta": {
+              "position": [
+                840.0,
+                -60.0
+              ]
+            }
+          },
+          {
+            "name": "u0100_pending",
+            "type": "ports.outport",
+            "params": {
+              "port": 4
+            },
+            "meta": {
+              "position": [
+                840.0,
+                -180.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "can_rx",
+            "src_port": 0,
+            "dst": "e2e_check",
+            "dst_port": 0
+          },
+          {
+            "src": "can_rx",
+            "src_port": 1,
+            "dst": "e2e_check",
+            "dst_port": 1
+          },
+          {
+            "src": "can_rx",
+            "src_port": 0,
+            "dst": "unpack",
+            "dst_port": 0
+          },
+          {
+            "src": "unpack",
+            "src_port": 0,
+            "dst": "use_if_valid",
+            "dst_port": 0
+          },
+          {
+            "src": "e2e_check",
+            "src_port": 1,
+            "dst": "use_if_valid",
+            "dst_port": 1
+          },
+          {
+            "src": "last_good",
+            "src_port": 0,
+            "dst": "use_if_valid",
+            "dst_port": 2
+          },
+          {
+            "src": "use_if_valid",
+            "src_port": 0,
+            "dst": "last_good",
+            "dst_port": 0
+          },
+          {
+            "src": "zero",
+            "src_port": 0,
+            "dst": "since_valid",
+            "dst_port": 0
+          },
+          {
+            "src": "e2e_check",
+            "src_port": 1,
+            "dst": "since_valid",
+            "dst_port": 1
+          },
+          {
+            "src": "since_prev",
+            "src_port": 0,
+            "dst": "plus_period",
+            "dst_port": 0
+          },
+          {
+            "src": "plus_period",
+            "src_port": 0,
+            "dst": "since_valid",
+            "dst_port": 2
+          },
+          {
+            "src": "since_valid",
+            "src_port": 0,
+            "dst": "since_prev",
+            "dst_port": 0
+          },
+          {
+            "src": "since_valid",
+            "src_port": 0,
+            "dst": "timeout",
+            "dst_port": 0
+          },
+          {
+            "src": "timeout",
+            "src_port": 0,
+            "dst": "U0100",
+            "dst_port": 0
+          },
+          {
+            "src": "zero",
+            "src_port": 0,
+            "dst": "needle",
+            "dst_port": 0
+          },
+          {
+            "src": "timeout",
+            "src_port": 0,
+            "dst": "needle",
+            "dst_port": 1
+          },
+          {
+            "src": "use_if_valid",
+            "src_port": 0,
+            "dst": "needle",
+            "dst_port": 2
+          },
+          {
+            "src": "needle",
+            "src_port": 0,
+            "dst": "rpm_display",
+            "dst_port": 0
+          },
+          {
+            "src": "e2e_check",
+            "src_port": 0,
+            "dst": "e2e_status",
+            "dst_port": 0
+          },
+          {
+            "src": "timeout",
+            "src_port": 0,
+            "dst": "comm_lost",
+            "dst_port": 0
+          },
+          {
+            "src": "U0100",
+            "src_port": 1,
+            "dst": "u0100_pending",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "rpm_scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          900.0,
+          -80.0
+        ]
+      }
+    },
+    {
+      "name": "rpm_display",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          900.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "e2e_status",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          900.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "comm_lost",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          900.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "u0100",
+      "type": "ports.outport",
+      "params": {
+        "port": 4
+      },
+      "meta": {
+        "position": [
+          900.0,
+          180.0
+        ]
+      }
+    },
+    {
+      "name": "powertrain_load",
+      "type": "ports.outport",
+      "params": {
+        "port": 5
+      },
+      "meta": {
+        "position": [
+          680.0,
+          320.0
+        ]
+      }
+    },
+    {
+      "name": "body_load",
+      "type": "ports.outport",
+      "params": {
+        "port": 6
+      },
+      "meta": {
+        "position": [
+          900.0,
+          320.0
+        ]
+      }
+    },
+    {
+      "name": "rpm",
+      "type": "ports.outport",
+      "params": {
+        "port": 7
+      },
+      "meta": {
+        "position": [
+          140.0,
+          -90.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "rpm_sensor",
+      "src_port": 0,
+      "dst": "ECM",
+      "dst_port": 0
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "rpm_sensor",
+      "dst_port": 0
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "ECM",
+      "dst_port": 1
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "rpm_scope",
+      "dst_port": 0
+    },
+    {
+      "src": "cluster",
+      "src_port": 0,
+      "dst": "rpm_scope",
+      "dst_port": 1
+    },
+    {
+      "src": "cluster",
+      "src_port": 0,
+      "dst": "rpm_display",
+      "dst_port": 0
+    },
+    {
+      "src": "cluster",
+      "src_port": 1,
+      "dst": "e2e_status",
+      "dst_port": 0
+    },
+    {
+      "src": "cluster",
+      "src_port": 2,
+      "dst": "comm_lost",
+      "dst_port": 0
+    },
+    {
+      "src": "cluster",
+      "src_port": 3,
+      "dst": "u0100",
+      "dst_port": 0
+    },
+    {
+      "src": "powertrain_can",
+      "src_port": 0,
+      "dst": "powertrain_load",
+      "dst_port": 0
+    },
+    {
+      "src": "body_can",
+      "src_port": 0,
+      "dst": "body_load",
+      "dst_port": 0
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "rpm",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "the cluster follows the engine",
+      "description": "Without faults the needle is at most 2 samples (+ the bus and gateway latency) behind the engine",
+      "stop_time": 1.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "comm_lost",
+          "lower": 0.0,
+          "upper": 0.0
+        }
+      ]
+    },
+    {
+      "name": "corrupted frames are rejected",
+      "description": "With 20 % corrupted frames the E2E check rejects them; the needle never shows a corrupted value",
+      "stop_time": 3.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "rpm_display",
+          "lower": 1650.0,
+          "upper": 3350.0,
+          "t_from": 0.1
+        },
+        {
+          "kind": "bounds",
+          "signal": "comm_lost",
+          "lower": 0.0,
+          "upper": 0.0
+        }
+      ]
+    },
+    {
+      "name": "bus-off: U0100 and the needle drops",
+      "description": "The ECM goes bus-off at 3 s: after 100 ms without a valid frame the needle drops to 0 and U0100 is pending",
+      "stop_time": 4.0,
+      "parameters": {
+        "ecm_bus_off": 1.0,
+        "corrupt_rate": 0.0,
+        "corrupt_from": 3.0
+      },
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "comm_lost",
+          "lower": 0.0,
+          "upper": 0.0,
+          "t_to": 3.09
+        },
+        {
+          "kind": "bounds",
+          "signal": "u0100",
+          "lower": 1.0,
+          "upper": 1.0,
+          "t_from": 3.2
+        },
+        {
+          "kind": "bounds",
+          "signal": "rpm_display",
+          "lower": 0.0,
+          "upper": 0.0,
+          "t_from": 3.2
+        }
+      ]
+    }
+  ]
+}

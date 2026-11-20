@@ -39,6 +39,7 @@ from nervus.gui.models import DiagramModel, SimulationModel, SimulationState
 from nervus.gui.theme import ThemeManager, ThemeMode, current_theme
 from nervus.gui.views.advisor_dialog import AdvisorDialog
 from nervus.gui.views.analysis_dialog import AnalysisDialog
+from nervus.gui.views.can_trace_dialog import CanTraceDialog
 from nervus.gui.views.canvas import DiagramScene, DiagramView
 from nervus.gui.views.codegen_dialog import CodegenDialog
 from nervus.gui.views.data_inspector import DataInspector
@@ -258,6 +259,9 @@ class MainWindow(QMainWindow):
         self.act_obd = self._action(
             "Record from &OBD-II…", self.show_obd, None, "Read live data from a car through its OBD-II port"
         )
+        self.act_can_trace = self._action(
+            "CAN Bus &Trace…", self.show_can_trace, None, "Frames on the simulated CAN buses of the last run"
+        )
         self.act_sweep = self._action(
             "Parameter &Sweep / Monte Carlo…",
             self.show_sweep,
@@ -336,6 +340,7 @@ class MainWindow(QMainWindow):
         m.addAction(self.act_advisor)
         m = mb.addMenu("&Tools")
         m.addAction(self.act_obd)
+        m.addAction(self.act_can_trace)
         m = mb.addMenu("&Code")
         m.addAction(self.act_codegen)
         m = mb.addMenu("&Help")
@@ -444,6 +449,11 @@ class MainWindow(QMainWindow):
 
     def show_obd(self) -> ObdRecordDialog:
         dlg = ObdRecordDialog(self.sim_model, self)
+        dlg.show()
+        return dlg
+
+    def show_can_trace(self) -> CanTraceDialog:
+        dlg = CanTraceDialog(self.diagram_model.root, self)
         dlg.show()
         return dlg
 

@@ -67,4 +67,5 @@ The `examples` folder in the repository has complete models you can open with **
 | `ignition_knock.nervus` | spark advance map and knock control on low-octane fuel (tutorial) |
 | `fuel_film.nervus` | wall wetting, switching lambda sensor, fuel trims learned per load cell (tutorial) |
 | `truck.nervus` | a 40 t truck: diesel, 12-speed AMT, exhaust brake on a mountain road (tutorial) |
+| `can_network.nervus` | two CAN buses, gateway, rest bus, E2E checks and fault injection (tutorial) |
 | `obd_ecu.nervus` | an engine ECU with trouble codes that answers OBD-II tools (`python -m nervus.obd simulate`) |

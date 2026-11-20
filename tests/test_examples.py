@@ -337,3 +337,14 @@ def test_truck_example() -> None:
     d = _import("truck").build()
     assert all(r.passed for r in run_tests(d))
     assert [t.name for t in load(EXAMPLES / "truck.nervus").tests] == [t.name for t in d.tests]
+
+
+def test_can_network_example() -> None:
+    pytest.importorskip("cantools")
+    from nervus.testing import run_tests
+
+    d = _import("can_network").build()
+    assert all(r.passed for r in run_tests(d))
+    again = load(EXAMPLES / "can_network.nervus")  # relative DBC paths inside subsystems
+    assert [t.name for t in again.tests] == [t.name for t in d.tests]
+    assert all(r.passed for r in run_tests(again))

@@ -65,6 +65,7 @@ nav:
           - "Tutorial: starter motor and throttle": app-help/tutorial_physical.md
           - "Tutorial: traction control": app-help/tutorial_traction.md
           - "Tutorial: a truck on a mountain road": app-help/tutorial_truck.md
+          - "Tutorial: a vehicle network (CAN)": app-help/tutorial_can_network.md
           - Coming from Simulink (app): app-help/coming_from_simulink.md
           - Model files (app): app-help/model_files.md
           - Keyboard shortcuts: app-help/shortcuts.md
@@ -82,6 +83,7 @@ nav:
       - Starter motor and electronic throttle: tutorials/physical-models.md
       - Tyre slip and traction control: tutorials/traction-control.md
       - A truck on a mountain road: tutorials/truck.md
+      - A vehicle network (CAN): tutorials/can-network.md
   - Block reference:
       - Overview: blocks/index.md
       - CAN: blocks/can.md

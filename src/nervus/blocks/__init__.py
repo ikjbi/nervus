@@ -5,7 +5,17 @@ Importing this package registers every block, so they can be created by ``type_i
 
 from nervus.blocks.automotive_electrics import Alternator, FuelInjector, GlowPlug, Solenoid
 from nervus.blocks.automotive_electrics import Relay as RelayContact
-from nervus.blocks.can_blocks import CanPack, CanUnpack
+from nervus.blocks.can_blocks import (
+    CanBusSetup,
+    CanGateway,
+    CanPack,
+    CanReceive,
+    CanRestBus,
+    CanTransmit,
+    CanUnpack,
+    E2ECheck,
+    E2EProtect,
+)
 from nervus.blocks.chart import StateChart
 from nervus.blocks.continuous import Derivative, Integrator, StateSpace, TransferFunction
 from nervus.blocks.control import PID, DiscretePID
@@ -98,7 +108,12 @@ __all__ = [
     "Assertion",
     "Battery",
     "Bias",
+    "CanBusSetup",
+    "CanGateway",
     "CanPack",
+    "CanReceive",
+    "CanRestBus",
+    "CanTransmit",
     "CanUnpack",
     "Capacitor",
     "Clock",
@@ -121,6 +136,8 @@ __all__ = [
     "DiscretePID",
     "DiscreteTransferFunction",
     "DriveCycle",
+    "E2ECheck",
+    "E2EProtect",
     "EdgeDetect",
     "ElectricalReference",
     "ElectricalSwitch",

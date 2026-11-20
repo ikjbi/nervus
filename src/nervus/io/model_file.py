@@ -204,6 +204,7 @@ def _fill_system(d: Diagram, data: dict[str, Any], prefix: str) -> None:
             if "system" in entry:
                 inner = Diagram(name)
                 inner.meta = dict(entry["system"].get("meta", {}))
+                inner.source_path = d.root.source_path  # relative file paths (DBC, data) resolve while loading
                 block = cls(name, system=inner, **entry.get("params", {}))
                 if "mask" in entry:
                     block.mask = Workspace.from_list(list(entry["mask"].get("variables", [])))  # type: ignore[attr-defined]

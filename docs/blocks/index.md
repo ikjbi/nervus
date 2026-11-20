@@ -14,6 +14,13 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 - **CAN Unpack**: Decodes a CAN frame: the input is the 8 data bytes (a vector of width 8), and there is one output per
 - **CAN Pack**: Encodes a CAN frame: one input per signal (physical units), output = the 8 data bytes (``uint8``).
+- **CAN Transmit**: Sends a CAN message on a simulated bus: one input per signal (physical units), packed with the DBC file
+- **CAN Receive**: Receives a CAN message from a simulated bus: one output per signal (physical units, the last frame
+- **CAN Bus**: Settings of a simulated CAN bus, and its load: *bitrate* (125, 250, 500 kbit/s or 1 Mbit/s), and the
+- **E2E Protect**: Protects a frame AUTOSAR E2E style (like profile 1): writes an **alive counter** (0..14, one step per
+- **E2E Check**: Checks a frame protected by E2E Protect. Inputs: the 8 data bytes and **new** (from CAN Receive).
+- **CAN Rest Bus**: Rest-bus simulation: sends every message of the ECUs (*nodes*) that are not modelled, at their cycle
+- **CAN Gateway**: Forwards frames from one bus to another, like the central gateway between the powertrain and the body
 
 ## [Continuous](continuous.md)
 
