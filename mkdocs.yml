@@ -57,6 +57,8 @@ nav:
           - Coverage and Model Advisor: app-help/verification.md
           - Tutorials (app): app-help/tutorials.md
           - "Tutorial: Your first model: a cruise control": app-help/tutorial_first_model.md
+          - "Tutorial: Position control of a mass-spring-damper": app-help/tutorial_mass_spring_damper.md
+          - "Tutorial: DC motor speed and position control": app-help/tutorial_dc_motor.md
           - "Tutorial: Idle speed control": app-help/tutorial_idle.md
           - "Tutorial: Lambda control and fuel trims": app-help/tutorial_lambda.md
           - "Tutorial: Ignition timing and knock control": app-help/tutorial_ignition.md
@@ -78,6 +80,10 @@ nav:
       - Overview: tutorials/index.md
       - Getting started:
           - "Your first model: a cruise control": tutorials/first-model.md
+      - Control engineering:
+          - Classic lab experiments:
+              - "Position control of a mass-spring-damper": tutorials/mass-spring-damper.md
+              - "DC motor speed and position control": tutorials/dc-motor.md
       - Powertrain and engine control:
           - Engine management:
               - "Idle speed control": tutorials/idle-speed-control.md

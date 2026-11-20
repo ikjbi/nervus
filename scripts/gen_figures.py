@@ -1481,6 +1481,64 @@ def chart_hierarchy() -> plt.Figure:
     return fig
 
 
+def _example(name: str):  # type: ignore[no-untyped-def]
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(name, Path(__file__).parent.parent / "examples" / f"{name}.py")
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@figure("lab_mass_spring_damper")
+def lab_mass_spring_damper() -> plt.Figure:
+    d = _example("mass_spring_damper_pid").build()
+    fig, (a0, a1) = plt.subplots(2, 1, figsize=(6.4, 4.6), sharex=True, height_ratios=[2, 1])
+    for (label, p), color in zip((("P (Kp = 40)", {"Ki": 0.0, "Kd": 0.0}), ("PD (+ Kd = 8)", {"Ki": 0.0}),
+                                  ("PID (+ Ki = 30)", {})), (C2, C3, C1), strict=True):  # fmt: skip
+        r = simulate(d, 10.0, params=p)
+        a0.plot(r.t, r["position"], color=color, lw=1.6, label=label)
+        a1.plot(r.t, r["pid"], color=color, lw=1.2)
+    a0.axhline(1.0, color=GRID, lw=1, ls="--")
+    a0.set_ylabel("position [m]")
+    a0.legend(loc="lower right", fontsize=8)
+    a0.set_title("Step from 0 to 1 m: P oscillates, PD leaves an error, PID removes it", color=INK, fontsize=9)
+    a1.set_ylabel("force [N]")
+    a1.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
+@figure("lab_dc_motor")
+def lab_dc_motor() -> plt.Figure:
+    m = _example("dc_motor_lab")
+    sp, po = m.build_speed(), m.build_position()
+    ol, pi = simulate(sp, params={"closed_loop": 0.0}), simulate(sp)
+    pd, p_only = simulate(po), simulate(po, params={"Kd_th": 0.0})
+    fig, (a0, a1, a2) = plt.subplots(3, 1, figsize=(6.4, 6.0))
+    a0.plot(ol.t, ol["speed"], color=C1, lw=1.6)
+    final = float(np.ravel(ol["speed"])[-1])
+    a0.axhline(final, color=GRID, ls="--", lw=1)
+    a0.axhline(0.632 * final, color=GRID, ls=":", lw=1)
+    a0.axvline(0.2, color=GRID, ls=":", lw=1)
+    a0.set_title(f"1. Open loop, 5 V step: K = {final / 5:.1f} rad/s/V, τ = 0.10 s (63 % point)", color=INK, fontsize=9)
+    a0.set_ylabel("speed [rad/s]")
+    a1.plot(pi.t, pi["speed"], color=C3, lw=1.6, label="speed")
+    a1.step(pi.t, np.where(pi.t >= 0.1, 50, 0), where="post", color=GRID, lw=1, ls="--", label="reference")
+    a1.set_title("2. PI speed control: first order, τ = 34 ms, no overshoot", color=INK, fontsize=9)
+    a1.set_ylabel("speed [rad/s]")
+    a1.legend(loc="lower right", fontsize=8)
+    a2.plot(p_only.t, p_only["angle"], color=C2, lw=1.2, label="P only (Kd = 0)")
+    a2.plot(pd.t, pd["angle"], color=C1, lw=1.8, label="PD (ζ = 0.7)")
+    a2.set_title("3. Position control: the D term damps the motor", color=INK, fontsize=9)
+    a2.set_ylabel("angle [rad]")
+    a2.set_xlabel("time [s]")
+    a2.legend(loc="lower right", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

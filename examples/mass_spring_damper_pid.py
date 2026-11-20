@@ -1,7 +1,10 @@
-"""PID position control of a mass-spring-damper.
+"""PID position control of a mass-spring-damper: the first experiment of many control lab courses.
 
 Plant:      m x'' + c x' + k x = F
-Controller: continuous PID with output limits and back-calculation anti-windup
+Controller: continuous PID with output limits (±50 N) and clamping anti-windup
+
+The masses, springs and gains are workspace variables (m, c, k, Kp, Ki, Kd), so the lab sequence of the
+tutorial (P, then PD, then PID) is a matter of changing three numbers.
 
 Run with ``uv run python examples/mass_spring_damper_pid.py``. If matplotlib is installed the response is plotted.
 The model is also saved next to this script as ``mass_spring_damper_pid.nervus``.
@@ -13,6 +16,7 @@ from pathlib import Path
 
 from nervus import Diagram, SimResult, save, simulate
 from nervus.blocks import PID, Gain, Integrator, Scope, Step, Sum
+from nervus.core import Check, TestCase, Variable
 from nervus.core.layout import auto_layout
 
 M, C, K = 1.0, 0.5, 2.0  # kg, N·s/m, N/m
@@ -21,21 +25,26 @@ M, C, K = 1.0, 0.5, 2.0  # kg, N·s/m, N/m
 def build() -> Diagram:
     d = Diagram("mass_spring_damper_pid")
     d.settings.t_final = 10.0
+    ws = d.workspace
+    for name, value, unit, desc in (("m", M, "kg", "Mass"), ("c", C, "N·s/m", "Damping coefficient"),
+                                    ("k", K, "N/m", "Spring stiffness"), ("Kp", 40.0, "N/m", "Proportional gain"),
+                                    ("Ki", 30.0, "N/(m·s)", "Integral gain"), ("Kd", 8.0, "N·s/m", "Derivative gain")):  # fmt: skip
+        ws.add(Variable(name, value, desc, unit))
 
     ref = d.add(Step(time=0.5, final=1.0), name="reference")
     err = d.add(Sum(signs="+-"), name="error")
     pid = d.add(
-        PID(P=40.0, I=30.0, D=8.0, N=100.0, upper=50.0, lower=-50.0, anti_windup="back_calculation"),
+        PID(P="Kp", I="Ki", D="Kd", N=100.0, upper=50.0, lower=-50.0, anti_windup="clamping"),
         name="pid",
     )
 
     # Plant: x'' = (F - c x' - k x) / m
     forces = d.add(Sum(signs="+--"), name="forces")
-    inv_m = d.add(Gain(gain=1 / M), name="1/m")
+    inv_m = d.add(Gain(gain="1 / m"), name="1/m")
     vel = d.add(Integrator(), name="velocity")
     pos = d.add(Integrator(), name="position")
-    damping = d.add(Gain(gain=C), name="c")
-    spring = d.add(Gain(gain=K), name="k")
+    damping = d.add(Gain(gain="c"), name="c")
+    spring = d.add(Gain(gain="k"), name="k")
     scope = d.add(Scope(num_inputs=3), name="scope")
 
     d.connect(ref, err.in_port(0))
@@ -51,6 +60,18 @@ def build() -> Diagram:
     d.connect(ref, scope.in_port(0))
     d.connect(pos, scope.in_port(1))
     d.connect(pid, scope.in_port(2))
+    d.tests = [
+        TestCase(
+            "PID reaches the reference",
+            "Within 2 % of the 1 m reference after 6 s, overshoot below 15 %, force within the ±50 N limit",
+            stop_time=10.0,
+            checks=[
+                Check("bounds", "position", {"lower": 0.98, "upper": 1.02, "t_from": 6.0}),
+                Check("bounds", "position", {"upper": 1.15}),
+                Check("bounds", "pid", {"lower": -50.0, "upper": 50.0}),
+            ],
+        )
+    ]
     return d
 
 

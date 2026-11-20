@@ -1,0 +1,402 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "dc_motor_position",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 0.6,
+    "solver": "auto",
+    "step": null,
+    "max_step": 0.0002,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "R_m",
+      "value": 8.4,
+      "description": "Armature resistance",
+      "unit": "Ω"
+    },
+    {
+      "name": "L_m",
+      "value": 0.00116,
+      "description": "Armature inductance",
+      "unit": "H"
+    },
+    {
+      "name": "k_m",
+      "value": 0.042,
+      "description": "Torque constant (= back-EMF constant in V·s/rad)",
+      "unit": "N·m/A"
+    },
+    {
+      "name": "J",
+      "value": 2.1e-05,
+      "description": "Rotor and inertia disk",
+      "unit": "kg·m²"
+    },
+    {
+      "name": "b",
+      "value": 1e-07,
+      "description": "Viscous friction",
+      "unit": "N·m·s/rad"
+    },
+    {
+      "name": "V_max",
+      "value": 10.0,
+      "description": "Amplifier limit",
+      "unit": "V"
+    },
+    {
+      "name": "Kp_th",
+      "value": 6.5,
+      "description": "Position controller: proportional gain (ωn = 40 rad/s)",
+      "unit": "V/rad"
+    },
+    {
+      "name": "Kd_th",
+      "value": 0.186,
+      "description": "Position controller: derivative gain (ζ = 0.7)",
+      "unit": "V·s/rad"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          420.0,
+          180.0
+        ]
+      }
+    },
+    {
+      "name": "amplifier",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": 12.0,
+        "controlled": true
+      },
+      "meta": {
+        "position": [
+          420.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "motor",
+      "type": "electrical.dc_motor",
+      "params": {
+        "R": "R_m",
+        "L": "L_m",
+        "k": "k_m"
+      },
+      "meta": {
+        "position": [
+          560.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "disk",
+      "type": "rotational.inertia",
+      "params": {
+        "J": "J",
+        "w0": 0.0
+      },
+      "meta": {
+        "position": [
+          710.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "friction",
+      "type": "rotational.damper",
+      "params": {
+        "d": "b"
+      },
+      "meta": {
+        "position": [
+          710.0,
+          100.0
+        ]
+      }
+    },
+    {
+      "name": "frame",
+      "type": "rotational.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          860.0,
+          100.0
+        ]
+      }
+    },
+    {
+      "name": "speed_sensor",
+      "type": "rotational.speed_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          710.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "encoder",
+      "type": "rotational.angle_sensor",
+      "params": {
+        "phi0": 0.0
+      },
+      "meta": {
+        "position": [
+          710.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "angle_ref",
+      "type": "sources.step",
+      "params": {
+        "time": 0.05,
+        "initial": 0.0,
+        "final": 1.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "angle_meas",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.001
+      },
+      "meta": {
+        "position": [
+          560.0,
+          260.0
+        ]
+      }
+    },
+    {
+      "name": "error",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          140.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "pd",
+      "type": "control.discrete_pid",
+      "params": {
+        "P": "Kp_th",
+        "I": 0.0,
+        "D": "Kd_th",
+        "N": 500.0,
+        "initial_integrator": 0.0,
+        "upper": "V_max",
+        "lower": "-V_max",
+        "anti_windup": "clamping",
+        "Kb": 1.0,
+        "sample_time": 0.001
+      },
+      "meta": {
+        "position": [
+          270.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          860.0,
+          -80.0
+        ]
+      }
+    },
+    {
+      "name": "angle",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          860.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "voltage",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          420.0,
+          -60.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "encoder",
+      "src_port": 0,
+      "dst": "angle_meas",
+      "dst_port": 0
+    },
+    {
+      "src": "angle_ref",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 0
+    },
+    {
+      "src": "angle_meas",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 1
+    },
+    {
+      "src": "error",
+      "src_port": 0,
+      "dst": "pd",
+      "dst_port": 0
+    },
+    {
+      "src": "pd",
+      "src_port": 0,
+      "dst": "amplifier",
+      "dst_port": 0
+    },
+    {
+      "src": "angle_ref",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "encoder",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "encoder",
+      "src_port": 0,
+      "dst": "angle",
+      "dst_port": 0
+    },
+    {
+      "src": "pd",
+      "src_port": 0,
+      "dst": "voltage",
+      "dst_port": 0
+    }
+  ],
+  "links": [
+    {
+      "a": "amplifier",
+      "a_port": "p",
+      "b": "motor",
+      "b_port": "p"
+    },
+    {
+      "a": "amplifier",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "motor",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "motor",
+      "a_port": "shaft",
+      "b": "disk",
+      "b_port": "a"
+    },
+    {
+      "a": "motor",
+      "a_port": "shaft",
+      "b": "friction",
+      "b_port": "a"
+    },
+    {
+      "a": "friction",
+      "a_port": "b",
+      "b": "frame",
+      "b_port": "a"
+    },
+    {
+      "a": "motor",
+      "a_port": "shaft",
+      "b": "speed_sensor",
+      "b_port": "a"
+    },
+    {
+      "a": "motor",
+      "a_port": "shaft",
+      "b": "encoder",
+      "b_port": "a"
+    }
+  ],
+  "tests": [
+    {
+      "name": "position loop: 1 rad step, small overshoot",
+      "description": "ζ = 0.7, ωn = 40 rad/s: about 5 % overshoot, settled within 2 % after 0.2 s",
+      "stop_time": 0.6,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "angle",
+          "upper": 1.08
+        },
+        {
+          "kind": "bounds",
+          "signal": "angle",
+          "lower": 0.98,
+          "upper": 1.02,
+          "t_from": 0.25
+        }
+      ]
+    }
+  ]
+}

@@ -13,7 +13,44 @@
     "atol": 1e-08,
     "zero_crossing": true
   },
-  "workspace": [],
+  "workspace": [
+    {
+      "name": "m",
+      "value": 1.0,
+      "description": "Mass",
+      "unit": "kg"
+    },
+    {
+      "name": "c",
+      "value": 0.5,
+      "description": "Damping coefficient",
+      "unit": "N·s/m"
+    },
+    {
+      "name": "k",
+      "value": 2.0,
+      "description": "Spring stiffness",
+      "unit": "N/m"
+    },
+    {
+      "name": "Kp",
+      "value": 40.0,
+      "description": "Proportional gain",
+      "unit": "N/m"
+    },
+    {
+      "name": "Ki",
+      "value": 30.0,
+      "description": "Integral gain",
+      "unit": "N/(m·s)"
+    },
+    {
+      "name": "Kd",
+      "value": 8.0,
+      "description": "Derivative gain",
+      "unit": "N·s/m"
+    }
+  ],
   "blocks": [
     {
       "name": "reference",
@@ -49,14 +86,14 @@
       "name": "pid",
       "type": "control.pid",
       "params": {
-        "P": 40.0,
-        "I": 30.0,
-        "D": 8.0,
+        "P": "Kp",
+        "I": "Ki",
+        "D": "Kd",
         "N": 100.0,
         "initial_integrator": 0.0,
         "upper": 50.0,
         "lower": -50.0,
-        "anti_windup": "back_calculation",
+        "anti_windup": "clamping",
         "Kb": 1.0
       },
       "meta": {
@@ -84,7 +121,7 @@
       "name": "1/m",
       "type": "math.gain",
       "params": {
-        "gain": 1.0,
+        "gain": "1 / m",
         "multiplication": "elementwise",
         "output_type": "inherit"
       },
@@ -135,7 +172,7 @@
       "name": "c",
       "type": "math.gain",
       "params": {
-        "gain": 0.5,
+        "gain": "c",
         "multiplication": "elementwise",
         "output_type": "inherit"
       },
@@ -150,7 +187,7 @@
       "name": "k",
       "type": "math.gain",
       "params": {
-        "gain": 2.0,
+        "gain": "k",
         "multiplication": "elementwise",
         "output_type": "inherit"
       },
@@ -261,5 +298,32 @@
       "dst_port": 2
     }
   ],
-  "tests": []
+  "tests": [
+    {
+      "name": "PID reaches the reference",
+      "description": "Within 2 % of the 1 m reference after 6 s, overshoot below 15 %, force within the ±50 N limit",
+      "stop_time": 10.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "position",
+          "lower": 0.98,
+          "upper": 1.02,
+          "t_from": 6.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "position",
+          "upper": 1.15
+        },
+        {
+          "kind": "bounds",
+          "signal": "pid",
+          "lower": -50.0,
+          "upper": 50.0
+        }
+      ]
+    }
+  ]
 }

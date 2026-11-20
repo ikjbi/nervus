@@ -174,4 +174,4 @@ Inspector.
 
 ## Next
 
-That was the last tutorial on getting started. Continue with powertrain and engine control: [Idle speed control](idle-speed-control.md), or pick another one from the [tutorial overview](index.md).
+That was the last tutorial on getting started. Continue with control engineering: [Position control of a mass-spring-damper](mass-spring-damper.md), or pick another one from the [tutorial overview](index.md).

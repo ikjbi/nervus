@@ -61,6 +61,15 @@ TUTORIALS: list[Tutorial] = [
     Tutorial("first-model", "Your first model: a cruise control", "Getting started", "", "beginner", 30,
              "the editor, blocks and wires, workspace variables, scopes, the Data Inspector, PI control and "
              "integrator windup", ("cruise_control.nervus",)),
+    # ------------------------------------------------------------------ control labs
+    Tutorial("mass-spring-damper", "Position control of a mass-spring-damper", "Control engineering",
+             "Classic lab experiments", "beginner", 30,
+             "what the P, I and D terms do, natural frequency and damping ratio, steady-state error, actuator "
+             "limits and anti-windup", ("mass_spring_damper_pid.nervus",), ("first-model",)),
+    Tutorial("dc-motor", "DC motor speed and position control", "Control engineering", "Classic lab experiments",
+             "intermediate", 45, "system identification from a step response, PI design by pole-zero "
+             "cancellation, PD design from damping and natural frequency, a physical motor model and a 1 kHz "
+             "controller", ("dc_motor_speed.nervus", "dc_motor_position.nervus"), ("mass-spring-damper",)),
     # ------------------------------------------------------------------ engine
     Tutorial("idle-speed-control", "Idle speed control", _ENGINE, "Engine management", "beginner", 45,
              "how an ECU holds the idle speed: a mean-value engine model, a PI controller with feed-forward, "

@@ -93,6 +93,8 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
 
 - `cruise_control.py`: the cruise control of the tutorial [Your first model](tutorials/first-model.md), with P, PI and
   anti-windup versions.
+- `dc_motor_lab.py`: the DC motor servo lab: identification, PI speed and PD position control
+  (`dc_motor_speed.nervus`, `dc_motor_position.nervus`). See the [tutorial](tutorials/dc-motor.md).
 - `mass_spring_damper_pid.py`: continuous PID position control with actuator limits.
 - `throttle_pi.py`: electronic throttle control with a 10 ms discrete PI controller, as on an ECU, with its
   gains as workspace variables and a second calibration file.

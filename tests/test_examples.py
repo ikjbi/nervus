@@ -359,3 +359,29 @@ def test_cruise_control_example() -> None:
     windup = simulate(mod.build(anti_windup="none"))
     assert p_only["speed"][-1] == pytest.approx(97.4, abs=0.1)  # the numbers quoted in Tutorial 1
     assert np.max(windup["speed"]) == pytest.approx(138.6, abs=0.2)
+
+
+def test_mass_spring_damper_lab_numbers() -> None:
+    """The numbers quoted in the mass-spring-damper tutorial."""
+    d = _import("mass_spring_damper_pid").build()
+    p_only = simulate(d, 30.0, params={"Ki": 0.0, "Kd": 0.0})
+    pd = simulate(d, 10.0, params={"Ki": 0.0})
+    pid = simulate(d, 10.0)
+    assert np.mean(p_only["position"][p_only.t > 20]) == pytest.approx(40 / 42, abs=0.003)
+    assert np.max(p_only["position"]) == pytest.approx(1.80, abs=0.01)
+    assert pd["position"][-1] == pytest.approx(40 / 42, abs=0.001)
+    assert np.max(pid["position"]) == pytest.approx(1.12, abs=0.005) and pid["position"][-1] == pytest.approx(
+        1.0, abs=1e-3
+    )
+
+
+def test_dc_motor_lab() -> None:
+    from nervus.testing import run_tests
+
+    m = _import("dc_motor_lab")
+    sp, po = m.build_speed(), m.build_position()
+    assert all(r.passed for d in (sp, po) for r in run_tests(d))
+    k, tau = m.identify(simulate(sp, params={"closed_loop": 0.0}))
+    assert k == pytest.approx(23.8, abs=0.1) and tau == pytest.approx(0.100, abs=0.003)
+    assert simulate(sp, params={"Ki_w": 0.0})["speed"][-1] == pytest.approx(37.2, abs=0.1)
+    assert np.max(simulate(po, params={"Kd_th": 0.0})["angle"]) == pytest.approx(1.70, abs=0.01)

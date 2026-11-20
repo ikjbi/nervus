@@ -1,0 +1,472 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "dc_motor_speed",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 1.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": 0.0002,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "R_m",
+      "value": 8.4,
+      "description": "Armature resistance",
+      "unit": "Ω"
+    },
+    {
+      "name": "L_m",
+      "value": 0.00116,
+      "description": "Armature inductance",
+      "unit": "H"
+    },
+    {
+      "name": "k_m",
+      "value": 0.042,
+      "description": "Torque constant (= back-EMF constant in V·s/rad)",
+      "unit": "N·m/A"
+    },
+    {
+      "name": "J",
+      "value": 2.1e-05,
+      "description": "Rotor and inertia disk",
+      "unit": "kg·m²"
+    },
+    {
+      "name": "b",
+      "value": 1e-07,
+      "description": "Viscous friction",
+      "unit": "N·m·s/rad"
+    },
+    {
+      "name": "V_max",
+      "value": 10.0,
+      "description": "Amplifier limit",
+      "unit": "V"
+    },
+    {
+      "name": "Kp_w",
+      "value": 0.122,
+      "description": "Speed controller: proportional gain",
+      "unit": "V/(rad/s)"
+    },
+    {
+      "name": "Ki_w",
+      "value": 1.26,
+      "description": "Speed controller: integral gain (Kp / τ: cancels the motor pole)",
+      "unit": "V/rad"
+    },
+    {
+      "name": "closed_loop",
+      "value": 1.0,
+      "description": "1: PI speed control, 0: open-loop 5 V step (identification)",
+      "unit": "-"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          560.0,
+          180.0
+        ]
+      }
+    },
+    {
+      "name": "amplifier",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": 12.0,
+        "controlled": true
+      },
+      "meta": {
+        "position": [
+          560.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "motor",
+      "type": "electrical.dc_motor",
+      "params": {
+        "R": "R_m",
+        "L": "L_m",
+        "k": "k_m"
+      },
+      "meta": {
+        "position": [
+          700.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "disk",
+      "type": "rotational.inertia",
+      "params": {
+        "J": "J",
+        "w0": 0.0
+      },
+      "meta": {
+        "position": [
+          850.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "friction",
+      "type": "rotational.damper",
+      "params": {
+        "d": "b"
+      },
+      "meta": {
+        "position": [
+          850.0,
+          100.0
+        ]
+      }
+    },
+    {
+      "name": "frame",
+      "type": "rotational.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          1000.0,
+          100.0
+        ]
+      }
+    },
+    {
+      "name": "speed_sensor",
+      "type": "rotational.speed_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          850.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "encoder",
+      "type": "rotational.angle_sensor",
+      "params": {
+        "phi0": 0.0
+      },
+      "meta": {
+        "position": [
+          850.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "speed_ref",
+      "type": "sources.step",
+      "params": {
+        "time": 0.1,
+        "initial": 0.0,
+        "final": 50.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "speed_meas",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.001
+      },
+      "meta": {
+        "position": [
+          700.0,
+          260.0
+        ]
+      }
+    },
+    {
+      "name": "error",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          140.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "pi",
+      "type": "control.discrete_pid",
+      "params": {
+        "P": "Kp_w",
+        "I": "Ki_w",
+        "D": 0.0,
+        "N": 100.0,
+        "initial_integrator": 0.0,
+        "upper": "V_max",
+        "lower": "-V_max",
+        "anti_windup": "clamping",
+        "Kb": 1.0,
+        "sample_time": 0.001
+      },
+      "meta": {
+        "position": [
+          270.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "test_voltage",
+      "type": "sources.step",
+      "params": {
+        "time": 0.1,
+        "initial": 0.0,
+        "final": 5.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          270.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "mode",
+      "type": "sources.constant",
+      "params": {
+        "value": "closed_loop",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          270.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "mode_switch",
+      "type": "routing.switch",
+      "params": {
+        "criterion": "u1 >= threshold",
+        "threshold": 0.5
+      },
+      "meta": {
+        "position": [
+          420.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          1000.0,
+          -80.0
+        ]
+      }
+    },
+    {
+      "name": "speed",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1000.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "voltage",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          560.0,
+          -60.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "speed_sensor",
+      "src_port": 0,
+      "dst": "speed_meas",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_ref",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_meas",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 1
+    },
+    {
+      "src": "error",
+      "src_port": 0,
+      "dst": "pi",
+      "dst_port": 0
+    },
+    {
+      "src": "pi",
+      "src_port": 0,
+      "dst": "mode_switch",
+      "dst_port": 0
+    },
+    {
+      "src": "mode",
+      "src_port": 0,
+      "dst": "mode_switch",
+      "dst_port": 1
+    },
+    {
+      "src": "test_voltage",
+      "src_port": 0,
+      "dst": "mode_switch",
+      "dst_port": 2
+    },
+    {
+      "src": "mode_switch",
+      "src_port": 0,
+      "dst": "amplifier",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_ref",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_sensor",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "speed_sensor",
+      "src_port": 0,
+      "dst": "speed",
+      "dst_port": 0
+    },
+    {
+      "src": "mode_switch",
+      "src_port": 0,
+      "dst": "voltage",
+      "dst_port": 0
+    }
+  ],
+  "links": [
+    {
+      "a": "amplifier",
+      "a_port": "p",
+      "b": "motor",
+      "b_port": "p"
+    },
+    {
+      "a": "amplifier",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "motor",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "motor",
+      "a_port": "shaft",
+      "b": "disk",
+      "b_port": "a"
+    },
+    {
+      "a": "motor",
+      "a_port": "shaft",
+      "b": "friction",
+      "b_port": "a"
+    },
+    {
+      "a": "friction",
+      "a_port": "b",
+      "b": "frame",
+      "b_port": "a"
+    },
+    {
+      "a": "motor",
+      "a_port": "shaft",
+      "b": "speed_sensor",
+      "b_port": "a"
+    },
+    {
+      "a": "motor",
+      "a_port": "shaft",
+      "b": "encoder",
+      "b_port": "a"
+    }
+  ],
+  "tests": [
+    {
+      "name": "speed loop: 50 rad/s within 0.15 s, no overshoot",
+      "description": "The PI cancels the motor's time constant: a first-order response with τ ≈ 33 ms",
+      "stop_time": 1.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "speed",
+          "lower": 49.0,
+          "upper": 50.5,
+          "t_from": 0.25
+        },
+        {
+          "kind": "bounds",
+          "signal": "voltage",
+          "lower": -10.0,
+          "upper": 10.0
+        }
+      ]
+    }
+  ]
+}

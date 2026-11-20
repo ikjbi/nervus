@@ -1,6 +1,6 @@
 # Tutorials
 
-12 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+14 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -18,6 +18,17 @@ Start here: the editor, and how to organise larger models.
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
 | *Your first model: a cruise control* | beginner | 30 min | the editor, blocks and wires, workspace variables, scopes, the Data Inspector, PI control and integrator windup |
+
+## Control engineering
+
+The experiments of a control-engineering lab course, each with a plant you can touch in the lab and the controller design that goes with it.
+
+### Classic lab experiments
+
+| Tutorial | Level | Time | You will learn |
+|---|---|---|---|
+| *Position control of a mass-spring-damper* | beginner | 30 min | what the P, I and D terms do, natural frequency and damping ratio, steady-state error, actuator limits and anti-windup |
+| *DC motor speed and position control* | intermediate | 45 min | system identification from a step response, PI design by pole-zero cancellation, PD design from damping and natural frequency, a physical motor model and a 1 kHz controller |
 
 ## Powertrain and engine control
 

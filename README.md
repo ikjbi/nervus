@@ -62,6 +62,7 @@ editor step by step, tune it, and meet integrator windup. Then pick a topic; the
 | Topic | Tutorials |
 |---|---|
 | Getting started | [Your first model: a cruise control](docs/tutorials/first-model.md) |
+| Control engineering: classic lab experiments | [Position control of a mass-spring-damper](docs/tutorials/mass-spring-damper.md), [DC motor speed and position control](docs/tutorials/dc-motor.md) |
 | Powertrain and engine control: engine management | [Idle speed control](docs/tutorials/idle-speed-control.md), [Lambda control and fuel trims](docs/tutorials/lambda-control.md), [Ignition timing and knock control](docs/tutorials/ignition-knock.md), [Wall wetting and learned fuel trims](docs/tutorials/fuel-film.md) |
 | Powertrain and engine control: transmission and driveline | [Gear-shift logic](docs/tutorials/gear-shift.md), [A truck on a mountain road](docs/tutorials/truck.md) |
 | Vehicle dynamics and energy: longitudinal dynamics and energy | [A car on a drive cycle](docs/tutorials/drive-cycle.md) |

@@ -49,6 +49,7 @@ The `examples` folder in the repository has complete models you can open with **
 | `cruise_control.nervus` | the cruise control built step by step in the tutorial *Your first model* |
 | `throttle_pi.nervus` | an electronic throttle controller running as a 10 ms ECU task |
 | `throttle_ecu.nervus` | the same controller as an ECU subsystem, with generated C and A2L |
+| `dc_motor_speed.nervus`, `dc_motor_position.nervus` | DC motor lab: identification, PI speed and PD position control (tutorial) |
 | `mass_spring_damper_pid.nervus` | continuous PID position control with actuator limits |
 | `idle_speed_control.nervus` | idle speed control on a mean-value engine model (tutorial) |
 | `coolant_fan.nervus` | radiator fan control with hysteresis and a lookup table |
