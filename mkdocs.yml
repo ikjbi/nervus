@@ -60,6 +60,7 @@ nav:
           - "Tutorial: drive cycle": app-help/tutorial_drive_cycle.md
           - "Tutorial: gear-shift logic": app-help/tutorial_gear_shift.md
           - "Tutorial: electronic circuits": app-help/tutorial_circuits.md
+          - "Tutorial: starter motor and throttle": app-help/tutorial_physical.md
           - Coming from Simulink (app): app-help/coming_from_simulink.md
           - Model files (app): app-help/model_files.md
           - Keyboard shortcuts: app-help/shortcuts.md
@@ -72,6 +73,7 @@ nav:
       - A car on a drive cycle: tutorials/drive-cycle.md
       - Gear-shift logic: tutorials/gear-shift.md
       - Electronic circuits: tutorials/circuits.md
+      - Starter motor and electronic throttle: tutorials/physical-models.md
   - Block reference:
       - Overview: blocks/index.md
       - CAN: blocks/can.md

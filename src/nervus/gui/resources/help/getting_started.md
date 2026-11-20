@@ -61,4 +61,6 @@ The `examples` folder in the repository has complete models you can open with **
 | `relay_driver.nervus` | a transistor switching a relay coil, with its freewheeling diode (tutorial) |
 | `buck_converter.nervus` | a 12 V → 5 V switching regulator (tutorial) |
 | `active_filter.nervus` | an op-amp Sallen-Key low-pass filter, 1 kHz (tutorial) |
+| `starter_motor.nervus` | cranking: battery, starter relay and motor, compression (tutorial) |
+| `electronic_throttle.nervus` | drive-by-wire throttle: H-bridge, DC motor, gear, spring, PID (tutorial) |
 | `obd_ecu.nervus` | an engine ECU with trouble codes that answers OBD-II tools (`python -m nervus.obd simulate`) |

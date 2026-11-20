@@ -274,3 +274,20 @@ def test_circuit_examples() -> None:
     assert 55.0 < kick["V(col)"].max() < 65.0  # clamped only by the transistor's breakdown
     _w, mag, _ = linearize(mod.active_filter()).bode(np.array([2 * math.pi * 1000.0]))
     assert mag[0] == pytest.approx(-3.01, abs=0.05)
+
+
+def test_physical_examples(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from nervus.codegen.sil import back_to_back, find_compiler
+    from nervus.testing import run_tests
+
+    for name in ("starter_motor", "electronic_throttle"):
+        d = _import(name).build()
+        results = run_tests(d)
+        assert all(r.passed for r in results), [r.summary() for r in results]
+        assert [t.name for t in load(EXAMPLES / f"{name}.nervus").tests] == [t.name for t in d.tests]
+    if find_compiler() is not None:
+        ecu = _import("electronic_throttle").build().block("ECU")
+        k = np.arange(300)
+        inputs = {"target_deg": 5 + 55 * (k > 50), "tps_deg": np.minimum(5 + 0.3 * k, 58.0)}
+        sil = back_to_back(ecu, inputs, 300, tolerance=1e-12, folder=tmp_path)
+        assert sil.passed, sil.summary()

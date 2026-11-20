@@ -1139,6 +1139,38 @@ def circuits() -> plt.Figure:
     return fig
 
 
+@figure("physical_models")
+def physical_models() -> plt.Figure:
+    from nervus import load
+
+    ex = Path(__file__).parent.parent / "examples"
+    st = simulate(load(ex / "starter_motor.nervus"))
+    et = simulate(load(ex / "electronic_throttle.nervus"))
+    fig, axes = plt.subplots(3, 2, figsize=(8.6, 6.2), sharex="col")
+    (a1, b1), (a2, b2), (a3, b3) = axes
+    a1.plot(st.t, st["battery_voltage"], color=C1, lw=2)
+    a1.set_ylabel("battery [V]")
+    a1.set_title("Cranking: key to start at 0.2 s", color=INK, fontsize=10)
+    a2.plot(st.t, st["starter_current"], color=C2, lw=2)
+    a2.set_ylabel("starter [A]")
+    a3.plot(st.t, st["engine_rpm"], color=C3, lw=2)
+    a3.set_ylabel("engine [rpm]")
+    a3.set_xlabel("time [s]")
+    b1.plot(et.t, et["pedal_target"], color=INK, lw=1.2, ls="--")
+    b1.plot(et.t, et["throttle_deg"], color=C1, lw=2)
+    b1.text(0.62, 60, "target (dashed)", color=INK, fontsize=8)
+    b1.set_ylabel("throttle [°]")
+    b1.set_title("Electronic throttle: angle control", color=INK, fontsize=10)
+    b2.plot(et.t, et["duty"], color=C2, lw=1.5)
+    b2.set_ylabel("H-bridge duty")
+    b3.plot(et.t, et["throttle_deg"] - np.ravel(et["pedal_target"]), color=C3, lw=1.5)
+    b3.set_ylabel("error [°]")
+    b3.set_ylim(-10, 10)
+    b3.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

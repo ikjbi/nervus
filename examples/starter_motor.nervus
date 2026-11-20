@@ -1,0 +1,484 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "starter_motor",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 1.5,
+    "solver": "BDF",
+    "step": null,
+    "max_step": 0.002,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [],
+  "blocks": [
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          130.0,
+          260.0
+        ]
+      }
+    },
+    {
+      "name": "battery",
+      "type": "electrical.battery",
+      "params": {
+        "capacity": 60.0,
+        "R_internal": 0.01,
+        "soc0": 0.95,
+        "soc_breakpoints": [
+          0.0,
+          0.2,
+          0.5,
+          0.8,
+          1.0
+        ],
+        "ocv": [
+          11.6,
+          11.9,
+          12.2,
+          12.5,
+          12.8
+        ]
+      },
+      "meta": {
+        "position": [
+          130.0,
+          130.0
+        ]
+      }
+    },
+    {
+      "name": "key_start",
+      "type": "sources.step",
+      "params": {
+        "time": 0.2,
+        "initial": 0.0,
+        "final": 12.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "ignition_switch",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": 12.0,
+        "controlled": true
+      },
+      "meta": {
+        "position": [
+          130.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "starter_relay",
+      "type": "automotive.relay",
+      "params": {
+        "R": 4.0,
+        "L": 0.02,
+        "I_pull": 1.5,
+        "I_drop": 0.5,
+        "tau": 0.005,
+        "R_contact": 0.002
+      },
+      "meta": {
+        "position": [
+          300.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "starter_current",
+      "type": "electrical.current_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          460.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "battery_voltage",
+      "type": "electrical.voltage_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          0.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "starter_motor",
+      "type": "electrical.dc_motor",
+      "params": {
+        "R": 0.02,
+        "L": 5e-05,
+        "k": 0.02
+      },
+      "meta": {
+        "position": [
+          610.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "pinion_ring_gear",
+      "type": "rotational.gear",
+      "params": {
+        "n": 12.0
+      },
+      "meta": {
+        "position": [
+          760.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "crankshaft",
+      "type": "rotational.inertia",
+      "params": {
+        "J": 0.1788,
+        "w0": 0.0
+      },
+      "meta": {
+        "position": [
+          910.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "engine_friction",
+      "type": "rotational.damper",
+      "params": {
+        "d": 0.5
+      },
+      "meta": {
+        "position": [
+          910.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "engine_block",
+      "type": "rotational.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          1060.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "crank_angle",
+      "type": "rotational.angle_sensor",
+      "params": {
+        "phi0": 0.0
+      },
+      "meta": {
+        "position": [
+          910.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "crank_speed",
+      "type": "rotational.speed_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          760.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "compression",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, phi):\n    \"\"\"Compression torque [N·m] of a 4-cylinder engine at crank angle phi: two peaks per revolution.\"\"\"\n    return p[0] * max(0.0, math.sin(2 * phi)) ** 2 + p[1]\n",
+        "num_inputs": 1,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": [
+          90.0,
+          0.0
+        ]
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          240.0
+        ]
+      }
+    },
+    {
+      "name": "compression_torque",
+      "type": "rotational.torque_source",
+      "params": {
+        "tau": 1.0,
+        "controlled": true
+      },
+      "meta": {
+        "position": [
+          910.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "opposes_rotation",
+      "type": "math.gain",
+      "params": {
+        "gain": -1.0,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "engine_rpm",
+      "type": "math.gain",
+      "params": {
+        "gain": 9.549296585513721,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          610.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          460.0,
+          220.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "key_start",
+      "src_port": 0,
+      "dst": "ignition_switch",
+      "dst_port": 0
+    },
+    {
+      "src": "crank_angle",
+      "src_port": 0,
+      "dst": "compression",
+      "dst_port": 0
+    },
+    {
+      "src": "compression",
+      "src_port": 0,
+      "dst": "opposes_rotation",
+      "dst_port": 0
+    },
+    {
+      "src": "opposes_rotation",
+      "src_port": 0,
+      "dst": "compression_torque",
+      "dst_port": 0
+    },
+    {
+      "src": "crank_speed",
+      "src_port": 0,
+      "dst": "engine_rpm",
+      "dst_port": 0
+    },
+    {
+      "src": "battery_voltage",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "starter_current",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    }
+  ],
+  "links": [
+    {
+      "a": "battery",
+      "a_port": "p",
+      "b": "starter_relay",
+      "b_port": "a"
+    },
+    {
+      "a": "starter_relay",
+      "a_port": "b",
+      "b": "starter_current",
+      "b_port": "p"
+    },
+    {
+      "a": "starter_current",
+      "a_port": "n",
+      "b": "starter_motor",
+      "b_port": "p"
+    },
+    {
+      "a": "starter_motor",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "battery",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "ignition_switch",
+      "a_port": "p",
+      "b": "starter_relay",
+      "b_port": "p"
+    },
+    {
+      "a": "ignition_switch",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "starter_relay",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "battery_voltage",
+      "a_port": "p",
+      "b": "battery",
+      "b_port": "p"
+    },
+    {
+      "a": "battery_voltage",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "starter_motor",
+      "a_port": "shaft",
+      "b": "pinion_ring_gear",
+      "b_port": "a"
+    },
+    {
+      "a": "pinion_ring_gear",
+      "a_port": "b",
+      "b": "crankshaft",
+      "b_port": "a"
+    },
+    {
+      "a": "crankshaft",
+      "a_port": "a",
+      "b": "engine_friction",
+      "b_port": "a"
+    },
+    {
+      "a": "engine_friction",
+      "a_port": "b",
+      "b": "engine_block",
+      "b_port": "a"
+    },
+    {
+      "a": "crankshaft",
+      "a_port": "a",
+      "b": "crank_angle",
+      "b_port": "a"
+    },
+    {
+      "a": "crankshaft",
+      "a_port": "a",
+      "b": "crank_speed",
+      "b_port": "a"
+    },
+    {
+      "a": "crankshaft",
+      "a_port": "a",
+      "b": "compression_torque",
+      "b_port": "a"
+    }
+  ],
+  "tests": [
+    {
+      "name": "cranking",
+      "description": "Inrush of several hundred amperes, the battery dips below 10 V, the engine cranks at 150-300 rpm",
+      "stop_time": 1.5,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "starter_current",
+          "lower": 300.0,
+          "upper": 1000.0,
+          "t_from": 0.21,
+          "t_to": 0.23
+        },
+        {
+          "kind": "bounds",
+          "signal": "battery_voltage",
+          "lower": 5.0,
+          "upper": 10.0,
+          "t_from": 0.21,
+          "t_to": 0.23
+        },
+        {
+          "kind": "bounds",
+          "signal": "engine_rpm",
+          "lower": 120.0,
+          "upper": 350.0,
+          "t_from": 1.0,
+          "t_to": 1.5
+        }
+      ]
+    }
+  ]
+}

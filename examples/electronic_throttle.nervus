@@ -1,0 +1,690 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "electronic_throttle",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 1.2,
+    "solver": "auto",
+    "step": null,
+    "max_step": 0.0005,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "n_gear",
+      "value": 20.0,
+      "description": "Gear ratio motor : plate",
+      "unit": "-"
+    },
+    {
+      "name": "k_motor",
+      "value": 0.02,
+      "description": "Motor torque constant",
+      "unit": "N·m/A"
+    },
+    {
+      "name": "R_motor",
+      "value": 1.5,
+      "description": "Armature resistance",
+      "unit": "Ω"
+    },
+    {
+      "name": "k_spring",
+      "value": 0.06,
+      "description": "Return spring stiffness (at the plate)",
+      "unit": "N·m/rad"
+    },
+    {
+      "name": "spring_preload",
+      "value": 0.05,
+      "description": "Return spring torque at the closed position",
+      "unit": "N·m"
+    },
+    {
+      "name": "Kp_etc",
+      "value": 0.08,
+      "description": "Proportional gain: duty per degree of error",
+      "unit": "1/°"
+    },
+    {
+      "name": "Ki_etc",
+      "value": 2.0,
+      "description": "Integral gain",
+      "unit": "1/(°·s)"
+    },
+    {
+      "name": "Kd_etc",
+      "value": 0.0008,
+      "description": "Derivative gain",
+      "unit": "s/°"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "pedal_target",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          0.05,
+          0.051,
+          0.3,
+          0.301,
+          0.6,
+          0.601,
+          0.9,
+          0.901,
+          1.2
+        ],
+        "data": [
+          [
+            5.0
+          ],
+          [
+            5.0
+          ],
+          [
+            60.0
+          ],
+          [
+            60.0
+          ],
+          [
+            20.0
+          ],
+          [
+            20.0
+          ],
+          [
+            80.0
+          ],
+          [
+            80.0
+          ],
+          [
+            5.0
+          ],
+          [
+            5.0
+          ]
+        ],
+        "csv_file": "",
+        "interpolation": "linear",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "ECU",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": 0.001,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          150.0,
+          10.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "target_deg",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "tps_deg",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                100.0
+              ]
+            }
+          },
+          {
+            "name": "error",
+            "type": "math.sum",
+            "params": {
+              "signs": "+-",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                130.0,
+                40.0
+              ]
+            }
+          },
+          {
+            "name": "pid",
+            "type": "control.discrete_pid",
+            "params": {
+              "P": "Kp_etc",
+              "I": "Ki_etc",
+              "D": "Kd_etc",
+              "N": 1000.0,
+              "initial_integrator": 0.0,
+              "upper": 1.0,
+              "lower": -1.0,
+              "anti_windup": "clamping",
+              "Kb": 1.0,
+              "sample_time": 0.001
+            },
+            "meta": {
+              "position": [
+                250.0,
+                40.0
+              ]
+            }
+          },
+          {
+            "name": "spring_ff",
+            "type": "math.gain",
+            "params": {
+              "gain": "(k_spring * pi / 180) / n_gear * R_motor / k_motor / 12",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                250.0,
+                150.0
+              ]
+            }
+          },
+          {
+            "name": "duty_sum",
+            "type": "math.sum",
+            "params": {
+              "signs": "++",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                400.0,
+                80.0
+              ]
+            }
+          },
+          {
+            "name": "duty",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                520.0,
+                80.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "target_deg",
+            "src_port": 0,
+            "dst": "error",
+            "dst_port": 0
+          },
+          {
+            "src": "tps_deg",
+            "src_port": 0,
+            "dst": "error",
+            "dst_port": 1
+          },
+          {
+            "src": "error",
+            "src_port": 0,
+            "dst": "pid",
+            "dst_port": 0
+          },
+          {
+            "src": "target_deg",
+            "src_port": 0,
+            "dst": "spring_ff",
+            "dst_port": 0
+          },
+          {
+            "src": "pid",
+            "src_port": 0,
+            "dst": "duty_sum",
+            "dst_port": 0
+          },
+          {
+            "src": "spring_ff",
+            "src_port": 0,
+            "dst": "duty_sum",
+            "dst_port": 1
+          },
+          {
+            "src": "duty_sum",
+            "src_port": 0,
+            "dst": "duty",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          330.0,
+          260.0
+        ]
+      }
+    },
+    {
+      "name": "battery",
+      "type": "electrical.battery",
+      "params": {
+        "capacity": 60.0,
+        "R_internal": 0.02,
+        "soc0": 0.8,
+        "soc_breakpoints": [
+          0.0,
+          0.2,
+          0.5,
+          0.8,
+          1.0
+        ],
+        "ocv": [
+          11.6,
+          11.9,
+          12.2,
+          12.5,
+          12.8
+        ]
+      },
+      "meta": {
+        "position": [
+          330.0,
+          140.0
+        ]
+      }
+    },
+    {
+      "name": "h_bridge",
+      "type": "electrical.h_bridge",
+      "params": {},
+      "meta": {
+        "position": [
+          480.0,
+          140.0
+        ]
+      }
+    },
+    {
+      "name": "motor",
+      "type": "electrical.dc_motor",
+      "params": {
+        "R": "R_motor",
+        "L": 0.0015,
+        "k": "k_motor"
+      },
+      "meta": {
+        "position": [
+          640.0,
+          150.0
+        ]
+      }
+    },
+    {
+      "name": "rotor_and_plate",
+      "type": "rotational.inertia",
+      "params": {
+        "J": 4.5e-06,
+        "w0": 0.0
+      },
+      "meta": {
+        "position": [
+          800.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "gear",
+      "type": "rotational.gear",
+      "params": {
+        "n": "n_gear"
+      },
+      "meta": {
+        "position": [
+          800.0,
+          180.0
+        ]
+      }
+    },
+    {
+      "name": "return_spring",
+      "type": "rotational.spring",
+      "params": {
+        "k": "k_spring",
+        "phi0": "spring_preload / k_spring"
+      },
+      "meta": {
+        "position": [
+          960.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "friction",
+      "type": "rotational.damper",
+      "params": {
+        "d": 0.002
+      },
+      "meta": {
+        "position": [
+          960.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "housing",
+      "type": "rotational.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          1110.0,
+          170.0
+        ]
+      }
+    },
+    {
+      "name": "plate_angle",
+      "type": "rotational.angle_sensor",
+      "params": {
+        "phi0": 0.0
+      },
+      "meta": {
+        "position": [
+          960.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "angle_deg",
+      "type": "math.gain",
+      "params": {
+        "gain": 57.29577951308232,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          800.0,
+          360.0
+        ]
+      }
+    },
+    {
+      "name": "tps",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.001
+      },
+      "meta": {
+        "position": [
+          640.0,
+          360.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          330.0,
+          -100.0
+        ]
+      }
+    },
+    {
+      "name": "throttle_deg",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1110.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "duty",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          330.0,
+          30.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "plate_angle",
+      "src_port": 0,
+      "dst": "angle_deg",
+      "dst_port": 0
+    },
+    {
+      "src": "angle_deg",
+      "src_port": 0,
+      "dst": "tps",
+      "dst_port": 0
+    },
+    {
+      "src": "pedal_target",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 0
+    },
+    {
+      "src": "tps",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 1
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "h_bridge",
+      "dst_port": 0
+    },
+    {
+      "src": "pedal_target",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "angle_deg",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "angle_deg",
+      "src_port": 0,
+      "dst": "throttle_deg",
+      "dst_port": 0
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "duty",
+      "dst_port": 0
+    }
+  ],
+  "links": [
+    {
+      "a": "battery",
+      "a_port": "p",
+      "b": "h_bridge",
+      "b_port": "supply_p"
+    },
+    {
+      "a": "battery",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "h_bridge",
+      "a_port": "supply_n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "h_bridge",
+      "a_port": "a",
+      "b": "motor",
+      "b_port": "p"
+    },
+    {
+      "a": "h_bridge",
+      "a_port": "b",
+      "b": "motor",
+      "b_port": "n"
+    },
+    {
+      "a": "motor",
+      "a_port": "shaft",
+      "b": "rotor_and_plate",
+      "b_port": "a"
+    },
+    {
+      "a": "motor",
+      "a_port": "shaft",
+      "b": "gear",
+      "b_port": "a"
+    },
+    {
+      "a": "gear",
+      "a_port": "b",
+      "b": "return_spring",
+      "b_port": "a"
+    },
+    {
+      "a": "gear",
+      "a_port": "b",
+      "b": "friction",
+      "b_port": "a"
+    },
+    {
+      "a": "gear",
+      "a_port": "b",
+      "b": "plate_angle",
+      "b_port": "a"
+    },
+    {
+      "a": "return_spring",
+      "a_port": "b",
+      "b": "housing",
+      "b_port": "a"
+    },
+    {
+      "a": "friction",
+      "a_port": "b",
+      "b": "housing",
+      "b_port": "a"
+    }
+  ],
+  "tests": [
+    {
+      "name": "step to 60°",
+      "description": "Full duty during the jump: 90 % in 50 ms, under 8° overshoot, within 1° after 150 ms",
+      "stop_time": 0.3,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "throttle_deg",
+          "lower": 54.0,
+          "upper": 68.0,
+          "t_from": 0.1,
+          "t_to": 0.3
+        },
+        {
+          "kind": "bounds",
+          "signal": "throttle_deg",
+          "lower": 59.0,
+          "upper": 61.0,
+          "t_from": 0.2,
+          "t_to": 0.3
+        },
+        {
+          "kind": "bounds",
+          "signal": "throttle_deg",
+          "lower": -0.5,
+          "upper": 68.0
+        }
+      ]
+    },
+    {
+      "name": "accurate at part throttle",
+      "description": "At 20° the integral removes the steady error caused by friction and the spring",
+      "stop_time": 0.6,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "throttle_deg",
+          "lower": 19.5,
+          "upper": 20.5,
+          "t_from": 0.45,
+          "t_to": 0.6
+        }
+      ]
+    }
+  ]
+}

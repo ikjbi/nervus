@@ -72,7 +72,7 @@ class LinearModel:
             return np.atleast_1d(d.ravel()), np.array([1.0])
         num, den = sps.ss2tf(a, b, c, d)
         num = np.trim_zeros(np.where(np.abs(num[0]) < 1e-12 * np.max(np.abs(num[0]) + 1e-300), 0.0, num[0]), "f")
-        return (num if num.size else np.array([0.0])), den
+        return minreal(num if num.size else np.array([0.0]), den)
 
     def zeros(self, input: int = 0, output: int = 0) -> npt.NDArray[np.complex128]:
         num, _ = self.transfer_function(input, output)
@@ -131,6 +131,29 @@ class LinearModel:
         num, den = self.transfer_function(input, output)
         tt, y = sps.step((num, den), T=t)
         return np.asarray(tt), np.asarray(y)
+
+
+def minreal(num: Array, den: Array, tol: float = 1e-6) -> tuple[Array, Array]:
+    """Cancel poles and zeros that coincide (within ``tol``, relative): states that the input cannot move
+    or the output cannot see (a battery's charge in a motor's speed loop), which would otherwise leave
+    numerical poles near zero."""
+    num, den = np.asarray(num, dtype=float), np.asarray(den, dtype=float)
+    if num.size < 2 or den.size < 2 or not np.any(num):
+        return num, den
+    zeros, poles = list(np.roots(num)), list(np.roots(den))
+    kept_z = []
+    for z in zeros:
+        scale = max(1.0, abs(z))
+        k = next((i for i, p in enumerate(poles) if abs(p - z) <= tol * scale + 1e-9), None)
+        if k is None:
+            kept_z.append(z)
+        else:
+            poles.pop(k)
+    if len(kept_z) == len(zeros):
+        return num, den
+    gain = num[0] / den[0]
+    new_num = gain * np.real(np.poly(kept_z)) if kept_z else np.array([gain])
+    return np.asarray(new_num, dtype=float), np.asarray(np.real(np.poly(poles)), dtype=float)
 
 
 def _pad(a: Array, n: int) -> Array:
@@ -373,19 +396,23 @@ class _LoopEvaluator:
         return float(self.model.y[s][p][0])
 
 
-def plant_at(diagram: Diagram, block: str, t: float = 0.0, eps: float = 1e-6) -> LinearModel:
+def plant_at(diagram: Diagram, block: str, t: float = 0.0, eps: float = 1e-6, u0: float | None = 0.0) -> LinearModel:
     """The plant a controller block sees: the loop is opened at the block's output, and the result is the
     transfer function G(s) from the controller output to the *negated* controller input, so that the loop is
     C(s)·G(s) in negative feedback (the input of a controller is usually the error r - y).
 
     ``block`` is the block's path, e.g. ``"ECU/idle_pi"``. Discrete blocks without state (sampling, gains) pass the
     signal on; discrete blocks with state (delays, filters) are held at their initial output.
+
+    ``u0`` is the controller output at the operating point (default 0: small signals around zero, away from
+    actuator limits); ``None`` uses the block's output at the start.
     """
     ev = _LoopEvaluator(diagram, block, t)
     try:
         m = ev.model
         x = m.xc0[ev.keep].copy()
-        u0 = ev.u
+        if u0 is None:
+            u0 = ev.u
         n = x.size
         a, b = np.zeros((n, n)), np.zeros((n, 1))
         c, d = np.zeros((1, n)), np.zeros((1, 1))

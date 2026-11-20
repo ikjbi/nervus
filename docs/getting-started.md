@@ -112,5 +112,9 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   with and without its freewheeling diode, a buck converter and an active filter (`rectifier.nervus`,
   `relay_driver.nervus`, `buck_converter.nervus`, `active_filter.nervus`). See the
   [tutorial](tutorials/circuits.md).
+- `starter_motor.py`: cranking an engine: battery, starter relay, starter motor, compression. See the
+  [tutorial](tutorials/physical-models.md).
+- `electronic_throttle.py`: drive-by-wire: H-bridge, DC motor, gear and return spring, with a tuned PID in a
+  1 ms ECU task. See the [tutorial](tutorials/physical-models.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

@@ -239,7 +239,7 @@ tests/
 - [ ] Fuel control, more: wall wetting (x-tau), narrow-band switching sensor, LTFT maps per load/speed cell
 - [ ] Ignition timing from speed/load maps, knock retard
 - [x] Idle speed control (PI + base opening + AC feed-forward), with tutorial
-- [ ] Electronic throttle control (DC motor, return spring, PID)
+- [x] Electronic throttle control (DC motor, return spring, PID): `examples/electronic_throttle.py`
 - [x] Vehicle longitudinal dynamics: aero and rolling resistance, force and power limits, brakes
       (`examples/drive_cycle.py`)
 - [ ] Vehicle dynamics, more: driveline with gearbox and shift logic, tire slip, road grade, engine efficiency map
@@ -289,10 +289,10 @@ tests/
 - [x] Sensors: voltage and current measurement as signals
 - [x] Automotive electrics: battery (open-circuit voltage map + internal resistance), DC motor, H-bridge with PWM
       (averaged), solenoid / injector, relay coil, glow plug, alternator
-- [ ] Throttle body and electronic throttle with a real DC motor and H-bridge instead of a first-order lag
+- [x] Throttle body and electronic throttle with a real DC motor and H-bridge instead of a first-order lag
 - [x] Other physical domains on the same solver: rotational mechanics (inertia, spring, damper, gear), thermal
       (heat capacity, conduction, convection), hydraulic/fluid basics
-- [ ] Editor: physical ports and wires drawn differently from signal lines; component library; examples and
+- [x] Editor: physical ports and wires drawn differently from signal lines; component library; examples and
       tutorials (battery + starter motor, electronic throttle)
 
 ## Phase 20b – Circuit simulation like LTspice

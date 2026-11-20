@@ -314,6 +314,15 @@ def main() -> None:
             grab(sw, "sweep-metric.png")
             sw.close()
 
+            # The physical examples.
+            for model, shot in (
+                ("electronic_throttle", "electronic-throttle.png"),
+                ("starter_motor", "starter-motor.png"),
+            ):
+                win.files.open(ROOT / "examples" / f"{model}.nervus")
+                win.view.fit()
+                grab(win.view, shot)
+
             # A circuit drawn with physical links.
             win.diagram_model.set_diagram(circuit_example())
             win.view.fit()

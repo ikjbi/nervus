@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Examples `starter_motor.py` and `electronic_throttle.py` with a tutorial; the PID tuner linearizes around
+  zero controller output and cancels unobservable pole-zero pairs (`minreal`).
 - Automotive electrics (solenoid, fuel injector, relay, glow plug, alternator) and hydraulics (tank, pump,
   pressure source, orifice, relief valve, volume, sensors) on the physical network solver.
 - Example `circuits.py` and tutorial: rectifier (from a netlist), relay driver with freewheeling diode, buck
