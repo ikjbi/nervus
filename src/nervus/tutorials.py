@@ -136,6 +136,10 @@ TUTORIALS: list[Tutorial] = [
              "signals): cranking an engine on a weak battery, a drive-by-wire throttle servo",
              ("starter_motor.nervus", "electronic_throttle.nervus"), ("first-model",),
              "[Physical modelling](../physical.md)", app_page="tutorial_physical"),
+    Tutorial("charging-system", "The 12 V charging system and energy management", _EL, "Vehicle electrical system",
+             "intermediate", 35, "the power balance of battery, alternator and loads, alternator output versus engine "
+             "speed, an electrical energy management function (idle boost and load shedding) as a State Chart",
+             ("charging_system.nervus",), ("physical-models",)),
     Tutorial("ntc-sensor", "An NTC temperature sensor interface", _EL, "ECU hardware and PCB", "intermediate", 35,
              "a thermistor in a voltage divider, the ECU's pull-up, input filter and ADC, a conversion table, "
              "resolution over the range, why software and hardware must match", ("ntc_sensor.nervus",),

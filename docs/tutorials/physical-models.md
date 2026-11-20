@@ -74,4 +74,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-Next in this topic: [An NTC temperature sensor interface](ntc-sensor.md). Or pick another one from the [tutorial overview](index.md).
+Next in this topic: [The 12 V charging system and energy management](charging-system.md). Or pick another one from the [tutorial overview](index.md).

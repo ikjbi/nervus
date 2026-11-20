@@ -484,3 +484,13 @@ def test_rc_rlc() -> None:
     gain, phase = m.bode_point(rc, 1 / (2 * np.pi * 1e-3))
     assert gain == pytest.approx(-3.01, abs=0.01) and phase == pytest.approx(-45.0, abs=0.1)
     assert m.bode_point(rlc, m.resonance(10e-3, 10e-6, 10.0)[0])[0] == pytest.approx(10.0, abs=0.05)
+
+
+def test_charging_system() -> None:
+    from nervus.testing import run_tests
+
+    m = _import("charging_system")
+    d = m.build()
+    assert all(r.passed for r in run_tests(d))
+    off = simulate(d, params={"energy_mgmt": 0.0})
+    assert m.ah(off, 0, 240) == pytest.approx(2.54, abs=0.05)

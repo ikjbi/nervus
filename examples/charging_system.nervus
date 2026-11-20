@@ -1,0 +1,595 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "charging_system",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 480.0,
+    "solver": "BDF",
+    "step": null,
+    "max_step": 0.2,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "I_base",
+      "value": 45.0,
+      "description": "Loads that are always on: ECUs, ignition, fuel pump, headlights, blower",
+      "unit": "A"
+    },
+    {
+      "name": "I_comfort",
+      "value": 25.0,
+      "description": "Sheddable loads: heated rear window and seat heaters",
+      "unit": "A"
+    },
+    {
+      "name": "i_discharge",
+      "value": 10.0,
+      "description": "Battery discharging by more than this: raise the idle speed (after 3 s), then shed",
+      "unit": "A"
+    },
+    {
+      "name": "i_charge",
+      "value": 10.0,
+      "description": "Battery charging by more than this for 10 s: back to normal",
+      "unit": "A"
+    },
+    {
+      "name": "idle_normal",
+      "value": 800.0,
+      "description": "Normal idle speed",
+      "unit": "rpm"
+    },
+    {
+      "name": "idle_boost",
+      "value": 1100.0,
+      "description": "Idle speed for more charging current",
+      "unit": "rpm"
+    },
+    {
+      "name": "energy_mgmt",
+      "value": 1.0,
+      "description": "1: energy management on, 0: off",
+      "unit": "-"
+    },
+    {
+      "name": "soc0",
+      "value": 0.75,
+      "description": "Battery state of charge at the start",
+      "unit": "-"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          600.0,
+          260.0
+        ]
+      }
+    },
+    {
+      "name": "battery",
+      "type": "electrical.battery",
+      "params": {
+        "capacity": 60.0,
+        "R_internal": 0.012,
+        "soc0": "soc0",
+        "soc_breakpoints": [
+          0.0,
+          0.2,
+          0.5,
+          0.8,
+          1.0
+        ],
+        "ocv": [
+          11.6,
+          11.9,
+          12.2,
+          12.5,
+          12.8
+        ]
+      },
+      "meta": {
+        "position": [
+          750.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "battery_current",
+      "type": "electrical.current_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          600.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "alternator",
+      "type": "automotive.alternator",
+      "params": {
+        "V_set": 14.2,
+        "I_rated": 120.0,
+        "cut_in_rpm": 1000.0,
+        "rated_rpm": 6000.0,
+        "ratio": 2.5,
+        "K": 500.0,
+        "tau_r": 0.05,
+        "efficiency": 0.6
+      },
+      "meta": {
+        "position": [
+          450.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "loads",
+      "type": "electrical.variable_resistor",
+      "params": {
+        "R_min": 0.05
+      },
+      "meta": {
+        "position": [
+          600.0,
+          140.0
+        ]
+      }
+    },
+    {
+      "name": "v_battery",
+      "type": "electrical.voltage_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          750.0,
+          140.0
+        ]
+      }
+    },
+    {
+      "name": "crankshaft",
+      "type": "rotational.speed_source",
+      "params": {
+        "w": 100.0,
+        "controlled": true
+      },
+      "meta": {
+        "position": [
+          300.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "driving",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          240.0,
+          240.01,
+          480.0
+        ],
+        "data": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            1.0
+          ],
+          [
+            1.0
+          ]
+        ],
+        "csv_file": "",
+        "interpolation": "linear",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "engine_speed",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, idle_rpm, driving):\n    \"\"\"Engine speed [rad/s]: the idle speed the ECU asks for in the traffic jam, 2000 rpm when driving.\"\"\"\n    rpm = 2000.0 if driving > 0.5 else idle_rpm\n    return rpm * 2 * math.pi / 60\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          150.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "load_demand",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, shed):\n    \"\"\"The electrical loads as one resistance [Ω]: 45 A always (ECUs, lights, blower), 25 A sheddable (heated\n    rear window, seat heaters), at a nominal 13.5 V.\"\"\"\n    current = p[0] + (0.0 if shed > 0.5 else p[1])\n    return 13.5 / current\n",
+        "num_inputs": 1,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": "[I_base, I_comfort]"
+      },
+      "meta": {
+        "position": [
+          450.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "battery_sensor",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.2
+      },
+      "meta": {
+        "position": [
+          900.0,
+          140.0
+        ]
+      }
+    },
+    {
+      "name": "enabled",
+      "type": "sources.constant",
+      "params": {
+        "value": "energy_mgmt",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          900.0,
+          240.0
+        ]
+      }
+    },
+    {
+      "name": "energy_management",
+      "type": "charts.state_chart",
+      "params": {
+        "definition": "\ninput i_bat, enabled\noutput idle_rpm = 800, shed = 0\nparam i_discharge, i_charge, idle_normal, idle_boost\n\nstate normal\n  entry: idle_rpm = idle_normal; shed = 0\nstate boost\n  entry: idle_rpm = idle_boost; shed = 0\nstate shed_loads\n  entry: idle_rpm = idle_boost; shed = 1\n\ntransition normal -> boost: enabled > 0.5 and i_bat < -i_discharge and after(15)\ntransition boost -> shed_loads: i_bat < -i_discharge and after(25)\ntransition boost -> normal: i_bat > i_charge and after(50)\ntransition shed_loads -> normal: i_bat > i_charge and after(50)\n",
+        "state_output": true,
+        "sample_time": 0.2
+      },
+      "meta": {
+        "position": [
+          1050.0,
+          180.0
+        ]
+      }
+    },
+    {
+      "name": "idle_request",
+      "type": "discrete.unit_delay",
+      "params": {
+        "initial": "idle_normal",
+        "sample_time": 0.2
+      },
+      "meta": {
+        "position": [
+          1200.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "load_relay",
+      "type": "discrete.unit_delay",
+      "params": {
+        "initial": 0.0,
+        "sample_time": 0.2
+      },
+      "meta": {
+        "position": [
+          1200.0,
+          240.0
+        ]
+      }
+    },
+    {
+      "name": "engine_rpm",
+      "type": "math.gain",
+      "params": {
+        "gain": 9.549296585513721,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          300.0,
+          -90.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          900.0,
+          -90.0
+        ]
+      }
+    },
+    {
+      "name": "voltage",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      }
+    },
+    {
+      "name": "soc",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      }
+    },
+    {
+      "name": "battery_charging",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      }
+    },
+    {
+      "name": "alternator_current",
+      "type": "ports.outport",
+      "params": {
+        "port": 4
+      }
+    },
+    {
+      "name": "rpm",
+      "type": "ports.outport",
+      "params": {
+        "port": 5
+      }
+    },
+    {
+      "name": "loads_shed",
+      "type": "ports.outport",
+      "params": {
+        "port": 6
+      }
+    },
+    {
+      "name": "mode",
+      "type": "ports.outport",
+      "params": {
+        "port": 7
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "battery_current",
+      "src_port": 0,
+      "dst": "battery_sensor",
+      "dst_port": 0
+    },
+    {
+      "src": "battery_sensor",
+      "src_port": 0,
+      "dst": "energy_management",
+      "dst_port": 0
+    },
+    {
+      "src": "enabled",
+      "src_port": 0,
+      "dst": "energy_management",
+      "dst_port": 1
+    },
+    {
+      "src": "energy_management",
+      "src_port": 0,
+      "dst": "idle_request",
+      "dst_port": 0
+    },
+    {
+      "src": "energy_management",
+      "src_port": 1,
+      "dst": "load_relay",
+      "dst_port": 0
+    },
+    {
+      "src": "idle_request",
+      "src_port": 0,
+      "dst": "engine_speed",
+      "dst_port": 0
+    },
+    {
+      "src": "driving",
+      "src_port": 0,
+      "dst": "engine_speed",
+      "dst_port": 1
+    },
+    {
+      "src": "engine_speed",
+      "src_port": 0,
+      "dst": "crankshaft",
+      "dst_port": 0
+    },
+    {
+      "src": "load_relay",
+      "src_port": 0,
+      "dst": "load_demand",
+      "dst_port": 0
+    },
+    {
+      "src": "load_demand",
+      "src_port": 0,
+      "dst": "loads",
+      "dst_port": 0
+    },
+    {
+      "src": "engine_speed",
+      "src_port": 0,
+      "dst": "engine_rpm",
+      "dst_port": 0
+    },
+    {
+      "src": "v_battery",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "battery",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "v_battery",
+      "src_port": 0,
+      "dst": "voltage",
+      "dst_port": 0
+    },
+    {
+      "src": "battery",
+      "src_port": 0,
+      "dst": "soc",
+      "dst_port": 0
+    },
+    {
+      "src": "battery_current",
+      "src_port": 0,
+      "dst": "battery_charging",
+      "dst_port": 0
+    },
+    {
+      "src": "alternator",
+      "src_port": 0,
+      "dst": "alternator_current",
+      "dst_port": 0
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "rpm",
+      "dst_port": 0
+    },
+    {
+      "src": "energy_management",
+      "src_port": 1,
+      "dst": "loads_shed",
+      "dst_port": 0
+    },
+    {
+      "src": "energy_management",
+      "src_port": 2,
+      "dst": "mode",
+      "dst_port": 0
+    }
+  ],
+  "links": [
+    {
+      "a": "battery",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "battery",
+      "a_port": "p",
+      "b": "battery_current",
+      "b_port": "n"
+    },
+    {
+      "a": "battery_current",
+      "a_port": "p",
+      "b": "alternator",
+      "b_port": "p"
+    },
+    {
+      "a": "alternator",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "loads",
+      "a_port": "p",
+      "b": "alternator",
+      "b_port": "p"
+    },
+    {
+      "a": "loads",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "v_battery",
+      "a_port": "p",
+      "b": "alternator",
+      "b_port": "p"
+    },
+    {
+      "a": "v_battery",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "crankshaft",
+      "a_port": "a",
+      "b": "alternator",
+      "b_port": "shaft"
+    }
+  ],
+  "tests": [
+    {
+      "name": "energy management protects the battery",
+      "description": "After 8 s in the traffic jam the battery is no longer discharged by more than 5 A, and it charges when driving",
+      "stop_time": 480.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "battery_charging",
+          "lower": -5.0,
+          "t_from": 8.0,
+          "t_to": 240.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "battery_charging",
+          "lower": 10.0,
+          "t_from": 245.0
+        }
+      ]
+    }
+  ]
+}

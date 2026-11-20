@@ -1,6 +1,6 @@
 # Tutorials
 
-29 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+30 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -88,6 +88,7 @@ Circuits from the textbook to the car's wiring harness and the ECU's circuit boa
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
 | [Starter motor and electronic throttle](physical-models.md) | intermediate | 45 min | physical modelling (circuits, shafts, springs connected by links instead of signals): cranking an engine on a weak battery, a drive-by-wire throttle servo |
+| [The 12 V charging system and energy management](charging-system.md) | intermediate | 35 min | the power balance of battery, alternator and loads, alternator output versus engine speed, an electrical energy management function (idle boost and load shedding) as a State Chart |
 
 ### ECU hardware and PCB
 

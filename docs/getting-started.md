@@ -147,5 +147,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   [tutorial](tutorials/requirements-testing.md).
 - `cruise_tolerance.py`: a Monte Carlo study of the cruise control over 200 cars. See the
   [tutorial](tutorials/robustness-monte-carlo.md).
+- `charging_system.py`: the 12 V charging system with electrical energy management. See the
+  [tutorial](tutorials/charging-system.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

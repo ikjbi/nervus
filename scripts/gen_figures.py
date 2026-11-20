@@ -1801,6 +1801,28 @@ def rc_rlc() -> plt.Figure:
     return fig
 
 
+@figure("charging_system")
+def charging_system() -> plt.Figure:
+    d = _example("charging_system").build()
+    on, off = simulate(d), simulate(d, params={"energy_mgmt": 0.0})
+    fig, (a0, a1, a2) = plt.subplots(3, 1, figsize=(6.4, 5.2), sharex=True, height_ratios=[1, 1.2, 0.8])
+    a0.plot(on.t, on["rpm"], color=C1, lw=1.6, label="with energy management")
+    a0.plot(off.t, off["rpm"], color=C2, lw=1.2, ls="--", label="without")
+    a0.set_ylabel("engine [rpm]")
+    a0.legend(loc="upper left", fontsize=8)
+    a0.set_title("Winter night: a 4-minute traffic jam, then driving", color=INK, fontsize=9)
+    a1.plot(on.t, on["battery_charging"], color=C1, lw=1.6)
+    a1.plot(off.t, off["battery_charging"], color=C2, lw=1.2, ls="--")
+    a1.axhline(0, color=GRID, lw=1)
+    a1.set_ylabel("battery [A]\n(+ charging)")
+    a2.plot(on.t, on["soc"], color=C1, lw=1.6)
+    a2.plot(off.t, off["soc"], color=C2, lw=1.2, ls="--")
+    a2.set_ylabel("state of charge")
+    a2.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

@@ -77,4 +77,5 @@ The `examples` folder in the repository has complete models you can open with **
 | `ntc_sensor.nervus` | a coolant temperature sensor: NTC circuit, ADC, conversion table, P0117/P0118 diagnosis (tutorials) |
 | `abs_braking.nervus` | an emergency stop with and without ABS on dry, wet and icy roads (tutorial) |
 | `idle_requirements.nervus` | the idle controller with requirements, traceability and coverage (tutorial) |
+| `charging_system.nervus` | battery, alternator, loads and electrical energy management on a winter night (tutorial) |
 | `obd_ecu.nervus` | an engine ECU with trouble codes that answers OBD-II tools (`python -m nervus.obd simulate`) |
