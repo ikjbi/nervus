@@ -35,6 +35,18 @@ class CodegenController(QObject):
             self.errorOccurred.emit(str(exc), tuple(getattr(exc, "blocks", ())))
         return None
 
+    def export_fmu(self, target: Diagram | Block, path: str | Path) -> Path | None:
+        """Export ``target`` as an FMI 2.0 co-simulation FMU (generated C code, compiled for this platform)."""
+        from nervus.codegen.fmu import export_fmu
+
+        try:
+            return export_fmu(target, path)
+        except CodegenError as exc:
+            self.errorOccurred.emit(str(exc), exc.blocks)
+        except NervusError as exc:
+            self.errorOccurred.emit(str(exc), tuple(getattr(exc, "blocks", ())))
+        return None
+
     def save(self, code: GeneratedCode, folder: str | Path) -> list[Path]:
         return code.write(folder)
 

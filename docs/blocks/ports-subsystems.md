@@ -1,5 +1,31 @@
 # Ports & Subsystems
 
+## FMU
+
+`fmi.fmu` · Ports & Subsystems
+
+Runs an **FMU** (Functional Mock-up Unit, FMI 2.0 co-simulation) from another tool: Simulink, Dymola,
+OpenModelica, SimulationX, AMESim, CANoe, or Nervus itself (``Code ▸ Export FMU``). The block's ports are the
+FMU's real-valued inputs and outputs, in the order of its model description.
+
+The FMU is a **co-simulation** slave: every *sample_time* (the communication step; 0 = the FMU's default step)
+the block sets the inputs, lets the FMU advance by one step, and reads the outputs, which it holds until the
+next step. The outputs therefore lag the inputs by one communication step, as in every co-simulation.
+*parameters* sets the FMU's parameters before it starts, e.g. ``Kp = 2.0, Ki = 30``. Needs fmpy
+(``uv sync --extra fmi``).
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `fmu_file` | `''` |  | FMU file (relative paths are relative to the model file) |
+| `parameters` | `''` |  | Parameter values for the FMU, e.g. Kp = 2.0, Ki = 30 |
+| `sample_time` | `0.0` | s | Communication step; 0 = the FMU's default step |
+
+*Direct feedthrough:* no
+
+---
+
 ## Connection Port
 
 `ports.connection_port` · Ports & Subsystems

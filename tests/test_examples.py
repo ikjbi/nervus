@@ -512,3 +512,16 @@ def test_injector_driver() -> None:
     assert all(r.passed for r in run_tests(d))
     weak, strong = (m.timing(simulate(d, params={"V_bat": v})) for v in (9.0, 15.0))
     assert weak["fuel_mg"] == pytest.approx(6.0, abs=0.1) and strong["fuel_mg"] == pytest.approx(9.2, abs=0.1)
+
+
+def test_fmi_exchange() -> None:
+    pytest.importorskip("fmpy")
+    from nervus.codegen.sil import find_compiler
+
+    if find_compiler() is None:
+        pytest.skip("no C compiler")
+    m = _import("fmi_exchange")
+    runs = m.main()
+    assert np.max(runs["fmu"]["plate_angle"]) == pytest.approx(np.max(runs["subsystem"]["plate_angle"]), abs=0.5)
+    r = m.run_in_fmpy(m.FMU_PATH)
+    assert r["duty_pct"][19] == 0.0 and r["duty_pct"][21] == pytest.approx(82.5, abs=0.5)

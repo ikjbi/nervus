@@ -29,6 +29,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- FMI 2.0: Code ▸ Export FMU (co-simulation, from the generated C code) and the FMU block (import, with fmpy:
+  extra `fmi`). Example `fmi_exchange.py` and tutorial.
 - Results can be read by a subsystem's name (`res["ECU"]`, `res["ECU:1"]`). Tutorial on reusable components
   (subsystems, masks and libraries).
 - Blocks: Variable Resistor (resistance from a signal) and Thermistor (NTC, β model). Example `ntc_sensor.py` and

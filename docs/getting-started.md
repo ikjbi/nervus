@@ -152,5 +152,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
 - `ev_range.py`: the range of an electric car on the WLTP cycle, summer and winter. See the
   [tutorial](tutorials/ev-range.md).
 - `injector_driver.py`: the injector power stage on the ECU board. See the [tutorial](tutorials/injector-driver.md).
+- `fmi_exchange.py`: exports the throttle ECU as an FMI 2.0 FMU, runs it in fmpy, and puts it back into the plant
+  model (`fmi_plant.nervus`). See the [tutorial](tutorials/fmi.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

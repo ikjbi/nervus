@@ -78,3 +78,23 @@ Everything that is discrete-time or has no state: gains, sums, lookup tables, lo
 counters, delays, discrete PID, and more. Not generated: blocks with continuous states (Integrator,
 Transfer Fcn, PID Controller, ...) and time-based sources (Step, Sine, ...). Keep those in the plant, outside
 the subsystem. If something cannot be generated, Diagnostics lists the blocks.
+
+## FMI export
+
+**Code ▸ Export FMU…** packs the generated code of the selected subsystem (or the whole model) as an **FMI 2.0
+co-simulation FMU**, the standard format for exchanging models between tools (Simulink, Dymola, OpenModelica,
+SimulationX, CANoe, fmpy). The FMU contains:
+
+- `modelDescription.xml`: the inputs and outputs (In and Out blocks), the tunable parameters (the calibratable
+  parameters of the `_P` struct, with their start values) and the default communication step (the base period);
+- `binaries/<platform>/`: the library compiled for this computer (`darwin64`, `linux64` or `win64`), with the FMI
+  functions (`fmi2Instantiate`, `fmi2DoStep`, `fmi2GetReal`, ...) around the generated step function;
+- `sources/`: the generated C files and the FMI wrapper, so other platforms can build it.
+
+Each `fmi2DoStep` runs the step function once per base period; the communication step must be a whole number of base
+periods. The generated code keeps its state in global variables, so one process runs one instance. In Python:
+`nervus.codegen.fmu.export_fmu(model.block("ECU"), "ECU.fmu")`.
+
+The **FMU** block imports FMUs from other tools into a model (co-simulation, needs fmpy: `uv sync --extra fmi`). See
+the tutorial *Exchanging models with FMI*.
+

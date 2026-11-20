@@ -65,4 +65,4 @@ and *the code-generation tutorial* for turning such a chain into C.
 
 ## Next
 
-That was the last tutorial on ecu software, communication and diagnostics. Continue with testing and verification: *Requirements-based testing and coverage*, or pick another one from the *tutorial overview*.
+Next in this topic: *Exchanging models with FMI*. Or pick another one from the *tutorial overview*.

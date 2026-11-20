@@ -272,6 +272,12 @@ class MainWindow(QMainWindow):
             "Ctrl+B",
             "Generate C code for the selected subsystem, or for the whole model",
         )
+        self.act_export_fmu = self._action(
+            "Export &FMU…",
+            self.export_fmu,
+            None,
+            "Export the selected subsystem, or the whole model, as an FMI 2.0 co-simulation FMU",
+        )
         self.act_obd = self._action(
             "Record from &OBD-II…", self.show_obd, None, "Read live data from a car through its OBD-II port"
         )
@@ -362,6 +368,7 @@ class MainWindow(QMainWindow):
         m.addAction(self.act_can_trace)
         m = mb.addMenu("&Code")
         m.addAction(self.act_codegen)
+        m.addAction(self.act_export_fmu)
         m = mb.addMenu("&Help")
         m.addActions([self.act_help, self.act_block_help])
         m.addSeparator()
@@ -565,6 +572,18 @@ class MainWindow(QMainWindow):
         dlg.show()
         self.status_label.setText(f"Generated C code for {code.name}")
         return dlg
+
+    def export_fmu(self, path: str | None = None) -> Path | None:
+        target = self.codegen.target_for(self.scene.selected_blocks())
+        if path is None:
+            name = getattr(target, "name", "") or self.diagram_model.root.name
+            path, _ = QFileDialog.getSaveFileName(self, "Export FMU", f"{name}.fmu", "FMU (*.fmu)")
+            if not path:
+                return None
+        out = self.codegen.export_fmu(target, path)
+        if out is not None:
+            self.status_label.setText(f"Exported {out.name} (FMI 2.0 co-simulation)")
+        return out
 
     def _codegen_error(self, message: str, blocks: tuple[str, ...]) -> None:
         self.sim_model.set_error(message, blocks)

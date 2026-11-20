@@ -86,6 +86,7 @@ nav:
           - "Tutorial: Sensor fault diagnosis and substitute values": app-help/tutorial_sensor_diagnostics.md
           - "Tutorial: From model to ECU C code": app-help/tutorial_model_to_code.md
           - "Tutorial: A sensor signal chain in fixed point": app-help/tutorial_fixed_point.md
+          - "Tutorial: Exchanging models with FMI": app-help/tutorial_fmi.md
           - "Tutorial: Requirements-based testing and coverage": app-help/tutorial_requirements_testing.md
           - "Tutorial: Robustness and tolerances with Monte Carlo": app-help/tutorial_robustness_monte_carlo.md
           - Coming from Simulink (app): app-help/coming_from_simulink.md
@@ -143,6 +144,7 @@ nav:
           - From model to ECU code:
               - "From model to ECU C code": tutorials/model-to-code.md
               - "A sensor signal chain in fixed point": tutorials/fixed-point.md
+              - "Exchanging models with FMI": tutorials/fmi.md
       - Testing and verification:
           - "Requirements-based testing and coverage": tutorials/requirements-testing.md
           - "Robustness and tolerances with Monte Carlo": tutorials/robustness-monte-carlo.md

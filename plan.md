@@ -270,7 +270,7 @@ tests/
 - [ ] Hardware-in-the-loop (HIL): run the plant model in real time against a real ECU
 
 ## Phase 18 – Interoperability
-- [ ] FMI 2.0/3.0: import FMUs as blocks (`fmpy`), export models as FMUs
+- [x] FMI 2.0/3.0: import FMUs as blocks (`fmpy`), export models as FMUs (FMI 2.0 co-simulation)
 - [ ] Import a subset of Simulink `.slx`/`.mdl` (useful for comparing against work models)
 - [x] Export results to MAT files (`scipy.io`) for MATLAB users (`SimResult.to_mat`)
 

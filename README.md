@@ -32,7 +32,7 @@ tool for designing, simulating and eventually generating C code for that kind of
 | Physical modelling | electrical, rotational, thermal and hydraulic networks connected like real parts; batteries, motors, solenoids, injectors, relays, alternator, glow plugs, NTC thermistors | [Physical modelling](docs/physical.md) |
 | Electronics | LTspice-style circuit simulation: diodes, BJTs, MOSFETs, op-amps, switches; operating point and DC sweeps; SPICE netlist import and export | [Physical modelling](docs/physical.md), [Circuits tutorial](docs/tutorials/circuits.md) |
 | Automotive models | mean-value engine, vehicle and driveline, tyres (magic formula), automatic and automated gearboxes, sensor and actuator models, diagnostic monitors with DTCs, adaptive maps, the official **WLTC and FTP-75 drive cycles** | [Tutorials](docs/tutorials/index.md) |
-| ECU code | C code generation (multirate, calibratable parameters, A2L file, HTML report), fixed-point data types, software-in-the-loop check | [C code](docs/codegen.md), [Data types](docs/datatypes.md) |
+| ECU code | C code generation (multirate, calibratable parameters, A2L file, HTML report), fixed-point data types, software-in-the-loop check, **FMI 2.0 FMU export and import** | [C code](docs/codegen.md), [Data types](docs/datatypes.md) |
 | Vehicle networks | CAN Pack/Unpack with DBC files (also **CAN FD**, multiplexed signals, value tables); **simulated CAN buses** with arbitration, bus load, gateways, rest-bus simulation, fault injection and E2E protection; bus trace with ASC/BLF export; real CAN adapters through python-can | [CAN](docs/can.md) |
 | Measurement and calibration | **XCP on CAN**: calibrate a running model from INCA/CANape or Python, or a real ECU from Python; **MDF4** (`.mf4`) import and export | [CAN: XCP](docs/can.md#xcp-live-measurement-and-calibration), [Testing](docs/testing.md) |
 | OBD-II | live data and trouble codes from a real car (ELM327 or CAN), and a simulated ECU to practise with | [OBD-II](docs/obd.md) |
@@ -72,7 +72,7 @@ editor step by step, tune it, and meet integrator windup. Then pick a topic; the
 | Electrics and electronics: ecu hardware and pcb | [An NTC temperature sensor interface](docs/tutorials/ntc-sensor.md), [The injector driver power stage](docs/tutorials/injector-driver.md) |
 | ECU software, communication and diagnostics: vehicle networks | [A vehicle network (CAN)](docs/tutorials/can-network.md), [Live calibration over XCP](docs/tutorials/xcp-calibration.md) |
 | ECU software, communication and diagnostics: diagnostics | [On-board diagnostics and trouble codes](docs/tutorials/obd-diagnostics.md), [Sensor fault diagnosis and substitute values](docs/tutorials/sensor-diagnostics.md) |
-| ECU software, communication and diagnostics: from model to ecu code | [From model to ECU C code](docs/tutorials/model-to-code.md), [A sensor signal chain in fixed point](docs/tutorials/fixed-point.md) |
+| ECU software, communication and diagnostics: from model to ecu code | [From model to ECU C code](docs/tutorials/model-to-code.md), [A sensor signal chain in fixed point](docs/tutorials/fixed-point.md), [Exchanging models with FMI](docs/tutorials/fmi.md) |
 | Testing and verification | [Requirements-based testing and coverage](docs/tutorials/requirements-testing.md), [Robustness and tolerances with Monte Carlo](docs/tutorials/robustness-monte-carlo.md) |
 <!-- tutorials:end -->
 

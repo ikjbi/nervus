@@ -1874,6 +1874,22 @@ def injector_driver() -> plt.Figure:
     return fig
 
 
+@figure("fmi_exchange")
+def fmi_exchange() -> plt.Figure:
+    runs = _example("fmi_exchange").main()
+    a, b = runs["subsystem"], runs["fmu"]
+    fig, ax = plt.subplots(figsize=(6.4, 3.0))
+    ax.plot(a.t, a["plate_angle"], color=GRID, lw=3, label="ECU as a subsystem")
+    ax.plot(b.t, b["plate_angle"], color=C1, lw=1.4, label="ECU as an FMU (co-simulation, 10 ms step)")
+    ax.set_xlabel("time [s]")
+    ax.set_ylabel("plate angle [°]")
+    ax.legend(loc="lower right", fontsize=8)
+    ax.set_title("The same controller, inline and as an FMU", color=INK, fontsize=9)
+    ax.set_xlim(0, 1.0)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

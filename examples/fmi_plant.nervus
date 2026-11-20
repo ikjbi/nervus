@@ -1,0 +1,257 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "fmi_plant",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 2.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "Kp",
+      "value": 1.5,
+      "description": "Proportional gain",
+      "unit": "%/°",
+      "min": 0.0
+    },
+    {
+      "name": "Ki",
+      "value": 40.0,
+      "description": "Integral gain",
+      "unit": "%/(°·s)",
+      "min": 0.0
+    },
+    {
+      "name": "Ts",
+      "value": 0.01,
+      "description": "ECU task period",
+      "unit": "s",
+      "min": 0.001
+    },
+    {
+      "name": "tau",
+      "value": 0.05,
+      "description": "Actuator time constant",
+      "unit": "s",
+      "min": 0.0
+    },
+    {
+      "name": "k_act",
+      "value": 0.9,
+      "description": "Actuator gain",
+      "unit": "°/%"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "pedal_target",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          0.2,
+          1.2
+        ],
+        "data": [
+          5.0,
+          60.0,
+          20.0
+        ],
+        "csv_file": "",
+        "interpolation": "hold",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "deg_per_pct",
+      "type": "math.gain",
+      "params": {
+        "gain": "k_act",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          440,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "lag",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          600,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "1/tau",
+      "type": "math.gain",
+      "params": {
+        "gain": "1/tau",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          760,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "plate_angle",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 5.0,
+        "upper": 90.0,
+        "lower": 0.0,
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          920,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          1080,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "ECU_fmu",
+      "type": "fmi.fmu",
+      "params": {
+        "fmu_file": "generated/ECU.fmu",
+        "parameters": "",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          160,
+          0.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "deg_per_pct",
+      "src_port": 0,
+      "dst": "lag",
+      "dst_port": 0
+    },
+    {
+      "src": "plate_angle",
+      "src_port": 0,
+      "dst": "lag",
+      "dst_port": 1
+    },
+    {
+      "src": "lag",
+      "src_port": 0,
+      "dst": "1/tau",
+      "dst_port": 0
+    },
+    {
+      "src": "1/tau",
+      "src_port": 0,
+      "dst": "plate_angle",
+      "dst_port": 0
+    },
+    {
+      "src": "pedal_target",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "plate_angle",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "pedal_target",
+      "src_port": 0,
+      "dst": "ECU_fmu",
+      "dst_port": 0
+    },
+    {
+      "src": "plate_angle",
+      "src_port": 0,
+      "dst": "ECU_fmu",
+      "dst_port": 1
+    },
+    {
+      "src": "ECU_fmu",
+      "src_port": 0,
+      "dst": "deg_per_pct",
+      "dst_port": 0
+    },
+    {
+      "src": "ECU_fmu",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    }
+  ],
+  "tests": [
+    {
+      "name": "tip-in, baseline calibration",
+      "description": "Reaches 59° within 150 ms of the step to 60°, with at most 5° overshoot",
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "reaches",
+          "signal": "plate_angle",
+          "value": 59.0,
+          "before": 0.35
+        },
+        {
+          "kind": "max",
+          "signal": "plate_angle",
+          "value": 65.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "plate_angle",
+          "value": 20.0,
+          "tolerance": 0.5
+        }
+      ]
+    }
+  ]
+}

@@ -236,6 +236,8 @@ class GeneratedCode:
     model: CompiledModel
     tasks: list[str] = field(default_factory=list)
     """Names of the task functions (one per rate) when generated with ``tasks=True``."""
+    tunables: list[tuple[str, int, list[float], str, str]] = field(default_factory=list)
+    """Calibratable parameters in the ``<name>_P`` struct: (field, size, initial values, C type, comment)."""
 
     @property
     def c_files(self) -> dict[str, str]:
@@ -464,6 +466,7 @@ class CGenerator:
             params={k: v.init for k, v in self.params.items()},
             model=m,
             tasks=[self.task_name(k) for k in self.task_plan["order"]] if self.task_plan is not None else [],
+            tunables=[(f.name, f.size, list(f.init), f.dtype.c_type, f.comment) for f in self.param_fields()],
         )
 
     def _banner(self, what: str) -> list[str]:

@@ -14,3 +14,6 @@ site/
 .DS_Store
 .idea/
 .vscode/
+
+# FMUs are built for one platform; the examples create them
+*.fmu

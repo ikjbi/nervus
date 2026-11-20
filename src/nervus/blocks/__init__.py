@@ -56,6 +56,7 @@ from nervus.blocks.electrical import (
 from nervus.blocks.electrical import (
     Switch as ElectricalSwitch,
 )
+from nervus.blocks.fmi import FMU
 from nervus.blocks.hydraulic import (
     FlowSensor,
     FlowSource,
@@ -99,6 +100,7 @@ from nervus.blocks.user import PythonFunction
 
 __all__ = [
     "BJT",
+    "FMU",
     "MOSFET",
     "PID",
     "VCCS",

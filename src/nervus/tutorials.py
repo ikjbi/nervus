@@ -168,6 +168,10 @@ TUTORIALS: list[Tutorial] = [
              30, "fixed-point data types (word length, fraction bits, resolution, range), an ADC model, "
              "quantization error, and the silent failure of a badly chosen range", ("fixed_point_sensor.nervus",),
              ("model-to-code",), "[Data types and fixed point](../datatypes.md)"),
+    Tutorial("fmi", "Exchanging models with FMI", _ECU, "From model to ECU code", "intermediate", 30,
+             "FMI 2.0 co-simulation FMUs: exporting a subsystem, running it in another tool (fmpy, Simulink), "
+             "importing an FMU as a block, and the communication-step delay of co-simulation",
+             ("fmi_plant.nervus",), ("model-to-code",)),
     Tutorial("can-network", "A vehicle network (CAN)", _ECU, "Vehicle networks", "advanced", 40,
              "ECUs on simulated CAN buses: DBC files, arbitration and bus load, a gateway, rest-bus simulation, "
              "E2E protection, fault injection and timeouts, the bus trace", ("can_network.nervus",),
