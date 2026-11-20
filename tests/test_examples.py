@@ -451,3 +451,18 @@ def test_abs_braking() -> None:
     assert all(r.passed for r in run_tests(d))
     with_abs, locked = m.stopping(simulate(d, 6.0)), m.stopping(simulate(d, 6.0, params={"abs_on": 0.0}))
     assert with_abs[0] == pytest.approx(45.7, abs=0.2) and locked[0] == pytest.approx(54.9, abs=0.2)
+
+
+def test_idle_requirements() -> None:
+    from nervus.core.requirements import trace
+    from nervus.coverage import Coverage
+    from nervus.testing import run_tests
+
+    m = _import("idle_requirements")
+    for with_new, untested, covered in ((False, ["IDLE-05"], 4), (True, [], 5)):
+        d = m.build(with_new)
+        cov = Coverage()
+        results = {r.case.name: r.passed for r in run_tests(d, base_dir=EXAMPLES, coverage=cov)}
+        rows = trace(d, results)
+        assert [r.requirement.id for r in rows if r.status == "not tested"] == untested
+        assert all(r.status in ("verified", "not tested") for r in rows) and cov.covered == covered

@@ -141,5 +141,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   circuit diagnosis. See the tutorials [NTC sensor interface](tutorials/ntc-sensor.md) and
   [sensor fault diagnosis](tutorials/sensor-diagnostics.md).
 - `abs_braking.py`: an emergency stop from 100 km/h with and without ABS. See the [tutorial](tutorials/abs.md).
+- `idle_requirements.py`: the idle speed controller with its requirements, traceability and coverage. See the
+  [tutorial](tutorials/requirements-testing.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

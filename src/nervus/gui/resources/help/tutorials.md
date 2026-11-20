@@ -1,6 +1,6 @@
 # Tutorials
 
-26 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+27 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -118,6 +118,14 @@ What happens inside and between ECUs: networks, calibration, diagnostics and the
 |---|---|---|---|
 | *From model to ECU C code* | intermediate | 40 min | an ECU software component with an interface, generated C code and its structure, calibration parameters and the A2L file, a back-to-back (SIL) test of the code |
 | *A sensor signal chain in fixed point* | intermediate | 30 min | fixed-point data types (word length, fraction bits, resolution, range), an ADC model, quantization error, and the silent failure of a badly chosen range |
+
+## Testing and verification
+
+Showing that a function does what it should: requirements, tests and tolerances.
+
+| Tutorial | Level | Time | You will learn |
+|---|---|---|---|
+| *Requirements-based testing and coverage* | intermediate | 40 min | requirements imported from a CSV file, traceability from requirements to blocks and tests, model coverage to find untested behaviour, closing the gap, review reports |
 
 ## Tips for every tutorial
 

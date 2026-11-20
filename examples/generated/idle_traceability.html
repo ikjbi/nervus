@@ -1,0 +1,9 @@
+<!doctype html><meta charset='utf-8'><title>Traceability: idle_requirements</title><style>body{font-family:system-ui,sans-serif;margin:2em;color:#222}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px 8px;vertical-align:top;text-align:left}th{background:#f3f3f3}</style><h1>Requirements traceability: idle_requirements</h1>
+<p><b style="color:#1f8a4c">5</b> verified</p>
+<table><tr><th>Id</th><th>Requirement</th><th>Blocks</th><th>Test cases</th><th>Status</th></tr>
+<tr><td>IDLE-01</td><td><b>Idle speed</b><br>With the engine warm and no load change, the idle speed stays within 800 ± 20 rpm.<br><small>ECU spec 4.2.1</small></td><td>ECU</td><td>AC compressor on at 5 s ✓</td><td style="color:#1f8a4c"><b>verified</b></td></tr>
+<tr><td>IDLE-02</td><td><b>Load rejection</b><br>When the AC compressor switches on, the idle speed drops by less than 50 rpm and is back within ± 20 rpm after 4 s.<br><small>ECU spec 4.2.2</small></td><td>ECU</td><td>AC compressor on at 5 s ✓</td><td style="color:#1f8a4c"><b>verified</b></td></tr>
+<tr><td>IDLE-03</td><td><b>Stall protection</b><br>Even without the AC feed-forward the engine must not stall: the speed stays above 600 rpm.<br><small>ECU spec 4.2.3</small></td><td>ECU</td><td>AC compressor on, no feed-forward ✓</td><td style="color:#1f8a4c"><b>verified</b></td></tr>
+<tr><td>IDLE-04</td><td><b>Calibratable target</b><br>The idle target is a calibration parameter (rpm_idle)<br><small>the engine reaches a new target within ± 15 rpm.</small></td><td>ECU</td><td>higher idle target ✓</td><td style="color:#1f8a4c"><b>verified</b></td></tr>
+<tr><td>IDLE-05</td><td><b>Limited correction</b><br>The controller&#x27;s correction is limited to 15° of throttle, and a large target change still settles without windup.<br><small>ECU spec 4.2.5</small></td><td>ECU</td><td>large target change: correction limited ✓</td><td style="color:#1f8a4c"><b>verified</b></td></tr>
+</table>

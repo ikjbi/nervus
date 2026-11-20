@@ -65,4 +65,4 @@ and *the code-generation tutorial* for turning such a chain into C.
 
 ## Next
 
-Pick another topic from the *tutorial overview*, or build your own model.
+That was the last tutorial on ecu software, communication and diagnostics. Continue with testing and verification: *Requirements-based testing and coverage*, or pick another one from the *tutorial overview*.

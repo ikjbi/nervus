@@ -1,0 +1,6 @@
+id;title;text;source
+IDLE-01;Idle speed;With the engine warm and no load change, the idle speed stays within 800 ± 20 rpm.;ECU spec 4.2.1
+IDLE-02;Load rejection;When the AC compressor switches on, the idle speed drops by less than 50 rpm and is back within ± 20 rpm after 4 s.;ECU spec 4.2.2
+IDLE-03;Stall protection;Even without the AC feed-forward the engine must not stall: the speed stays above 600 rpm.;ECU spec 4.2.3
+IDLE-04;Calibratable target;The idle target is a calibration parameter (rpm_idle); the engine reaches a new target within ± 15 rpm.;ECU spec 4.2.4
+IDLE-05;Limited correction;The controller's correction is limited to 15° of throttle, and a large target change still settles without windup.;ECU spec 4.2.5

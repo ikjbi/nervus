@@ -161,6 +161,11 @@ TUTORIALS: list[Tutorial] = [
              "how calibration tools work: XCP on CAN, A2L files, measuring and changing values in a running ECU, "
              "a command-line calibration tool, real-time simulation", ("xcp_calibration.nervus",),
              ("first-model",)),
+    # ------------------------------------------------------------------ testing and verification
+    Tutorial("requirements-testing", "Requirements-based testing and coverage", "Testing and verification", "",
+             "intermediate", 40, "requirements imported from a CSV file, traceability from requirements to blocks "
+             "and tests, model coverage to find untested behaviour, closing the gap, review reports",
+             ("idle_requirements.nervus",), ("idle-speed-control",)),
 ]  # fmt: skip
 
 
