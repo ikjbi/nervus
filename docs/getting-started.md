@@ -99,6 +99,8 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   [tutorial](tutorials/coupled-tanks.md).
 - `inverted_pendulum.py`: balancing a pendulum on a cart with LQR state feedback. See the
   [tutorial](tutorials/inverted-pendulum.md).
+- `rc_rlc.py`: an RC low-pass and a series RLC circuit (`rc_filter.nervus`, `rlc_circuit.nervus`). See the
+  [tutorial](tutorials/rc-rlc.md).
 - `mass_spring_damper_pid.py`: continuous PID position control with actuator limits.
 - `throttle_pi.py`: electronic throttle control with a 10 ms discrete PI controller, as on an ECU, with its
   gains as workspace variables and a second calibration file.

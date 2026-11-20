@@ -71,4 +71,4 @@ driver can **steer around** the obstacle.
 
 ## Next
 
-That was the last tutorial on vehicle dynamics and energy. Continue with electrics and electronics: [Rectifier, relay driver, buck converter and active filter](circuits.md), or pick another one from the [tutorial overview](index.md).
+That was the last tutorial on vehicle dynamics and energy. Continue with electrics and electronics: [RC and RLC circuits](rc-rlc.md), or pick another one from the [tutorial overview](index.md).

@@ -1,6 +1,6 @@
 # Tutorials
 
-28 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+29 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -80,6 +80,7 @@ Circuits from the textbook to the car's wiring harness and the ECU's circuit boa
 
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
+| [RC and RLC circuits](rc-rlc.md) | beginner | 30 min | time constant and step response, cut-off frequency and the Bode plot, resonance, damping and the quality factor, physical circuit blocks and linear analysis |
 | [Rectifier, relay driver, buck converter and active filter](circuits.md) | advanced | 45 min | circuit simulation like LTspice: a rectifier, a relay driver and its freewheeling diode, a buck converter, an active filter; SPICE netlists |
 
 ### Vehicle electrical system

@@ -473,3 +473,14 @@ def test_cruise_tolerance() -> None:
     ok30 = m.study(30.0, runs=100).column("settling_s")
     ok60 = m.study(60.0, runs=100).column("settling_s")
     assert np.all(ok30 <= 20.0) and np.mean(ok60 > 20.0) > 0.05  # Ki = 60 fails for some (heavy) cars
+
+
+def test_rc_rlc() -> None:
+    from nervus.testing import run_tests
+
+    m = _import("rc_rlc")
+    rc, rlc = m.build_rc(), m.build_rlc()
+    assert all(r.passed for d in (rc, rlc) for r in run_tests(d))
+    gain, phase = m.bode_point(rc, 1 / (2 * np.pi * 1e-3))
+    assert gain == pytest.approx(-3.01, abs=0.01) and phase == pytest.approx(-45.0, abs=0.1)
+    assert m.bode_point(rlc, m.resonance(10e-3, 10e-6, 10.0)[0])[0] == pytest.approx(10.0, abs=0.05)

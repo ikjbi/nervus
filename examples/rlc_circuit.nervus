@@ -1,0 +1,247 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "rlc_circuit",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 0.012,
+    "solver": "auto",
+    "step": null,
+    "max_step": 2.4e-05,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "R",
+      "value": 10.0,
+      "description": "Series resistor (critical damping at 2√(L/C) = 63 Ω)",
+      "unit": "Ω"
+    },
+    {
+      "name": "L",
+      "value": 0.01,
+      "description": "Inductor",
+      "unit": "H"
+    },
+    {
+      "name": "C",
+      "value": 1e-05,
+      "description": "Capacitor",
+      "unit": "F"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "v_in",
+      "type": "ports.inport",
+      "params": {
+        "port": 1,
+        "value": 1.0,
+        "sample_time": -1.0,
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "source",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": 12.0,
+        "controlled": true
+      },
+      "meta": {
+        "position": [
+          140.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          280.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "R",
+      "type": "electrical.resistor",
+      "params": {
+        "R": "R"
+      },
+      "meta": {
+        "position": [
+          420.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "L",
+      "type": "electrical.inductor",
+      "params": {
+        "L": "L",
+        "i0": 0.0
+      },
+      "meta": {
+        "position": [
+          560.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "C",
+      "type": "electrical.capacitor",
+      "params": {
+        "C": "C",
+        "v0": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "v_cap_sensor",
+      "type": "electrical.voltage_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          140.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "v_out",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          280.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          420.0,
+          110.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "v_in",
+      "src_port": 0,
+      "dst": "source",
+      "dst_port": 0
+    },
+    {
+      "src": "v_cap_sensor",
+      "src_port": 0,
+      "dst": "v_out",
+      "dst_port": 0
+    },
+    {
+      "src": "v_in",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "v_cap_sensor",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    }
+  ],
+  "links": [
+    {
+      "a": "source",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "source",
+      "a_port": "p",
+      "b": "R",
+      "b_port": "p"
+    },
+    {
+      "a": "R",
+      "a_port": "n",
+      "b": "L",
+      "b_port": "p"
+    },
+    {
+      "a": "L",
+      "a_port": "n",
+      "b": "C",
+      "b_port": "p"
+    },
+    {
+      "a": "C",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "v_cap_sensor",
+      "a_port": "p",
+      "b": "C",
+      "b_port": "p"
+    },
+    {
+      "a": "v_cap_sensor",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    }
+  ],
+  "tests": [
+    {
+      "name": "underdamped step",
+      "description": "ζ = 0.16: the capacitor voltage overshoots by about 60 % and rings at the resonance (503 Hz)",
+      "stop_time": 0.012,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "max",
+          "signal": "v_out",
+          "value": 1.62
+        },
+        {
+          "kind": "min",
+          "signal": "v_out",
+          "value": 0.0
+        }
+      ]
+    }
+  ]
+}

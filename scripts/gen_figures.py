@@ -1771,6 +1771,36 @@ def cruise_tolerance() -> plt.Figure:
     return fig
 
 
+@figure("rc_rlc")
+def rc_rlc() -> plt.Figure:
+    m = _example("rc_rlc")
+    rc, rlc = m.build_rc(), m.build_rlc()
+    fig, ((a0, a1), (b0, b1)) = plt.subplots(2, 2, figsize=(7.4, 5.0))
+    r = simulate(rc)
+    a0.plot(r.t * 1000, r["v_out"], color=C1, lw=1.6)
+    a0.axhline(5 * 0.632, color=GRID, ls=":", lw=1)
+    a0.axvline(1.0, color=GRID, ls=":", lw=1)
+    a0.set_title("RC step: 63 % after τ = 1 ms", color=INK, fontsize=9)
+    a0.set_xlabel("time [ms]")
+    a0.set_ylabel("V")
+    for rv, color in ((10.0, C2), (63.2, C3), (200.0, C4)):
+        rr = simulate(rlc, params={"R": rv})
+        a1.plot(rr.t * 1000, rr["v_out"], color=color, lw=1.4, label=f"R = {rv:g} Ω")
+    a1.set_title("RLC step: under-, critically, overdamped", color=INK, fontsize=9)
+    a1.set_xlabel("time [ms]")
+    a1.legend(loc="lower right", fontsize=7)
+    f = np.logspace(1, 4, 300)
+    for d, ax, title in ((rc, b0, "RC: −3 dB at 159 Hz"), (rlc, b1, "RLC: +10 dB peak at 503 Hz (Q = 3.2)")):
+        gains = [m.bode_point(d, x)[0] for x in f]
+        ax.semilogx(f, gains, color=C1, lw=1.6)
+        ax.axhline(-3, color=GRID, ls=":", lw=1)
+        ax.set_title(title, color=INK, fontsize=9)
+        ax.set_xlabel("frequency [Hz]")
+    b0.set_ylabel("gain [dB]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

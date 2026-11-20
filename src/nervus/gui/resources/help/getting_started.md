@@ -52,6 +52,7 @@ The `examples` folder in the repository has complete models you can open with **
 | `dc_motor_speed.nervus`, `dc_motor_position.nervus` | DC motor lab: identification, PI speed and PD position control (tutorial) |
 | `coupled_tanks.nervus` | level control of two coupled tanks: a nonlinear process (tutorial) |
 | `inverted_pendulum.nervus` | balancing a pendulum on a cart with LQR state feedback (tutorial) |
+| `rc_filter.nervus`, `rlc_circuit.nervus` | RC low-pass and series RLC: step and frequency response (tutorial) |
 | `mass_spring_damper_pid.nervus` | continuous PID position control with actuator limits |
 | `idle_speed_control.nervus` | idle speed control on a mean-value engine model (tutorial) |
 | `coolant_fan.nervus` | radiator fan control with hysteresis and a lookup table |

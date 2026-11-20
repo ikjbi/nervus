@@ -122,11 +122,15 @@ TUTORIALS: list[Tutorial] = [
              "threshold ABS as a State Chart, stopping distances on dry, wet and icy roads", ("abs_braking.nervus",),
              ("traction-control",)),
     # ------------------------------------------------------------------ electrics and electronics
+    Tutorial("rc-rlc", "RC and RLC circuits", _EL, "Circuit fundamentals", "beginner", 30,
+             "time constant and step response, cut-off frequency and the Bode plot, resonance, damping and the "
+             "quality factor, physical circuit blocks and linear analysis", ("rc_filter.nervus", "rlc_circuit.nervus"),
+             ("first-model",)),
     Tutorial("circuits", "Rectifier, relay driver, buck converter and active filter", _EL, "Circuit fundamentals",
              "advanced", 45, "circuit simulation like LTspice: a rectifier, a relay driver and its freewheeling "
              "diode, a buck converter, an active filter; SPICE netlists",
              ("rectifier.nervus", "relay_driver.nervus", "buck_converter.nervus", "active_filter.nervus"),
-             ("physical-models",)),
+             ("rc-rlc", "physical-models")),
     Tutorial("physical-models", "Starter motor and electronic throttle", _EL, "Vehicle electrical system",
              "intermediate", 45, "physical modelling (circuits, shafts, springs connected by links instead of "
              "signals): cranking an engine on a weak battery, a drive-by-wire throttle servo",

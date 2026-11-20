@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **You will learn** | circuit simulation like LTspice: a rectifier, a relay driver and its freewheeling diode, a buck converter, an active filter; SPICE netlists |
-| **Before this** | [Starter motor and electronic throttle](physical-models.md) |
+| **Before this** | [RC and RLC circuits](rc-rlc.md), [Starter motor and electronic throttle](physical-models.md) |
 | **Level and time** | advanced, about 45 minutes |
 | **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/rectifier.nervus`, `examples/relay_driver.nervus`, `examples/buck_converter.nervus`, `examples/active_filter.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 | **Topic** | Electrics and electronics ▸ Circuit fundamentals ([all tutorials](index.md)) |
