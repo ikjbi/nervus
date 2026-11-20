@@ -116,5 +116,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   [tutorial](tutorials/physical-models.md).
 - `electronic_throttle.py`: drive-by-wire: H-bridge, DC motor, gear and return spring, with a tuned PID in a
   1 ms ECU task. See the [tutorial](tutorials/physical-models.md).
+- `traction_control.py`: tyre slip with Pacejka's magic formula and a traction control ECU on dry, wet and
+  snowy roads. See the [tutorial](tutorials/traction-control.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

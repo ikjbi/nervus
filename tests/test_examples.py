@@ -291,3 +291,14 @@ def test_physical_examples(tmp_path) -> None:  # type: ignore[no-untyped-def]
         inputs = {"target_deg": 5 + 55 * (k > 50), "tps_deg": np.minimum(5 + 0.3 * k, 58.0)}
         sil = back_to_back(ecu, inputs, 300, tolerance=1e-12, folder=tmp_path)
         assert sil.passed, sil.summary()
+
+
+def test_traction_control_example() -> None:
+    from nervus.testing import run_tests
+
+    mod = _import("traction_control")
+    d = mod.build()
+    assert all(r.passed for r in run_tests(d))
+    off = simulate(d, params={"mu_road": 0.5, "tcs_enable": 0.0})
+    assert off["slip"][-1] > 0.6  # without TCS the wheels spin
+    assert [t.name for t in load(EXAMPLES / "traction_control.nervus").tests] == [t.name for t in d.tests]

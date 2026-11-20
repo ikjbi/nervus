@@ -103,6 +103,26 @@ transition g4 -> g3: speed < down_speed and after(min_gear_time)
 transition g5 -> g4: speed < down_speed and after(min_gear_time)
 """
 
+# Brake-specific fuel consumption [g/kWh] of a 2-litre petrol engine: rows 1000..6000 rpm, columns 10..200 N·m.
+# Best (about 245 g/kWh, 33 % efficiency) at middle speed and high load; poor at light load (throttling losses).
+BSFC = [
+    [600.0, 330.0, 280.0, 270.0, 270.0],
+    [560.0, 310.0, 255.0, 245.0, 250.0],
+    [580.0, 320.0, 260.0, 245.0, 255.0],
+    [620.0, 340.0, 270.0, 255.0, 265.0],
+    [680.0, 370.0, 290.0, 270.0, 280.0],
+    [750.0, 400.0, 310.0, 290.0, 300.0],
+]
+
+FUEL_RATE = '''def f(t, rpm, torque, bsfc):
+    """Fuel flow [g/s] from the BSFC map: g/kWh times the power in kW, plus idle fuel; none when the engine is
+    pulled (negative torque: overrun fuel cut-off)."""
+    if torque <= 0:
+        return 0.0
+    power_kw = torque * rpm * 2 * math.pi / 60 / 1000
+    return bsfc * power_kw / 3600 + p[0]
+'''
+
 ROAD_LOADS = '''def f(t, v, grade):
     """Road loads [N] at speed v [m/s] on a grade [%]. p = [m kg, c_d*A m2, c_rr]"""
     m, cda, crr = p[0], p[1], p[2]
@@ -217,6 +237,16 @@ def build_engine() -> Subsystem:
     s.connect(net, (torque, 0))
     s.connect(cut, (torque, 1))
     s.connect(torque, s.add(Outport(port=1), name="torque"))
+    # Fuel: the brake-specific fuel consumption map (g/kWh) times the power the engine delivers.
+    bsfc = s.add(Lookup2D(row_breakpoints="bsfc_rpm", column_breakpoints="bsfc_torque", table="bsfc_map"), name="bsfc")
+    fuel = s.add(PythonFunction(code=FUEL_RATE, num_inputs=3, parameters="[idle_fuel]"), name="fuel_rate")
+    s.connect(rpm, (bsfc, 0))
+    s.connect(torque, (bsfc, 1))
+    s.connect(rpm, (fuel, 0))
+    s.connect(torque, (fuel, 1))
+    s.connect(bsfc, (fuel, 2))
+    s.connect(fuel, s.add(Outport(port=2), name="fuel_g_s"))
+    _place(s, {"bsfc": (620, 220), "fuel_rate": (740, 200), "fuel_g_s": (860, 200)})
     _place(s, {"rpm": (0, 60), "full_load": (130, 0), "friction": (130, 100), "pedal": (0, 190),
                "pedal_fraction": (130, 190), "driver_torque": (260, 30), "minus_friction": (380, 70),
                "one": (0, 280), "shifting": (0, 350), "torque_cut": (260, 300), "engine_torque": (500, 120),
@@ -274,9 +304,10 @@ def build_vehicle() -> Subsystem:
     s.connect(kmh, s.add(Outport(port=1), name="speed_kmh"))
     s.connect((gearbox, 1), s.add(Outport(port=2), name="engine_rpm"))
     s.connect(engine, s.add(Outport(port=3), name="torque"))
+    s.connect((engine, 1), s.add(Outport(port=4), name="fuel"))
     _place(s, {"gear": (0, 0), "gearbox": (150, 10), "pedal": (0, 200), "shifting": (0, 280),
                "engine": (330, 190), "grade": (400, 100), "body": (560, 60), "kmh": (740, 60),
-               "speed_kmh": (870, 60), "engine_rpm": (870, -40), "torque": (870, 200)})  # fmt: skip
+               "speed_kmh": (870, 60), "engine_rpm": (870, -40), "torque": (870, 200), "fuel": (870, 280)})  # fmt: skip
     return Subsystem(system=s)
 
 
@@ -295,6 +326,10 @@ def build() -> Diagram:
     ws.add(Variable("torque_friction", [8.0, 30.0], "Engine friction (engine braking) torque", "Nm"))
     ws.add(Variable("cd_area", 0.65, "Drag coefficient × frontal area", "m2"))
     ws.add(Variable("c_rr", 0.012, "Rolling resistance coefficient", "-"))
+    ws.add(Variable("bsfc_rpm", [1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0], "BSFC map speeds", "rpm"))
+    ws.add(Variable("bsfc_torque", [10.0, 50.0, 100.0, 150.0, 200.0], "BSFC map torques", "N·m"))
+    ws.add(Variable("bsfc_map", BSFC, "Brake-specific fuel consumption", "g/kWh"))
+    ws.add(Variable("idle_fuel", 0.15, "Fuel flow at idle / zero load (not in fuel cut-off)", "g/s"))
     ws.add(Variable("upshift_map", UPSHIFT, "Upshift speed per gear (rows) and pedal 0/50/100 % (columns)", "km/h"))
     ws.add(Variable("downshift_map", DOWNSHIFT, "Downshift speed per gear and pedal", "km/h"))
 
@@ -317,6 +352,13 @@ def build() -> Diagram:
     for k, name in enumerate(("speed", "rpm", "gear")):
         out = d.add(Outport(port=k + 1), name=name)
         d.connect((car, 0) if k == 0 else (car, 1) if k == 1 else (tcu, 0), out)
+    fuel_used = d.add(Integrator(), name="fuel_used_g")
+    distance = d.add(Integrator(), name="distance_m")
+    d.connect((car, 3), fuel_used)
+    d.chain(d.add(Gain(gain=1 / 3.6), name="speed_m_s"), distance)
+    d.connect((car, 0), d.block("speed_m_s"))
+    d.connect(fuel_used, d.add(Outport(port=4), name="fuel_g"))
+    d.connect(distance, d.add(Outport(port=5), name="distance"))
     for name, pos in {
         "pedal": (0, 120),
         "grade": (0, 220),
@@ -326,6 +368,11 @@ def build() -> Diagram:
         "speed": (640, 100),
         "rpm": (640, 170),
         "gear": (640, 240),
+        "fuel_used_g": (640, 320),
+        "speed_m_s": (520, 400),
+        "distance_m": (640, 400),
+        "fuel_g": (780, 320),
+        "distance": (780, 400),
     }.items():
         d.block(name).meta["position"] = [float(pos[0]), float(pos[1])]
     d.tests = tests()

@@ -63,4 +63,5 @@ The `examples` folder in the repository has complete models you can open with **
 | `active_filter.nervus` | an op-amp Sallen-Key low-pass filter, 1 kHz (tutorial) |
 | `starter_motor.nervus` | cranking: battery, starter relay and motor, compression (tutorial) |
 | `electronic_throttle.nervus` | drive-by-wire throttle: H-bridge, DC motor, gear, spring, PID (tutorial) |
+| `traction_control.nervus` | tyre slip and a traction control ECU on a wet road (tutorial) |
 | `obd_ecu.nervus` | an engine ECU with trouble codes that answers OBD-II tools (`python -m nervus.obd simulate`) |

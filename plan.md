@@ -125,7 +125,7 @@ tests/
 - [x] Typeset LaTeX equations in the in-app help (matplotlib mathtext) and in the docs (MathJax)
 - [x] Explanatory block figures (`scripts/gen_figures.py`), shown in the app and in the docs
 - [x] Developer docs: architecture (engine and MVC), how to write a custom block
-- [ ] Tutorials that follow the examples
+- [x] Tutorials that follow the examples (idle speed, lambda, drive cycle, gear shift, circuits, starter motor and throttle)
 
 ## Phase 7 – Parameters, model workspace and calibration data
 *ECU software is "code + calibration". Parameters must live outside the blocks, as named, tunable values.*
@@ -242,7 +242,8 @@ tests/
 - [x] Electronic throttle control (DC motor, return spring, PID): `examples/electronic_throttle.py`
 - [x] Vehicle longitudinal dynamics: aero and rolling resistance, force and power limits, brakes
       (`examples/drive_cycle.py`)
-- [ ] Vehicle dynamics, more: driveline with gearbox and shift logic, tire slip, road grade, engine efficiency map
+- [x] Vehicle dynamics, more: driveline with gearbox and shift logic, tire slip, road grade, engine efficiency map
+      (`gear_shift.py` with a BSFC map, `traction_control.py`)
 - [x] Driver model and the ECE-15 drive cycle (tutorial); other cycles from CSV files
 - [ ] Bundled WLTP / FTP-75 tables (from the official sources) and a drive-cycle block
 - [ ] Sensor and actuator models: quantisation, noise, delay, faults

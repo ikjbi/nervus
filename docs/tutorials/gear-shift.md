@@ -104,6 +104,25 @@ $\alpha = \arctan(\text{grade}/100)$:
 
 $$ m\,\frac{dv}{dt} = \frac{T\,i\,\eta}{r_{wheel}} - \tfrac{1}{2}\rho\,c_d A\,v^2 - m g\,c_{rr}\cos\alpha - m g \sin\alpha $$
 
+## Fuel consumption: why light-pedal upshifts save fuel
+
+The engine has a **brake-specific fuel consumption** map (BSFC, in g/kWh) over speed and torque. The fuel flow
+is the map value times the power the engine delivers:
+
+$$ \dot m_{fuel} = \frac{\mathrm{BSFC}(n, T)\cdot T\,\omega}{3.6\cdot 10^{6}} \quad [\text{g/s}] $$
+
+The map is best (about 245 g/kWh, 33 % efficiency) at middle speed and high load, and poor at light load,
+where the throttle losses dominate. Cruising at 80 km/h needs the same power in every gear, but in 5th the
+engine runs at 2000 rpm with a high load, in 3rd at 3700 rpm with a light load. Over the cruise (12-22 s):
+
+| | engine speed | fuel |
+|---|---|---|
+| 5th gear (the shift schedule) | 2040 rpm | 5.1 L/100 km |
+| held in 3rd (`upshift_map` row 3 = 999) | 3720 rpm | 7.6 L/100 km |
+
+Half as much fuel again, for the same speed. The model integrates the fuel (`fuel_g`) and the distance
+(`distance`); the whole drive with its full-throttle launch, kickdown and hill uses about 14 L/100 km.
+
 ## Results
 
 ![Pedal, speed, engine speed and gear](../images/blocks/gear_shift.png)

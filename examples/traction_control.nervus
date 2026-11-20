@@ -1,0 +1,814 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "traction_control",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 6.0,
+    "solver": "rk4",
+    "step": 0.001,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "mu_road",
+      "value": 0.5,
+      "description": "Road friction: dry 1.0, wet 0.5, snow 0.2",
+      "unit": "-"
+    },
+    {
+      "name": "mass",
+      "value": 1500.0,
+      "description": "Vehicle mass",
+      "unit": "kg"
+    },
+    {
+      "name": "axle_load",
+      "value": 0.6,
+      "description": "Share of the weight on the driven axle",
+      "unit": "-"
+    },
+    {
+      "name": "r_tyre",
+      "value": 0.31,
+      "description": "Tyre radius",
+      "unit": "m"
+    },
+    {
+      "name": "J_wheels",
+      "value": 30.0,
+      "description": "Wheels, driveline and the engine reflected through 1st gear (at the wheels)",
+      "unit": "kg·m²"
+    },
+    {
+      "name": "T_wheel_max",
+      "value": 3000.0,
+      "description": "Engine torque at the wheels in 1st gear, full throttle",
+      "unit": "N·m"
+    },
+    {
+      "name": "slip_target",
+      "value": 0.1,
+      "description": "Slip the TCS allows",
+      "unit": "-"
+    },
+    {
+      "name": "tcs_enable",
+      "value": 1.0,
+      "description": "1: traction control on, 0: off",
+      "unit": "-"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "one",
+      "type": "sources.constant",
+      "params": {
+        "value": 1.0,
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "torque_left",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          120.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "wheel_torque",
+      "type": "math.gain",
+      "params": {
+        "gain": "T_wheel_max",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          240.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "wheel_net_torque",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          360.0,
+          40.0
+        ]
+      }
+    },
+    {
+      "name": "wheel_omega",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": 0.0,
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          600.0,
+          40.0
+        ]
+      }
+    },
+    {
+      "name": "wheel_m_s",
+      "type": "math.gain",
+      "params": {
+        "gain": "r_tyre",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          720.0,
+          40.0
+        ]
+      }
+    },
+    {
+      "name": "normal_force",
+      "type": "sources.constant",
+      "params": {
+        "value": "mass * 9.81 * axle_load",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          860.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "tyre_slip",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, wheel_speed, car_speed):\n    \"\"\"Slip of the driven wheels from their speed [m/s at the tyre] and the car's speed [m/s].\"\"\"\n    return (wheel_speed - car_speed) / max(wheel_speed, car_speed, 0.5)\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          860.0,
+          100.0
+        ]
+      }
+    },
+    {
+      "name": "tyre_force",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, slip, normal_force):\n    \"\"\"Longitudinal tyre force [N]: Pacejka's magic formula, scaled by the road friction. p = [mu, B, C, E]\"\"\"\n    mu, b, c, e = p[0], p[1], p[2], p[3]\n    x = b * slip\n    return mu * normal_force * math.sin(c * math.atan(x - e * (x - math.atan(x))))\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": "[mu_road, 10.0, 1.9, 0.97]"
+      },
+      "meta": {
+        "position": [
+          1000.0,
+          140.0
+        ]
+      }
+    },
+    {
+      "name": "tyre_torque",
+      "type": "math.gain",
+      "params": {
+        "gain": "r_tyre",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1000.0,
+          260.0
+        ]
+      }
+    },
+    {
+      "name": "net_force",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1140.0,
+          160.0
+        ]
+      }
+    },
+    {
+      "name": "road_loads",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, v):\n    return 0.4 * v * v + 180.0\n",
+        "num_inputs": 1,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          1140.0,
+          280.0
+        ]
+      }
+    },
+    {
+      "name": "accel",
+      "type": "math.gain",
+      "params": {
+        "gain": "1 / mass",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1260.0,
+          160.0
+        ]
+      }
+    },
+    {
+      "name": "car_m_s",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": 0.0,
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          1380.0,
+          160.0
+        ]
+      }
+    },
+    {
+      "name": "wheel_accel",
+      "type": "math.gain",
+      "params": {
+        "gain": "1 / J_wheels",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          480.0,
+          40.0
+        ]
+      }
+    },
+    {
+      "name": "speed_kmh",
+      "type": "math.gain",
+      "params": {
+        "gain": 3.6,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1500.0,
+          160.0
+        ]
+      }
+    },
+    {
+      "name": "wss_driven",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          860.0,
+          -60.0
+        ]
+      }
+    },
+    {
+      "name": "wss_free",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          1380.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "TCS",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": 0.01,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          360.0,
+          -120.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "driven_wheel_m_s",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "free_wheel_m_s",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                90.0
+              ]
+            }
+          },
+          {
+            "name": "slip",
+            "type": "user.python_function",
+            "params": {
+              "code": "def f(t, wheel_speed, car_speed):\n    \"\"\"Slip of the driven wheels from their speed [m/s at the tyre] and the car's speed [m/s].\"\"\"\n    return (wheel_speed - car_speed) / max(wheel_speed, car_speed, 0.5)\n",
+              "num_inputs": 2,
+              "num_outputs": 1,
+              "output_width": -1,
+              "parameters": []
+            },
+            "meta": {
+              "position": [
+                140.0,
+                40.0
+              ]
+            }
+          },
+          {
+            "name": "slip_error",
+            "type": "math.sum",
+            "params": {
+              "signs": "+-",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                270.0,
+                60.0
+              ]
+            }
+          },
+          {
+            "name": "target",
+            "type": "sources.constant",
+            "params": {
+              "value": "slip_target",
+              "sample_time": "inf",
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                140.0,
+                140.0
+              ]
+            }
+          },
+          {
+            "name": "pi",
+            "type": "control.discrete_pid",
+            "params": {
+              "P": 4.0,
+              "I": 40.0,
+              "D": 0.0,
+              "N": 100.0,
+              "initial_integrator": 0.0,
+              "upper": 1.0,
+              "lower": 0.0,
+              "anti_windup": "clamping",
+              "Kb": 1.0,
+              "sample_time": 0.01
+            },
+            "meta": {
+              "position": [
+                390.0,
+                60.0
+              ]
+            }
+          },
+          {
+            "name": "enable",
+            "type": "sources.constant",
+            "params": {
+              "value": "tcs_enable",
+              "sample_time": "inf",
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                390.0,
+                160.0
+              ]
+            }
+          },
+          {
+            "name": "torque_cut",
+            "type": "math.product",
+            "params": {
+              "ops": "**",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                520.0,
+                90.0
+              ]
+            }
+          },
+          {
+            "name": "reduction",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                650.0,
+                90.0
+              ]
+            }
+          },
+          {
+            "name": "slip_out",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            },
+            "meta": {
+              "position": [
+                270.0,
+                -40.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "driven_wheel_m_s",
+            "src_port": 0,
+            "dst": "slip",
+            "dst_port": 0
+          },
+          {
+            "src": "free_wheel_m_s",
+            "src_port": 0,
+            "dst": "slip",
+            "dst_port": 1
+          },
+          {
+            "src": "slip",
+            "src_port": 0,
+            "dst": "slip_error",
+            "dst_port": 0
+          },
+          {
+            "src": "target",
+            "src_port": 0,
+            "dst": "slip_error",
+            "dst_port": 1
+          },
+          {
+            "src": "slip_error",
+            "src_port": 0,
+            "dst": "pi",
+            "dst_port": 0
+          },
+          {
+            "src": "pi",
+            "src_port": 0,
+            "dst": "torque_cut",
+            "dst_port": 0
+          },
+          {
+            "src": "enable",
+            "src_port": 0,
+            "dst": "torque_cut",
+            "dst_port": 1
+          },
+          {
+            "src": "torque_cut",
+            "src_port": 0,
+            "dst": "reduction",
+            "dst_port": 0
+          },
+          {
+            "src": "slip",
+            "src_port": 0,
+            "dst": "slip_out",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          1000.0,
+          -120.0
+        ]
+      }
+    },
+    {
+      "name": "speed",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1620.0,
+          160.0
+        ]
+      }
+    },
+    {
+      "name": "slip",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          1140.0,
+          40.0
+        ]
+      }
+    },
+    {
+      "name": "torque_reduction",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          600.0,
+          -120.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "one",
+      "src_port": 0,
+      "dst": "torque_left",
+      "dst_port": 0
+    },
+    {
+      "src": "TCS",
+      "src_port": 0,
+      "dst": "torque_left",
+      "dst_port": 1
+    },
+    {
+      "src": "torque_left",
+      "src_port": 0,
+      "dst": "wheel_torque",
+      "dst_port": 0
+    },
+    {
+      "src": "wheel_torque",
+      "src_port": 0,
+      "dst": "wheel_net_torque",
+      "dst_port": 0
+    },
+    {
+      "src": "tyre_torque",
+      "src_port": 0,
+      "dst": "wheel_net_torque",
+      "dst_port": 1
+    },
+    {
+      "src": "wheel_net_torque",
+      "src_port": 0,
+      "dst": "wheel_accel",
+      "dst_port": 0
+    },
+    {
+      "src": "wheel_accel",
+      "src_port": 0,
+      "dst": "wheel_omega",
+      "dst_port": 0
+    },
+    {
+      "src": "wheel_omega",
+      "src_port": 0,
+      "dst": "wheel_m_s",
+      "dst_port": 0
+    },
+    {
+      "src": "wheel_m_s",
+      "src_port": 0,
+      "dst": "tyre_slip",
+      "dst_port": 0
+    },
+    {
+      "src": "car_m_s",
+      "src_port": 0,
+      "dst": "tyre_slip",
+      "dst_port": 1
+    },
+    {
+      "src": "tyre_slip",
+      "src_port": 0,
+      "dst": "tyre_force",
+      "dst_port": 0
+    },
+    {
+      "src": "normal_force",
+      "src_port": 0,
+      "dst": "tyre_force",
+      "dst_port": 1
+    },
+    {
+      "src": "tyre_force",
+      "src_port": 0,
+      "dst": "tyre_torque",
+      "dst_port": 0
+    },
+    {
+      "src": "tyre_force",
+      "src_port": 0,
+      "dst": "net_force",
+      "dst_port": 0
+    },
+    {
+      "src": "road_loads",
+      "src_port": 0,
+      "dst": "net_force",
+      "dst_port": 1
+    },
+    {
+      "src": "net_force",
+      "src_port": 0,
+      "dst": "accel",
+      "dst_port": 0
+    },
+    {
+      "src": "accel",
+      "src_port": 0,
+      "dst": "car_m_s",
+      "dst_port": 0
+    },
+    {
+      "src": "car_m_s",
+      "src_port": 0,
+      "dst": "road_loads",
+      "dst_port": 0
+    },
+    {
+      "src": "car_m_s",
+      "src_port": 0,
+      "dst": "speed_kmh",
+      "dst_port": 0
+    },
+    {
+      "src": "wheel_m_s",
+      "src_port": 0,
+      "dst": "wss_driven",
+      "dst_port": 0
+    },
+    {
+      "src": "car_m_s",
+      "src_port": 0,
+      "dst": "wss_free",
+      "dst_port": 0
+    },
+    {
+      "src": "wss_driven",
+      "src_port": 0,
+      "dst": "TCS",
+      "dst_port": 0
+    },
+    {
+      "src": "wss_free",
+      "src_port": 0,
+      "dst": "TCS",
+      "dst_port": 1
+    },
+    {
+      "src": "tyre_slip",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "TCS",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "speed_kmh",
+      "src_port": 0,
+      "dst": "speed",
+      "dst_port": 0
+    },
+    {
+      "src": "tyre_slip",
+      "src_port": 0,
+      "dst": "slip",
+      "dst_port": 0
+    },
+    {
+      "src": "TCS",
+      "src_port": 0,
+      "dst": "torque_reduction",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "TCS holds the slip on a wet road",
+      "description": "With traction control the slip stays near 10 % after the first moment",
+      "stop_time": 6.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "slip",
+          "lower": 0.0,
+          "upper": 0.2,
+          "t_from": 0.5,
+          "t_to": 6.0
+        }
+      ]
+    }
+  ]
+}

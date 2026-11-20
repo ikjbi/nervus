@@ -1171,6 +1171,27 @@ def physical_models() -> plt.Figure:
     return fig
 
 
+@figure("traction_control")
+def traction_control() -> plt.Figure:
+    from nervus import load
+
+    d = load(Path(__file__).parent.parent / "examples" / "traction_control.nervus")
+    fig, (a1, a2) = plt.subplots(2, 1, figsize=(6.4, 4.4), sharex=True)
+    for tcs, color, label in ((0.0, C2, "TCS off"), (1.0, C1, "TCS on")):
+        r = simulate(d, params={"mu_road": 0.5, "tcs_enable": tcs})
+        a1.plot(r.t, np.ravel(r["slip"]) * 100, color=color, lw=2, label=label)
+        a2.plot(r.t, r["speed"], color=color, lw=2, label=label)
+    a1.axhline(10, color=INK, ls=":", lw=1)
+    a1.text(4.6, 13, "target 10 %", color=INK, fontsize=8)
+    a1.set_ylabel("slip [%]")
+    a1.set_title("Full-throttle launch on a wet road (μ = 0.5)", color=INK, fontsize=10)
+    a1.legend(loc="center right", fontsize=8)
+    a2.set_ylabel("speed [km/h]")
+    a2.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
