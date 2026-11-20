@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QListWidget,
     QListWidgetItem,
+    QMessageBox,
     QPushButton,
     QSplitter,
     QVBoxLayout,
@@ -219,9 +220,26 @@ class DataInspector(QWidget):
         return runs[-1] if runs else None
 
     def _load(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Load result", "", "Nervus results (*.nervres)")
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Load result", "", "Nervus results (*.nervres);;MDF4 measurements (*.mf4 *.mdf)"
+        )
         if path:
-            self.sim.add_run(SimResult.load(path), path.rsplit("/", 1)[-1])
+            self.load_file(path)
+
+    def load_file(self, path: str) -> bool:
+        """Add a saved result (.nervres) or a measurement file (MDF4, e.g. from INCA, CANape or a logger)."""
+        try:
+            if path.lower().endswith((".mf4", ".mdf")):
+                from nervus.mdf import read_mdf
+
+                result = read_mdf(path)
+            else:
+                result = SimResult.load(path)
+        except Exception as exc:  # unreadable or foreign files: show why
+            QMessageBox.warning(self, "Load result", f"Could not read {path}:\n{exc}")
+            return False
+        self.sim.add_run(result, path.rsplit("/", 1)[-1])
+        return True
 
     def _save(self) -> None:
         run = self._selected_run()
@@ -238,9 +256,13 @@ class DataInspector(QWidget):
         if run is None:
             return
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export result", run.label.replace(":", ""), "CSV (*.csv);;MATLAB (*.mat)"
+            self, "Export result", run.label.replace(":", ""), "CSV (*.csv);;MATLAB (*.mat);;MDF4 (*.mf4)"
         )
         if path.endswith(".mat"):
             run.result.to_mat(path)
+        elif path.endswith(".mf4"):
+            from nervus.mdf import write_mdf
+
+            write_mdf(run.result, path)
         elif path:
             run.result.to_csv(path if path.endswith(".csv") else path + ".csv")

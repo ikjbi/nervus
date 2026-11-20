@@ -23,7 +23,7 @@ jobs:
       - name: Set up Python
         run: uv python install ${{ matrix.python-version }}
       - name: Install
-        run: uv sync --extra gui --extra can --python ${{ matrix.python-version }}
+        run: uv sync --extra gui --extra can --extra mdf --python ${{ matrix.python-version }}
       - name: Lint
         run: |
           uv run ruff check .

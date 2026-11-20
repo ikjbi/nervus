@@ -25,6 +25,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- MDF4 import and export (`nervus.mdf`, extra `mdf`): Data Inspector *Load…* reads `.mf4` measurements,
+  *Export* writes them.
 - XCP on CAN (`nervus.xcp`): the XCP Slave block makes a running model measurable and calibratable by INCA,
   CANape or `XcpMaster`; `XcpMaster` reads and writes a real ECU by A2L name; `read_a2l`.
 - CAN FD frames (up to 64 bytes, bit-rate switching on the bus), multiplexed signals (held when not sent),

@@ -105,4 +105,25 @@ Ready-made metrics are also available in Python: `metric("plate_angle", "max")` 
 
 **Simulation → Data Inspector** (⌘I / Ctrl+I) lists the recent runs, including test results. Check runs
 and signals to overlay them; with two runs it shows the largest difference, and *Difference to first run*
-plots the deviation. *Save run…* creates a baseline file for `baseline` checks; *Export* writes CSV or `.mat`.
+plots the deviation. *Save run…* creates a baseline file for `baseline` checks; *Load…* also reads MDF4
+measurements (`.mf4`); *Export* writes CSV, `.mat` or MDF4.
+
+### MDF4 measurement files
+
+**MDF4** (`.mf4`, ASAM MDF) is the file format of INCA, CANape, vehicle data loggers and test benches
+(`uv sync --extra mdf`). *Load…* also reads MDF4 files, so a vehicle measurement can be overlaid on a
+simulation, and *Export* writes a run as MDF4 to open it in the calibration tool. An MDF file keeps every
+channel group at its own rate (a logger records each CAN message at its own period); on loading, all channels
+are put on the time base of the group with the most samples, the others linearly interpolated. Text and
+byte-array channels are skipped.
+
+```python
+from nervus.mdf import mdf_channels, read_mdf, write_mdf
+
+mdf_channels("drive.mf4")  # {'n_engine': 'rpm', 'T_coolant': 'degC', ...}
+rec = read_mdf("drive.mf4", ["n_engine", "T_coolant"], raster=0.01)
+write_mdf(res, "simulation.mf4", units={"rpm": "rpm"})
+```
+
+A recorded channel can drive a model: `FromWorkspace(time=rec.t, data=rec["n_engine"])`, or an In block in a
+test case.

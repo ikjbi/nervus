@@ -125,9 +125,29 @@ Ready-made metrics are also available in Python: `metric("plate_angle", "max")` 
 **Simulation → Data Inspector** (⌘I) keeps the last 20 runs, both normal simulations and test results.
 Check runs and signals to overlay them. With two runs selected it shows the largest difference, and
 *Difference to first run* plots the deviation directly. *Save run…* writes a `.nervres` file (use it as a
-baseline), *Load…* reads one, and *Export* writes CSV or MATLAB `.mat`.
+baseline), *Load…* reads one (or an MDF4 measurement), and *Export* writes CSV, MATLAB `.mat` or MDF4.
 
 ![The Data Inspector comparing the two calibrations of the throttle controller](images/data-inspector.png)
+
+### MDF4 measurement files
+
+**MDF4** (`.mf4`, ASAM MDF) is the file format of INCA, CANape, vehicle data loggers and test benches
+(`uv sync --extra mdf`). *Load…* also reads MDF4 files, so a vehicle measurement can be overlaid on a
+simulation, and *Export* writes a run as MDF4 to open it in the calibration tool. An MDF file keeps every
+channel group at its own rate (a logger records each CAN message at its own period); on loading, all channels
+are put on the time base of the group with the most samples, the others linearly interpolated. Text and
+byte-array channels are skipped.
+
+```python
+from nervus.mdf import mdf_channels, read_mdf, write_mdf
+
+mdf_channels("drive.mf4")  # {'n_engine': 'rpm', 'T_coolant': 'degC', ...}
+rec = read_mdf("drive.mf4", ["n_engine", "T_coolant"], raster=0.01)
+write_mdf(res, "simulation.mf4", units={"rpm": "rpm"})
+```
+
+A recorded channel can drive a model: `FromWorkspace(time=rec.t, data=rec["n_engine"])`, or an In block in a
+test case.
 
 ## In Python
 

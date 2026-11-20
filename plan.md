@@ -170,7 +170,7 @@ tests/
 - [x] Scenario inputs: piecewise signals (hold/linear), CSV replay
 - [ ] Graphical signal editor (Signal Builder-like)
 - [x] Save/load simulation results (`.nervres`, compressed NPZ) and export CSV / MAT
-- [ ] Import/export ASAM MDF4 (`.mf4`, via `asammdf`), the format of INCA/CANape vehicle logs
+- [x] Import/export ASAM MDF4 (`.mf4`, via `asammdf`), the format of INCA/CANape vehicle logs
 - [x] Run several cases in batch
 - [x] Parameter sweeps and Monte Carlo runs (`nervus.sweep`); HTML test report
 - [x] Sweep and Monte Carlo dialog in the editor, with result plots
