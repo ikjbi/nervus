@@ -1,6 +1,6 @@
 # Tutorials
 
-30 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+31 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -64,6 +64,7 @@ How a vehicle moves, uses energy, and stays controllable.
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
 | *A car on a drive cycle* | beginner | 40 min | vehicle longitudinal dynamics, a driver model, standard drive cycles (ECE-15, WLTC, FTP-75), where the energy goes, fuel consumption |
+| *Electric vehicle range on the WLTP cycle* | beginner | 30 min | the energy chain of an electric car, drivetrain efficiency, regenerative braking, the winter heater, consumption in kWh/100 km and range |
 
 ### Chassis control
 

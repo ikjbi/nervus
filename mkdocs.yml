@@ -71,6 +71,7 @@ nav:
           - "Tutorial: Gear-shift logic": app-help/tutorial_gear_shift.md
           - "Tutorial: A truck on a mountain road": app-help/tutorial_truck.md
           - "Tutorial: A car on a drive cycle": app-help/tutorial_drive_cycle.md
+          - "Tutorial: Electric vehicle range on the WLTP cycle": app-help/tutorial_ev_range.md
           - "Tutorial: Tyre slip and traction control": app-help/tutorial_traction.md
           - "Tutorial: Anti-lock braking (ABS)": app-help/tutorial_abs.md
           - "Tutorial: RC and RLC circuits": app-help/tutorial_rc_rlc.md
@@ -117,6 +118,7 @@ nav:
       - Vehicle dynamics and energy:
           - Longitudinal dynamics and energy:
               - "A car on a drive cycle": tutorials/drive-cycle.md
+              - "Electric vehicle range on the WLTP cycle": tutorials/ev-range.md
           - Chassis control:
               - "Tyre slip and traction control": tutorials/traction-control.md
               - "Anti-lock braking (ABS)": tutorials/abs.md

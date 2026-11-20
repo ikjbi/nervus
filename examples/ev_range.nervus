@@ -1,0 +1,1146 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "ev_range",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 1800.0,
+    "solver": "rk4",
+    "step": 0.1,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "m",
+      "value": 1800.0,
+      "description": "Vehicle mass incl. driver",
+      "unit": "kg"
+    },
+    {
+      "name": "cd_A",
+      "value": 0.66,
+      "description": "Drag coefficient × frontal area",
+      "unit": "m²"
+    },
+    {
+      "name": "c_rr",
+      "value": 0.012,
+      "description": "Rolling resistance coefficient",
+      "unit": "-"
+    },
+    {
+      "name": "F_max",
+      "value": 6000.0,
+      "description": "Maximum traction force (1st gear)",
+      "unit": "N"
+    },
+    {
+      "name": "P_max",
+      "value": 150000.0,
+      "description": "Maximum engine power",
+      "unit": "W"
+    },
+    {
+      "name": "F_brake_max",
+      "value": 9000.0,
+      "description": "Maximum brake force",
+      "unit": "N"
+    },
+    {
+      "name": "Kp_driver",
+      "value": 0.5,
+      "description": "Driver proportional gain",
+      "unit": "1/(m/s)"
+    },
+    {
+      "name": "Ki_driver",
+      "value": 0.05,
+      "description": "Driver integral gain",
+      "unit": "1/m"
+    },
+    {
+      "name": "eta_engine",
+      "value": 0.25,
+      "description": "Average engine + gearbox efficiency",
+      "unit": "-"
+    },
+    {
+      "name": "eta_drive",
+      "value": 0.88,
+      "description": "Battery to wheel efficiency (inverter, motor, gearbox)",
+      "unit": "-"
+    },
+    {
+      "name": "eta_regen",
+      "value": 0.75,
+      "description": "Wheel to battery efficiency when recovering braking energy",
+      "unit": "-"
+    },
+    {
+      "name": "regen_share",
+      "value": 1.0,
+      "description": "Share of the braking power recovered (0: all friction brakes)",
+      "unit": "-"
+    },
+    {
+      "name": "P_aux",
+      "value": 300.0,
+      "description": "ECUs, pumps, fans, lights",
+      "unit": "W"
+    },
+    {
+      "name": "P_heater",
+      "value": 0.0,
+      "description": "Cabin heater (about 3000 W in winter, a heat pump about 1200 W)",
+      "unit": "W"
+    },
+    {
+      "name": "E_pack",
+      "value": 60.0,
+      "description": "Usable battery energy",
+      "unit": "kWh"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "drive_cycle",
+      "type": "sources.drive_cycle",
+      "params": {
+        "cycle": "wltc3b",
+        "csv_file": "",
+        "unit": "m/s",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "driver",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": -1.0,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          220.0,
+          40.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "v_ref",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "a_ref",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                150.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "v",
+            "type": "ports.inport",
+            "params": {
+              "port": 3,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                100.0
+              ]
+            }
+          },
+          {
+            "name": "speed_error",
+            "type": "math.sum",
+            "params": {
+              "signs": "+-",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                150.0,
+                40.0
+              ]
+            }
+          },
+          {
+            "name": "driver_pi",
+            "type": "control.pid",
+            "params": {
+              "P": "Kp_driver",
+              "I": "Ki_driver",
+              "D": 0.0,
+              "N": 1.0,
+              "initial_integrator": 0.0,
+              "upper": "inf",
+              "lower": "-inf",
+              "anti_windup": "none",
+              "Kb": 1.0
+            },
+            "meta": {
+              "position": [
+                300.0,
+                40.0
+              ]
+            }
+          },
+          {
+            "name": "feed_forward",
+            "type": "math.gain",
+            "params": {
+              "gain": "m / F_max",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                300.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "pedal_sum",
+            "type": "math.sum",
+            "params": {
+              "signs": "++",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                450.0,
+                100.0
+              ]
+            }
+          },
+          {
+            "name": "pedal",
+            "type": "math.saturation",
+            "params": {
+              "upper": 1.0,
+              "lower": -1.0
+            },
+            "meta": {
+              "position": [
+                600.0,
+                100.0
+              ]
+            }
+          },
+          {
+            "name": "tracking_error_kmh",
+            "type": "math.gain",
+            "params": {
+              "gain": 3.6,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                450.0,
+                300.0
+              ]
+            }
+          },
+          {
+            "name": "pedal_cmd",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                750.0,
+                100.0
+              ]
+            }
+          },
+          {
+            "name": "error_kmh",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            },
+            "meta": {
+              "position": [
+                600.0,
+                300.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "v_ref",
+            "src_port": 0,
+            "dst": "speed_error",
+            "dst_port": 0
+          },
+          {
+            "src": "v",
+            "src_port": 0,
+            "dst": "speed_error",
+            "dst_port": 1
+          },
+          {
+            "src": "speed_error",
+            "src_port": 0,
+            "dst": "driver_pi",
+            "dst_port": 0
+          },
+          {
+            "src": "driver_pi",
+            "src_port": 0,
+            "dst": "pedal_sum",
+            "dst_port": 0
+          },
+          {
+            "src": "a_ref",
+            "src_port": 0,
+            "dst": "feed_forward",
+            "dst_port": 0
+          },
+          {
+            "src": "feed_forward",
+            "src_port": 0,
+            "dst": "pedal_sum",
+            "dst_port": 1
+          },
+          {
+            "src": "pedal_sum",
+            "src_port": 0,
+            "dst": "pedal",
+            "dst_port": 0
+          },
+          {
+            "src": "pedal",
+            "src_port": 0,
+            "dst": "pedal_cmd",
+            "dst_port": 0
+          },
+          {
+            "src": "speed_error",
+            "src_port": 0,
+            "dst": "tracking_error_kmh",
+            "dst_port": 0
+          },
+          {
+            "src": "tracking_error_kmh",
+            "src_port": 0,
+            "dst": "error_kmh",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "vehicle",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": -1.0,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          520.0,
+          40.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "pedal",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "wheel_force",
+            "type": "user.python_function",
+            "params": {
+              "code": "def f(t, pedal, v):\n    \"\"\"Wheel force [N] from the pedal (-1 brake .. +1 throttle). p = [F_max N, P_max W, F_brake_max N]\"\"\"\n    if pedal >= 0:\n        return pedal * min(p[0], p[1] / max(v, 0.5))  # traction: force limit, then power limit\n    return pedal * p[2] * min(1.0, v / 0.2)  # brakes (fade out at standstill so the car does not roll back)\n",
+              "num_inputs": 2,
+              "num_outputs": 1,
+              "output_width": -1,
+              "parameters": "[F_max, P_max, F_brake_max]"
+            },
+            "meta": {
+              "position": [
+                150.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "net_force",
+            "type": "math.sum",
+            "params": {
+              "signs": "+--",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                300.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "1/m",
+            "type": "math.gain",
+            "params": {
+              "gain": "1 / m",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                450.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "speed",
+            "type": "continuous.integrator",
+            "params": {
+              "initial": 0.0,
+              "upper": "inf",
+              "lower": 0.0,
+              "external_reset": "none",
+              "initial_source": "internal",
+              "saturation_port": false
+            },
+            "meta": {
+              "position": [
+                600.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "v_squared",
+            "type": "math.product",
+            "params": {
+              "ops": "**",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                600.0,
+                150.0
+              ],
+              "flipped": true
+            }
+          },
+          {
+            "name": "F_aero",
+            "type": "math.gain",
+            "params": {
+              "gain": "0.5 * 1.2 * cd_A",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                450.0,
+                150.0
+              ],
+              "flipped": true
+            }
+          },
+          {
+            "name": "v_x10",
+            "type": "math.gain",
+            "params": {
+              "gain": 10.0,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                600.0,
+                260.0
+              ],
+              "flipped": true
+            }
+          },
+          {
+            "name": "rolling_onset",
+            "type": "math.function",
+            "params": {
+              "function": "tanh"
+            },
+            "meta": {
+              "position": [
+                450.0,
+                260.0
+              ],
+              "flipped": true
+            }
+          },
+          {
+            "name": "F_roll",
+            "type": "math.gain",
+            "params": {
+              "gain": "m * 9.81 * c_rr",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                300.0,
+                260.0
+              ],
+              "flipped": true
+            }
+          },
+          {
+            "name": "distance",
+            "type": "continuous.integrator",
+            "params": {
+              "initial": 0.0,
+              "upper": "inf",
+              "lower": "-inf",
+              "external_reset": "none",
+              "initial_source": "internal",
+              "saturation_port": false
+            },
+            "meta": {
+              "position": [
+                750.0,
+                120.0
+              ]
+            }
+          },
+          {
+            "name": "wheel_power",
+            "type": "math.product",
+            "params": {
+              "ops": "**",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                450.0,
+                400.0
+              ]
+            }
+          },
+          {
+            "name": "traction_power",
+            "type": "math.saturation",
+            "params": {
+              "upper": 1000000000.0,
+              "lower": 0.0
+            },
+            "meta": {
+              "position": [
+                600.0,
+                400.0
+              ]
+            }
+          },
+          {
+            "name": "wheel_energy_J",
+            "type": "continuous.integrator",
+            "params": {
+              "initial": 0.0,
+              "upper": "inf",
+              "lower": "-inf",
+              "external_reset": "none",
+              "initial_source": "internal",
+              "saturation_port": false
+            },
+            "meta": {
+              "position": [
+                750.0,
+                400.0
+              ]
+            }
+          },
+          {
+            "name": "v_out",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                900.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "distance_m",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            },
+            "meta": {
+              "position": [
+                900.0,
+                120.0
+              ]
+            }
+          },
+          {
+            "name": "energy_J",
+            "type": "ports.outport",
+            "params": {
+              "port": 3
+            },
+            "meta": {
+              "position": [
+                900.0,
+                400.0
+              ]
+            }
+          },
+          {
+            "name": "power_W",
+            "type": "ports.outport",
+            "params": {
+              "port": 4
+            },
+            "meta": {
+              "position": [
+                900.0,
+                500.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "pedal",
+            "src_port": 0,
+            "dst": "wheel_force",
+            "dst_port": 0
+          },
+          {
+            "src": "speed",
+            "src_port": 0,
+            "dst": "wheel_force",
+            "dst_port": 1
+          },
+          {
+            "src": "wheel_force",
+            "src_port": 0,
+            "dst": "net_force",
+            "dst_port": 0
+          },
+          {
+            "src": "F_aero",
+            "src_port": 0,
+            "dst": "net_force",
+            "dst_port": 1
+          },
+          {
+            "src": "F_roll",
+            "src_port": 0,
+            "dst": "net_force",
+            "dst_port": 2
+          },
+          {
+            "src": "net_force",
+            "src_port": 0,
+            "dst": "1/m",
+            "dst_port": 0
+          },
+          {
+            "src": "1/m",
+            "src_port": 0,
+            "dst": "speed",
+            "dst_port": 0
+          },
+          {
+            "src": "speed",
+            "src_port": 0,
+            "dst": "v_out",
+            "dst_port": 0
+          },
+          {
+            "src": "speed",
+            "src_port": 0,
+            "dst": "v_squared",
+            "dst_port": 0
+          },
+          {
+            "src": "speed",
+            "src_port": 0,
+            "dst": "v_squared",
+            "dst_port": 1
+          },
+          {
+            "src": "v_squared",
+            "src_port": 0,
+            "dst": "F_aero",
+            "dst_port": 0
+          },
+          {
+            "src": "speed",
+            "src_port": 0,
+            "dst": "v_x10",
+            "dst_port": 0
+          },
+          {
+            "src": "v_x10",
+            "src_port": 0,
+            "dst": "rolling_onset",
+            "dst_port": 0
+          },
+          {
+            "src": "rolling_onset",
+            "src_port": 0,
+            "dst": "F_roll",
+            "dst_port": 0
+          },
+          {
+            "src": "speed",
+            "src_port": 0,
+            "dst": "distance",
+            "dst_port": 0
+          },
+          {
+            "src": "distance",
+            "src_port": 0,
+            "dst": "distance_m",
+            "dst_port": 0
+          },
+          {
+            "src": "wheel_force",
+            "src_port": 0,
+            "dst": "wheel_power",
+            "dst_port": 0
+          },
+          {
+            "src": "speed",
+            "src_port": 0,
+            "dst": "wheel_power",
+            "dst_port": 1
+          },
+          {
+            "src": "wheel_power",
+            "src_port": 0,
+            "dst": "traction_power",
+            "dst_port": 0
+          },
+          {
+            "src": "traction_power",
+            "src_port": 0,
+            "dst": "wheel_energy_J",
+            "dst_port": 0
+          },
+          {
+            "src": "wheel_energy_J",
+            "src_port": 0,
+            "dst": "energy_J",
+            "dst_port": 0
+          },
+          {
+            "src": "wheel_power",
+            "src_port": 0,
+            "dst": "power_W",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "cycle_kmh",
+      "type": "math.gain",
+      "params": {
+        "gain": 3.6,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          220.0,
+          320.0
+        ]
+      }
+    },
+    {
+      "name": "speed_kmh",
+      "type": "math.gain",
+      "params": {
+        "gain": 3.6,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          820.0,
+          320.0
+        ]
+      }
+    },
+    {
+      "name": "speed_scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          1000.0,
+          320.0
+        ]
+      }
+    },
+    {
+      "name": "error_scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          520.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "distance_scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          1000.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "energy_scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          1000.0,
+          100.0
+        ]
+      }
+    },
+    {
+      "name": "power_scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 1
+      },
+      "meta": {
+        "position": [
+          1000.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "battery_power_W",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, wheel_power):\n    \"\"\"Battery power [W] for a wheel power [W]: losses when driving, partial recovery when braking, and the\n    auxiliaries. p = [eta_drive, eta_regen, regen_share, P_aux, P_heater]\"\"\"\n    if wheel_power >= 0.0:\n        drive = wheel_power / p[0]\n    else:\n        drive = wheel_power * p[1] * p[2]\n    return drive + p[3] + p[4]\n",
+        "num_inputs": 1,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": "[eta_drive, eta_regen, regen_share, P_aux, P_heater]"
+      },
+      "meta": {
+        "position": [
+          820.0,
+          420.0
+        ]
+      }
+    },
+    {
+      "name": "battery_energy_J",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": "-inf",
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          960.0,
+          420.0
+        ]
+      }
+    },
+    {
+      "name": "battery_kWh",
+      "type": "math.gain",
+      "params": {
+        "gain": 2.7777777777777776e-07,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1100.0,
+          420.0
+        ]
+      }
+    },
+    {
+      "name": "energy_kwh",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1240.0,
+          420.0
+        ]
+      }
+    },
+    {
+      "name": "distance_m",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          1240.0,
+          500.0
+        ]
+      }
+    },
+    {
+      "name": "battery_W",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          960.0,
+          520.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "drive_cycle",
+      "src_port": 0,
+      "dst": "driver",
+      "dst_port": 0
+    },
+    {
+      "src": "drive_cycle",
+      "src_port": 1,
+      "dst": "driver",
+      "dst_port": 1
+    },
+    {
+      "src": "vehicle",
+      "src_port": 0,
+      "dst": "driver",
+      "dst_port": 2
+    },
+    {
+      "src": "driver",
+      "src_port": 0,
+      "dst": "vehicle",
+      "dst_port": 0
+    },
+    {
+      "src": "driver",
+      "src_port": 1,
+      "dst": "error_scope",
+      "dst_port": 0
+    },
+    {
+      "src": "drive_cycle",
+      "src_port": 0,
+      "dst": "cycle_kmh",
+      "dst_port": 0
+    },
+    {
+      "src": "vehicle",
+      "src_port": 0,
+      "dst": "speed_kmh",
+      "dst_port": 0
+    },
+    {
+      "src": "cycle_kmh",
+      "src_port": 0,
+      "dst": "speed_scope",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_kmh",
+      "src_port": 0,
+      "dst": "speed_scope",
+      "dst_port": 1
+    },
+    {
+      "src": "vehicle",
+      "src_port": 1,
+      "dst": "distance_scope",
+      "dst_port": 0
+    },
+    {
+      "src": "vehicle",
+      "src_port": 2,
+      "dst": "energy_scope",
+      "dst_port": 0
+    },
+    {
+      "src": "vehicle",
+      "src_port": 3,
+      "dst": "power_scope",
+      "dst_port": 0
+    },
+    {
+      "src": "vehicle",
+      "src_port": 3,
+      "dst": "battery_power_W",
+      "dst_port": 0
+    },
+    {
+      "src": "battery_power_W",
+      "src_port": 0,
+      "dst": "battery_energy_J",
+      "dst_port": 0
+    },
+    {
+      "src": "battery_energy_J",
+      "src_port": 0,
+      "dst": "battery_kWh",
+      "dst_port": 0
+    },
+    {
+      "src": "battery_kWh",
+      "src_port": 0,
+      "dst": "energy_kwh",
+      "dst_port": 0
+    },
+    {
+      "src": "vehicle",
+      "src_port": 1,
+      "dst": "distance_m",
+      "dst_port": 0
+    },
+    {
+      "src": "battery_power_W",
+      "src_port": 0,
+      "dst": "battery_W",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "driver follows the cycle",
+      "description": "The speed stays within ±2 km/h of the cycle, and the distance matches the 994 m of ECE-15",
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "driver/tracking_error_kmh",
+          "lower": -2.0,
+          "upper": 2.0
+        },
+        {
+          "kind": "final_value",
+          "signal": "vehicle/distance",
+          "value": 994.0,
+          "tolerance": 10.0
+        }
+      ]
+    },
+    {
+      "name": "wheel energy of the 1300 kg car",
+      "description": "About 340 kJ for one ECE-15 cycle (9.5 kWh/100 km)",
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "final_value",
+          "signal": "vehicle/wheel_energy_J",
+          "value": 340000.0,
+          "tolerance": 10000.0
+        }
+      ]
+    },
+    {
+      "name": "heavier car needs more energy",
+      "description": "500 kg more: about 35 % more energy; accelerating and rolling grow with the mass, only drag does not",
+      "parameters": {
+        "m": 1800.0
+      },
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "final_value",
+          "signal": "vehicle/wheel_energy_J",
+          "value": 460000.0,
+          "tolerance": 12000.0
+        }
+      ]
+    }
+  ]
+}

@@ -114,6 +114,9 @@ TUTORIALS: list[Tutorial] = [
     Tutorial("drive-cycle", "A car on a drive cycle", _VEH, "Longitudinal dynamics and energy", "beginner", 40,
              "vehicle longitudinal dynamics, a driver model, standard drive cycles (ECE-15, WLTC, FTP-75), where "
              "the energy goes, fuel consumption", ("drive_cycle.nervus",), ("first-model",)),
+    Tutorial("ev-range", "Electric vehicle range on the WLTP cycle", _VEH, "Longitudinal dynamics and energy",
+             "beginner", 30, "the energy chain of an electric car, drivetrain efficiency, regenerative braking, the "
+             "winter heater, consumption in kWh/100 km and range", ("ev_range.nervus",), ("drive-cycle",)),
     Tutorial("traction-control", "Tyre slip and traction control", _VEH, "Chassis control", "intermediate", 30,
              "tyre slip and Pacejka's magic formula, wheel and vehicle dynamics, a traction control ECU on dry, "
              "wet and snowy roads", ("traction_control.nervus",), ("first-model",), app_page="tutorial_traction"),

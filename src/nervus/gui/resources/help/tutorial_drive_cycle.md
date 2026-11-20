@@ -97,4 +97,4 @@ The test cases in the **Test Manager** check the tracking, the distance and the 
 
 ## Next
 
-Next in this topic: *Tyre slip and traction control*. Or pick another one from the *tutorial overview*.
+Next in this topic: *Electric vehicle range on the WLTP cycle*. Or pick another one from the *tutorial overview*.

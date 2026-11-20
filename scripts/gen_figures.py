@@ -1823,6 +1823,32 @@ def charging_system() -> plt.Figure:
     return fig
 
 
+@figure("ev_range")
+def ev_range() -> plt.Figure:
+    m = _example("ev_range")
+    d = m.build()
+    r = simulate(d)
+    fig, (a0, a1) = plt.subplots(1, 2, figsize=(7.6, 3.4), width_ratios=[1.7, 1])
+    a0.plot(r.t, np.ravel(r["battery_W"]) / 1000, color=C1, lw=0.8)
+    a0.axhline(0, color=GRID, lw=1)
+    a0.set_xlabel("time [s]")
+    a0.set_ylabel("battery power [kW]")
+    a0.set_title("WLTC: negative = recovered while braking", color=INK, fontsize=9)
+    labels, values = [], []
+    for label, params in (("summer", {}), ("no regen", {"regen_share": 0.0}), ("heat pump", {"P_heater": 1200.0}),
+                          ("heater", {"P_heater": 3000.0})):  # fmt: skip
+        c = m.consumption(simulate(d, params=params), d)
+        labels.append(label)
+        values.append(c["range_km"])
+    a1.barh(labels, values, color=[C1, C2, C3, C4])
+    for k, v in enumerate(values):
+        a1.text(v - 5, k, f"{v:.0f} km", va="center", ha="right", color="white", fontsize=8)
+    a1.set_xlabel("range [km], 60 kWh")
+    a1.invert_yaxis()
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

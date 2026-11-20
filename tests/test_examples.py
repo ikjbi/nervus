@@ -494,3 +494,10 @@ def test_charging_system() -> None:
     assert all(r.passed for r in run_tests(d))
     off = simulate(d, params={"energy_mgmt": 0.0})
     assert m.ah(off, 0, 240) == pytest.approx(2.54, abs=0.05)
+
+
+def test_ev_range() -> None:
+    m = _import("ev_range")
+    d = m.build()
+    c = m.consumption(simulate(d), d)
+    assert c["kwh_per_100km"] == pytest.approx(15.5, abs=0.1) and c["range_km"] == pytest.approx(387, abs=3)

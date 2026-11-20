@@ -149,5 +149,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   [tutorial](tutorials/robustness-monte-carlo.md).
 - `charging_system.py`: the 12 V charging system with electrical energy management. See the
   [tutorial](tutorials/charging-system.md).
+- `ev_range.py`: the range of an electric car on the WLTP cycle, summer and winter. See the
+  [tutorial](tutorials/ev-range.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).
