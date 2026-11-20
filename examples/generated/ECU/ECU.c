@@ -23,7 +23,7 @@ void ECU_initialize(void)
 {
     uint32_T i;
     (void)i;
-    for (i = 0; i < 2u; i++) { ECU_DW.throttle_pi_x[i] = 0.0; }
+    for (i = 0u; i < 2u; i++) { ECU_DW.throttle_pi_x[i] = 0.0; }
 }
 
 void ECU_step(void)
@@ -44,7 +44,7 @@ void ECU_step(void)
     {
         real_T err = ECU_B.error[0];
         real_T d_term = ECU_P.throttle_pi_D[0] * ECU_P.throttle_pi_N[0] * (err - ECU_DW.throttle_pi_x[1]);
-        real_T unsat = ECU_P.Kp[0] * err + ECU_DW.throttle_pi_x[0] + d_term;
+        real_T unsat = (ECU_P.Kp[0] * err) + ECU_DW.throttle_pi_x[0] + d_term;
         real_T y = fmin(fmax(unsat, ECU_P.throttle_pi_lower[0]), ECU_P.throttle_pi_upper[0]);
         ECU_B.throttle_pi[0] = y;
     }
@@ -56,7 +56,7 @@ void ECU_step(void)
     {
         real_T err = ECU_B.error[0];
         real_T d_term = ECU_P.throttle_pi_D[0] * ECU_P.throttle_pi_N[0] * (err - ECU_DW.throttle_pi_x[1]);
-        real_T unsat = ECU_P.Kp[0] * err + ECU_DW.throttle_pi_x[0] + d_term;
+        real_T unsat = (ECU_P.Kp[0] * err) + ECU_DW.throttle_pi_x[0] + d_term;
         real_T y = fmin(fmax(unsat, ECU_P.throttle_pi_lower[0]), ECU_P.throttle_pi_upper[0]);
         real_T di = ECU_P.Ki[0] * err;
         if ((unsat != y) && (((unsat - y) > 0.0) == (di > 0.0)) && (di != 0.0)) { di = 0.0; }

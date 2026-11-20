@@ -120,7 +120,7 @@ What happens inside and between ECUs: networks, calibration, diagnostics and the
 
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
-| [From model to ECU C code](model-to-code.md) | intermediate | 40 min | an ECU software component with an interface, generated C code and its structure, calibration parameters and the A2L file, a back-to-back (SIL) test of the code |
+| [From model to ECU C code](model-to-code.md) | intermediate | 40 min | an ECU software component with an interface, generated C code and its structure, calibration parameters and the A2L file, a back-to-back (SIL) test of the code, a MISRA C check |
 | [A sensor signal chain in fixed point](fixed-point.md) | intermediate | 30 min | fixed-point data types (word length, fraction bits, resolution, range), an ADC model, quantization error, and the silent failure of a badly chosen range |
 | [Exchanging models with FMI](fmi.md) | intermediate | 30 min | FMI 2.0 co-simulation FMUs: exporting a subsystem, running it in another tool (fmpy, Simulink), importing an FMU as a block, and the communication-step delay of co-simulation |
 

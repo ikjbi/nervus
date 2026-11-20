@@ -162,7 +162,7 @@ TUTORIALS: list[Tutorial] = [
              ("ntc-sensor",)),
     Tutorial("model-to-code", "From model to ECU C code", _ECU, "From model to ECU code", "intermediate", 40,
              "an ECU software component with an interface, generated C code and its structure, calibration "
-             "parameters and the A2L file, a back-to-back (SIL) test of the code", ("throttle_ecu.nervus",),
+             "parameters and the A2L file, a back-to-back (SIL) test of the code, a MISRA C check", ("throttle_ecu.nervus",),
              ("first-model",), "[C code generation](../codegen.md)"),
     Tutorial("fixed-point", "A sensor signal chain in fixed point", _ECU, "From model to ECU code", "intermediate",
              30, "fixed-point data types (word length, fraction bits, resolution, range), an ADC model, "

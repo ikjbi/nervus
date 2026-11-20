@@ -69,7 +69,7 @@ def test_task_functions_in_the_code() -> None:
     code = generate_c(two_tasks(), tasks=True)
     h, c = code.files["ecu.h"], code.files["ecu.c"]
     assert "void ecu_task_10ms(void);" in h and "void ecu_task_100ms(void);" in h
-    assert "void ecu_task_10ms(void)" in c and "if (rt_hit[1]) { ecu_task_100ms(); }" in c
+    assert "void ecu_task_10ms(void)" in c and "if (rt_hit[1] != 0u) { ecu_task_100ms(); }" in c
 
 
 def test_missing_rate_transition_is_reported() -> None:

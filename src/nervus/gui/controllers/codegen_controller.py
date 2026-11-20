@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from PySide6.QtCore import QObject, Signal
@@ -34,6 +35,22 @@ class CodegenController(QObject):
         except NervusError as exc:
             self.errorOccurred.emit(str(exc), tuple(getattr(exc, "blocks", ())))
         return None
+
+    @staticmethod
+    def misra_available() -> bool:
+        from nervus.codegen.misra import cppcheck_path
+
+        return cppcheck_path() is not None
+
+    def misra_check(self, code: GeneratedCode) -> list[Any] | None:
+        """MISRA C:2012 findings (cppcheck's MISRA addon); None if the check could not run."""
+        from nervus.codegen.misra import misra_check
+
+        try:
+            return misra_check(code)
+        except RuntimeError as exc:
+            self.errorOccurred.emit(str(exc), ())
+            return None
 
     def export_fmu(self, target: Diagram | Block, path: str | Path) -> Path | None:
         """Export ``target`` as an FMI 2.0 co-simulation FMU (generated C code, compiled for this platform)."""

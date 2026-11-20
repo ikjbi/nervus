@@ -148,9 +148,9 @@ When blocks run at different rates (e.g. 10 ms and 50 ms), `<name>_step()` is ca
 (the greatest common divisor of the periods). Rate counters decide which blocks run in each step:
 
 ```c
-for (i = 0; i < 2u; i++) { rt_hit[i] = (rt_count[i] == 0u); }
+for (i = 0u; i < 2u; i++) { rt_hit[i] = (rt_count[i] == 0u) ? 1u : 0u; }
 ...
-if (rt_hit[1]) {        /* blocks of the 50 ms rate */
+if (rt_hit[1] != 0u) {  /* blocks of the 50 ms rate */
     ...
 }
 ```
@@ -204,7 +204,6 @@ Custom blocks can provide their own C template with `@nervus.codegen.template("m
   [Data types](datatypes.md)), but arithmetic between conversions is done in `double`.
 - Discrete blocks with a sample-time **offset** start in their first hit; their output before the
   first hit is 0 in the generated code.
-- MISRA C checking (cppcheck) and XCP (live measurement and calibration over CAN) are planned.
 
 ## From Python
 
@@ -220,6 +219,45 @@ code.write("build/ECU")
 result = back_to_back(model.block("ECU"), {"target_deg": 60.0, "tps_deg": 5.0}, steps=500)
 print(result.summary())
 ```
+
+## MISRA C
+
+**MISRA C:2012** is the coding standard for safety-related C in the automotive industry: ISO 26262 asks for a coding
+standard, and most ECU projects choose MISRA. The generated code follows it, and **MISRA check** in the code
+generation dialog checks it with the free checker **cppcheck** and its MISRA addon (install it with
+`brew install cppcheck` or `apt install cppcheck`). From Python:
+
+```python
+from nervus.codegen.misra import misra_check
+
+findings = misra_check(generate_c(model.block("ECU")))  # [] : no findings
+```
+
+What the generated code does for it:
+
+| Rule | In the generated code |
+|---|---|
+| 10.4, 7.2 | unsigned loop counters and index constants (`for (i = 0u; i < 4u; i++)`) |
+| 12.1 | explicit parentheses: `(Kp * err) + x`, `(a != 0.0) && (b != 0.0)` |
+| 14.4 | conditions are comparisons: `if ((st & 0x02u) != 0u)`, never `if (st & 0x02u)` |
+| 15.7 | every `if … else if` chain ends with an `else` |
+| 2.2, 2.3 | no `+ 0` in index expressions; only the type aliases the model uses |
+| 8.9 | data used by one function only is declared in it (e.g. the rate periods) |
+| 12.3 | one declaration per line |
+
+The check analyses `<name>.c` and `<name>.h` (with `main_example.c`, so the calls of the step function count, but
+its own findings are not reported). Three rules are **deviations**, as a MISRA compliance report records them:
+
+| Rule | Why |
+|---|---|
+| 2.5 (advisory) | `<MODEL>_BASE_PERIOD` is part of the interface, for the scheduler that calls the step function |
+| 8.7 (advisory) | `<model>_P` has external linkage so the calibration tool (XCP, A2L) and other ECU code reach the parameters |
+| 7.3 | a false positive of the addon: the last letter of an identifier like `pedal` taken for an `l` suffix |
+
+The test suite checks the code of every block with a C template and several example ECUs this way, and compiles it
+with `-std=c99 -Wall -Wextra -Werror -pedantic`. cppcheck checks the rules a tool can decide; a MISRA compliance
+claim for a project also needs a review of the rules no tool can decide, and a compliance report. Many projects use
+a commercial checker (PC-lint, Polyspace, QA-C) as well.
 
 ## FMI export
 

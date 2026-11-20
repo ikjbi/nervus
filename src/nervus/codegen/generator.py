@@ -146,6 +146,8 @@ class Emitter:
         else:
             fname = f"{self.cname}_{pname}"
             comment = f"{self.path}: {pname}" + (f" = {expr}" if expr else "")
+        if fname in self.gen.global_names():
+            fname += "_prm"  # e.g. parameter P of a block named like the model: not the same name as <model>_P
         self.gen.add_param(fname, arr, comment, dtype, const)
         return f"{self.gen.prefix}_{'C' if const else 'P'}.{fname}"
 
@@ -205,7 +207,7 @@ class Emitter:
         if width == 1:
             return body("0")
         lines = body("i")
-        return [f"for (i = 0; i < {width}; i++) {{", *[f"    {line}" for line in lines], "}"]
+        return [f"for (i = 0u; i < {width}u; i++) {{", *[f"    {line}" for line in lines], "}"]
 
 
 Template = Callable[[Emitter], BlockCode]
@@ -221,6 +223,32 @@ def template(*type_ids: str) -> Callable[[Template], Template]:
         return fn
 
     return deco
+
+
+def _drop_unused_types(header: str, others: list[str]) -> str:
+    """Remove the ``typedef`` lines of the type aliases that no generated file uses (MISRA C:2012 rule 2.3)."""
+    lines = header.split("\n")
+    text = "\n".join([*(x for x in lines if not x.startswith("typedef ")), *others])
+    keep = []
+    for line in lines:
+        m = re.match(r"typedef \w+ (\w+);$", line)
+        if m is None or re.search(rf"\b{m.group(1)}\b", text):
+            keep.append(line)
+    return "\n".join(keep)
+
+
+def c_index(*terms: int | str) -> str:
+    """A C array index as the sum of ``terms``, with the constant terms folded into one unsigned literal: no
+    ``+ 0`` (MISRA C:2012 rule 2.2) and no signed constants next to unsigned loop counters (rule 10.4)."""
+    const, rest = 0, []
+    for term in terms:
+        if isinstance(term, int) or str(term).isdigit():
+            const += int(term)
+        else:
+            rest.append(str(term))
+    if not rest:
+        return str(const)
+    return " + ".join(rest + ([f"{const}u"] if const else []))
 
 
 @dataclass
@@ -345,8 +373,10 @@ class CGenerator:
                 span = c_float(float(dtype.stored_max - dtype.stored_min + 1))
                 body += [f"    q = fmod(q - {lo}, {span});", f"    if (q < 0.0) {{ q += {span}; }}", f"    q += {lo};"]
             else:
-                body += [f"    if (q > {hi}) {{ q = {hi}; }} else if (q < {lo}) {{ q = {lo}; }}"]
-            body += [f"    return q * {c_float(dtype.slope)} + {c_float(dtype.bias)};"]
+                body += [
+                    f"    if (q > {hi}) {{ q = {hi}; }} else if (q < {lo}) {{ q = {lo}; }} else {{ /* in range */ }}"
+                ]
+            body += [f"    return (q * {c_float(dtype.slope)}) + {c_float(dtype.bias)};"]
         self.quantizers[name] = "\n".join(
             [
                 f"/* {dtype.name}, rounding {rounding}, overflow {overflow} */",
@@ -369,6 +399,12 @@ class CGenerator:
         if existing is not None and existing.init != vals:
             raise CodegenError(f"parameter {fname} has conflicting values ({existing.init} vs {vals})")
         self.params[fname] = _Field(fname, len(vals), vals, comment, dtype, const)
+
+    def global_names(self) -> set[str]:
+        """The names with external linkage in the generated code (MISRA C:2012 rule 5.8: no other identifier may
+        reuse them, not even a struct field)."""
+        p = self.prefix
+        return {f"{p}_{x}" for x in ("U", "Y", "P", "C", "B", "DW", "step", "initialize")}
 
     def param_fields(self, const: bool = False) -> list[_Field]:
         """Calibratable (or constant) parameters, largest types first so the struct has no padding."""
@@ -431,7 +467,7 @@ class CGenerator:
                     fn = self.quantizer(dtype, rounding, overflow)
                     var, w = self.signal_var(i, p), m.out_widths[i][p]
                     code.outputs.append(
-                        f"for (i = 0; i < {w}; i++) {{ {var}[i] = {fn}({var}[i]); }} /* {dtype.name} */"
+                        f"for (i = 0u; i < {w}u; i++) {{ {var}[i] = {fn}({var}[i]); }} /* {dtype.name} */"
                     )
 
         inputs = [(i, b) for i, b in enumerate(m.blocks) if isinstance(b, Inport)]
@@ -448,6 +484,8 @@ class CGenerator:
         self.task_plan = self._task_plan(steps) if self.tasks else None
         header = self._header(in_fields, out_fields, base_period, steps)
         source = self._source(codes, steps, base_period)
+        header = _drop_unused_types(header, [source, self._sil(in_fields, out_fields),
+                                             self._main_example(in_fields, out_fields, base_period)])  # fmt: skip
         files = {
             f"{self.prefix}.h": header,
             f"{self.prefix}.c": source,
@@ -596,7 +634,7 @@ class CGenerator:
                 if code.outputs:
                     init_out += [label, *code.outputs]
                 continue
-            guard = f"rt_hit[{rate}]" if (kind is Kind.DISCRETE and multirate) else None
+            guard = f"rt_hit[{rate}] != 0u" if (kind is Kind.DISCRETE and multirate) else None
             if code.outputs:
                 if guard:
                     body_out += [label, f"if ({guard}) {{", *[f"    {x}" for x in code.outputs], "}"]
@@ -627,14 +665,17 @@ class CGenerator:
         if multirate:
             lines += [
                 f"static uint32_T rt_count[{len(steps)}];",
-                f"static const uint32_T rt_period[{len(steps)}] = {{" + ", ".join(f"{n}u" for n, _ in steps) + "};",
-                f"static int rt_hit[{len(steps)}];",
+                *(
+                    [f"static uint8_T rt_hit[{len(steps)}]; /* shared by the task functions */"]
+                    if self.task_plan is not None
+                    else []
+                ),
                 "",
             ]
         lines += [f"void {pfx}_initialize(void)", "{", "    uint32_T i;", "    (void)i;"]
         for f in self.states.values():
             if all(v == 0 for v in f.init):
-                lines.append(f"    for (i = 0; i < {f.size}u; i++) {{ {pfx}_DW.{f.name}[i] = 0.0; }}")
+                lines.append(f"    for (i = 0u; i < {f.size}u; i++) {{ {pfx}_DW.{f.name}[i] = 0.0; }}")
             else:
                 for k, v in enumerate(f.init):
                     lines.append(f"    {pfx}_DW.{f.name}[{k}] = {c_float(v)};")
@@ -645,19 +686,22 @@ class CGenerator:
                 )
         lines += [f"    {x}" for x in init_out]
         if self.task_plan is not None:
-            lines += ["}", "", *self._task_functions(codes, len(steps))]
+            lines += ["}", "", *self._task_functions(codes, steps)]
             return "\n".join(lines)
-        lines += ["}", "", f"void {pfx}_step(void)", "{", "    uint32_T i;", "    (void)i;"]
+        lines += ["}", "", f"void {pfx}_step(void)", "{", "    uint32_T i;"]
         if multirate:
-            lines += [f"    for (i = 0; i < {len(steps)}u; i++) {{ rt_hit[i] = (rt_count[i] == 0u); }}"]
+            lines += [f"    {self._rt_period(steps)}", f"    uint8_T rt_hit[{len(steps)}];"]
+        lines += ["    (void)i;"]
+        if multirate:
+            lines += [f"    for (i = 0u; i < {len(steps)}u; i++) {{ rt_hit[i] = (rt_count[i] == 0u) ? 1u : 0u; }}"]
         lines += ["", "    /* outputs */", *[f"    {x}" for x in body_out]]
         lines += ["", "    /* state updates */", *[f"    {x}" for x in body_upd]]
         if multirate:
             lines += [
                 "",
                 "    /* advance the rate counters */",
-                f"    for (i = 0; i < {len(steps)}u; i++) {{",
-                "        rt_count[i] = (rt_count[i] + 1u == rt_period[i]) ? 0u : rt_count[i] + 1u;",
+                f"    for (i = 0u; i < {len(steps)}u; i++) {{",
+                "        rt_count[i] = ((rt_count[i] + 1u) == rt_period[i]) ? 0u : (rt_count[i] + 1u);",
                 "    }",
             ]
         lines += ["}", ""]
@@ -670,6 +714,11 @@ class CGenerator:
         ms = period * 1000
         tag = f"{round(ms)}ms" if abs(ms - round(ms)) < 1e-9 and ms >= 1 else f"{period:g}s".replace(".", "p")
         return f"{self.prefix}_task_{tag}"
+
+    @staticmethod
+    def _rt_period(steps: list[tuple[int, int]]) -> str:
+        """The base steps between two runs of each rate (a constant local of the function that counts them)."""
+        return f"static const uint32_T rt_period[{len(steps)}] = {{" + ", ".join(f"{n}u" for n, _ in steps) + "};"
 
     def _task_plan(self, steps: list[tuple[int, int]]) -> dict[str, Any]:
         """Which task runs the outputs and the update of every block, checked for deterministic data transfer."""
@@ -765,7 +814,8 @@ class CGenerator:
             lines.append(f"void {self.task_name(k)}(void); /* every {m.rates[k].period:g} s */")
         return lines
 
-    def _task_functions(self, codes: list[BlockCode], n_rates: int) -> list[str]:
+    def _task_functions(self, codes: list[BlockCode], steps: list[tuple[int, int]]) -> list[str]:
+        n_rates = len(steps)
         plan = self.task_plan
         assert plan is not None
         pfx, m = self.prefix, self.model
@@ -779,31 +829,34 @@ class CGenerator:
                 g = plan["guard"][i]
                 if plan["out"][i] == k and code.outputs:
                     body = (
-                        [f"if (rt_hit[{g}]) {{", *[f"    {x}" for x in code.outputs], "}"]
+                        [f"if (rt_hit[{g}] != 0u) {{", *[f"    {x}" for x in code.outputs], "}"]
                         if g is not None
                         else code.outputs
                     )
                     out_lines += [label, *body]
                 if plan["upd"][i] == k and code.update:
                     upd_lines += [label, *code.update]
-            lines += [f"void {self.task_name(k)}(void)", "{", "    uint32_T i;", "    (void)i;"]
+            lines += [f"void {self.task_name(k)}(void)", "{", "    uint32_T i;"]
             if k == fastest and n_rates > 1:
-                lines += [f"    for (i = 0; i < {n_rates}u; i++) {{ rt_hit[i] = (rt_count[i] == 0u); }}"]
+                lines += [f"    {self._rt_period(steps)}"]
+            lines += ["    (void)i;"]
+            if k == fastest and n_rates > 1:
+                lines += [f"    for (i = 0u; i < {n_rates}u; i++) {{ rt_hit[i] = (rt_count[i] == 0u) ? 1u : 0u; }}"]
             lines += ["", "    /* outputs */", *[f"    {x}" for x in out_lines]]
             lines += ["", "    /* state updates */", *[f"    {x}" for x in upd_lines]]
             if k == fastest and n_rates > 1:
                 lines += [
                     "",
                     "    /* this task counts the ticks of all tasks */",
-                    f"    for (i = 0; i < {n_rates}u; i++) {{",
-                    "        rt_count[i] = (rt_count[i] + 1u == rt_period[i]) ? 0u : rt_count[i] + 1u;",
+                    f"    for (i = 0u; i < {n_rates}u; i++) {{",
+                    "        rt_count[i] = ((rt_count[i] + 1u) == rt_period[i]) ? 0u : (rt_count[i] + 1u);",
                     "    }",
                 ]
             lines += ["}", ""]
         lines += [f"void {pfx}_step(void)", "{", f"    {self.task_name(fastest)}();"]
         for k in plan["order"]:
             if k != fastest:
-                lines.append(f"    if (rt_hit[{k}]) {{ {self.task_name(k)}(); }}")
+                lines.append(f"    if (rt_hit[{k}] != 0u) {{ {self.task_name(k)}(); }}")
         lines += ["}", ""]
         return lines
 

@@ -189,8 +189,8 @@ tests/
 - [x] Software-in-the-loop (SIL): compile the generated C, run it via ctypes, and compare it with the Python
       simulation (back-to-back test)
 - [x] Code generation report (HTML): block-to-code traceability, memory use
-- [ ] Generated code follows MISRA C guidelines (checked with cppcheck's MISRA addon); compiles with
-      `-Wall -Wextra -Werror -pedantic` already
+- [x] Generated code follows MISRA C guidelines (checked with cppcheck's MISRA addon; three documented
+      deviations); compiles with `-Wall -Wextra -Werror -pedantic`
 - [ ] Generate code for blocks with offsets exactly like the simulation's first step
 - [x] Optional `const` parameters (ROM) instead of calibratable RAM (variable not calibratable)
 - [ ] Reusable functions for subsystems instead of inlining

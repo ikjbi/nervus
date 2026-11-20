@@ -13,7 +13,7 @@ from typing import Any
 
 import numpy as np
 
-from nervus.codegen.generator import BlockCode, CodegenError, Emitter, c_float, template
+from nervus.codegen.generator import BlockCode, CodegenError, Emitter, c_float, c_index, template
 from nervus.core.types import as_signal
 
 # ---------------------------------------------------------------------------- ports, sources, sinks
@@ -82,10 +82,10 @@ def _gain(e: Emitter) -> BlockCode:
         u = e.u_var(0)
         return BlockCode(
             [
-                f"for (i = 0; i < {rows}; i++) {{",
+                f"for (i = 0u; i < {rows}u; i++) {{",
                 "    uint32_T j;",
                 f"    {e.y(0, 'i')} = 0.0;",
-                f"    for (j = 0; j < {cols}u; j++) {{ {e.y(0, 'i')} += {kp}[i * {cols}u + j] * {u}[j]; }}",
+                f"    for (j = 0u; j < {cols}u; j++) {{ {e.y(0, 'i')} += {kp}[(i * {cols}u) + j] * {u}[j]; }}",
                 "}",
             ]
         )
@@ -233,7 +233,7 @@ def _rate_limiter(e: Emitter) -> BlockCode:
 
     def body(ix: str) -> list[str]:
         u, y, prev = e.u(0, ix), e.y(0, ix), f"{s}[{ix}]"
-        return [f"{y} = fmin(fmax({u}, {prev} + {fall} * {ts}), {prev} + {rise} * {ts});"]
+        return [f"{y} = fmin(fmax({u}, {prev} + ({fall} * {ts})), {prev} + ({rise} * {ts}));"]
 
     return BlockCode(e.each(e.w(), body), e.each(e.w(), lambda ix: [f"{s}[{ix}] = {e.y(0, ix)};"]))
 
@@ -283,7 +283,7 @@ def _mux(e: Emitter) -> BlockCode:
     lines, offset = [], 0
     for k, w in enumerate(e.in_widths):
         u = e.u_var(k)
-        lines.append(f"for (i = 0; i < {w}; i++) {{ {e.y(0, f'{offset} + i')} = {u}[i]; }}")
+        lines.append(f"for (i = 0u; i < {w}u; i++) {{ {e.y(0, c_index(offset, 'i'))} = {u}[i]; }}")
         offset += w
     return BlockCode(lines)
 
@@ -293,7 +293,7 @@ def _demux(e: Emitter) -> BlockCode:
     lines, offset = [], 0
     u = e.u_var(0)
     for p, w in enumerate(e.out_widths):
-        lines.append(f"for (i = 0; i < {w}; i++) {{ {e.y(p, 'i')} = {u}[{offset} + i]; }}")
+        lines.append(f"for (i = 0u; i < {w}u; i++) {{ {e.y(p, 'i')} = {u}[{c_index(offset, 'i')}]; }}")
         offset += w
     return BlockCode(lines)
 
@@ -355,8 +355,8 @@ def _integer_delay(e: Emitter) -> BlockCode:
     w, n = e.w(), int(e.block.params["delay"])
     s = e.state("buf", e.block.initial_discrete_state(), f"last {n} inputs, oldest first")
     out = e.each(w, lambda ix: [f"{e.y(0, ix)} = {s}[{ix}];"])
-    upd = [f"for (i = 0; i < {(n - 1) * w}u; i++) {{ {s}[i] = {s}[i + {w}u]; }}"] if n > 1 else []
-    upd += e.each(w, lambda ix: [f"{s}[{(n - 1) * w} + {ix}] = {e.u(0, ix)};"])
+    upd = [f"for (i = 0u; i < {(n - 1) * w}u; i++) {{ {s}[i] = {s}[i + {w}u]; }}"] if n > 1 else []
+    upd += e.each(w, lambda ix: [f"{s}[{c_index((n - 1) * w, ix)}] = {e.u(0, ix)};"])
     return BlockCode(out, upd)
 
 
@@ -372,7 +372,7 @@ def _discrete_integrator(e: Emitter) -> BlockCode:
     ts = c_float(e.period)
 
     def step(ix: str) -> str:
-        return f"fmin(fmax({s}[{ix}] + {k} * {ts} * {e.u(0, ix)}, {lo}), {hi})"
+        return f"fmin(fmax({s}[{ix}] + ({k} * {ts} * {e.u(0, ix)}), {lo}), {hi})"
 
     pre: list[str] = []
     post: list[str] = []
@@ -405,16 +405,16 @@ def _discrete_tf(e: Emitter) -> BlockCode:
     s = e.state("x", e.block.initial_discrete_state(), "state vector")
     ap, bp, cp, dp = (e.param(nm, m.ravel()) for nm, m in (("A", a), ("B", b), ("C", c), ("D", d)))
     u = e.u(0, "0")
-    out = [f"{e.y(0, '0')} = {dp}[0] * {u};", f"for (i = 0; i < {n}; i++) {{ {e.y(0, '0')} += {cp}[i] * {s}[i]; }}"]
+    out = [f"{e.y(0, '0')} = {dp}[0] * {u};", f"for (i = 0u; i < {n}u; i++) {{ {e.y(0, '0')} += {cp}[i] * {s}[i]; }}"]
     upd = [
         "{",
         f"    real_T x_new[{n}];",
         "    uint32_T j;",
-        f"    for (i = 0; i < {n}; i++) {{",
+        f"    for (i = 0u; i < {n}u; i++) {{",
         f"        x_new[i] = {bp}[i] * {u};",
-        f"        for (j = 0; j < {n}u; j++) {{ x_new[i] += {ap}[i * {n}u + j] * {s}[j]; }}",
+        f"        for (j = 0u; j < {n}u; j++) {{ x_new[i] += {ap}[(i * {n}u) + j] * {s}[j]; }}",
         "    }",
-        f"    for (i = 0; i < {n}; i++) {{ {s}[i] = x_new[i]; }}",
+        f"    for (i = 0u; i < {n}u; i++) {{ {s}[i] = x_new[i]; }}",
         "}",
     ]
     return BlockCode(out, upd)
@@ -496,13 +496,13 @@ def _moving_average(e: Emitter) -> BlockCode:
             f"{e.y(0, ix)} = {e.u(0, ix)};",
             "{",
             "    uint32_T k;",
-            f"    for (k = 0; k < {n - 1}u; k++) {{ {e.y(0, ix)} += {s}[k * {w}u + {ix}]; }}",
+            f"    for (k = 0u; k < {n - 1}u; k++) {{ {e.y(0, ix)} += {s}[{c_index(f'k * {w}u' if w != 1 else 'k', ix)}]; }}",
             "}",
             f"{e.y(0, ix)} /= {n}.0;",
         ]
 
-    upd = [f"for (i = 0; i < {(n - 2) * w}u; i++) {{ {s}[i] = {s}[i + {w}u]; }}"] if n > 2 else []
-    upd += e.each(w, lambda ix: [f"{s}[{(n - 2) * w} + {ix}] = {e.u(0, ix)};"])
+    upd = [f"for (i = 0u; i < {(n - 2) * w}u; i++) {{ {s}[i] = {s}[i + {w}u]; }}"] if n > 2 else []
+    upd += e.each(w, lambda ix: [f"{s}[{c_index((n - 2) * w, ix)}] = {e.u(0, ix)};"])
     return BlockCode(e.each(w, out), upd)
 
 
@@ -519,7 +519,7 @@ def _discrete_pid(e: Emitter) -> BlockCode:
     law = [
         f"real_T err = {u};",
         f"real_T d_term = {kd} * {kn} * (err - {s}[1]);",
-        f"real_T unsat = {kp} * err + {s}[0] + d_term;",
+        f"real_T unsat = ({kp} * err) + {s}[0] + d_term;",
         f"real_T y = fmin(fmax(unsat, {lo}), {hi});",
     ]
     di = [f"real_T di = {ki} * err;"]
@@ -577,7 +577,7 @@ def _lookup1d(e: Emitter) -> BlockCode:
             "    uint32_T k;",
             "    real_T f;",
             *[f"    {x}" for x in _locate_c(e.u(0, ix), lambda j: e.at(bp, j), n, interp, extrap, "k", "f")],
-            f"    {e.y(0, ix)} = {t('k')} + f * ({t('k + 1u')} - {t('k')});",
+            f"    {e.y(0, ix)} = {t('k')} + (f * ({t('k + 1u')} - {t('k')}));",
             "}",
         ]
 
@@ -626,7 +626,7 @@ def _interpolation(e: Emitter) -> BlockCode:
                 "{",
                 f"    uint32_T k = {index(0, ix, shape[0])};",
                 f"    real_T f = {e.u(1, ix)};",
-                f"    {e.y(0, ix)} = {e.at(tab, 'k')} + f * ({e.at(tab, 'k + 1u')} - {e.at(tab, 'k')});",
+                f"    {e.y(0, ix)} = {e.at(tab, 'k')} + (f * ({e.at(tab, 'k + 1u')} - {e.at(tab, 'k')}));",
                 "}",
             ]
 
@@ -662,17 +662,19 @@ def _lookup2d(e: Emitter) -> BlockCode:
     interp, extrap = e.block.params["interpolation"], e.block.params["extrapolation"]
 
     def t(i: str, j: str) -> str:
-        return e.at(tab, f"({i}) * {nc}u + ({j})")
+        return e.at(tab, f"(({i}) * {nc}u) + ({j})")
 
     def body(ix: str) -> list[str]:
         return [
             "{",
-            "    uint32_T r, c;",
-            "    real_T fr, fc;",
+            "    uint32_T r;",
+            "    uint32_T c;",
+            "    real_T fr;",
+            "    real_T fc;",
             *[f"    {x}" for x in _locate_c(e.u(0, ix), lambda j: e.at(rb, j), nr, interp, extrap, "r", "fr")],
             *[f"    {x}" for x in _locate_c(e.u(1, ix), lambda j: e.at(cb, j), nc, interp, extrap, "c", "fc")],
-            f"    {e.y(0, ix)} = (1.0 - fr) * (1.0 - fc) * {t('r', 'c')} + (1.0 - fr) * fc * {t('r', 'c + 1u')}",
-            f"        + fr * (1.0 - fc) * {t('r + 1u', 'c')} + fr * fc * {t('r + 1u', 'c + 1u')};",
+            f"    {e.y(0, ix)} = ((1.0 - fr) * (1.0 - fc) * {t('r', 'c')}) + ((1.0 - fr) * fc * {t('r', 'c + 1u')})",
+            f"        + (fr * (1.0 - fc) * {t('r + 1u', 'c')}) + (fr * fc * {t('r + 1u', 'c + 1u')});",
             "}",
         ]
 
@@ -690,20 +692,22 @@ def _adaptive_map(e: Emitter) -> BlockCode:
 
     def locate() -> list[str]:
         return [
-            "    uint32_T r, c;",
-            "    real_T fr, fc;",
+            "    uint32_T r;",
+            "    uint32_T c;",
+            "    real_T fr;",
+            "    real_T fc;",
             *[f"    {x}" for x in _locate_c(e.u(0, "0"), lambda j: e.at(rb, j), nr, "linear", "clip", "r", "fr")],
             *[f"    {x}" for x in _locate_c(e.u(1, "0"), lambda j: e.at(cb, j), nc, "linear", "clip", "c", "fc")],
         ]
 
     def t(i: str, j: str) -> str:
-        return f"{tab}[({i}) * {nc}u + ({j})]"
+        return f"{tab}[(({i}) * {nc}u) + ({j})]"
 
     out = [
         "{",
         *locate(),
-        f"    {e.y(0, '0')} = (1.0 - fr) * (1.0 - fc) * {t('r', 'c')} + (1.0 - fr) * fc * {t('r', 'c + 1u')}",
-        f"        + fr * (1.0 - fc) * {t('r + 1u', 'c')} + fr * fc * {t('r + 1u', 'c + 1u')};",
+        f"    {e.y(0, '0')} = ((1.0 - fr) * (1.0 - fc) * {t('r', 'c')}) + ((1.0 - fr) * fc * {t('r', 'c + 1u')})",
+        f"        + (fr * (1.0 - fc) * {t('r + 1u', 'c')}) + (fr * fc * {t('r + 1u', 'c + 1u')});",
         "}",
     ]
     upd = [
@@ -713,12 +717,12 @@ def _adaptive_map(e: Emitter) -> BlockCode:
         "    real_T w[4];",
         "    uint32_T k[4];",
         "    uint32_T q;",
-        "    w[0] = (1.0 - fr) * (1.0 - fc); k[0] = r * " + f"{nc}u + c;",
-        "    w[1] = (1.0 - fr) * fc; k[1] = r * " + f"{nc}u + c + 1u;",
-        "    w[2] = fr * (1.0 - fc); k[2] = (r + 1u) * " + f"{nc}u + c;",
-        "    w[3] = fr * fc; k[3] = (r + 1u) * " + f"{nc}u + c + 1u;",
+        f"    w[0] = (1.0 - fr) * (1.0 - fc); k[0] = (r * {nc}u) + c;",
+        f"    w[1] = (1.0 - fr) * fc; k[1] = (r * {nc}u) + c + 1u;",
+        f"    w[2] = fr * (1.0 - fc); k[2] = ((r + 1u) * {nc}u) + c;",
+        f"    w[3] = fr * fc; k[3] = ((r + 1u) * {nc}u) + c + 1u;",
         "    for (q = 0u; q < 4u; q++) {",
-        f"        {tab}[k[q]] = fmin(fmax({tab}[k[q]] + step * w[q], -{lim}), {lim});",
+        f"        {tab}[k[q]] = fmin(fmax({tab}[k[q]] + (step * w[q]), -{lim}), {lim});",
         "    }",
         "}",
     ]
@@ -925,10 +929,10 @@ def _state_chart(e: Emitter) -> BlockCode:
         for c in states[k].children:
             rest += process(c)
         if outgoing:
-            body += ["} else {", *[f"    {x}" for x in rest], "}"] if rest else ["}"]
+            body += ["} else {", *([f"    {x}" for x in rest] or ["    /* no transition */"]), "}"]
         else:
             body += rest
-        return [f"if (act0[{k}] != 0.0 && {act(k)} != 0.0) {{ /* {states[k].name} */",
+        return [f"if ((act0[{k}] != 0.0) && ({act(k)} != 0.0)) {{ /* {states[k].name} */",
                 *[f"    {x}" for x in body], "}"]  # fmt: skip
 
     body = [f"for (i = 0; i < {n}; i++) {{ act0[i] = {s}[i]; }}"]
@@ -939,7 +943,9 @@ def _state_chart(e: Emitter) -> BlockCode:
     if spec.events:  # one pass, then one more for each broadcast event
         lines += [
             f"    int q[{MAX_EVENT_PASSES}];",
-            "    int nq = 0, ev = -1, pass;",
+            "    int nq = 0;",
+            "    int ev = -1;",
+            "    int pass;",
             f"    for (pass = 0; pass <= {MAX_EVENT_PASSES}; pass++) {{",
             *[f"        {x}" for x in body],
             "        if (nq == 0) { break; }",
@@ -952,7 +958,7 @@ def _state_chart(e: Emitter) -> BlockCode:
         lines += [f"    {x}" for x in body]
     lines += [
         f"    for (i = 0; i < {n}; i++) {{",
-        f"        if ({s}[i] != 0.0 && !entered[i]) {{ {s}[{n} + i] += 1.0; }}",
+        f"        if (({s}[i] != 0.0) && (entered[i] == 0)) {{ {s}[{n} + i] += 1.0; }}",
         "    }",
     ]
     for k, (name, _init) in enumerate(spec.outputs):
@@ -1077,7 +1083,7 @@ def _diagnostic_monitor(e: Emitter) -> BlockCode:
     ports = b.input_names()
 
     def inp(name: str, default: str) -> str:
-        return f"({e.u(ports.index(name), '0')} >= 0.5)" if name in ports else default
+        return f"(({e.u(ports.index(name), '0')} >= 0.5) ? 1 : 0)" if name in ports else default
 
     status = f"((uint32_T){x}[1])"
     out = [
@@ -1097,28 +1103,32 @@ def _diagnostic_monitor(e: Emitter) -> BlockCode:
         f"    int enable = {inp('enable', '1')};",
         f"    int cycle = {inp('cycle', '0')};",
         f"    int clear = {inp('clear', '0')};",
-        f"    if (clear && {x}[5] < 0.5) {{  /* mode 04: clear the code and the readiness */",
+        f"    if ((clear != 0) && ({x}[5] < 0.5)) {{  /* mode 04: clear the code and the readiness */",
         "        c = 0.0; st = 0x50u; fc = 0.0; pc = 0.0;",
-        f"    }} else if (cycle && {x}[4] < 0.5) {{  /* a new operation cycle */",
-        "        if (st & 0x02u) {",
+        f"    }} else if ((cycle != 0) && ({x}[4] < 0.5)) {{  /* a new operation cycle */",
+        "        if ((st & 0x02u) != 0u) {",
         "            pc = 0.0;",
-        "        } else if (!(st & 0x40u)) {  /* the last cycle completed and passed */",
+        "        } else if ((st & 0x40u) == 0u) {  /* the last cycle completed and passed */",
         "            fc = 0.0;",
         "            pc += 1.0;",
         "            st &= ~0x04u;",
         f"            if (pc >= {heal}) {{ st &= ~0x80u; }}",
+        "        } else {",
+        "            /* the last cycle did not complete: no change */",
         "        }",
         "        st = (st & ~0x03u) | 0x40u;",
         "        c = 0.0;",
+        "    } else {",
+        "        /* the same operation cycle */",
         "    }",
-        "    if (enable) {",
-        "        if (fault) {",
-        f"            if (c < 0.0 && {'1' if b.params['jump_down'] else '0'}) {{ c = 0.0; }}",
+        "    if (enable != 0) {",
+        "        if (fault != 0) {",
+        *(["            if (c < 0.0) { c = 0.0; }  /* jump down */"] if b.params["jump_down"] else []),
         f"            c = fmin(c + {fail_step}, {threshold});",
         "        } else {",
         f"            c = fmax(c - {pass_step}, -{threshold});",
         "        }",
-        f"        if (c >= {threshold} && !(st & 0x02u)) {{  /* failed, first time this cycle */",
+        f"        if ((c >= {threshold}) && ((st & 0x02u) == 0u)) {{  /* failed, first time this cycle */",
         "            fc += 1.0;",
         "            st |= 0x27u;",
         "            st &= ~0x50u;",
@@ -1130,14 +1140,16 @@ def _diagnostic_monitor(e: Emitter) -> BlockCode:
         "            st |= 0x01u;",
         f"        }} else if (c <= -{threshold}) {{  /* passed */",
         "            st &= ~0x51u;",
+        "        } else {",
+        "            /* not decided yet */",
         "        }",
         "    }",
         f"    {x}[0] = c;",
         f"    {x}[1] = (real_T)st;",
         f"    {x}[2] = fc;",
         f"    {x}[3] = pc;",
-        f"    {x}[4] = cycle ? 1.0 : 0.0;",
-        f"    {x}[5] = clear ? 1.0 : 0.0;",
+        f"    {x}[4] = (cycle != 0) ? 1.0 : 0.0;",
+        f"    {x}[5] = (clear != 0) ? 1.0 : 0.0;",
         "}",
     ]
     return BlockCode(out, upd)
@@ -1147,7 +1159,8 @@ def _e2e_crc_lines(byte: Callable[[str], str], data_id: int, crc_byte: int, widt
     """C statements computing ``crc`` (E2E CRC-8 SAE J1850) of the frame bytes ``byte("k")`` (real_T 0..255)."""
     return [
         "uint8_T crc = 0xFFu;",
-        "int k, j;",
+        "int k;",
+        "int j;",
         f"uint8_T head[2] = {{0x{data_id & 0xFF:02X}u, 0x{(data_id >> 8) & 0xFF:02X}u}};",
         f"for (k = -2; k < {width}; k++) {{",
         f"    if (k == {crc_byte}) {{ continue; }}",

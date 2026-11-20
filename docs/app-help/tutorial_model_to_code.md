@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **You will learn** | an ECU software component with an interface, generated C code and its structure, calibration parameters and the A2L file, a back-to-back (SIL) test of the code |
+| **You will learn** | an ECU software component with an interface, generated C code and its structure, calibration parameters and the A2L file, a back-to-back (SIL) test of the code, a MISRA C check |
 | **Before this** | *Your first model: a cruise control*; read *C code generation* first |
 | **Level and time** | intermediate, about 40 minutes |
 | **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/throttle_ecu.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
@@ -88,6 +88,13 @@ Back-to-back test, 300 steps: PASSED
 The difference is in the last digits of a double: the C code computes the same numbers. In the editor, the
 code generation dialog offers the same check (**Run SIL check**). Run it after every change to the model, and
 after updating the compiler.
+
+## Step 5: MISRA C
+
+ECU code is written to a coding standard, in the automotive industry nearly always **MISRA C**. Click **MISRA check**
+in the code generation dialog (it needs cppcheck: `brew install cppcheck` or `apt install cppcheck`): the throttle
+controller's code has no findings. *C code generation* lists what the generated code does for
+the rules, and the three documented deviations.
 
 ## Experiments
 

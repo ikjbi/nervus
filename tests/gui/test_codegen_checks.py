@@ -1,4 +1,4 @@
-"""Code ▸ Export FMU from the editor."""
+"""Code menu checks from the editor: Export FMU and the MISRA check."""
 
 from pathlib import Path
 
@@ -18,3 +18,17 @@ def test_export_from_the_editor(window, tmp_path) -> None:  # type: ignore[no-un
     window.scene.select_blocks(["ECU"])
     out = window.export_fmu(str(tmp_path / "ecu.fmu"))
     assert out is not None and validate_fmu(str(out)) == []
+
+
+def test_misra_check_from_the_dialog(window) -> None:  # type: ignore[no-untyped-def]
+    from nervus.codegen.misra import cppcheck_path
+
+    if cppcheck_path() is None:
+        pytest.skip("needs cppcheck")
+    window.files.open(EXAMPLES / "throttle_ecu.nervus")
+    window.scene.select_blocks(["ECU"])
+    dlg = window.generate_code()
+    assert dlg.misra_button.isEnabled()
+    dlg.run_misra()
+    assert dlg.sil_label.text().startswith("✓ MISRA C:2012: no findings")
+    dlg.close()

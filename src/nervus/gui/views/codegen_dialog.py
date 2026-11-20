@@ -63,6 +63,13 @@ class CodegenDialog(QDialog):
         self.sil_label.setWordWrap(True)
         self.sil_button = QPushButton("Run SIL check")
         self.sil_button.setEnabled(controller.compiler_available())
+        self.misra_button = QPushButton("MISRA check")
+        self.misra_button.setEnabled(controller.misra_available())
+        self.misra_button.setToolTip(
+            "Check the code against MISRA C:2012 with cppcheck's MISRA addon"
+            if controller.misra_available()
+            else "Install cppcheck (brew install cppcheck, apt install cppcheck) to check the code against MISRA C"
+        )
         self.save_button = QPushButton("Save to folder…")
         self.save_button.setObjectName("primary")
         self.report_button = QPushButton("Open report")
@@ -72,6 +79,7 @@ class CodegenDialog(QDialog):
 
         buttons = QHBoxLayout()
         buttons.addWidget(self.sil_button)
+        buttons.addWidget(self.misra_button)
         buttons.addWidget(self.copy_button)
         buttons.addStretch(1)
         buttons.addWidget(self.report_button)
@@ -85,6 +93,7 @@ class CodegenDialog(QDialog):
         layout.addLayout(buttons)
 
         self.sil_button.clicked.connect(self.run_sil)
+        self.misra_button.clicked.connect(self.run_misra)
         self.save_button.clicked.connect(self._save)
         self.report_button.clicked.connect(self._open_report)
         self.copy_button.clicked.connect(self._copy)
@@ -136,6 +145,19 @@ class CodegenDialog(QDialog):
             return
         icon = "✓" if res.passed else "✗"
         self.sil_label.setText(f"{icon} " + res.summary().replace("\n", "   "))
+
+    def run_misra(self) -> None:
+        self.sil_label.setText("Checking against MISRA C:2012…")
+        QGuiApplication.processEvents()
+        findings = self.controller.misra_check(self.code)
+        if findings is None:
+            self.sil_label.setText("The MISRA check could not run; see Diagnostics.")
+        elif not findings:
+            self.sil_label.setText("✓ MISRA C:2012: no findings (cppcheck), apart from the documented deviations")
+        else:
+            shown = "   ".join(str(f) for f in findings[:3])
+            more = f"   … and {len(findings) - 3} more" if len(findings) > 3 else ""
+            self.sil_label.setText(f"✗ MISRA C:2012: {len(findings)} finding(s): {shown}{more}")
 
     def save_to(self, folder: str | Path) -> None:
         self.controller.save(self.code, folder)
