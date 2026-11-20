@@ -246,7 +246,7 @@ tests/
       (`gear_shift.py` with a BSFC map, `traction_control.py`)
 - [x] Driver model and the ECE-15 drive cycle (tutorial); other cycles from CSV files
 - [ ] Bundled WLTP / FTP-75 tables (from the official sources) and a drive-cycle block
-- [ ] Sensor and actuator models: quantisation, noise, delay, faults
+- [x] Sensor and actuator models: quantisation, noise, delay, faults (Sensor Model, Actuator Model blocks)
 - [ ] Truck-specific models: heavy-duty diesel, exhaust brake, AMT gearbox
 - [ ] Tutorial series: "Learn engine control with Nervus" (first: idle speed control)
 

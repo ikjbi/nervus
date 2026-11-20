@@ -132,6 +132,11 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **MOSFET**: A MOSFET (SPICE level 1, square law), N- or P-channel. Ports ``d`` (drain), ``g`` (gate), ``s`` (source);
 - **Op-Amp**: An operational amplifier: high gain, and the output limited to its supply rails:
 
+## [Sensors & Actuators](sensors-actuators.md)
+
+- **Sensor Model**: A real sensor between the physical value and the ECU's input, sampled every *sample_time*:
+- **Actuator Model**: A real actuator between the ECU's command and the physical effect, sampled every *sample_time*: a delay
+
 ## [Signal Attributes](signal-attributes.md)
 
 - **Rate Transition**: Passes a signal between two rates (two ECU tasks) in a way that is deterministic on an RTOS.

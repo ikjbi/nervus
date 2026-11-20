@@ -79,6 +79,7 @@ from nervus.blocks.ports import Inport, Outport, Subsystem
 from nervus.blocks.registry import block_types, categories, create_block, get_block_class, register
 from nervus.blocks.routing import DataTypeConversion, Demux, InitialCondition, Mux, Switch
 from nervus.blocks.semiconductors import BJT, MOSFET, OpAmp, SemiconductorDiode
+from nervus.blocks.sensors import ActuatorModel, SensorModel
 from nervus.blocks.sinks import Assertion, Scope, StopSimulation, Terminator, ToWorkspace
 from nervus.blocks.sources import Clock, Constant, FromWorkspace, Ground, Pulse, Ramp, Sine, Step
 from nervus.blocks.user import PythonFunction
@@ -90,6 +91,7 @@ __all__ = [
     "VCCS",
     "VCVS",
     "Abs",
+    "ActuatorModel",
     "Alternator",
     "AngleSensor",
     "Assertion",
@@ -172,6 +174,7 @@ __all__ = [
     "Saturation",
     "Scope",
     "SemiconductorDiode",
+    "SensorModel",
     "Sine",
     "Solenoid",
     "SpeedSensor",

@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Sensor Model and Actuator Model blocks: gain/offset errors, reproducible noise, delay, quantization, range,
+  rate limit, and injected faults (stuck, open circuit, short to supply, drift).
 - Example `traction_control.py` (tyre slip, magic formula, TCS ECU) with a tutorial; a BSFC fuel map in
   `gear_shift.py` (fuel consumption per gear in the tutorial).
 - Examples `starter_motor.py` and `electronic_throttle.py` with a tutorial; the PID tuner linearizes around

@@ -1192,6 +1192,29 @@ def traction_control() -> plt.Figure:
     return fig
 
 
+@figure("sensor_model")
+def sensor_model() -> plt.Figure:
+    from nervus.blocks import SensorModel
+
+    fig, ax = plt.subplots(figsize=(6.4, 3.2))
+    cases = (("noise σ 0.1, 0.2 resolution", {"noise": 0.1, "resolution": 0.2}, C1),
+             ("stuck at 0.4 s", {"fault": "stuck", "fault_time": 0.4}, C2),
+             ("short to supply (5 V) at 0.6 s", {"fault": "short_to_supply", "fault_time": 0.6, "y_max": 5.0}, C3),
+             ("drift +4/s from 0.3 s", {"fault": "drift", "fault_time": 0.3, "drift_rate": 4.0}, C4))  # fmt: skip
+    for label, params, color in cases:
+        d = Diagram()
+        d.chain(d.add(Sine(amplitude=1.5, frequency=2 * np.pi, bias=2.5), name="u"),
+                d.add(SensorModel(**params), name="y"), d.add(Scope()))  # fmt: skip
+        r = simulate(d, 1.0, solver="rk4", step=0.01)
+        ax.step(r.t, r["y"], where="post", color=color, lw=1.6, label=label)
+    ax.set_xlabel("time [s]")
+    ax.set_ylabel("sensor output")
+    ax.legend(loc="upper left", fontsize=7, ncol=2)
+    ax.set_ylim(0, 8.5)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

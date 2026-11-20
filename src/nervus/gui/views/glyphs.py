@@ -76,6 +76,8 @@ _GLYPHS: dict[str, Callable[[Block], str]] = {
     "thermal.temperature_source": lambda b: "T " + _src(b, "°C", "T"),
     "thermal.temperature_sensor": lambda b: "🌡 T",
     "thermal.heat_flow_sensor": lambda b: "Q̇",
+    "sensors.sensor": lambda b: "sensor" + ("" if b.params["fault"] == "none" else " ⚠"),
+    "sensors.actuator": lambda b: "actuator" + ("" if b.params["fault"] == "none" else " ⚠"),
     "automotive.solenoid": lambda b: "⧈ solenoid",
     "automotive.injector": lambda b: "⧈ injector",
     "automotive.relay": lambda b: "⧈ ─╱ ─",
