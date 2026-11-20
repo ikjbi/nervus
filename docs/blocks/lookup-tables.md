@@ -120,3 +120,34 @@ the camshaft position. A 3-D *table* is a nested list: ``table[i][j][k]``.
 *Direct feedthrough:* yes
 
 ---
+
+## Adaptive Map
+
+`lookup.adaptive_map` · Lookup Tables
+
+A 2-D map that **learns**, like an ECU's long-term fuel trim or knock adaptation per load/speed cell.
+
+Output: the table interpolated at (x, y), like a 2-D Lookup Table with clipped axes. Every sample while
+*learn* is ≥ 0.5 the table moves towards the correction input *e* at the cells around (x, y), each by its
+interpolation weight:
+
+$$ T_{ij} \leftarrow \mathrm{clip}(T_{ij} + r\,T_s\,w_{ij}\,e,\ -L,\ L) $$
+
+with the learning *rate* r (1/s) and the *limit* L. So each operating region gets its own correction: a lean
+error that only exists at idle is learned in the idle cells and does not disturb full load. The learned
+table is a state (it would be kept in the ECU's non-volatile memory).
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `row_breakpoints` | `[0.0, 1.0]` |  | Breakpoints for x (rows) |
+| `column_breakpoints` | `[0.0, 1.0]` |  | Breakpoints for y (columns) |
+| `initial` | `0.0` |  | Initial table (rows × columns, or one value for all cells) |
+| `rate` | `0.1` | 1/s | Learning rate |
+| `limit` | inf |  | Largest |value| of a cell |
+| `sample_time` | `0.01` | s | Sample period |
+
+*Direct feedthrough:* only some inputs (see above)
+
+---

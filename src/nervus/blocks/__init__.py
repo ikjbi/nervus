@@ -54,7 +54,7 @@ from nervus.blocks.hydraulic import (
     ReliefValve,
 )
 from nervus.blocks.logic import CompareToConstant, LogicalOperator, RelationalOperator
-from nervus.blocks.lookup import Interpolation, Lookup1D, Lookup2D, Prelookup
+from nervus.blocks.lookup import AdaptiveMap, Interpolation, Lookup1D, Lookup2D, Prelookup
 from nervus.blocks.math_ops import Abs, Bias, Gain, MathFunction, MinMax, Product, Saturation, Sum
 from nervus.blocks.mechanical import (
     AngleSensor,
@@ -92,6 +92,7 @@ __all__ = [
     "VCVS",
     "Abs",
     "ActuatorModel",
+    "AdaptiveMap",
     "Alternator",
     "AngleSensor",
     "Assertion",

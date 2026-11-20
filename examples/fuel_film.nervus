@@ -1,0 +1,1073 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "fuel_film",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 40.0,
+    "solver": "rk4",
+    "step": 0.005,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "X_film",
+      "value": 0.3,
+      "description": "Share of the injected fuel that lands on the wall",
+      "unit": "-"
+    },
+    {
+      "name": "tau_film",
+      "value": 0.3,
+      "description": "Evaporation time constant of the wall film",
+      "unit": "s"
+    },
+    {
+      "name": "xtau_comp",
+      "value": 1.0,
+      "description": "1: the ECU compensates the wall film, 0: off",
+      "unit": "-"
+    },
+    {
+      "name": "stft_jump",
+      "value": 2.0,
+      "description": "Short-term trim jump when the sensor switches",
+      "unit": "%"
+    },
+    {
+      "name": "stft_ramp",
+      "value": 8.0,
+      "description": "Short-term trim ramp between switches",
+      "unit": "%/s"
+    },
+    {
+      "name": "ltft_rate",
+      "value": 0.6,
+      "description": "Learning rate of the long-term trim",
+      "unit": "1/s"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "throttle_air",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          20.0,
+          20.05,
+          25.0,
+          25.05,
+          30.0,
+          30.05,
+          35.0,
+          35.05,
+          40.0
+        ],
+        "data": [
+          [
+            5.0
+          ],
+          [
+            5.0
+          ],
+          [
+            20.0
+          ],
+          [
+            20.0
+          ],
+          [
+            5.0
+          ],
+          [
+            5.0
+          ],
+          [
+            20.0
+          ],
+          [
+            20.0
+          ],
+          [
+            5.0
+          ],
+          [
+            5.0
+          ]
+        ],
+        "csv_file": "",
+        "interpolation": "linear",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "manifold_filling",
+      "type": "continuous.transfer_function",
+      "params": {
+        "numerator": [
+          1.0
+        ],
+        "denominator": [
+          0.05,
+          1.0
+        ]
+      },
+      "meta": {
+        "position": [
+          130.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "ECU",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": 0.01,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          380.0,
+          -60.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "maf_g_s",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            }
+          },
+          {
+            "name": "o2_volts",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            }
+          },
+          {
+            "name": "base_fuel",
+            "type": "math.gain",
+            "params": {
+              "gain": 0.06802721088435375,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "rich",
+            "type": "logic.compare_to_constant",
+            "params": {
+              "operator": ">",
+              "constant": 0.45
+            }
+          },
+          {
+            "name": "minus_2_rich",
+            "type": "math.gain",
+            "params": {
+              "gain": -2.0,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "direction",
+            "type": "math.sum",
+            "params": {
+              "signs": "++",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "stft_ramp_part",
+            "type": "discrete.integrator",
+            "params": {
+              "gain": "stft_ramp",
+              "initial": 0.0,
+              "method": "forward_euler",
+              "upper": 25.0,
+              "lower": -25.0,
+              "external_reset": "none",
+              "sample_time": 0.01
+            }
+          },
+          {
+            "name": "stft_jump_part",
+            "type": "math.gain",
+            "params": {
+              "gain": "stft_jump",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "stft_pct",
+            "type": "math.sum",
+            "params": {
+              "signs": "++",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "ltft_pct",
+            "type": "lookup.adaptive_map",
+            "params": {
+              "row_breakpoints": [
+                4.0,
+                10.0,
+                25.0
+              ],
+              "column_breakpoints": [
+                0.0,
+                1.0
+              ],
+              "initial": 0.0,
+              "rate": "ltft_rate",
+              "limit": 25.0,
+              "sample_time": 0.01
+            }
+          },
+          {
+            "name": "trim_pct",
+            "type": "math.sum",
+            "params": {
+              "signs": "+++",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "trim_fraction",
+            "type": "math.gain",
+            "params": {
+              "gain": 0.01,
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "cylinder_fuel",
+            "type": "math.product",
+            "params": {
+              "ops": "**",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "film_estimate",
+            "type": "discrete.unit_delay",
+            "params": {
+              "initial": 0.0,
+              "sample_time": 0.01
+            }
+          },
+          {
+            "name": "evaporation",
+            "type": "math.gain",
+            "params": {
+              "gain": "xtau_comp / tau_film",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "minus_evaporation",
+            "type": "math.sum",
+            "params": {
+              "signs": "+-",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "injection",
+            "type": "math.gain",
+            "params": {
+              "gain": "1 / (1 - xtau_comp * X_film)",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "to_film",
+            "type": "math.gain",
+            "params": {
+              "gain": "X_film * 0.01",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "from_film",
+            "type": "math.gain",
+            "params": {
+              "gain": "0.01 / tau_film",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "film_update",
+            "type": "math.sum",
+            "params": {
+              "signs": "++-",
+              "output_type": "inherit"
+            }
+          },
+          {
+            "name": "one",
+            "type": "sources.constant",
+            "params": {
+              "value": 1.0,
+              "sample_time": "inf",
+              "output_type": "double"
+            }
+          },
+          {
+            "name": "learn",
+            "type": "sources.constant",
+            "params": {
+              "value": 1.0,
+              "sample_time": "inf",
+              "output_type": "double"
+            }
+          },
+          {
+            "name": "y_cell",
+            "type": "sources.constant",
+            "params": {
+              "value": 0.0,
+              "sample_time": "inf",
+              "output_type": "double"
+            }
+          },
+          {
+            "name": "hundred",
+            "type": "sources.constant",
+            "params": {
+              "value": 100.0,
+              "sample_time": "inf",
+              "output_type": "double"
+            }
+          },
+          {
+            "name": "injection_g_s",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            }
+          },
+          {
+            "name": "stft",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            }
+          },
+          {
+            "name": "ltft",
+            "type": "ports.outport",
+            "params": {
+              "port": 3
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "maf_g_s",
+            "src_port": 0,
+            "dst": "base_fuel",
+            "dst_port": 0
+          },
+          {
+            "src": "o2_volts",
+            "src_port": 0,
+            "dst": "rich",
+            "dst_port": 0
+          },
+          {
+            "src": "rich",
+            "src_port": 0,
+            "dst": "minus_2_rich",
+            "dst_port": 0
+          },
+          {
+            "src": "one",
+            "src_port": 0,
+            "dst": "direction",
+            "dst_port": 0
+          },
+          {
+            "src": "minus_2_rich",
+            "src_port": 0,
+            "dst": "direction",
+            "dst_port": 1
+          },
+          {
+            "src": "direction",
+            "src_port": 0,
+            "dst": "stft_ramp_part",
+            "dst_port": 0
+          },
+          {
+            "src": "direction",
+            "src_port": 0,
+            "dst": "stft_jump_part",
+            "dst_port": 0
+          },
+          {
+            "src": "stft_ramp_part",
+            "src_port": 0,
+            "dst": "stft_pct",
+            "dst_port": 0
+          },
+          {
+            "src": "stft_jump_part",
+            "src_port": 0,
+            "dst": "stft_pct",
+            "dst_port": 1
+          },
+          {
+            "src": "maf_g_s",
+            "src_port": 0,
+            "dst": "ltft_pct",
+            "dst_port": 0
+          },
+          {
+            "src": "y_cell",
+            "src_port": 0,
+            "dst": "ltft_pct",
+            "dst_port": 1
+          },
+          {
+            "src": "stft_pct",
+            "src_port": 0,
+            "dst": "ltft_pct",
+            "dst_port": 2
+          },
+          {
+            "src": "learn",
+            "src_port": 0,
+            "dst": "ltft_pct",
+            "dst_port": 3
+          },
+          {
+            "src": "stft_pct",
+            "src_port": 0,
+            "dst": "trim_pct",
+            "dst_port": 0
+          },
+          {
+            "src": "ltft_pct",
+            "src_port": 0,
+            "dst": "trim_pct",
+            "dst_port": 1
+          },
+          {
+            "src": "hundred",
+            "src_port": 0,
+            "dst": "trim_pct",
+            "dst_port": 2
+          },
+          {
+            "src": "trim_pct",
+            "src_port": 0,
+            "dst": "trim_fraction",
+            "dst_port": 0
+          },
+          {
+            "src": "base_fuel",
+            "src_port": 0,
+            "dst": "cylinder_fuel",
+            "dst_port": 0
+          },
+          {
+            "src": "trim_fraction",
+            "src_port": 0,
+            "dst": "cylinder_fuel",
+            "dst_port": 1
+          },
+          {
+            "src": "film_estimate",
+            "src_port": 0,
+            "dst": "evaporation",
+            "dst_port": 0
+          },
+          {
+            "src": "cylinder_fuel",
+            "src_port": 0,
+            "dst": "minus_evaporation",
+            "dst_port": 0
+          },
+          {
+            "src": "evaporation",
+            "src_port": 0,
+            "dst": "minus_evaporation",
+            "dst_port": 1
+          },
+          {
+            "src": "minus_evaporation",
+            "src_port": 0,
+            "dst": "injection",
+            "dst_port": 0
+          },
+          {
+            "src": "injection",
+            "src_port": 0,
+            "dst": "to_film",
+            "dst_port": 0
+          },
+          {
+            "src": "film_estimate",
+            "src_port": 0,
+            "dst": "from_film",
+            "dst_port": 0
+          },
+          {
+            "src": "film_estimate",
+            "src_port": 0,
+            "dst": "film_update",
+            "dst_port": 0
+          },
+          {
+            "src": "to_film",
+            "src_port": 0,
+            "dst": "film_update",
+            "dst_port": 1
+          },
+          {
+            "src": "from_film",
+            "src_port": 0,
+            "dst": "film_update",
+            "dst_port": 2
+          },
+          {
+            "src": "film_update",
+            "src_port": 0,
+            "dst": "film_estimate",
+            "dst_port": 0
+          },
+          {
+            "src": "injection",
+            "src_port": 0,
+            "dst": "injection_g_s",
+            "dst_port": 0
+          },
+          {
+            "src": "stft_pct",
+            "src_port": 0,
+            "dst": "stft",
+            "dst_port": 0
+          },
+          {
+            "src": "ltft_pct",
+            "src_port": 0,
+            "dst": "ltft",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "maf",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          260.0,
+          -60.0
+        ]
+      }
+    },
+    {
+      "name": "injector_error",
+      "type": "lookup.table_1d",
+      "params": {
+        "breakpoints": [
+          5.0,
+          20.0
+        ],
+        "table": [
+          0.92,
+          1.0
+        ],
+        "interpolation": "linear",
+        "extrapolation": "clip",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          260.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "injected_fuel",
+      "type": "math.product",
+      "params": {
+        "ops": "**",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          560.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "wall_film_g",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": "-inf",
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          920.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "deposit",
+      "type": "math.gain",
+      "params": {
+        "gain": "X_film",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          680.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "evaporate",
+      "type": "math.gain",
+      "params": {
+        "gain": "1 / tau_film",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1040.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "film_balance",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          800.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "direct_fuel",
+      "type": "math.gain",
+      "params": {
+        "gain": "1 - X_film",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          680.0,
+          -40.0
+        ]
+      }
+    },
+    {
+      "name": "cylinder_fuel",
+      "type": "math.sum",
+      "params": {
+        "signs": "++",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1160.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "lambda_cyl",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, air, fuel):\n    \"\"\"Lambda of the mixture in the cylinder (1 = stoichiometric, AFR 14.7).\"\"\"\n    return air / (14.7 * max(fuel, 1e-6))\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          1280.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "sensor_lag",
+      "type": "continuous.transfer_function",
+      "params": {
+        "numerator": [
+          1.0
+        ],
+        "denominator": [
+          0.05,
+          1.0
+        ]
+      },
+      "meta": {
+        "position": [
+          1280.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "o2_sensor",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, lam):\n    \"\"\"A narrow-band (zirconia) sensor: about 0.8 V rich, 0.1 V lean, switching steeply at lambda = 1.\"\"\"\n    return 0.45 + 0.37 * math.tanh((1.0 - lam) * 60.0)\n",
+        "num_inputs": 1,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          1160.0,
+          200.0
+        ],
+        "flipped": true
+      }
+    },
+    {
+      "name": "o2_adc",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          1040.0,
+          200.0
+        ],
+        "flipped": true
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          1400.0,
+          -100.0
+        ]
+      }
+    },
+    {
+      "name": "lambda",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1420.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "stft",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          560.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "name": "ltft",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          560.0,
+          -200.0
+        ]
+      }
+    },
+    {
+      "name": "air",
+      "type": "ports.outport",
+      "params": {
+        "port": 4
+      },
+      "meta": {
+        "position": [
+          260.0,
+          160.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "throttle_air",
+      "src_port": 0,
+      "dst": "manifold_filling",
+      "dst_port": 0
+    },
+    {
+      "src": "manifold_filling",
+      "src_port": 0,
+      "dst": "maf",
+      "dst_port": 0
+    },
+    {
+      "src": "maf",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 0
+    },
+    {
+      "src": "o2_adc",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 1
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "injected_fuel",
+      "dst_port": 0
+    },
+    {
+      "src": "manifold_filling",
+      "src_port": 0,
+      "dst": "injector_error",
+      "dst_port": 0
+    },
+    {
+      "src": "injector_error",
+      "src_port": 0,
+      "dst": "injected_fuel",
+      "dst_port": 1
+    },
+    {
+      "src": "injected_fuel",
+      "src_port": 0,
+      "dst": "deposit",
+      "dst_port": 0
+    },
+    {
+      "src": "deposit",
+      "src_port": 0,
+      "dst": "film_balance",
+      "dst_port": 0
+    },
+    {
+      "src": "evaporate",
+      "src_port": 0,
+      "dst": "film_balance",
+      "dst_port": 1
+    },
+    {
+      "src": "film_balance",
+      "src_port": 0,
+      "dst": "wall_film_g",
+      "dst_port": 0
+    },
+    {
+      "src": "wall_film_g",
+      "src_port": 0,
+      "dst": "evaporate",
+      "dst_port": 0
+    },
+    {
+      "src": "injected_fuel",
+      "src_port": 0,
+      "dst": "direct_fuel",
+      "dst_port": 0
+    },
+    {
+      "src": "direct_fuel",
+      "src_port": 0,
+      "dst": "cylinder_fuel",
+      "dst_port": 0
+    },
+    {
+      "src": "evaporate",
+      "src_port": 0,
+      "dst": "cylinder_fuel",
+      "dst_port": 1
+    },
+    {
+      "src": "manifold_filling",
+      "src_port": 0,
+      "dst": "lambda_cyl",
+      "dst_port": 0
+    },
+    {
+      "src": "cylinder_fuel",
+      "src_port": 0,
+      "dst": "lambda_cyl",
+      "dst_port": 1
+    },
+    {
+      "src": "lambda_cyl",
+      "src_port": 0,
+      "dst": "sensor_lag",
+      "dst_port": 0
+    },
+    {
+      "src": "sensor_lag",
+      "src_port": 0,
+      "dst": "o2_sensor",
+      "dst_port": 0
+    },
+    {
+      "src": "o2_sensor",
+      "src_port": 0,
+      "dst": "o2_adc",
+      "dst_port": 0
+    },
+    {
+      "src": "lambda_cyl",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "ECU",
+      "src_port": 1,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "ECU",
+      "src_port": 2,
+      "dst": "scope",
+      "dst_port": 2
+    },
+    {
+      "src": "lambda_cyl",
+      "src_port": 0,
+      "dst": "lambda",
+      "dst_port": 0
+    },
+    {
+      "src": "ECU",
+      "src_port": 1,
+      "dst": "stft",
+      "dst_port": 0
+    },
+    {
+      "src": "ECU",
+      "src_port": 2,
+      "dst": "ltft",
+      "dst_port": 0
+    },
+    {
+      "src": "manifold_filling",
+      "src_port": 0,
+      "dst": "air",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "LTFT learns the idle injector error",
+      "description": "At idle the injectors deliver 8 % too little: the long-term trim learns about +8 %",
+      "stop_time": 20.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "ltft",
+          "lower": 6.0,
+          "upper": 10.0,
+          "t_from": 18.0,
+          "t_to": 20.0
+        }
+      ]
+    },
+    {
+      "name": "tip-in with film compensation",
+      "description": "With the x-tau compensation lambda stays within ±12 % on the tip-ins; the high-load cell learns ~0",
+      "stop_time": 40.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "lambda",
+          "lower": 0.88,
+          "upper": 1.12,
+          "t_from": 19.0,
+          "t_to": 40.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "ltft",
+          "lower": -2.0,
+          "upper": 2.0,
+          "t_from": 24.5,
+          "t_to": 25.0
+        }
+      ]
+    }
+  ]
+}

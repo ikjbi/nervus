@@ -236,7 +236,8 @@ tests/
 - [x] Turn the engine model into reusable library subsystems (`examples/library/engine_parts.nervlib`)
 - [x] Fuel control: injector model, lambda (AFR) closed-loop control, short and long term fuel trim
       (`examples/lambda_control.py`, tutorial)
-- [ ] Fuel control, more: wall wetting (x-tau), narrow-band switching sensor, LTFT maps per load/speed cell
+- [x] Fuel control, more: wall wetting (x-tau), narrow-band switching sensor, LTFT maps per load/speed cell
+      (`examples/fuel_film.py`, Adaptive Map block)
 - [x] Ignition timing from speed/load maps, knock retard (`examples/ignition_knock.py`, tutorial)
 - [x] Idle speed control (PI + base opening + AC feed-forward), with tutorial
 - [x] Electronic throttle control (DC motor, return spring, PID): `examples/electronic_throttle.py`

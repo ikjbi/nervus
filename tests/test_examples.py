@@ -318,3 +318,14 @@ def test_ignition_knock_example(tmp_path) -> None:  # type: ignore[no-untyped-de
         sil = back_to_back(d.block("ECU"), {"rpm": 2500 + 0 * k, "load_pct": 100 + 0 * k, "knock_sensor": knock}, 400,
                            tolerance=1e-12, folder=tmp_path)  # fmt: skip
         assert sil.passed, sil.summary()
+
+
+def test_fuel_film_example() -> None:
+    from nervus.testing import run_tests
+
+    mod = _import("fuel_film")
+    d = mod.build()
+    assert all(r.passed for r in run_tests(d))
+    off = simulate(d, params={"xtau_comp": 0.0})
+    assert mod.lambda_excursion(off) > 2 * mod.lambda_excursion(simulate(d))
+    assert [t.name for t in load(EXAMPLES / "fuel_film.nervus").tests] == [t.name for t in d.tests]

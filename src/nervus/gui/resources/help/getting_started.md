@@ -65,4 +65,5 @@ The `examples` folder in the repository has complete models you can open with **
 | `electronic_throttle.nervus` | drive-by-wire throttle: H-bridge, DC motor, gear, spring, PID (tutorial) |
 | `traction_control.nervus` | tyre slip and a traction control ECU on a wet road (tutorial) |
 | `ignition_knock.nervus` | spark advance map and knock control on low-octane fuel (tutorial) |
+| `fuel_film.nervus` | wall wetting, switching lambda sensor, fuel trims learned per load cell (tutorial) |
 | `obd_ecu.nervus` | an engine ECU with trouble codes that answers OBD-II tools (`python -m nervus.obd simulate`) |

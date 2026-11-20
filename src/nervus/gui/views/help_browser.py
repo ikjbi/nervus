@@ -64,6 +64,7 @@ HELP_PAGES = [
     ("tutorial_idle", "Tutorial: idle speed control"),
     ("tutorial_lambda", "Tutorial: lambda control"),
     ("tutorial_ignition", "Tutorial: ignition and knock"),
+    ("tutorial_fuel_film", "Tutorial: wall wetting and fuel trims"),
     ("tutorial_drive_cycle", "Tutorial: drive cycle"),
     ("tutorial_gear_shift", "Tutorial: gear-shift logic"),
     ("tutorial_circuits", "Tutorial: electronic circuits"),

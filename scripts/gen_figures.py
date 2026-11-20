@@ -1236,6 +1236,31 @@ def ignition_knock() -> plt.Figure:
     return fig
 
 
+@figure("fuel_film")
+def fuel_film() -> plt.Figure:
+    from nervus import load
+
+    d = load(Path(__file__).parent.parent / "examples" / "fuel_film.nervus")
+    on, off = simulate(d), simulate(d, params={"xtau_comp": 0.0})
+    fig, (a1, a2, a3) = plt.subplots(3, 1, figsize=(6.4, 5.2), sharex=True)
+    a1.plot(off.t, off["lambda"], color=C2, lw=1.2, label="no film compensation")
+    a1.plot(on.t, on["lambda"], color=C1, lw=1.5, label="x-tau compensation")
+    a1.set_ylabel("lambda")
+    a1.set_ylim(0.7, 1.4)
+    a1.legend(loc="upper left", fontsize=8, ncol=2)
+    a1.set_title("Tip-ins at 20 and 30 s; injectors 8 % lean at idle", color=INK, fontsize=10)
+    a2.plot(on.t, on["air"], color=C3, lw=1.5)
+    a2.set_ylabel("air [g/s]")
+    a3.plot(on.t, on["stft"], color=C4, lw=1, label="short-term trim")
+    a3.plot(on.t, on["ltft"], color=C1, lw=2, label="long-term trim (map)")
+    a3.set_ylabel("trim [%]")
+    a3.set_ylim(-6, 14)
+    a3.legend(loc="upper right", fontsize=8, ncol=2)
+    a3.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

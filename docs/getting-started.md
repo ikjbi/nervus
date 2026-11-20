@@ -120,5 +120,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   snowy roads. See the [tutorial](tutorials/traction-control.md).
 - `ignition_knock.py`: spark advance from a speed/load map and knock control on low-octane fuel. See the
   [tutorial](tutorials/ignition-knock.md).
+- `fuel_film.py`: wall wetting (x-tau) and its compensation, a switching lambda sensor with jump and ramp, and
+  long-term fuel trims learned per load cell (Adaptive Map). See the [tutorial](tutorials/fuel-film.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

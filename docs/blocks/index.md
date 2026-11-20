@@ -94,6 +94,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **2-D Lookup Table**: 2-D lookup table (a calibration *map*), e.g. ignition advance over engine speed and load.
 - **Prelookup**: Breakpoint search on its own: finds the interval index *k* and the fraction *f* of the input.
 - **Interpolation using Prelookup**: Interpolates an n-D *table* (1 to 4 dimensions) at the index and fraction from Prelookup blocks.
+- **Adaptive Map**: A 2-D map that **learns**, like an ECU's long-term fuel trim or knock adaptation per load/speed cell.
 
 ## [Math Operations](math-operations.md)
 

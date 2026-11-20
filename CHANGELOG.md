@@ -25,6 +25,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Adaptive Map block (a learning 2-D table, with C code); example `fuel_film.py` and tutorial: wall wetting
+  and x-tau compensation, jump-and-ramp lambda control, long-term trims per load cell.
 - Example `ignition_knock.py` and tutorial: spark advance map, knock sensor and knock control.
 - Sensor Model and Actuator Model blocks: gain/offset errors, reproducible noise, delay, quantization, range,
   rate limit, and injected faults (stuck, open circuit, short to supply, drift).

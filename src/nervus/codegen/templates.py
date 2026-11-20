@@ -678,6 +678,52 @@ def _lookup2d(e: Emitter) -> BlockCode:
     return BlockCode(e.each(e.w(), body))
 
 
+@template("lookup.adaptive_map")
+def _adaptive_map(e: Emitter) -> BlockCode:
+    r_arr, c_arr = e.block._axes()  # type: ignore[attr-defined]
+    nr, nc = r_arr.size, c_arr.size
+    rb = e.param("row_breakpoints", r_arr, typed=True)
+    cb = e.param("column_breakpoints", c_arr, typed=True)
+    rate, lim = e.p("rate", "0"), e.p("limit", "0")
+    tab = e.state("table", e.block.initial_discrete_state(), f"{e.path}: the learned map")
+
+    def locate() -> list[str]:
+        return [
+            "    uint32_T r, c;",
+            "    real_T fr, fc;",
+            *[f"    {x}" for x in _locate_c(e.u(0, "0"), lambda j: e.at(rb, j), nr, "linear", "clip", "r", "fr")],
+            *[f"    {x}" for x in _locate_c(e.u(1, "0"), lambda j: e.at(cb, j), nc, "linear", "clip", "c", "fc")],
+        ]
+
+    def t(i: str, j: str) -> str:
+        return f"{tab}[({i}) * {nc}u + ({j})]"
+
+    out = [
+        "{",
+        *locate(),
+        f"    {e.y(0, '0')} = (1.0 - fr) * (1.0 - fc) * {t('r', 'c')} + (1.0 - fr) * fc * {t('r', 'c + 1u')}",
+        f"        + fr * (1.0 - fc) * {t('r + 1u', 'c')} + fr * fc * {t('r + 1u', 'c + 1u')};",
+        "}",
+    ]
+    upd = [
+        f"if ({e.u(3, '0')} >= 0.5) {{",
+        *locate(),
+        f"    real_T step = {rate} * {c_float(e.period)} * {e.u(2, '0')};",
+        "    real_T w[4];",
+        "    uint32_T k[4];",
+        "    uint32_T q;",
+        "    w[0] = (1.0 - fr) * (1.0 - fc); k[0] = r * " + f"{nc}u + c;",
+        "    w[1] = (1.0 - fr) * fc; k[1] = r * " + f"{nc}u + c + 1u;",
+        "    w[2] = fr * (1.0 - fc); k[2] = (r + 1u) * " + f"{nc}u + c;",
+        "    w[3] = fr * fc; k[3] = (r + 1u) * " + f"{nc}u + c + 1u;",
+        "    for (q = 0u; q < 4u; q++) {",
+        f"        {tab}[k[q]] = fmin(fmax({tab}[k[q]] + step * w[q], -{lim}), {lim});",
+        "    }",
+        "}",
+    ]
+    return BlockCode(out, upd)
+
+
 # ---------------------------------------------------------------------------- state charts
 
 _C_CALLS = {

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 
 import numpy as np
@@ -274,3 +275,90 @@ class Interpolation(Block):
                 ix.append(ks[d] + up)
             y = y + weight * tab[tuple(ix)]
         return [np.asarray(y, dtype=float)]
+
+
+@register
+class AdaptiveMap(Block):
+    """A 2-D map that **learns**, like an ECU's long-term fuel trim or knock adaptation per load/speed cell.
+
+    Output: the table interpolated at (x, y), like a 2-D Lookup Table with clipped axes. Every sample while
+    *learn* is ≥ 0.5 the table moves towards the correction input *e* at the cells around (x, y), each by its
+    interpolation weight:
+
+    $$ T_{ij} \\leftarrow \\mathrm{clip}(T_{ij} + r\\,T_s\\,w_{ij}\\,e,\\ -L,\\ L) $$
+
+    with the learning *rate* r (1/s) and the *limit* L. So each operating region gets its own correction: a lean
+    error that only exists at idle is learned in the idle cells and does not disturb full load. The learned
+    table is a state (it would be kept in the ECU's non-volatile memory).
+    """
+
+    type_id = "lookup.adaptive_map"
+    label = "Adaptive Map"
+    category = CATEGORY
+    NUM_INPUTS = 4
+    PARAMS = (
+        Param("row_breakpoints", [0.0, 1.0], ParamKind.ARRAY, "Breakpoints for x (rows)"),
+        Param("column_breakpoints", [0.0, 1.0], ParamKind.ARRAY, "Breakpoints for y (columns)"),
+        Param("initial", 0.0, ParamKind.ARRAY, "Initial table (rows × columns, or one value for all cells)"),
+        Param("rate", 0.1, ParamKind.FLOAT, "Learning rate", "1/s", min=0.0),
+        Param("limit", math.inf, ParamKind.FLOAT, "Largest |value| of a cell", min=0.0),
+        Param("sample_time", 0.01, ParamKind.SAMPLE_TIME, "Sample period", "s"),
+    )
+
+    def _axes(self) -> tuple[Array, Array]:
+        return (
+            np.asarray(self.params["row_breakpoints"], dtype=float).ravel(),
+            np.asarray(self.params["column_breakpoints"], dtype=float).ravel(),
+        )
+
+    def validate_params(self) -> None:
+        r, c = self._axes()
+        _check_breakpoints(r, "row_breakpoints")
+        _check_breakpoints(c, "column_breakpoints")
+        init = np.asarray(self.params["initial"], dtype=float)
+        if init.size not in (1, r.size * c.size):
+            raise ParameterError(f"initial must be one value or a {r.size} × {c.size} table")
+
+    def input_names(self) -> list[str]:
+        return ["x", "y", "correction", "learn"]
+
+    def feedthrough_ports(self) -> list[int]:
+        return [0, 1]  # the output reads the table at (x, y); the correction only changes the table
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [1]
+
+    def initial_discrete_state(self) -> Array:
+        r, c = self._axes()
+        return np.broadcast_to(np.asarray(self.params["initial"], dtype=float).ravel(), (r.size * c.size,)).copy()
+
+    def weights(self, x: float, y: float) -> tuple[int, int, float, float]:
+        r, c = self._axes()
+        i, fr = locate(np.array([x]), r, "linear", "clip")
+        j, fc = locate(np.array([y]), c, "linear", "clip")
+        return int(i[0]), int(j[0]), float(fr[0]), float(fc[0])
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        nc = self._axes()[1].size
+        i, j, fr, fc = self.weights(float(np.ravel(u[0])[0]), float(np.ravel(u[1])[0]))
+        tab = xd.reshape(-1, nc)
+        y = (
+            (1 - fr) * (1 - fc) * tab[i, j]
+            + (1 - fr) * fc * tab[i, j + 1]
+            + fr * (1 - fc) * tab[i + 1, j]
+            + fr * fc * tab[i + 1, j + 1]
+        )
+        return [np.array([y])]
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        new = xd.copy()
+        if float(np.ravel(u[3])[0]) < 0.5:
+            return new
+        nc = self._axes()[1].size
+        i, j, fr, fc = self.weights(float(np.ravel(u[0])[0]), float(np.ravel(u[1])[0]))
+        step = self.params["rate"] * self.period() * float(np.ravel(u[2])[0])
+        lim = self.params["limit"]
+        for di, dj, w in ((0, 0, (1 - fr) * (1 - fc)), (0, 1, (1 - fr) * fc), (1, 0, fr * (1 - fc)), (1, 1, fr * fc)):
+            k = (i + di) * nc + j + dj
+            new[k] = min(max(new[k] + step * w, -lim), lim)
+        return new
