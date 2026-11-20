@@ -148,6 +148,7 @@ SHARED_PAGES = {
     "coming-from-simulink.md": "coming_from_simulink.md",
     "model-files.md": "model_files.md",
     "physical.md": "physical.md",
+    "statecharts.md": "statecharts.md",
     "tutorials/index.md": "tutorials.md",
 }
 """Pages written for GitHub (docs/...) and converted for the in-app help by ``scripts/gen_block_reference.py``.

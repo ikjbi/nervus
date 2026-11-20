@@ -114,6 +114,13 @@ def _place(d: Diagram) -> None:
         d.block(name).meta["position"] = [0.0, 100.0 * k]
         d.block(f"{name}_10ms").meta["position"] = [150.0, 100.0 * k]
     d.block("modes").meta["position"] = [330.0, 70.0]
+    # Where the states are drawn in the chart editor (double-click the chart): the start sequence on top, the
+    # driving modes below.
+    d.block("modes").meta["chart_layout"] = {
+        "off": [0.0, 0.0, 150.0, 70.0], "crank": [320.0, 0.0, 150.0, 70.0], "crank_fail": [640.0, 0.0, 150.0, 70.0],
+        "idle": [320.0, 240.0, 150.0, 70.0], "run": [640.0, 240.0, 150.0, 70.0],
+        "stalled": [0.0, 240.0, 150.0, 70.0], "fuel_cut": [960.0, 240.0, 150.0, 70.0],
+    }  # fmt: skip
     for k, name in enumerate(("fuel", "starter", "idle_ctrl", "mode")):
         d.block(name).meta["position"] = [560.0, 70.0 * k]
 

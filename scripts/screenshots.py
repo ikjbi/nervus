@@ -5,6 +5,7 @@ Run: QT_QPA_PLATFORM=offscreen uv run python scripts/screenshots.py
 
 from __future__ import annotations
 
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -329,6 +330,27 @@ def requirements_shots(win) -> None:  # type: ignore[no-untyped-def]
     ed.undo_stack.setClean()
 
 
+def chart_shots(win) -> None:  # type: ignore[no-untyped-def]
+    """The graphical chart editor, on the engine operating modes."""
+    win.files.open(ROOT / "examples" / "engine_modes.nervus")
+    block = next(b for _p, b in win.diagram_model.root.walk() if b.type_id == "charts.state_chart")
+    ed = win.open_chart_editor(block)
+    ed.resize(1280, 760)
+    QApplication.processEvents()
+    ed.fit()
+    ed.state_items["crank"].setSelected(True)
+    QApplication.processEvents()
+    grab(ed, "chart-editor.png")
+    ed.scene.clearSelection()
+    tr = next(t for t in ed.transition_items if t.transition.source == "crank" and t.transition.target == "idle")
+    tr.setSelected(True)
+    QApplication.processEvents()
+    grab(ed, "chart-editor-transition.png")
+    ed.close()
+    for shot in ("chart-editor.png", "chart-editor-transition.png"):  # shown in the app's help too
+        shutil.copy(OUT / shot, ROOT / "src" / "nervus" / "gui" / "resources" / "figures" / shot)
+
+
 def grab(widget: QWidget, name: str) -> None:
     QApplication.processEvents()
     widget.grab().save(str(OUT / name))
@@ -343,7 +365,7 @@ def main() -> None:
     app.setStyle("Fusion")
     from nervus.gui.theme import ThemeManager, ThemeMode
 
-    if sys.argv[1:] in (["console"], ["dictionary"], ["first"], ["requirements"]):  # only the newest shots
+    if sys.argv[1:] in (["console"], ["dictionary"], ["first"], ["requirements"], ["chart"]):  # only the newest shots
         from nervus.gui.views.main_window import MainWindow
 
         ThemeManager.instance().set_mode(ThemeMode.LIGHT)
@@ -351,7 +373,7 @@ def main() -> None:
         win.resize(1400, 860)
         win.show()
         shots = {"console": console_and_can_shots, "dictionary": dictionary_shots, "first": first_model_shots,
-                 "requirements": requirements_shots}  # fmt: skip
+                 "requirements": requirements_shots, "chart": chart_shots}  # fmt: skip
         shots[sys.argv[1]](win)
         win.editor.undo_stack.setClean()
         win.close()

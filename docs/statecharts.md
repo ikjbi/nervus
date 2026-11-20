@@ -6,9 +6,34 @@ Simulink they are Stateflow charts; in Nervus they are **State Chart** blocks
 
 ![An engine operating-mode chart](images/blocks/chart_engine_modes.png)
 
-## Writing a chart
+## The chart editor
 
-Select the block and edit its *definition* in the Properties panel, then press **Apply code**:
+**Double-click** a State Chart block to open the chart editor:
+
+![The chart editor with the engine operating modes](images/chart-editor.png)
+
+- **States** are boxes. Double-click empty space (or press **Add state**) to add one; drag it to move it. Select a
+  state to edit its name and its *entry*, *during* and *exit* actions on the right. **Add child state** puts a state
+  inside the selected one (a nested state); **Make initial** marks the state entered first at its level (the dot
+  and arrow).
+- **Transitions** are arrows. Select the source state, press **Add transition** and click the target state. Select
+  an arrow to edit its *guard* and *action*. When several transitions leave the same state, the number on the
+  label is the order in which they are checked: **Check earlier** and **Check later** change it.
+- With nothing selected, the panel shows the chart's **inputs, outputs, locals, parameters and events**.
+- The **Text** tab shows the same chart in the chart language below; edit either one.
+- **Apply** or **OK** writes the chart to the block, as one step you can undo (Ctrl+Z). A chart that is not valid
+  (an unknown name in a guard, say) shows the reason at the bottom and cannot be applied.
+
+![A transition selected: its guard, action and priority](images/chart-editor-transition.png)
+
+The positions of the states are saved in the model file. A chart without positions (written as text) is laid out
+automatically, from the initial state on the left; **Tidy up** does that again. Comments in the chart text are not
+kept when the chart is edited graphically.
+
+## Writing a chart as text
+
+Charts are stored in a short text language. Besides the chart editor's **Text** tab, you can select the block and
+edit its *definition* in the Properties panel, then press **Apply code**:
 
 ```
 # Engine operating modes
@@ -170,7 +195,3 @@ time in a gear and the hysteresis between the up- and downshift maps keep it fro
 Charts are generated as C code (the transitions of each state as `if` / `else if`, and the entry and exit
 actions inlined), so they can be part of the ECU code. A back-to-back test
 in the test suite checks the generated chart against the simulation sample by sample, with zero tolerance.
-
-## Planned
-
-A graphical chart editor is on the [roadmap](https://github.com/ikjbi/nervus/blob/main/plan.md).

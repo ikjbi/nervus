@@ -41,6 +41,7 @@ from nervus.gui.views.advisor_dialog import AdvisorDialog
 from nervus.gui.views.analysis_dialog import AnalysisDialog
 from nervus.gui.views.can_trace_dialog import CanTraceDialog
 from nervus.gui.views.canvas import DiagramScene, DiagramView
+from nervus.gui.views.chart_editor import ChartEditor
 from nervus.gui.views.codegen_dialog import CodegenDialog
 from nervus.gui.views.console_panel import ConsolePanel
 from nervus.gui.views.data_inspector import DataInspector
@@ -1082,9 +1083,16 @@ class MainWindow(QMainWindow):
             self.diagram_model.enter(block)
         elif block.LOGS_INPUTS and block.type_id == "sinks.scope":
             self.open_scope(block)
+        elif block.type_id == "charts.state_chart":
+            self.open_chart_editor(block)
         else:
             self.properties_dock.show()
             self.properties_dock.raise_()
+
+    def open_chart_editor(self, block: Block) -> ChartEditor:
+        editor = ChartEditor(block, self.editor, self)
+        editor.show()
+        return editor
 
     # ------------------------------------------------------------------ help
 

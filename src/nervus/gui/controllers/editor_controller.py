@@ -169,6 +169,21 @@ class EditorController(QObject):
             return False
         return self._push(SetParamsCommand(self.model, block, changed))
 
+    def set_chart(self, block: Block, definition: str, layout: dict[str, list[float]]) -> bool:
+        """The graphical chart editor's result: the chart text and the states' boxes, as one undo step."""
+        if _same(block.param_source("definition"), definition) and block.meta.get("chart_layout") == layout:
+            return True
+        self.undo_stack.beginMacro(f"Edit chart {block.name}")
+        try:
+            ok = self.set_params(block, {"definition": definition})
+            if ok and block.meta.get("chart_layout") != layout:
+                self._push(
+                    SetMetaCommand(self.model, f"Chart layout of {block.name}", [(block, {"chart_layout": layout})])
+                )
+        finally:
+            self.undo_stack.endMacro()
+        return ok
+
     def rename(self, block: Block, new_name: str) -> bool:
         new_name = new_name.strip()
         if new_name == block.name:

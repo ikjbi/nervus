@@ -225,7 +225,8 @@ tests/
 - [x] State chart block (a Stateflow-like subset): states, transitions, guards, entry/during/exit actions,
       locals, `after(n)`, `t_in_state`, defined in a small text language
 - [x] Hierarchical (nested) and parallel states, events, history junctions
-- [ ] Graphical state-chart editor
+- [x] Graphical state-chart editor (boxes and arrows, property panel, synchronised text view, undoable; the
+      layout is saved in the model)
 - [x] C code generation for charts (back-to-back tested with zero tolerance)
 - [x] Example: engine operating modes (crank, idle, run, fuel cut-off, stall) with chart `param`s
 - [x] Example: gear-shift logic (`examples/gear_shift.py`, with a tutorial)

@@ -33,6 +33,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Graphical chart editor: double-click a State Chart block to edit states, transitions, priorities and the
+  chart's interface as a diagram (with a synchronised text view); the layout is saved in the model.
 - MISRA C:2012: the generated code follows it (checked with cppcheck's MISRA addon for every block template);
   `nervus.codegen.misra.misra_check` and a MISRA check button in the code generation dialog.
 - FMI 2.0: Code ▸ Export FMU (co-simulation, from the generated C code) and the FMU block (import, with fmpy:

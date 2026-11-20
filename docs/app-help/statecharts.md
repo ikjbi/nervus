@@ -4,11 +4,36 @@ Operating modes, start sequences and fault handling are naturally described as *
 Simulink they are Stateflow charts; in Nervus they are **State Chart** blocks
 (**Library → State Machines → State Chart**).
 
-![An engine operating-mode chart](figures/chart_engine_modes.png)
+![](figures/chart_engine_modes.png)
 
-## Writing a chart
+## The chart editor
 
-Select the block and edit its *definition* in the Properties panel, then press **Apply code**:
+**Double-click** a State Chart block to open the chart editor:
+
+![](figures/chart-editor.png)
+
+- **States** are boxes. Double-click empty space (or press **Add state**) to add one; drag it to move it. Select a
+  state to edit its name and its *entry*, *during* and *exit* actions on the right. **Add child state** puts a state
+  inside the selected one (a nested state); **Make initial** marks the state entered first at its level (the dot
+  and arrow).
+- **Transitions** are arrows. Select the source state, press **Add transition** and click the target state. Select
+  an arrow to edit its *guard* and *action*. When several transitions leave the same state, the number on the
+  label is the order in which they are checked: **Check earlier** and **Check later** change it.
+- With nothing selected, the panel shows the chart's **inputs, outputs, locals, parameters and events**.
+- The **Text** tab shows the same chart in the chart language below; edit either one.
+- **Apply** or **OK** writes the chart to the block, as one step you can undo (Ctrl+Z). A chart that is not valid
+  (an unknown name in a guard, say) shows the reason at the bottom and cannot be applied.
+
+![](figures/chart-editor-transition.png)
+
+The positions of the states are saved in the model file. A chart without positions (written as text) is laid out
+automatically, from the initial state on the left; **Tidy up** does that again. Comments in the chart text are not
+kept when the chart is edited graphically.
+
+## Writing a chart as text
+
+Charts are stored in a short text language. Besides the chart editor's **Text** tab, you can select the block and
+edit its *definition* in the Properties panel, then press **Apply code**:
 
 ```
 # Engine operating modes
@@ -116,7 +141,7 @@ processed in the order they are written. `after(n)` and `t_in_state` count the t
 transition or `during` action is being evaluated. The state output gives the innermost active state of the
 first region.
 
-![The chart above: the stall at 5.4 s switches the diagnosis region to failed through the event; it recovers 3 s later](figures/chart_hierarchy.png)
+![](figures/chart_hierarchy.png)
 
 Hierarchical charts are generated as C code like flat ones (the same algorithm, unrolled over the states), and
 back-to-back tests check them sample by sample. The Model Advisor knows that initial children and parallel
@@ -153,7 +178,7 @@ starter protection into **crank_fail**), **idle** (idle speed control on), **run
 cut-off while coasting) and **stalled** (no automatic restart). All thresholds are `param`s. Four test cases
 drive the key, engine speed and pedal with scenarios: a normal start, a failed start, fuel cut-off, and a stall.
 
-![The fuel cut-off scenario](figures/engine_modes.png)
+![](figures/engine_modes.png)
 
 Coasting from 3000 rpm with the pedal released, the chart switches the fuel off (no fuel is needed: the car's
 momentum turns the engine) and back on at 1100 rpm, before the engine could stall, and goes to idle control.
@@ -162,15 +187,11 @@ momentum turns the engine) and back on at 1100 rpm, before the engine could stal
 
 `examples/gear_shift.py` has one state per gear. Each transition compares the vehicle speed with the shift
 speed read from a map for the current gear and pedal, `speed > up_speed and after(min_gear_time)`; the minimum
-time in a gear and the hysteresis between the up- and downshift maps keep it from hunting. See
-**Tutorial: gear-shift logic** in the help contents.
+time in a gear and the hysteresis between the up- and downshift maps keep it from hunting. See the
+*gear-shift tutorial*.
 
 ## C code
 
 Charts are generated as C code (the transitions of each state as `if` / `else if`, and the entry and exit
 actions inlined), so they can be part of the ECU code. A back-to-back test
 in the test suite checks the generated chart against the simulation sample by sample, with zero tolerance.
-
-## Planned
-
-A graphical chart editor is on the roadmap.

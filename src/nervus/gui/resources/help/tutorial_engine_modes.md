@@ -30,7 +30,13 @@ uv run python examples/engine_modes.py
 
 The thresholds are `param` names in the chart, so they are **calibration parameters** in the Model Workspace:
 `rpm_started` (600 rpm), `crank_limit` (300 samples of 10 ms = 3 s), `rpm_cut_on` (1500 rpm), `rpm_cut_off`
-(1100 rpm) and so on. Double-click the **modes** block to read the chart.
+(1100 rpm) and so on.
+
+Double-click the **modes** block: the chart editor shows the modes as states and the conditions as arrows. Click
+the arrow from *crank* to *idle* to see its guard, `rpm > rpm_started`; the number in front of it, 1, means it is
+checked first of the three transitions leaving *crank*. See *the chart editor*.
+
+![](figures/chart-editor.png)
 
 ## Follow the scenarios
 
@@ -62,6 +68,7 @@ Change a value in the Model Workspace and press **Run All** in the Test Manager:
 | `crank_limit` = 100 (1 s) | two tests fail: *normal start* (this engine needs 1.3 s of cranking, the chart gives up at 1.5 s) and *failed start* (it specifies 3 s of cranking): the tests are the specification |
 | `rpm_cut_off` = 800 | *overrun fuel cut-off* fails: the speed never falls below 800 rpm in the scenario, so the fuel never comes back (in a car the engine would stall) |
 | `rpm_cut_on` = 3500 | no fuel cut-off at all: the chart stays in *run* until 7.4 s and then goes to *idle*; the fuel is never switched off |
+| in the chart editor, select *crank* → *off* (`key < 0.5`) and press **Check earlier** twice | no change in these scenarios: the key stays on while cranking. The order matters only when two guards are true at the same time |
 
 The chart can be generated as C code (Code ▸ Generate C Code), and a back-to-back test checks the code against
 the simulation; see *C code generation*.
