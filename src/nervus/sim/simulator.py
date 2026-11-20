@@ -120,6 +120,7 @@ class _Logger:
         for name, b in zip(m.names, m.blocks, strict=True):
             for alias, port in b.result_aliases().items():
                 aliases[alias] = input_keys[name][port]
+        aliases.update(_subsystem_aliases(m.diagram, signals))
         aliases.update(_signal_aliases(m.diagram, signals, input_keys))
         t = np.asarray(self.t)
         dictionary = m.diagram.root.signals
@@ -577,4 +578,20 @@ def _signal_aliases(diagram: Diagram, signals: dict[str, Array], input_keys: dic
                 if consumer is not None and c.dst_port < len(consumer):
                     out[name] = consumer[c.dst_port]
                     break
+    return out
+
+
+def _subsystem_aliases(diagram: Diagram, signals: dict[str, Array]) -> dict[str, str]:
+    """``"sub:k"`` → the signal of the subsystem's Out block number k+1, so results can be read by the subsystem's
+    name like any other block (``res["ECU"]``, ``res["ECU:1"]``)."""
+    out: dict[str, str] = {}
+    for path, b in diagram.walk():
+        system = getattr(b, "system", None)
+        if not isinstance(system, Diagram):
+            continue
+        ports = sorted((int(x.params["port"]), x.name) for x in system.blocks if x.type_id == "ports.outport")
+        for k, (_num, name) in enumerate(ports):
+            key = f"{path}/{name}:0"
+            if key in signals:
+                out[f"{path}:{k}"] = key
     return out

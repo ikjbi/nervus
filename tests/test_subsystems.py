@@ -120,3 +120,21 @@ def test_subsystem_roundtrip() -> None:
     assert s2.system.block("y").meta == {"position": [100, 0]}
     assert s2.system.block("k").expressions == {"gain": "1/tau"}
     np.testing.assert_allclose(simulate(again, 1.0)["plant/y"], simulate(d, 1.0)["plant/y"])
+
+
+def test_result_by_subsystem_name() -> None:
+    """A subsystem's outputs can be read from a result by the subsystem's name, like a block's."""
+    from nervus import Diagram, simulate
+    from nervus.blocks import Constant, Gain, Inport, Outport, Scope, Subsystem
+
+    inner = Diagram()
+    u = inner.add(Inport(port=1), name="u")
+    inner.chain(u, inner.add(Gain(gain=2.0), name="g"), inner.add(Outport(port=1), name="twice"))
+    inner.chain(u, inner.add(Gain(gain=3.0), name="h"), inner.add(Outport(port=2), name="thrice"))
+    d = Diagram()
+    sub = d.add(Subsystem(system=inner), name="sub")
+    d.chain(d.add(Constant(value=1.5)), sub)
+    d.connect((sub, 0), d.add(Scope()))
+    d.connect((sub, 1), d.add(Scope()))
+    r = simulate(d, 0.1)
+    assert r["sub"][-1] == 3.0 and r["sub:1"][-1] == 4.5

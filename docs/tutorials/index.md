@@ -1,6 +1,6 @@
 # Tutorials
 
-24 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+25 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -18,6 +18,7 @@ Start here: the editor, and how to organise larger models.
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
 | [Your first model: a cruise control](first-model.md) | beginner | 30 min | the editor, blocks and wires, workspace variables, scopes, the Data Inspector, PI control and integrator windup |
+| [Reusable components with subsystems, masks and libraries](component-libraries.md) | beginner | 30 min | subsystems, masks (parameters for a subsystem), component libraries and linked copies, updating every model from one library |
 
 ## Control engineering
 

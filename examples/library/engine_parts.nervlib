@@ -19,6 +19,7 @@
       "name": "mean_value_engine",
       "type": "ports.subsystem",
       "params": {
+        "sample_time": -1.0,
         "enable_port": false,
         "when_enabled": "held",
         "trigger": "none"
@@ -126,7 +127,10 @@
             "params": {
               "initial": 30000.0,
               "upper": 101325.0,
-              "lower": 1000.0
+              "lower": 1000.0,
+              "external_reset": "none",
+              "initial_source": "internal",
+              "saturation_port": false
             },
             "meta": {
               "position": [
@@ -173,7 +177,10 @@
             "params": {
               "initial": 83.7758040957278,
               "upper": "inf",
-              "lower": 0.0
+              "lower": 0.0,
+              "external_reset": "none",
+              "initial_source": "internal",
+              "saturation_port": false
             },
             "meta": {
               "position": [
@@ -370,6 +377,7 @@
       "name": "throttle_actuator",
       "type": "ports.subsystem",
       "params": {
+        "sample_time": -1.0,
         "enable_port": false,
         "when_enabled": "held",
         "trigger": "none"

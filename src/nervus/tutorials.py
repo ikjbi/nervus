@@ -61,6 +61,9 @@ TUTORIALS: list[Tutorial] = [
     Tutorial("first-model", "Your first model: a cruise control", "Getting started", "", "beginner", 30,
              "the editor, blocks and wires, workspace variables, scopes, the Data Inspector, PI control and "
              "integrator windup", ("cruise_control.nervus",)),
+    Tutorial("component-libraries", "Reusable components with subsystems, masks and libraries", "Getting started",
+             "", "beginner", 30, "subsystems, masks (parameters for a subsystem), component libraries and linked "
+             "copies, updating every model from one library", ("engine_comparison.nervus",), ("first-model",)),
     # ------------------------------------------------------------------ control labs
     Tutorial("mass-spring-damper", "Position control of a mass-spring-damper", "Control engineering",
              "Classic lab experiments", "beginner", 30,

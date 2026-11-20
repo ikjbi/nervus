@@ -54,6 +54,8 @@ class SimResult:
             return self.aliases[name]
         if f"{name}:0" in self.signals:
             return f"{name}:0"
+        if f"{name}:0" in self.aliases:
+            return self.aliases[f"{name}:0"]
         raise KeyError(f"no signal named {name!r}; available: {', '.join(self.names())}")
 
     def __getitem__(self, name: str) -> Array:

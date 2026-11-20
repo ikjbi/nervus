@@ -172,4 +172,4 @@ Inspector.
 
 ## Next
 
-That was the last tutorial on getting started. Continue with control engineering: *Position control of a mass-spring-damper*, or pick another one from the *tutorial overview*.
+Next in this topic: *Reusable components with subsystems, masks and libraries*. Or pick another one from the *tutorial overview*.
