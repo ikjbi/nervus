@@ -1,0 +1,800 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "truck",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 420.0,
+    "solver": "rk4",
+    "step": 0.05,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "set_speed",
+      "value": 80.0,
+      "description": "Cruise control set speed",
+      "unit": "km/h"
+    },
+    {
+      "name": "brake_margin",
+      "value": 4.0,
+      "description": "The exhaust brake closes above set speed + this",
+      "unit": "km/h"
+    },
+    {
+      "name": "up_rpm",
+      "value": 1500.0,
+      "description": "Upshift above this engine speed",
+      "unit": "rpm"
+    },
+    {
+      "name": "down_rpm",
+      "value": 1050.0,
+      "description": "Downshift below this engine speed",
+      "unit": "rpm"
+    },
+    {
+      "name": "hold_rpm",
+      "value": 2000.0,
+      "description": "While braking, downshift below this (for more exhaust brake)",
+      "unit": "rpm"
+    },
+    {
+      "name": "shift_time",
+      "value": 0.8,
+      "description": "Torque interruption of a shift",
+      "unit": "s"
+    },
+    {
+      "name": "n_gears",
+      "value": 12.0,
+      "description": "Number of gears",
+      "unit": "-"
+    },
+    {
+      "name": "exhaust_brake",
+      "value": 1.0,
+      "description": "1: the exhaust brake is fitted, 0: not",
+      "unit": "-"
+    },
+    {
+      "name": "gear_ratios",
+      "value": [
+        14.9,
+        11.7,
+        9.0,
+        7.1,
+        5.6,
+        4.4,
+        3.4,
+        2.6,
+        2.0,
+        1.6,
+        1.3,
+        1.0
+      ],
+      "description": "AMT ratios, gear 1..12",
+      "unit": "-"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "v_m_s",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 22.22222222222222,
+        "upper": "inf",
+        "lower": 0.0,
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "position_m",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": "-inf",
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          160.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "route_grade",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, s):\n    \"\"\"Road grade [%] along the route [m]: flat, a 2 km climb of 6 %, then a descent of 6 %.\"\"\"\n    if s < 500:\n        return 0.0\n    if s < 2500:\n        return 6.0\n    return -6.0\n",
+        "num_inputs": 1,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          320.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "road_loads",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, v, grade):\n    \"\"\"Road loads [N] for a 40 t truck: drag (cdA 5.5 m²), rolling resistance 0.006, grade.\"\"\"\n    a = math.atan(grade / 100)\n    return 0.5 * 1.2 * 5.5 * v * abs(v) + 40000 * 9.81 * (0.006 * math.cos(a) * min(1.0, v / 0.5) + math.sin(a))\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          480.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "gear_engaged",
+      "type": "discrete.unit_delay",
+      "params": {
+        "initial": 12.0,
+        "sample_time": 0.05
+      },
+      "meta": {
+        "position": [
+          640.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "gear_ratio",
+      "type": "lookup.table_1d",
+      "params": {
+        "breakpoints": [
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0,
+          8.0,
+          9.0,
+          10.0,
+          11.0,
+          12.0
+        ],
+        "table": "gear_ratios",
+        "interpolation": "nearest",
+        "extrapolation": "clip",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          800.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "axle_ratio",
+      "type": "math.gain",
+      "params": {
+        "gain": 3.4,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "engine_rpm",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, v, i):\n    return max(600.0, v / 0.5 * i * 60 / (2 * math.pi))\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          160.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "engine_torque",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, rpm, fuel, flap):\n    \"\"\"Engine torque at the flywheel [N·m]: fuel (0..1) times the full-load curve, minus friction and the exhaust\n    brake (flap 0..1), whose braking torque grows with the engine speed.\"\"\"\n    full = np.interp(rpm, [600, 1000, 1400, 1800, 2100], [1400, 2600, 2600, 2000, 0])\n    friction = 80 + 0.06 * rpm\n    exhaust = flap * np.interp(rpm, [600, 1200, 2300], [0, 900, 2000])\n    return fuel * full - friction - exhaust\n",
+        "num_inputs": 3,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          320.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "clutch",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, tq, shifting):\n    return 0.0 if shifting > 0.5 else tq\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          480.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "tractive_force",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, tq, i):\n    return tq * i * 0.95 / 0.5\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          640.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "net_force",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          800.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "accel",
+      "type": "math.gain",
+      "params": {
+        "gain": 2.5e-05,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "speed_kmh",
+      "type": "math.gain",
+      "params": {
+        "gain": 3.6,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          160.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "speed_sensor",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.05
+      },
+      "meta": {
+        "position": [
+          320.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "rpm_sensor",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.05
+      },
+      "meta": {
+        "position": [
+          480.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "speed_error",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          640.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "cruise_control",
+      "type": "control.discrete_pid",
+      "params": {
+        "P": 0.15,
+        "I": 0.02,
+        "D": 0.0,
+        "N": 100.0,
+        "initial_integrator": 0.0,
+        "upper": 1.0,
+        "lower": 0.0,
+        "anti_windup": "clamping",
+        "Kb": 1.0,
+        "sample_time": 0.05
+      },
+      "meta": {
+        "position": [
+          800.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "set_speed_kmh",
+      "type": "sources.constant",
+      "params": {
+        "value": "set_speed",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "exhaust_brake_request",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, v, vset, fitted):\n    return 1.0 if fitted > 0.5 and v > vset + p[0] else 0.0\n",
+        "num_inputs": 3,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": "[brake_margin]"
+      },
+      "meta": {
+        "position": [
+          160.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "brake_fitted",
+      "type": "sources.constant",
+      "params": {
+        "value": "exhaust_brake",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          320.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "amt_tcu",
+      "type": "charts.state_chart",
+      "params": {
+        "definition": "\ninput rpm, brake_request\noutput gear = 12, shifting = 0\nlocal target = 12\nparam up_rpm, down_rpm, hold_rpm, shift_time, n_gears\n\nstate driving\n  entry: shifting = 0\nstate shifting_up\n  entry: shifting = 1; target = gear + 1\nstate shifting_down\n  entry: shifting = 1; target = gear - 1\n\ntransition driving -> shifting_down: rpm < down_rpm and gear > 1 and after(10)\ntransition driving -> shifting_down: brake_request > 0.5 and rpm < hold_rpm and gear > 1 and after(10)\ntransition driving -> shifting_up: rpm > up_rpm and gear < n_gears and brake_request < 0.5 and after(10)\ntransition shifting_up -> driving: t_in_state >= shift_time / gear = target\ntransition shifting_down -> driving: t_in_state >= shift_time / gear = target\n",
+        "state_output": true,
+        "sample_time": 0.05
+      },
+      "meta": {
+        "position": [
+          480.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          640.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "speed",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          800.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "rpm",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          0.0,
+          440.0
+        ]
+      }
+    },
+    {
+      "name": "gear",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          160.0,
+          440.0
+        ]
+      }
+    },
+    {
+      "name": "exhaust_brake_on",
+      "type": "ports.outport",
+      "params": {
+        "port": 4
+      },
+      "meta": {
+        "position": [
+          320.0,
+          440.0
+        ]
+      }
+    },
+    {
+      "name": "grade",
+      "type": "ports.outport",
+      "params": {
+        "port": 5
+      },
+      "meta": {
+        "position": [
+          480.0,
+          440.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "v_m_s",
+      "src_port": 0,
+      "dst": "position_m",
+      "dst_port": 0
+    },
+    {
+      "src": "position_m",
+      "src_port": 0,
+      "dst": "route_grade",
+      "dst_port": 0
+    },
+    {
+      "src": "v_m_s",
+      "src_port": 0,
+      "dst": "road_loads",
+      "dst_port": 0
+    },
+    {
+      "src": "route_grade",
+      "src_port": 0,
+      "dst": "road_loads",
+      "dst_port": 1
+    },
+    {
+      "src": "gear_engaged",
+      "src_port": 0,
+      "dst": "gear_ratio",
+      "dst_port": 0
+    },
+    {
+      "src": "gear_ratio",
+      "src_port": 0,
+      "dst": "axle_ratio",
+      "dst_port": 0
+    },
+    {
+      "src": "v_m_s",
+      "src_port": 0,
+      "dst": "engine_rpm",
+      "dst_port": 0
+    },
+    {
+      "src": "axle_ratio",
+      "src_port": 0,
+      "dst": "engine_rpm",
+      "dst_port": 1
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "engine_torque",
+      "dst_port": 0
+    },
+    {
+      "src": "cruise_control",
+      "src_port": 0,
+      "dst": "engine_torque",
+      "dst_port": 1
+    },
+    {
+      "src": "exhaust_brake_request",
+      "src_port": 0,
+      "dst": "engine_torque",
+      "dst_port": 2
+    },
+    {
+      "src": "engine_torque",
+      "src_port": 0,
+      "dst": "clutch",
+      "dst_port": 0
+    },
+    {
+      "src": "amt_tcu",
+      "src_port": 1,
+      "dst": "clutch",
+      "dst_port": 1
+    },
+    {
+      "src": "clutch",
+      "src_port": 0,
+      "dst": "tractive_force",
+      "dst_port": 0
+    },
+    {
+      "src": "axle_ratio",
+      "src_port": 0,
+      "dst": "tractive_force",
+      "dst_port": 1
+    },
+    {
+      "src": "tractive_force",
+      "src_port": 0,
+      "dst": "net_force",
+      "dst_port": 0
+    },
+    {
+      "src": "road_loads",
+      "src_port": 0,
+      "dst": "net_force",
+      "dst_port": 1
+    },
+    {
+      "src": "net_force",
+      "src_port": 0,
+      "dst": "accel",
+      "dst_port": 0
+    },
+    {
+      "src": "accel",
+      "src_port": 0,
+      "dst": "v_m_s",
+      "dst_port": 0
+    },
+    {
+      "src": "v_m_s",
+      "src_port": 0,
+      "dst": "speed_kmh",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_kmh",
+      "src_port": 0,
+      "dst": "speed_sensor",
+      "dst_port": 0
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "rpm_sensor",
+      "dst_port": 0
+    },
+    {
+      "src": "set_speed_kmh",
+      "src_port": 0,
+      "dst": "speed_error",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_sensor",
+      "src_port": 0,
+      "dst": "speed_error",
+      "dst_port": 1
+    },
+    {
+      "src": "speed_error",
+      "src_port": 0,
+      "dst": "cruise_control",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_sensor",
+      "src_port": 0,
+      "dst": "exhaust_brake_request",
+      "dst_port": 0
+    },
+    {
+      "src": "set_speed_kmh",
+      "src_port": 0,
+      "dst": "exhaust_brake_request",
+      "dst_port": 1
+    },
+    {
+      "src": "brake_fitted",
+      "src_port": 0,
+      "dst": "exhaust_brake_request",
+      "dst_port": 2
+    },
+    {
+      "src": "rpm_sensor",
+      "src_port": 0,
+      "dst": "amt_tcu",
+      "dst_port": 0
+    },
+    {
+      "src": "exhaust_brake_request",
+      "src_port": 0,
+      "dst": "amt_tcu",
+      "dst_port": 1
+    },
+    {
+      "src": "amt_tcu",
+      "src_port": 0,
+      "dst": "gear_engaged",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_kmh",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "amt_tcu",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    },
+    {
+      "src": "speed_kmh",
+      "src_port": 0,
+      "dst": "speed",
+      "dst_port": 0
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "rpm",
+      "dst_port": 0
+    },
+    {
+      "src": "amt_tcu",
+      "src_port": 0,
+      "dst": "gear",
+      "dst_port": 0
+    },
+    {
+      "src": "exhaust_brake_request",
+      "src_port": 0,
+      "dst": "exhaust_brake_on",
+      "dst_port": 0
+    },
+    {
+      "src": "route_grade",
+      "src_port": 0,
+      "dst": "grade",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "the climb: AMT keeps the engine in its torque band",
+      "description": "On the 6 % climb the truck slows; the gearbox downshifts and the engine stays between 1000 and 1700 rpm",
+      "stop_time": 110.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "rpm",
+          "lower": 950.0,
+          "upper": 1750.0,
+          "t_from": 40.0,
+          "t_to": 110.0
+        }
+      ]
+    },
+    {
+      "name": "the descent: the exhaust brake limits the speed",
+      "description": "On the 6 % descent the exhaust brake (with the engine high in 11th gear) holds the truck below 100 km/h",
+      "stop_time": 420.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "speed",
+          "lower": 30.0,
+          "upper": 100.0,
+          "t_from": 190.0,
+          "t_to": 420.0
+        }
+      ]
+    }
+  ]
+}

@@ -248,7 +248,7 @@ tests/
 - [x] Driver model and the ECE-15 drive cycle (tutorial); other cycles from CSV files
 - [x] Bundled WLTP / FTP-75 tables (from the official sources) and a drive-cycle block (`nervus.cycles`, Drive Cycle)
 - [x] Sensor and actuator models: quantisation, noise, delay, faults (Sensor Model, Actuator Model blocks)
-- [ ] Truck-specific models: heavy-duty diesel, exhaust brake, AMT gearbox
+- [x] Truck-specific models: heavy-duty diesel, exhaust brake, AMT gearbox (`examples/truck.py`)
 - [x] Tutorial series: "Learn engine control with Nervus": idle speed, lambda, ignition and knock, throttle,
       gear shift, traction control
 

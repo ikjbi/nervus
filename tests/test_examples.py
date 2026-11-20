@@ -329,3 +329,11 @@ def test_fuel_film_example() -> None:
     off = simulate(d, params={"xtau_comp": 0.0})
     assert mod.lambda_excursion(off) > 2 * mod.lambda_excursion(simulate(d))
     assert [t.name for t in load(EXAMPLES / "fuel_film.nervus").tests] == [t.name for t in d.tests]
+
+
+def test_truck_example() -> None:
+    from nervus.testing import run_tests
+
+    d = _import("truck").build()
+    assert all(r.passed for r in run_tests(d))
+    assert [t.name for t in load(EXAMPLES / "truck.nervus").tests] == [t.name for t in d.tests]

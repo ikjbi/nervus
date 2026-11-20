@@ -122,5 +122,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   [tutorial](tutorials/ignition-knock.md).
 - `fuel_film.py`: wall wetting (x-tau) and its compensation, a switching lambda sensor with jump and ramp, and
   long-term fuel trims learned per load cell (Adaptive Map). See the [tutorial](tutorials/fuel-film.md).
+- `truck.py`: a 40 t truck with a heavy-duty diesel, a 12-speed AMT and an exhaust brake on a climb and a
+  descent. See the [tutorial](tutorials/truck.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

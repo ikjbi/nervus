@@ -25,6 +25,7 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Example `truck.py` and tutorial: 40 t truck with heavy-duty diesel, 12-speed AMT and exhaust brake.
 - The official WLTC class 3b (UNECE GTR 15) and FTP-75 (US EPA) speed tables, `nervus.cycles`, and the Drive
   Cycle block (speed and acceleration); the drive-cycle example runs them with `build("wltc3b")`.
 - Adaptive Map block (a learning 2-D table, with C code); example `fuel_film.py` and tutorial: wall wetting

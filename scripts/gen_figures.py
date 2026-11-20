@@ -1278,6 +1278,30 @@ def drive_cycle_block() -> plt.Figure:
     return fig
 
 
+@figure("truck")
+def truck() -> plt.Figure:
+    from nervus import load
+
+    d = load(Path(__file__).parent.parent / "examples" / "truck.nervus")
+    r, off = simulate(d), simulate(d, params={"exhaust_brake": 0.0})
+    fig, (a0, a1, a2, a3) = plt.subplots(4, 1, figsize=(6.4, 6.0), sharex=True, height_ratios=[0.6, 1, 1, 0.8])
+    a0.plot(r.t, r["grade"], color=INK, lw=1.5)
+    a0.set_ylabel("grade [%]")
+    a0.set_title("40 t truck: a 6 % climb, then a 6 % descent", color=INK, fontsize=10)
+    a1.plot(off.t, np.minimum(off["speed"], 140), color=C2, lw=1.2, label="no exhaust brake (runs away; clipped)")
+    a1.plot(r.t, r["speed"], color=C1, lw=2, label="exhaust brake")
+    a1.set_ylabel("speed [km/h]")
+    a1.set_ylim(0, 145)
+    a1.legend(loc="upper left", fontsize=8)
+    a2.plot(r.t, r["rpm"], color=C3, lw=1.5)
+    a2.set_ylabel("engine [rpm]")
+    a3.step(r.t, r["gear"], where="post", color=C4, lw=2)
+    a3.set_ylabel("gear")
+    a3.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

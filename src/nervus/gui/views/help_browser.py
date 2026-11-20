@@ -70,6 +70,7 @@ HELP_PAGES = [
     ("tutorial_circuits", "Tutorial: electronic circuits"),
     ("tutorial_physical", "Tutorial: starter motor and throttle"),
     ("tutorial_traction", "Tutorial: traction control"),
+    ("tutorial_truck", "Tutorial: a truck on a mountain road"),
     ("coming_from_simulink", "Coming from Simulink"),
     ("model_files", "Model files"),
     ("shortcuts", "Keyboard shortcuts"),
