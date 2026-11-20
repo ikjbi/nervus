@@ -1,11 +1,12 @@
-# Tutorial 6: a car on a drive cycle
+# Tutorial: A car on a drive cycle
 
 | | |
 |---|---|
 | **You will learn** | vehicle longitudinal dynamics, a driver model, standard drive cycles (ECE-15, WLTC, FTP-75), where the energy goes, fuel consumption |
-| **Before this** | Tutorial 1 |
-| **Time** | about 40 minutes |
+| **Before this** | *Your first model: a cruise control* |
+| **Level and time** | beginner, about 40 minutes |
 | **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/drive_cycle.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
+| **Topic** | Vehicle dynamics and energy ▸ Longitudinal dynamics and energy (*all tutorials*) |
 
 This tutorial follows `examples/drive_cycle.py`: a car with a driver model drives the **ECE-15** urban
 cycle. You will see where the energy for city driving goes, and how vehicle mass changes it.
@@ -96,4 +97,4 @@ The test cases in the **Test Manager** check the tracking, the distance and the 
 
 ## Next
 
-*Tutorial 7: gear-shift logic*, or pick another one from the *tutorial overview*.
+Next in this topic: *Tyre slip and traction control*. Or pick another one from the *tutorial overview*.

@@ -1,11 +1,12 @@
-# Tutorial 10: starter motor and electronic throttle
+# Tutorial: Starter motor and electronic throttle
 
 | | |
 |---|---|
 | **You will learn** | physical modelling (circuits, shafts, springs connected by links instead of signals): cranking an engine on a weak battery, a drive-by-wire throttle servo |
-| **Before this** | Tutorial 1; read [Physical modelling](../physical.md) first |
-| **Time** | about 45 minutes |
+| **Before this** | [Your first model: a cruise control](first-model.md); read [Physical modelling](../physical.md) first |
+| **Level and time** | intermediate, about 45 minutes |
 | **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/starter_motor.nervus`, `examples/electronic_throttle.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
+| **Topic** | Electrics and electronics ▸ Vehicle electrical system ([all tutorials](index.md)) |
 
 Two physical models that mix circuits, mechanics and control: cranking an engine with the starter motor, and
 the drive-by-wire throttle. Both are built from physical blocks (see [Physical modelling](../physical.md)).
@@ -73,4 +74,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-[Tutorial 11: electronic circuits](circuits.md), or pick another one from the [tutorial overview](index.md).
+That was the last tutorial on electrics and electronics. Continue with ecu software, communication and diagnostics: [A vehicle network (CAN)](can-network.md), or pick another one from the [tutorial overview](index.md).

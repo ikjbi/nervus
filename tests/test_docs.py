@@ -9,9 +9,12 @@ NAV = (ROOT / "mkdocs.yml").read_text(encoding="utf-8")
 
 
 def help_pages() -> set[str]:
-    source = (ROOT / "src" / "nervus" / "gui" / "views" / "help_browser.py").read_text(encoding="utf-8")
-    block = source[source.index("HELP_PAGES = [") : source.index("]", source.index("HELP_PAGES = ["))]
-    return set(re.findall(r'\("([a-z_]+)",', block))
+    import pytest
+
+    pytest.importorskip("PySide6")
+    from nervus.gui.views.help_browser import HELP_PAGES
+
+    return {name for name, _title in HELP_PAGES}
 
 
 def test_every_help_file_is_in_the_help_window() -> None:

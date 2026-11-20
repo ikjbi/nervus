@@ -1,11 +1,12 @@
-# Tutorial 8: tyre slip and traction control
+# Tutorial: Tyre slip and traction control
 
 | | |
 |---|---|
 | **You will learn** | tyre slip and Pacejka's magic formula, wheel and vehicle dynamics, a traction control ECU on dry, wet and snowy roads |
-| **Before this** | Tutorial 1 |
-| **Time** | about 30 minutes |
+| **Before this** | *Your first model: a cruise control* |
+| **Level and time** | intermediate, about 30 minutes |
 | **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/traction_control.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
+| **Topic** | Vehicle dynamics and energy ▸ Chassis control (*all tutorials*) |
 
 This tutorial follows `examples/traction_control.py`: a car launching at full throttle on dry, wet and snowy
 roads, and a traction control (TCS) ECU that keeps the driven wheels from spinning.
@@ -60,4 +61,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-*Tutorial 9: a truck on a mountain road*, or pick another one from the *tutorial overview*.
+That was the last tutorial on vehicle dynamics and energy. Continue with electrics and electronics: *Rectifier, relay driver, buck converter and active filter*, or pick another one from the *tutorial overview*.

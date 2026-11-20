@@ -1,11 +1,12 @@
-# Tutorial 11: electronic circuits
+# Tutorial: Rectifier, relay driver, buck converter and active filter
 
 | | |
 |---|---|
 | **You will learn** | circuit simulation like LTspice: a rectifier, a relay driver and its freewheeling diode, a buck converter, an active filter; SPICE netlists |
-| **Before this** | Tutorial 10 |
-| **Time** | about 45 minutes |
+| **Before this** | *Starter motor and electronic throttle* |
+| **Level and time** | advanced, about 45 minutes |
 | **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/rectifier.nervus`, `examples/relay_driver.nervus`, `examples/buck_converter.nervus`, `examples/active_filter.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
+| **Topic** | Electrics and electronics ▸ Circuit fundamentals (*all tutorials*) |
 
 This tutorial follows `examples/circuits.py`: four circuits that every ECU engineer meets, simulated the way
 LTspice does it. You will see a rectifier's ripple, the voltage spike of a relay coil, a switching regulator
@@ -100,4 +101,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-*Tutorial 12: a vehicle network (CAN)*, or pick another one from the *tutorial overview*.
+Next in this topic: *Starter motor and electronic throttle*. Or pick another one from the *tutorial overview*.

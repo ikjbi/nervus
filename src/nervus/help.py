@@ -149,21 +149,19 @@ SHARED_PAGES = {
     "model-files.md": "model_files.md",
     "physical.md": "physical.md",
     "tutorials/index.md": "tutorials.md",
-    "tutorials/first-model.md": "tutorial_first_model.md",
-    "tutorials/idle-speed-control.md": "tutorial_idle.md",
-    "tutorials/lambda-control.md": "tutorial_lambda.md",
-    "tutorials/ignition-knock.md": "tutorial_ignition.md",
-    "tutorials/fuel-film.md": "tutorial_fuel_film.md",
-    "tutorials/drive-cycle.md": "tutorial_drive_cycle.md",
-    "tutorials/gear-shift.md": "tutorial_gear_shift.md",
-    "tutorials/traction-control.md": "tutorial_traction.md",
-    "tutorials/truck.md": "tutorial_truck.md",
-    "tutorials/physical-models.md": "tutorial_physical.md",
-    "tutorials/circuits.md": "tutorial_circuits.md",
-    "tutorials/can-network.md": "tutorial_can_network.md",
 }
 """Pages written for GitHub (docs/...) and converted for the in-app help by ``scripts/gen_block_reference.py``.
 Edit the docs version; the app version is generated."""
+
+
+def _tutorial_pages() -> None:
+    from nervus.tutorials import TUTORIALS
+
+    for t in TUTORIALS:
+        SHARED_PAGES[f"tutorials/{t.slug}.md"] = f"{t.help_page}.md"
+
+
+_tutorial_pages()
 
 
 def docs_page_for_app(markdown: str) -> str:

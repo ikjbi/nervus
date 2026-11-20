@@ -1,11 +1,12 @@
-# Tutorial 5: wall wetting and learned fuel trims
+# Tutorial: Wall wetting and learned fuel trims
 
 | | |
 |---|---|
 | **You will learn** | fuel film dynamics (x-tau) and transient compensation, a switching lambda sensor, long-term trims learned per load cell (Adaptive Map) |
-| **Before this** | Tutorial 3 |
-| **Time** | about 30 minutes |
+| **Before this** | [Lambda control and fuel trims](lambda-control.md) |
+| **Level and time** | intermediate, about 30 minutes |
 | **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/fuel_film.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
+| **Topic** | Powertrain and engine control ▸ Engine management ([all tutorials](index.md)) |
 
 This tutorial follows `examples/fuel_film.py` and continues [lambda control](lambda-control.md) with three
 things every production fuel system has.
@@ -57,4 +58,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-[Tutorial 6: a car on a drive cycle](drive-cycle.md), or pick another one from the [tutorial overview](index.md).
+Next in this topic: [Gear-shift logic](gear-shift.md). Or pick another one from the [tutorial overview](index.md).

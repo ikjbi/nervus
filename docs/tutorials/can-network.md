@@ -1,11 +1,12 @@
-# Tutorial 12: a vehicle network (CAN)
+# Tutorial: A vehicle network (CAN)
 
 | | |
 |---|---|
 | **You will learn** | ECUs on simulated CAN buses: DBC files, arbitration and bus load, a gateway, rest-bus simulation, E2E protection, fault injection and timeouts, the bus trace |
-| **Before this** | Tutorial 1; read [CAN communication](../can.md) first |
-| **Time** | about 40 minutes |
+| **Before this** | [Your first model: a cruise control](first-model.md); read [CAN communication](../can.md) first |
+| **Level and time** | advanced, about 40 minutes |
 | **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/can_network.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
+| **Topic** | ECU software, communication and diagnostics ▸ Vehicle networks ([all tutorials](index.md)) |
 
 `examples/can_network.py` connects ECUs over two simulated CAN buses: an engine ECU (ECM) on the
 **powertrain CAN** (500 kbit/s), an instrument cluster on the **body CAN** (125 kbit/s), a **gateway**
@@ -57,4 +58,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-You have done them all. Pick a topic from the [tutorial overview](index.md) to go deeper, or build your own model.
+Pick another topic from the [tutorial overview](index.md), or build your own model.

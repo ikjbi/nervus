@@ -16,7 +16,7 @@ Simulink. It is aimed at control engineering, and especially at engine and vehic
 | Structure | subsystems, masks, enabled/triggered/function-call subsystems, atomic ECU tasks with their own period, variants, linked component libraries | [Subsystems](subsystems.md), [Libraries](libraries.md) |
 | Logic | State Chart block: nested and parallel states, history, events, guards, timers, calibration parameters | [State machines](statecharts.md) |
 | Physical modelling | electrical, rotational, thermal and hydraulic networks connected like real parts; batteries, motors, solenoids, injectors, relays, alternator, glow plugs | [Physical modelling](physical.md) |
-| Electronics | LTspice-style circuit simulation: diodes, BJTs, MOSFETs, op-amps, switches; operating point and DC sweeps; SPICE netlist import and export | [Physical modelling](physical.md), [Tutorial 11](tutorials/circuits.md) |
+| Electronics | LTspice-style circuit simulation: diodes, BJTs, MOSFETs, op-amps, switches; operating point and DC sweeps; SPICE netlist import and export | [Physical modelling](physical.md), [Circuits tutorial](tutorials/circuits.md) |
 | Automotive models | mean-value engine, vehicle and driveline, tyres (magic formula), automatic and automated gearboxes, sensor and actuator models, diagnostic monitors with DTCs, adaptive maps, the official **WLTC and FTP-75 drive cycles** | [Tutorials](tutorials/index.md) |
 | ECU code | C code generation (multirate, calibratable parameters, A2L file, HTML report), fixed-point data types, software-in-the-loop check | [C code](codegen.md), [Data types](datatypes.md) |
 | Vehicle networks | CAN Pack/Unpack with DBC files (also **CAN FD**, multiplexed signals, value tables); **simulated CAN buses** with arbitration, bus load, gateways, rest-bus simulation, fault injection and E2E protection; bus trace with ASC/BLF export; real CAN adapters through python-can | [CAN](can.md) |
@@ -28,7 +28,7 @@ Simulink. It is aimed at control engineering, and especially at engine and vehic
 
 ## Where to start
 
-- [Tutorial 1: your first model](tutorials/first-model.md): build a cruise control in the editor, step by step.
+- [Your first model](tutorials/first-model.md): build a cruise control in the editor, step by step.
 - [Tutorials](tutorials/index.md): twelve guided examples and learning paths.
 - [Getting started](getting-started.md): install Nervus and build a model in Python.
 - [Concepts](concepts.md): signals, sample times, solvers and algebraic loops.

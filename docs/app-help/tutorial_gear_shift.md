@@ -1,11 +1,12 @@
-# Tutorial 7: gear-shift logic
+# Tutorial: Gear-shift logic
 
 | | |
 |---|---|
 | **You will learn** | an automatic gearbox's shift schedule, hysteresis, a State Chart in its own ECU task, kickdown and hills, fuel consumption per gear |
-| **Before this** | Tutorials 1 and 6; *State machines* helps |
-| **Time** | about 60 minutes |
+| **Before this** | *Your first model: a cruise control*, *A car on a drive cycle*; read *State machines* first |
+| **Level and time** | intermediate, about 60 minutes |
 | **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/gear_shift.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
+| **Topic** | Powertrain and engine control ▸ Transmission and driveline (*all tutorials*) |
 
 This tutorial follows `examples/gear_shift.py`: the shift logic of an automatic gearbox, running in its own
 ECU (the TCU, transmission control unit), and a car to try it on. You will see how a shift schedule works,
@@ -153,4 +154,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-*Tutorial 8: tyre slip and traction control*, or pick another one from the *tutorial overview*.
+Next in this topic: *A truck on a mountain road*. Or pick another one from the *tutorial overview*.

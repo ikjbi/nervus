@@ -30,7 +30,7 @@ tool for designing, simulating and eventually generating C code for that kind of
 | Structure | subsystems, masks, enabled/triggered/function-call subsystems, atomic ECU tasks with their own period, variants, linked component libraries | [Subsystems](docs/subsystems.md), [Libraries](docs/libraries.md) |
 | Logic | State Chart block: nested and parallel states, history, events, guards, timers, calibration parameters | [State machines](docs/statecharts.md) |
 | Physical modelling | electrical, rotational, thermal and hydraulic networks connected like real parts; batteries, motors, solenoids, injectors, relays, alternator, glow plugs | [Physical modelling](docs/physical.md) |
-| Electronics | LTspice-style circuit simulation: diodes, BJTs, MOSFETs, op-amps, switches; operating point and DC sweeps; SPICE netlist import and export | [Physical modelling](docs/physical.md), [Tutorial 11](docs/tutorials/circuits.md) |
+| Electronics | LTspice-style circuit simulation: diodes, BJTs, MOSFETs, op-amps, switches; operating point and DC sweeps; SPICE netlist import and export | [Physical modelling](docs/physical.md), [Circuits tutorial](docs/tutorials/circuits.md) |
 | Automotive models | mean-value engine, vehicle and driveline, tyres (magic formula), automatic and automated gearboxes, sensor and actuator models, diagnostic monitors with DTCs, adaptive maps, the official **WLTC and FTP-75 drive cycles** | [Tutorials](docs/tutorials/index.md) |
 | ECU code | C code generation (multirate, calibratable parameters, A2L file, HTML report), fixed-point data types, software-in-the-loop check | [C code](docs/codegen.md), [Data types](docs/datatypes.md) |
 | Vehicle networks | CAN Pack/Unpack with DBC files (also **CAN FD**, multiplexed signals, value tables); **simulated CAN buses** with arbitration, bus load, gateways, rest-bus simulation, fault injection and E2E protection; bus trace with ASC/BLF export; real CAN adapters through python-can | [CAN](docs/can.md) |
@@ -54,16 +54,22 @@ uv sync --all-extras    # everything: editor, CAN/DBC (cantools), OBD-II (pyseri
 
 ## Learn Nervus
 
-Start with [Tutorial 1: your first model](docs/tutorials/first-model.md): you build a cruise control in the
-editor step by step, tune it, and meet integrator windup. Then pick a path in the
-[tutorial overview](docs/tutorials/index.md):
+Start with the tutorial [Your first model](docs/tutorials/first-model.md): you build a cruise control in the
+editor step by step, tune it, and meet integrator windup. Then pick a topic; the
+[tutorial overview](docs/tutorials/index.md) has them all:
 
-| Path | Tutorials |
+<!-- tutorials:begin -->
+| Topic | Tutorials |
 |---|---|
-| Engine control | idle speed, lambda control and fuel trims, ignition and knock, wall wetting |
-| Vehicle and driveline | drive cycles (WLTP, FTP-75), gear-shift logic, traction control, a truck on a mountain road |
-| Electrics and electronics | starter motor and electronic throttle, electronic circuits |
-| ECU communication | a vehicle network on CAN, OBD-II, XCP calibration |
+| Getting started | [Your first model: a cruise control](docs/tutorials/first-model.md) |
+| Powertrain and engine control: engine management | [Idle speed control](docs/tutorials/idle-speed-control.md), [Lambda control and fuel trims](docs/tutorials/lambda-control.md), [Ignition timing and knock control](docs/tutorials/ignition-knock.md), [Wall wetting and learned fuel trims](docs/tutorials/fuel-film.md) |
+| Powertrain and engine control: transmission and driveline | [Gear-shift logic](docs/tutorials/gear-shift.md), [A truck on a mountain road](docs/tutorials/truck.md) |
+| Vehicle dynamics and energy: longitudinal dynamics and energy | [A car on a drive cycle](docs/tutorials/drive-cycle.md) |
+| Vehicle dynamics and energy: chassis control | [Tyre slip and traction control](docs/tutorials/traction-control.md) |
+| Electrics and electronics: circuit fundamentals | [Rectifier, relay driver, buck converter and active filter](docs/tutorials/circuits.md) |
+| Electrics and electronics: vehicle electrical system | [Starter motor and electronic throttle](docs/tutorials/physical-models.md) |
+| ECU software, communication and diagnostics: vehicle networks | [A vehicle network (CAN)](docs/tutorials/can-network.md) |
+<!-- tutorials:end -->
 
 Coming from MATLAB/Simulink? See [Coming from Simulink](docs/coming-from-simulink.md).
 

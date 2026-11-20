@@ -56,18 +56,18 @@ nav:
           - Test cases and the Data Inspector: app-help/testing.md
           - Coverage and Model Advisor: app-help/verification.md
           - Tutorials (app): app-help/tutorials.md
-          - "Tutorial 1: your first model": app-help/tutorial_first_model.md
-          - "Tutorial 2: idle speed control": app-help/tutorial_idle.md
-          - "Tutorial 3: lambda control": app-help/tutorial_lambda.md
-          - "Tutorial 4: ignition and knock": app-help/tutorial_ignition.md
-          - "Tutorial 5: wall wetting and fuel trims": app-help/tutorial_fuel_film.md
-          - "Tutorial 6: drive cycle": app-help/tutorial_drive_cycle.md
-          - "Tutorial 7: gear-shift logic": app-help/tutorial_gear_shift.md
-          - "Tutorial 8: traction control": app-help/tutorial_traction.md
-          - "Tutorial 9: a truck": app-help/tutorial_truck.md
-          - "Tutorial 10: starter motor and throttle": app-help/tutorial_physical.md
-          - "Tutorial 11: electronic circuits": app-help/tutorial_circuits.md
-          - "Tutorial 12: a vehicle network (CAN)": app-help/tutorial_can_network.md
+          - "Tutorial: Your first model: a cruise control": app-help/tutorial_first_model.md
+          - "Tutorial: Idle speed control": app-help/tutorial_idle.md
+          - "Tutorial: Lambda control and fuel trims": app-help/tutorial_lambda.md
+          - "Tutorial: Ignition timing and knock control": app-help/tutorial_ignition.md
+          - "Tutorial: Wall wetting and learned fuel trims": app-help/tutorial_fuel_film.md
+          - "Tutorial: Gear-shift logic": app-help/tutorial_gear_shift.md
+          - "Tutorial: A truck on a mountain road": app-help/tutorial_truck.md
+          - "Tutorial: A car on a drive cycle": app-help/tutorial_drive_cycle.md
+          - "Tutorial: Tyre slip and traction control": app-help/tutorial_traction.md
+          - "Tutorial: Rectifier, relay driver, buck converter and active filter": app-help/tutorial_circuits.md
+          - "Tutorial: Starter motor and electronic throttle": app-help/tutorial_physical.md
+          - "Tutorial: A vehicle network (CAN)": app-help/tutorial_can_network.md
           - Coming from Simulink (app): app-help/coming_from_simulink.md
           - Model files (app): app-help/model_files.md
           - Keyboard shortcuts: app-help/shortcuts.md
@@ -75,19 +75,31 @@ nav:
       - Coming from Simulink: coming-from-simulink.md
       - Model files: model-files.md
   - Tutorials:
-      - Overview and learning path: tutorials/index.md
-      - "1. Your first model: cruise control": tutorials/first-model.md
-      - "2. Idle speed control": tutorials/idle-speed-control.md
-      - "3. Lambda control and fuel trims": tutorials/lambda-control.md
-      - "4. Ignition timing and knock control": tutorials/ignition-knock.md
-      - "5. Wall wetting and learned fuel trims": tutorials/fuel-film.md
-      - "6. A car on a drive cycle": tutorials/drive-cycle.md
-      - "7. Gear-shift logic": tutorials/gear-shift.md
-      - "8. Tyre slip and traction control": tutorials/traction-control.md
-      - "9. A truck on a mountain road": tutorials/truck.md
-      - "10. Starter motor and electronic throttle": tutorials/physical-models.md
-      - "11. Electronic circuits": tutorials/circuits.md
-      - "12. A vehicle network (CAN)": tutorials/can-network.md
+      - Overview: tutorials/index.md
+      - Getting started:
+          - "Your first model: a cruise control": tutorials/first-model.md
+      - Powertrain and engine control:
+          - Engine management:
+              - "Idle speed control": tutorials/idle-speed-control.md
+              - "Lambda control and fuel trims": tutorials/lambda-control.md
+              - "Ignition timing and knock control": tutorials/ignition-knock.md
+              - "Wall wetting and learned fuel trims": tutorials/fuel-film.md
+          - Transmission and driveline:
+              - "Gear-shift logic": tutorials/gear-shift.md
+              - "A truck on a mountain road": tutorials/truck.md
+      - Vehicle dynamics and energy:
+          - Longitudinal dynamics and energy:
+              - "A car on a drive cycle": tutorials/drive-cycle.md
+          - Chassis control:
+              - "Tyre slip and traction control": tutorials/traction-control.md
+      - Electrics and electronics:
+          - Circuit fundamentals:
+              - "Rectifier, relay driver, buck converter and active filter": tutorials/circuits.md
+          - Vehicle electrical system:
+              - "Starter motor and electronic throttle": tutorials/physical-models.md
+      - ECU software, communication and diagnostics:
+          - Vehicle networks:
+              - "A vehicle network (CAN)": tutorials/can-network.md
   - Block reference:
       - Overview: blocks/index.md
       - CAN: blocks/can.md

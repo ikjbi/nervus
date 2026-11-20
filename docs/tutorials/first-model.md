@@ -1,11 +1,12 @@
-# Tutorial 1: your first model, a cruise control
+# Tutorial: Your first model: a cruise control
 
 | | |
 |---|---|
-| **You will learn** | to place and connect blocks, set parameters with workspace variables, run a simulation, read a scope and compare runs |
-| **You need** | Nervus with the editor (`uv sync --extra gui`); no prior Simulink experience |
-| **Time** | about 30 minutes |
-| **Finished model** | `examples/cruise_control.nervus` (open it if you get stuck) |
+| **You will learn** | the editor, blocks and wires, workspace variables, scopes, the Data Inspector, PI control and integrator windup |
+| **Before this** | nothing: start here (the editor needs `uv sync --extra gui`) |
+| **Level and time** | beginner, about 30 minutes |
+| **Follow along** | build the model yourself, step by step below; the finished model is `examples/cruise_control.nervus` |
+| **Topic** | Getting started ([all tutorials](index.md)) |
 
 We build a **cruise control**: a controller that adjusts the engine force so the car holds a set speed. On the
 way you meet the most common effect in control engineering, **integrator windup**, and fix it.
@@ -173,4 +174,4 @@ Inspector.
 
 ## Next
 
-[Tutorial 2: idle speed control](idle-speed-control.md), or pick another one from the [tutorial overview](index.md).
+That was the last tutorial on getting started. Continue with powertrain and engine control: [Idle speed control](idle-speed-control.md), or pick another one from the [tutorial overview](index.md).

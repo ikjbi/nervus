@@ -5,11 +5,13 @@
 """
 
 import shutil
+import sys
 from pathlib import Path
 
 from nervus.help import reference_pages
 
 ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(Path(__file__).parent))
 OUT = ROOT / "docs" / "blocks"
 HELP_SRC = ROOT / "src" / "nervus" / "gui" / "resources" / "help"
 HELP_OUT = ROOT / "docs" / "app-help"
@@ -22,6 +24,9 @@ def main() -> None:
     for name, text in reference_pages().items():
         (OUT / name).write_text(text.rstrip() + "\n", encoding="utf-8")
     print(f"wrote {len(list(OUT.glob('*.md')))} pages to {OUT}")
+    import gen_tutorials
+
+    gen_tutorials.main()  # tutorial boxes, overview and navigation, from nervus.tutorials
     from nervus.help import SHARED_PAGES, docs_page_for_app
 
     for docs_name, app_name in SHARED_PAGES.items():  # written for GitHub, converted for the app

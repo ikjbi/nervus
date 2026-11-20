@@ -46,7 +46,7 @@ The `examples` folder in the repository has complete models you can open with **
 
 | Example | What it shows |
 |---|---|
-| `cruise_control.nervus` | the cruise control built step by step in *Tutorial 1: your first model* |
+| `cruise_control.nervus` | the cruise control built step by step in the tutorial *Your first model* |
 | `throttle_pi.nervus` | an electronic throttle controller running as a 10 ms ECU task |
 | `throttle_ecu.nervus` | the same controller as an ECU subsystem, with generated C and A2L |
 | `mass_spring_damper_pid.nervus` | continuous PID position control with actuator limits |

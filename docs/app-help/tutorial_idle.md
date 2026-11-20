@@ -1,11 +1,12 @@
-# Tutorial 2: idle speed control
+# Tutorial: Idle speed control
 
 | | |
 |---|---|
 | **You will learn** | how an ECU holds the idle speed: a mean-value engine model, a PI controller with feed-forward, requirements as test cases, C code |
-| **Before this** | Tutorial 1 |
-| **Time** | about 45 minutes |
+| **Before this** | *Your first model: a cruise control* |
+| **Level and time** | beginner, about 45 minutes |
 | **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/idle_speed_control.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
+| **Topic** | Powertrain and engine control ▸ Engine management (*all tutorials*) |
 
 This tutorial walks through `examples/idle_speed_control.py`. It's a complete engine-control loop: a
 physical engine model, an ECU function that holds the idle speed, a calibration, requirement tests, and C
@@ -84,4 +85,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-*Tutorial 3: lambda control and fuel trims*, or pick another one from the *tutorial overview*.
+Next in this topic: *Lambda control and fuel trims*. Or pick another one from the *tutorial overview*.

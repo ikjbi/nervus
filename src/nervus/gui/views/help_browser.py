@@ -44,6 +44,14 @@ class HelpText(QTextBrowser):
         self.setMarkdown(md)
 
 
+def _tutorial_pages() -> list[tuple[str, str]]:
+    from nervus.tutorials import ordered
+
+    return [("tutorials", "Tutorials: where to start"), *[(t.help_page, f"Tutorial: {t.title}") for t in ordered()]]
+
+
+_TUTORIAL_PAGES = _tutorial_pages()
+
 HELP_PAGES = [
     ("getting_started", "Getting started"),
     ("concepts", "Concepts"),
@@ -61,19 +69,7 @@ HELP_PAGES = [
     ("codegen", "C code generation"),
     ("testing", "Test cases and the Data Inspector"),
     ("verification", "Coverage, requirements, Model Advisor"),
-    ("tutorials", "Tutorials: where to start"),
-    ("tutorial_first_model", "Tutorial 1: your first model"),
-    ("tutorial_idle", "Tutorial 2: idle speed control"),
-    ("tutorial_lambda", "Tutorial 3: lambda control"),
-    ("tutorial_ignition", "Tutorial 4: ignition and knock"),
-    ("tutorial_fuel_film", "Tutorial 5: wall wetting and fuel trims"),
-    ("tutorial_drive_cycle", "Tutorial 6: drive cycle"),
-    ("tutorial_gear_shift", "Tutorial 7: gear-shift logic"),
-    ("tutorial_traction", "Tutorial 8: traction control"),
-    ("tutorial_truck", "Tutorial 9: a truck on a mountain road"),
-    ("tutorial_physical", "Tutorial 10: starter motor and throttle"),
-    ("tutorial_circuits", "Tutorial 11: electronic circuits"),
-    ("tutorial_can_network", "Tutorial 12: a vehicle network (CAN)"),
+    *_TUTORIAL_PAGES,
     ("coming_from_simulink", "Coming from Simulink"),
     ("model_files", "Model files"),
     ("shortcuts", "Keyboard shortcuts"),
