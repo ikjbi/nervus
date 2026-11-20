@@ -60,7 +60,7 @@ def cycle_stats(name: str) -> dict[str, float]:
     return {
         "duration_s": float(t[-1] - t[0]),
         "distance_km": float(np.trapezoid(v, t) / 3600.0),
-        "max_kmh": float(v.max()),
+        "max_kmh": float(np.max(v)),
         "mean_kmh": float(np.trapezoid(v, t) / (t[-1] - t[0])),
         "standstill_share": float(np.mean(vv < 0.5)),
     }
