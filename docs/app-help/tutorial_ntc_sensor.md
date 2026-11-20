@@ -68,4 +68,4 @@ The same circuit with a short or an open wire is the subject of the next tutoria
 
 ## Next
 
-That was the last tutorial on electrics and electronics. Continue with ecu software, communication and diagnostics: *A vehicle network (CAN)*, or pick another one from the *tutorial overview*.
+Next in this topic: *The injector driver power stage*. Or pick another one from the *tutorial overview*.

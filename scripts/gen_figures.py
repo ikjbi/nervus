@@ -1849,6 +1849,31 @@ def ev_range() -> plt.Figure:
     return fig
 
 
+@figure("injector_driver")
+def injector_driver() -> plt.Figure:
+    m = _example("injector_driver")
+    d = m.build()
+    runs = {(v, fw): simulate(d, params={"V_bat": v, "freewheel": fw}) for v in (9.0, 14.0) for fw in (0.0, 1.0)}
+    fig, (a0, a1, a2) = plt.subplots(3, 1, figsize=(6.4, 5.6), sharex=True, height_ratios=[1, 1.2, 1])
+    r = runs[(14.0, 0.0)]
+    a0.step(r.t * 1000, r["command"], where="post", color=INK, lw=1.4)
+    a0.set_ylabel("command")
+    a0.set_title("A 3 ms injection pulse: current, needle and drain voltage", color=INK, fontsize=9)
+    for (v, fw), color, ls in (((14.0, 0.0), C1, "-"), ((9.0, 0.0), C3, "-"), ((14.0, 1.0), C2, "--")):
+        rr = runs[(v, fw)]
+        label = f"{v:g} V, {'freewheel diode' if fw else 'clamp'}"
+        a1.plot(rr.t * 1000, rr["current"], color=color, lw=1.4, ls=ls, label=label)
+        a2.plot(rr.t * 1000, rr["needle_lift"], color=color, lw=1.4, ls=ls)
+    a1.axhline(0.6, color=GRID, ls=":", lw=1)
+    a1.text(6.2, 0.63, "pull-in", color=INK, fontsize=8)
+    a1.set_ylabel("coil current [A]")
+    a1.legend(loc="upper right", fontsize=7)
+    a2.set_ylabel("needle lift")
+    a2.set_xlabel("time [ms]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

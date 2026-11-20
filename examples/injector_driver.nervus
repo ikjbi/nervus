@@ -1,0 +1,506 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "injector_driver",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 0.008,
+    "solver": "BDF",
+    "step": null,
+    "max_step": 1e-05,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "V_bat",
+      "value": 14.0,
+      "description": "Battery voltage",
+      "unit": "V"
+    },
+    {
+      "name": "freewheel",
+      "value": 0.0,
+      "description": "1: freewheeling diode across the coil, 0: transistor clamp only",
+      "unit": "-"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "battery",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": "V_bat",
+        "controlled": false
+      },
+      "meta": {
+        "position": [
+          150.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "injector",
+      "type": "automotive.injector",
+      "params": {
+        "R": 12.0,
+        "L": 0.01,
+        "I_pull": 0.6,
+        "I_drop": 0.3,
+        "tau": 0.0005,
+        "static_flow": 3.5
+      },
+      "meta": {
+        "position": [
+          300.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "coil_current",
+      "type": "electrical.current_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          450.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "low_side_switch",
+      "type": "electrical.switch",
+      "params": {
+        "R_on": 0.1,
+        "G_off": 1e-07
+      },
+      "meta": {
+        "position": [
+          600.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "clamp_diode",
+      "type": "electrical.diode",
+      "params": {
+        "Vf": 0.7,
+        "R_on": 0.01,
+        "G_off": 1e-08
+      },
+      "meta": {
+        "position": [
+          750.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "clamp_60V",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": 59.3,
+        "controlled": false
+      },
+      "meta": {
+        "position": [
+          0.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "freewheel_diode",
+      "type": "electrical.diode",
+      "params": {
+        "Vf": 0.7,
+        "R_on": 0.01,
+        "G_off": 1e-08
+      },
+      "meta": {
+        "position": [
+          150.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "freewheel_fitted",
+      "type": "electrical.variable_resistor",
+      "params": {
+        "R_min": 0.001
+      },
+      "meta": {
+        "position": [
+          300.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "v_drain",
+      "type": "electrical.voltage_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          450.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "injection_command",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          0.001,
+          0.001000001,
+          0.004,
+          0.004000001,
+          1.0
+        ],
+        "data": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            1.0
+          ],
+          [
+            1.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "csv_file": "",
+        "interpolation": "hold",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          600.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "diode_fitted",
+      "type": "sources.constant",
+      "params": {
+        "value": "0.01 + (1 - freewheel) * 1e6",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          750.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "fuel_mg",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": "-inf",
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          0.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          150.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "command",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          300.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "current",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          450.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "needle_lift",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          600.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "drain_voltage",
+      "type": "ports.outport",
+      "params": {
+        "port": 4
+      },
+      "meta": {
+        "position": [
+          750.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "fuel_g",
+      "type": "ports.outport",
+      "params": {
+        "port": 5
+      },
+      "meta": {
+        "position": [
+          0.0,
+          330.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "injection_command",
+      "src_port": 0,
+      "dst": "low_side_switch",
+      "dst_port": 0
+    },
+    {
+      "src": "diode_fitted",
+      "src_port": 0,
+      "dst": "freewheel_fitted",
+      "dst_port": 0
+    },
+    {
+      "src": "injector",
+      "src_port": 1,
+      "dst": "fuel_mg",
+      "dst_port": 0
+    },
+    {
+      "src": "injection_command",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "coil_current",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "injector",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    },
+    {
+      "src": "injection_command",
+      "src_port": 0,
+      "dst": "command",
+      "dst_port": 0
+    },
+    {
+      "src": "coil_current",
+      "src_port": 0,
+      "dst": "current",
+      "dst_port": 0
+    },
+    {
+      "src": "injector",
+      "src_port": 0,
+      "dst": "needle_lift",
+      "dst_port": 0
+    },
+    {
+      "src": "v_drain",
+      "src_port": 0,
+      "dst": "drain_voltage",
+      "dst_port": 0
+    },
+    {
+      "src": "fuel_mg",
+      "src_port": 0,
+      "dst": "fuel_g",
+      "dst_port": 0
+    }
+  ],
+  "links": [
+    {
+      "a": "battery",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "battery",
+      "a_port": "p",
+      "b": "injector",
+      "b_port": "p"
+    },
+    {
+      "a": "injector",
+      "a_port": "n",
+      "b": "coil_current",
+      "b_port": "p"
+    },
+    {
+      "a": "coil_current",
+      "a_port": "n",
+      "b": "low_side_switch",
+      "b_port": "p"
+    },
+    {
+      "a": "low_side_switch",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "clamp_diode",
+      "a_port": "p",
+      "b": "low_side_switch",
+      "b_port": "p"
+    },
+    {
+      "a": "clamp_diode",
+      "a_port": "n",
+      "b": "clamp_60V",
+      "b_port": "p"
+    },
+    {
+      "a": "clamp_60V",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "freewheel_diode",
+      "a_port": "p",
+      "b": "low_side_switch",
+      "b_port": "p"
+    },
+    {
+      "a": "freewheel_diode",
+      "a_port": "n",
+      "b": "freewheel_fitted",
+      "b_port": "p"
+    },
+    {
+      "a": "freewheel_fitted",
+      "a_port": "n",
+      "b": "battery",
+      "b_port": "p"
+    },
+    {
+      "a": "v_drain",
+      "a_port": "p",
+      "b": "low_side_switch",
+      "b_port": "p"
+    },
+    {
+      "a": "v_drain",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    }
+  ],
+  "tests": [
+    {
+      "name": "opening and closing delay at 14 V with the clamp",
+      "description": "The needle is open 1 ms after the command and closed 0.6 ms after its end",
+      "stop_time": 0.008,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "needle_lift",
+          "lower": 0.5,
+          "t_from": 0.002,
+          "t_to": 0.004
+        },
+        {
+          "kind": "bounds",
+          "signal": "needle_lift",
+          "upper": 0.5,
+          "t_from": 0.0046
+        }
+      ]
+    },
+    {
+      "name": "the clamp limits the drain voltage",
+      "description": "When the transistor switches off, the drain voltage is clamped at about 60 V",
+      "stop_time": 0.008,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "drain_voltage",
+          "upper": 62.0
+        }
+      ]
+    }
+  ]
+}

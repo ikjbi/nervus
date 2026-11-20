@@ -147,6 +147,10 @@ TUTORIALS: list[Tutorial] = [
              "a thermistor in a voltage divider, the ECU's pull-up, input filter and ADC, a conversion table, "
              "resolution over the range, why software and hardware must match", ("ntc_sensor.nervus",),
              ("first-model",)),
+    Tutorial("injector-driver", "The injector driver power stage", _EL, "ECU hardware and PCB", "intermediate", 30,
+             "a low-side switch driving a solenoid injector, opening delay versus battery voltage, freewheeling "
+             "diode versus clamp, why injection needs a battery voltage correction", ("injector_driver.nervus",),
+             ("rc-rlc",)),
     # ------------------------------------------------------------------ ECU software
     Tutorial("obd-diagnostics", "On-board diagnostics and trouble codes", _ECU, "Diagnostics", "intermediate", 35,
              "diagnostic monitors: debouncing, enable conditions, pending and confirmed codes, two-trip detection, "

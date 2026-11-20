@@ -79,6 +79,7 @@ nav:
           - "Tutorial: Starter motor and electronic throttle": app-help/tutorial_physical.md
           - "Tutorial: The 12 V charging system and energy management": app-help/tutorial_charging_system.md
           - "Tutorial: An NTC temperature sensor interface": app-help/tutorial_ntc_sensor.md
+          - "Tutorial: The injector driver power stage": app-help/tutorial_injector_driver.md
           - "Tutorial: A vehicle network (CAN)": app-help/tutorial_can_network.md
           - "Tutorial: Live calibration over XCP": app-help/tutorial_xcp_calibration.md
           - "Tutorial: On-board diagnostics and trouble codes": app-help/tutorial_obd_diagnostics.md
@@ -131,6 +132,7 @@ nav:
               - "The 12 V charging system and energy management": tutorials/charging-system.md
           - ECU hardware and PCB:
               - "An NTC temperature sensor interface": tutorials/ntc-sensor.md
+              - "The injector driver power stage": tutorials/injector-driver.md
       - ECU software, communication and diagnostics:
           - Vehicle networks:
               - "A vehicle network (CAN)": tutorials/can-network.md

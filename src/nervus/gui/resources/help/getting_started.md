@@ -79,4 +79,5 @@ The `examples` folder in the repository has complete models you can open with **
 | `idle_requirements.nervus` | the idle controller with requirements, traceability and coverage (tutorial) |
 | `charging_system.nervus` | battery, alternator, loads and electrical energy management on a winter night (tutorial) |
 | `ev_range.nervus` | an electric car on the WLTC: consumption, regenerative braking, winter range (tutorial) |
+| `injector_driver.nervus` | an injector power stage: opening and closing delays, freewheel diode versus clamp (tutorial) |
 | `obd_ecu.nervus` | an engine ECU with trouble codes that answers OBD-II tools (`python -m nervus.obd simulate`) |

@@ -69,7 +69,7 @@ editor step by step, tune it, and meet integrator windup. Then pick a topic; the
 | Vehicle dynamics and energy: chassis control | [Tyre slip and traction control](docs/tutorials/traction-control.md), [Anti-lock braking (ABS)](docs/tutorials/abs.md) |
 | Electrics and electronics: circuit fundamentals | [RC and RLC circuits](docs/tutorials/rc-rlc.md), [Rectifier, relay driver, buck converter and active filter](docs/tutorials/circuits.md) |
 | Electrics and electronics: vehicle electrical system | [Starter motor and electronic throttle](docs/tutorials/physical-models.md), [The 12 V charging system and energy management](docs/tutorials/charging-system.md) |
-| Electrics and electronics: ecu hardware and pcb | [An NTC temperature sensor interface](docs/tutorials/ntc-sensor.md) |
+| Electrics and electronics: ecu hardware and pcb | [An NTC temperature sensor interface](docs/tutorials/ntc-sensor.md), [The injector driver power stage](docs/tutorials/injector-driver.md) |
 | ECU software, communication and diagnostics: vehicle networks | [A vehicle network (CAN)](docs/tutorials/can-network.md), [Live calibration over XCP](docs/tutorials/xcp-calibration.md) |
 | ECU software, communication and diagnostics: diagnostics | [On-board diagnostics and trouble codes](docs/tutorials/obd-diagnostics.md), [Sensor fault diagnosis and substitute values](docs/tutorials/sensor-diagnostics.md) |
 | ECU software, communication and diagnostics: from model to ecu code | [From model to ECU C code](docs/tutorials/model-to-code.md), [A sensor signal chain in fixed point](docs/tutorials/fixed-point.md) |

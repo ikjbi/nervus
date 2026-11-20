@@ -501,3 +501,13 @@ def test_ev_range() -> None:
     d = m.build()
     c = m.consumption(simulate(d), d)
     assert c["kwh_per_100km"] == pytest.approx(15.5, abs=0.1) and c["range_km"] == pytest.approx(387, abs=3)
+
+
+def test_injector_driver() -> None:
+    from nervus.testing import run_tests
+
+    m = _import("injector_driver")
+    d = m.build()
+    assert all(r.passed for r in run_tests(d))
+    weak, strong = (m.timing(simulate(d, params={"V_bat": v})) for v in (9.0, 15.0))
+    assert weak["fuel_mg"] == pytest.approx(6.0, abs=0.1) and strong["fuel_mg"] == pytest.approx(9.2, abs=0.1)

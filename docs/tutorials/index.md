@@ -1,6 +1,6 @@
 # Tutorials
 
-31 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+32 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -96,6 +96,7 @@ Circuits from the textbook to the car's wiring harness and the ECU's circuit boa
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
 | [An NTC temperature sensor interface](ntc-sensor.md) | intermediate | 35 min | a thermistor in a voltage divider, the ECU's pull-up, input filter and ADC, a conversion table, resolution over the range, why software and hardware must match |
+| [The injector driver power stage](injector-driver.md) | intermediate | 30 min | a low-side switch driving a solenoid injector, opening delay versus battery voltage, freewheeling diode versus clamp, why injection needs a battery voltage correction |
 
 ## ECU software, communication and diagnostics
 
