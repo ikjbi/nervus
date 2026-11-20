@@ -72,6 +72,7 @@ nav:
           - "Tutorial: A truck on a mountain road": app-help/tutorial_truck.md
           - "Tutorial: A car on a drive cycle": app-help/tutorial_drive_cycle.md
           - "Tutorial: Tyre slip and traction control": app-help/tutorial_traction.md
+          - "Tutorial: Anti-lock braking (ABS)": app-help/tutorial_abs.md
           - "Tutorial: Rectifier, relay driver, buck converter and active filter": app-help/tutorial_circuits.md
           - "Tutorial: Starter motor and electronic throttle": app-help/tutorial_physical.md
           - "Tutorial: An NTC temperature sensor interface": app-help/tutorial_ntc_sensor.md
@@ -114,6 +115,7 @@ nav:
               - "A car on a drive cycle": tutorials/drive-cycle.md
           - Chassis control:
               - "Tyre slip and traction control": tutorials/traction-control.md
+              - "Anti-lock braking (ABS)": tutorials/abs.md
       - Electrics and electronics:
           - Circuit fundamentals:
               - "Rectifier, relay driver, buck converter and active filter": tutorials/circuits.md

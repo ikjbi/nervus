@@ -441,3 +441,13 @@ def test_ntc_sensor() -> None:
     assert float(m.r_ntc(90.0)) == pytest.approx(230, abs=1)
     r = simulate(d, params={"R_pull": 470.0})  # the table no longer matches the hardware
     assert float(np.ravel(r["measured_temp"])[-1]) == pytest.approx(41.5, abs=0.3)
+
+
+def test_abs_braking() -> None:
+    from nervus.testing import run_tests
+
+    m = _import("abs_braking")
+    d = m.build()
+    assert all(r.passed for r in run_tests(d))
+    with_abs, locked = m.stopping(simulate(d, 6.0)), m.stopping(simulate(d, 6.0, params={"abs_on": 0.0}))
+    assert with_abs[0] == pytest.approx(45.7, abs=0.2) and locked[0] == pytest.approx(54.9, abs=0.2)

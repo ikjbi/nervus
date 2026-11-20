@@ -1,6 +1,6 @@
 # Tutorials
 
-25 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+26 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -70,6 +70,7 @@ How a vehicle moves, uses energy, and stays controllable.
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
 | [Tyre slip and traction control](traction-control.md) | intermediate | 30 min | tyre slip and Pacejka's magic formula, wheel and vehicle dynamics, a traction control ECU on dry, wet and snowy roads |
+| [Anti-lock braking (ABS)](abs.md) | intermediate | 35 min | braking slip and the tyre's friction peak, a quarter-car model, hydraulic pressure modulation, a threshold ABS as a State Chart, stopping distances on dry, wet and icy roads |
 
 ## Electrics and electronics
 

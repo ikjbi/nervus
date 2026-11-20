@@ -1722,6 +1722,32 @@ def ntc_fault() -> plt.Figure:
     return fig
 
 
+@figure("abs_braking")
+def abs_braking() -> plt.Figure:
+    m = _example("abs_braking")
+    d = m.build()
+    on, off = simulate(d, 4.5), simulate(d, 4.5, params={"abs_on": 0.0})
+    fig, (a0, a1, a2) = plt.subplots(3, 1, figsize=(6.4, 5.4), sharex=True, height_ratios=[1.4, 1, 1])
+    a0.plot(on.t, on["speed"], color=GRID, lw=3, label="car")
+    a0.plot(on.t, on["wheel_speed"], color=C1, lw=1.2, label="wheel, with ABS")
+    a0.plot(off.t, off["wheel_speed"], color=C2, lw=1.4, label="wheel, no ABS (locked)")
+    a0.set_ylabel("km/h")
+    a0.legend(loc="upper right", fontsize=8)
+    a0.set_title("Full braking from 100 km/h on a dry road", color=INK, fontsize=9)
+    a1.plot(on.t, np.ravel(on["wheel_slip"]) * 100, color=C1, lw=1.0)
+    a1.plot(off.t, np.ravel(off["wheel_slip"]) * 100, color=C2, lw=1.2)
+    for y in (10, 20):
+        a1.axhline(y, color=GRID, ls=":", lw=1)
+    a1.set_ylabel("slip [%]")
+    a2.plot(on.t, on["brake_torque_out"], color=C1, lw=1.0, label="with ABS")
+    a2.plot(off.t, off["brake_torque_out"], color=C2, lw=1.2, label="no ABS")
+    a2.set_ylabel("brake [N·m]")
+    a2.set_xlabel("time [s]")
+    a2.legend(loc="upper right", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

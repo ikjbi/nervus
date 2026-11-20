@@ -66,7 +66,7 @@ editor step by step, tune it, and meet integrator windup. Then pick a topic; the
 | Powertrain and engine control: engine management | [Engine operating modes](docs/tutorials/engine-modes.md), [Radiator fan control](docs/tutorials/coolant-fan.md), [Idle speed control](docs/tutorials/idle-speed-control.md), [Lambda control and fuel trims](docs/tutorials/lambda-control.md), [Ignition timing and knock control](docs/tutorials/ignition-knock.md), [Wall wetting and learned fuel trims](docs/tutorials/fuel-film.md) |
 | Powertrain and engine control: transmission and driveline | [Gear-shift logic](docs/tutorials/gear-shift.md), [A truck on a mountain road](docs/tutorials/truck.md) |
 | Vehicle dynamics and energy: longitudinal dynamics and energy | [A car on a drive cycle](docs/tutorials/drive-cycle.md) |
-| Vehicle dynamics and energy: chassis control | [Tyre slip and traction control](docs/tutorials/traction-control.md) |
+| Vehicle dynamics and energy: chassis control | [Tyre slip and traction control](docs/tutorials/traction-control.md), [Anti-lock braking (ABS)](docs/tutorials/abs.md) |
 | Electrics and electronics: circuit fundamentals | [Rectifier, relay driver, buck converter and active filter](docs/tutorials/circuits.md) |
 | Electrics and electronics: vehicle electrical system | [Starter motor and electronic throttle](docs/tutorials/physical-models.md) |
 | Electrics and electronics: ecu hardware and pcb | [An NTC temperature sensor interface](docs/tutorials/ntc-sensor.md) |

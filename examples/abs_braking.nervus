@@ -1,0 +1,697 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "abs_braking",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 5.0,
+    "solver": "rk4",
+    "step": 0.001,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "m_quarter",
+      "value": 400.0,
+      "description": "A quarter of the car's mass",
+      "unit": "kg"
+    },
+    {
+      "name": "J_wheel",
+      "value": 1.2,
+      "description": "Wheel, tyre and brake disc",
+      "unit": "kg·m²"
+    },
+    {
+      "name": "r_tyre",
+      "value": 0.31,
+      "description": "Tyre radius",
+      "unit": "m"
+    },
+    {
+      "name": "mu_road",
+      "value": 1.0,
+      "description": "Road friction: dry 1.0, wet 0.5, ice 0.15",
+      "unit": "-"
+    },
+    {
+      "name": "T_driver",
+      "value": 2500.0,
+      "description": "Brake torque the driver asks for (full braking)",
+      "unit": "N·m"
+    },
+    {
+      "name": "build_rate",
+      "value": 8000.0,
+      "description": "How fast the pressure (torque) rises with the inlet valve open",
+      "unit": "N·m/s"
+    },
+    {
+      "name": "release_rate",
+      "value": 16000.0,
+      "description": "How fast it falls with the outlet valve open",
+      "unit": "N·m/s"
+    },
+    {
+      "name": "slip_hold",
+      "value": 0.1,
+      "description": "ABS: hold the pressure above this slip",
+      "unit": "-"
+    },
+    {
+      "name": "slip_release",
+      "value": 0.2,
+      "description": "ABS: release the pressure above this slip",
+      "unit": "-"
+    },
+    {
+      "name": "abs_on",
+      "value": 1.0,
+      "description": "1: ABS active, 0: no ABS (the pressure follows the driver)",
+      "unit": "-"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "car_speed",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 27.77777777777778,
+        "upper": "inf",
+        "lower": 0.0,
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          800.0,
+          40.0
+        ]
+      }
+    },
+    {
+      "name": "wheel_omega",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 89.6057347670251,
+        "upper": "inf",
+        "lower": 0.0,
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          800.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "distance",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": "-inf",
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          930.0,
+          40.0
+        ]
+      }
+    },
+    {
+      "name": "slip",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, v, omega):\n    \"\"\"Braking slip: 0 rolling freely, 1 locked. The 0.1 m/s floor keeps a locked wheel braking down to standstill.\"\"\"\n    return min(1.0, max(0.0, (v - omega * p[0]) / max(v, omega * p[0], 0.1)))\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": "[r_tyre]"
+      },
+      "meta": {
+        "position": [
+          930.0,
+          140.0
+        ]
+      }
+    },
+    {
+      "name": "normal_force",
+      "type": "sources.constant",
+      "params": {
+        "value": "m_quarter * 9.81",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          930.0,
+          260.0
+        ]
+      }
+    },
+    {
+      "name": "tyre_force",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, slip, fz):\n    \"\"\"Longitudinal tyre force [N] (Pacejka's magic formula) for a slip 0..1, scaled by the road friction.\"\"\"\n    mu, b, c, e = p[0], 12.0, 1.65, 0.5  # peak at 15 % slip; a locked wheel keeps 71 % of the peak\n    x = b * slip\n    return mu * fz * math.sin(c * math.atan(x - e * (x - math.atan(x))))\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": "[mu_road]"
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          160.0
+        ]
+      }
+    },
+    {
+      "name": "car_accel",
+      "type": "math.gain",
+      "params": {
+        "gain": "-1 / m_quarter",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          680.0,
+          40.0
+        ],
+        "flipped": true
+      }
+    },
+    {
+      "name": "tyre_torque",
+      "type": "math.gain",
+      "params": {
+        "gain": "r_tyre",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          560.0,
+          120.0
+        ],
+        "flipped": true
+      }
+    },
+    {
+      "name": "wheel_net_torque",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          560.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "wheel_accel",
+      "type": "math.gain",
+      "params": {
+        "gain": "1 / J_wheel",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          680.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "driver_brakes",
+      "type": "sources.step",
+      "params": {
+        "time": 0.5,
+        "initial": 0.0,
+        "final": 1.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "torque_demand",
+      "type": "math.gain",
+      "params": {
+        "gain": "T_driver",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          130.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "valves",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, torque, demand, mode, abs_on):\n    \"\"\"Rate of change of the brake torque [N·m/s]: towards the driver's demand without ABS (a 50 ms lag), or by\n    the ABS valve mode (1 build, 0 hold, -1 release) with ABS.\"\"\"\n    if abs_on < 0.5 or demand <= 0.0:\n        return (demand - torque) / 0.05\n    if mode > 0.5:\n        return p[0] if torque < demand else 0.0\n    if mode < -0.5:\n        return -p[1] if torque > 0.0 else 0.0\n    return 0.0\n",
+        "num_inputs": 4,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": "[build_rate, release_rate]"
+      },
+      "meta": {
+        "position": [
+          300.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "brake_torque",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": 0.0,
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          430.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "abs_switch",
+      "type": "sources.constant",
+      "params": {
+        "value": "abs_on",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          130.0,
+          400.0
+        ]
+      }
+    },
+    {
+      "name": "slip_sensor",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.005
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "speed_sensor",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.005
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          380.0
+        ]
+      }
+    },
+    {
+      "name": "abs_ecu",
+      "type": "charts.state_chart",
+      "params": {
+        "definition": "\ninput slip, v\noutput mode = 1\nparam slip_hold, slip_release\n\nstate build\n  entry: mode = 1\nstate hold\n  entry: mode = 0\nstate release\n  entry: mode = -1\n\ntransition build -> release: v > 2 and slip > slip_release\ntransition build -> hold: v > 2 and slip > slip_hold\ntransition hold -> release: v > 2 and slip > slip_release\ntransition hold -> build: slip < slip_hold or v < 2\ntransition release -> build: slip < slip_hold or v < 2\n",
+        "state_output": false,
+        "sample_time": 0.005
+      },
+      "meta": {
+        "position": [
+          1200.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "speed_kmh",
+      "type": "math.gain",
+      "params": {
+        "gain": 3.6,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          930.0,
+          -60.0
+        ]
+      }
+    },
+    {
+      "name": "wheel_kmh",
+      "type": "math.gain",
+      "params": {
+        "gain": "3.6 * r_tyre",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          230.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          1200.0,
+          -60.0
+        ]
+      }
+    },
+    {
+      "name": "speed",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1200.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "wheel_speed",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          1340.0,
+          230.0
+        ]
+      }
+    },
+    {
+      "name": "wheel_slip",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          1200.0,
+          140.0
+        ]
+      }
+    },
+    {
+      "name": "stopping_distance",
+      "type": "ports.outport",
+      "params": {
+        "port": 4
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          40.0
+        ]
+      }
+    },
+    {
+      "name": "brake_torque_out",
+      "type": "ports.outport",
+      "params": {
+        "port": 5
+      },
+      "meta": {
+        "position": [
+          560.0,
+          400.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "car_speed",
+      "src_port": 0,
+      "dst": "slip",
+      "dst_port": 0
+    },
+    {
+      "src": "wheel_omega",
+      "src_port": 0,
+      "dst": "slip",
+      "dst_port": 1
+    },
+    {
+      "src": "slip",
+      "src_port": 0,
+      "dst": "tyre_force",
+      "dst_port": 0
+    },
+    {
+      "src": "normal_force",
+      "src_port": 0,
+      "dst": "tyre_force",
+      "dst_port": 1
+    },
+    {
+      "src": "tyre_force",
+      "src_port": 0,
+      "dst": "car_accel",
+      "dst_port": 0
+    },
+    {
+      "src": "car_accel",
+      "src_port": 0,
+      "dst": "car_speed",
+      "dst_port": 0
+    },
+    {
+      "src": "car_speed",
+      "src_port": 0,
+      "dst": "distance",
+      "dst_port": 0
+    },
+    {
+      "src": "tyre_force",
+      "src_port": 0,
+      "dst": "tyre_torque",
+      "dst_port": 0
+    },
+    {
+      "src": "tyre_torque",
+      "src_port": 0,
+      "dst": "wheel_net_torque",
+      "dst_port": 0
+    },
+    {
+      "src": "brake_torque",
+      "src_port": 0,
+      "dst": "wheel_net_torque",
+      "dst_port": 1
+    },
+    {
+      "src": "wheel_net_torque",
+      "src_port": 0,
+      "dst": "wheel_accel",
+      "dst_port": 0
+    },
+    {
+      "src": "wheel_accel",
+      "src_port": 0,
+      "dst": "wheel_omega",
+      "dst_port": 0
+    },
+    {
+      "src": "driver_brakes",
+      "src_port": 0,
+      "dst": "torque_demand",
+      "dst_port": 0
+    },
+    {
+      "src": "brake_torque",
+      "src_port": 0,
+      "dst": "valves",
+      "dst_port": 0
+    },
+    {
+      "src": "torque_demand",
+      "src_port": 0,
+      "dst": "valves",
+      "dst_port": 1
+    },
+    {
+      "src": "abs_ecu",
+      "src_port": 0,
+      "dst": "valves",
+      "dst_port": 2
+    },
+    {
+      "src": "abs_switch",
+      "src_port": 0,
+      "dst": "valves",
+      "dst_port": 3
+    },
+    {
+      "src": "valves",
+      "src_port": 0,
+      "dst": "brake_torque",
+      "dst_port": 0
+    },
+    {
+      "src": "slip",
+      "src_port": 0,
+      "dst": "slip_sensor",
+      "dst_port": 0
+    },
+    {
+      "src": "car_speed",
+      "src_port": 0,
+      "dst": "speed_sensor",
+      "dst_port": 0
+    },
+    {
+      "src": "slip_sensor",
+      "src_port": 0,
+      "dst": "abs_ecu",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_sensor",
+      "src_port": 0,
+      "dst": "abs_ecu",
+      "dst_port": 1
+    },
+    {
+      "src": "car_speed",
+      "src_port": 0,
+      "dst": "speed_kmh",
+      "dst_port": 0
+    },
+    {
+      "src": "wheel_omega",
+      "src_port": 0,
+      "dst": "wheel_kmh",
+      "dst_port": 0
+    },
+    {
+      "src": "speed_kmh",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "wheel_kmh",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "speed_kmh",
+      "src_port": 0,
+      "dst": "speed",
+      "dst_port": 0
+    },
+    {
+      "src": "wheel_kmh",
+      "src_port": 0,
+      "dst": "wheel_speed",
+      "dst_port": 0
+    },
+    {
+      "src": "slip",
+      "src_port": 0,
+      "dst": "wheel_slip",
+      "dst_port": 0
+    },
+    {
+      "src": "distance",
+      "src_port": 0,
+      "dst": "stopping_distance",
+      "dst_port": 0
+    },
+    {
+      "src": "brake_torque",
+      "src_port": 0,
+      "dst": "brake_torque_out",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "ABS keeps the wheel turning",
+      "description": "With ABS the slip stays below 30 % after the first cycle: the wheel never locks and the car can steer",
+      "stop_time": 4.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "wheel_slip",
+          "upper": 0.3,
+          "t_from": 0.7,
+          "t_to": 3.0
+        }
+      ]
+    },
+    {
+      "name": "without ABS the wheel locks",
+      "description": "Full braking without ABS on a dry road locks the wheel within 0.2 s",
+      "stop_time": 2.0,
+      "parameters": {
+        "abs_on": 0.0
+      },
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "wheel_slip",
+          "lower": 0.99,
+          "t_from": 0.75,
+          "t_to": 2.0
+        }
+      ]
+    }
+  ]
+}

@@ -117,6 +117,10 @@ TUTORIALS: list[Tutorial] = [
     Tutorial("traction-control", "Tyre slip and traction control", _VEH, "Chassis control", "intermediate", 30,
              "tyre slip and Pacejka's magic formula, wheel and vehicle dynamics, a traction control ECU on dry, "
              "wet and snowy roads", ("traction_control.nervus",), ("first-model",), app_page="tutorial_traction"),
+    Tutorial("abs", "Anti-lock braking (ABS)", _VEH, "Chassis control", "intermediate", 35,
+             "braking slip and the tyre's friction peak, a quarter-car model, hydraulic pressure modulation, a "
+             "threshold ABS as a State Chart, stopping distances on dry, wet and icy roads", ("abs_braking.nervus",),
+             ("traction-control",)),
     # ------------------------------------------------------------------ electrics and electronics
     Tutorial("circuits", "Rectifier, relay driver, buck converter and active filter", _EL, "Circuit fundamentals",
              "advanced", 45, "circuit simulation like LTspice: a rectifier, a relay driver and its freewheeling "

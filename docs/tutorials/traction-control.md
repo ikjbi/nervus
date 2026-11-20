@@ -61,4 +61,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-That was the last tutorial on vehicle dynamics and energy. Continue with electrics and electronics: [Rectifier, relay driver, buck converter and active filter](circuits.md), or pick another one from the [tutorial overview](index.md).
+Next in this topic: [Anti-lock braking (ABS)](abs.md). Or pick another one from the [tutorial overview](index.md).

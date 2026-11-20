@@ -140,5 +140,6 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
 - `ntc_sensor.py`: a coolant temperature sensor from the NTC circuit to the ECU software, with open and short
   circuit diagnosis. See the tutorials [NTC sensor interface](tutorials/ntc-sensor.md) and
   [sensor fault diagnosis](tutorials/sensor-diagnostics.md).
+- `abs_braking.py`: an emergency stop from 100 km/h with and without ABS. See the [tutorial](tutorials/abs.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).
