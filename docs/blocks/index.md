@@ -168,6 +168,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **Clock**: Outputs the simulation time *t*.
 - **From Workspace**: Plays back recorded data.
 - **Ground**: Outputs zero. Use it to connect an input you do not need, instead of leaving it unconnected.
+- **Drive Cycle**: A standard drive cycle as a speed profile (the target for a driver model):
 
 ## [State Machines](state-machines.md)
 

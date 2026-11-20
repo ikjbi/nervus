@@ -81,7 +81,7 @@ from nervus.blocks.routing import DataTypeConversion, Demux, InitialCondition, M
 from nervus.blocks.semiconductors import BJT, MOSFET, OpAmp, SemiconductorDiode
 from nervus.blocks.sensors import ActuatorModel, SensorModel
 from nervus.blocks.sinks import Assertion, Scope, StopSimulation, Terminator, ToWorkspace
-from nervus.blocks.sources import Clock, Constant, FromWorkspace, Ground, Pulse, Ramp, Sine, Step
+from nervus.blocks.sources import Clock, Constant, DriveCycle, FromWorkspace, Ground, Pulse, Ramp, Sine, Step
 from nervus.blocks.user import PythonFunction
 
 __all__ = [
@@ -120,6 +120,7 @@ __all__ = [
     "DiscreteIntegrator",
     "DiscretePID",
     "DiscreteTransferFunction",
+    "DriveCycle",
     "EdgeDetect",
     "ElectricalReference",
     "ElectricalSwitch",

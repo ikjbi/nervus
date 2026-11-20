@@ -1261,6 +1261,23 @@ def fuel_film() -> plt.Figure:
     return fig
 
 
+@figure("drive_cycle_block")
+def drive_cycle_block() -> plt.Figure:
+    from nervus.cycles import cycle, cycle_stats
+
+    fig, axes = plt.subplots(3, 1, figsize=(6.4, 5.0))
+    for ax, (name, title, color) in zip(axes, (("wltc3b", "WLTC class 3b", C1), ("ftp75", "FTP-75", C2),
+                                               ("ece15", "ECE-15", C3)), strict=True):  # fmt: skip
+        t, v = cycle(name)
+        st = cycle_stats(name)
+        ax.plot(t, v, color=color, lw=1.4)
+        ax.set_title(f"{title}: {st['duration_s']:.0f} s, {st['distance_km']:.2f} km", color=INK, fontsize=9)
+        ax.set_ylabel("km/h")
+    axes[-1].set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

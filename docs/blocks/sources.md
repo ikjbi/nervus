@@ -167,3 +167,33 @@ Outputs zero. Use it to connect an input you do not need, instead of leaving it 
 *Direct feedthrough:* yes · no inputs
 
 ---
+
+## Drive Cycle
+
+`sources.drive_cycle` · Sources
+
+A standard drive cycle as a speed profile (the target for a driver model):
+
+- ``wltc3b``: WLTC class 3b (WLTP, the European type approval since 2017), 1800 s, 23.3 km, up to 131 km/h;
+- ``ftp75``: FTP-75, the US city cycle, 1874 s, 17.8 km;
+- ``ece15``: ECE-15, the urban part of the old NEDC, 195 s, 1 km;
+- ``csv_file``: your own: two columns, time [s] and speed [km/h].
+
+![The bundled cycles](../images/blocks/drive_cycle_block.png)
+
+Output 0 is the speed (km/h or m/s, *unit*), output 1 the acceleration [m/s²] (the slope of the profile,
+useful as a feed-forward for a driver model). After the end of the cycle the speed stays 0. The WLTC and
+FTP-75 tables are the official second-by-second values.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `cycle` | `'wltc3b'` |  | Cycle — one of `wltc3b`, `ftp75`, `ece15`, `csv_file` |
+| `csv_file` | `''` |  | CSV file (time s, speed km/h) for cycle = csv_file |
+| `unit` | `'km/h'` |  | Speed unit of the output — one of `km/h`, `m/s` |
+| `sample_time` | `0.0` | s | 0 = continuous, > 0 = discrete period |
+
+*Direct feedthrough:* yes · no inputs
+
+---

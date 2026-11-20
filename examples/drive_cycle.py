@@ -12,8 +12,8 @@ covers 994 m. This example follows it with:
 * **vehicle**: ``m·dv/dt = F_traction - F_brake - F_aero - F_roll``
 
 It reports the energy delivered at the wheels and a rough fuel estimate (average engine efficiency
-``eta_engine``, no idle fuel). For WLTP or another cycle, put the official speed table in a CSV file
-(time [s], speed [km/h]) and set the ``csv_file`` parameter of the ``drive_cycle`` block.
+``eta_engine``, no idle fuel). ``build("wltc3b")`` or ``build("ftp75")`` drive the official WLTC class 3b or FTP-75
+instead (the Drive Cycle block); for another cycle use its ``csv_file`` option (time [s], speed [km/h]).
 
 Run with ``uv run python examples/drive_cycle.py``.
 """
@@ -61,7 +61,8 @@ POWERTRAIN = '''def f(t, pedal, v):
 
 def _place(d: Diagram, positions: dict[str, tuple[int, int]]) -> None:
     for name, (x, y) in positions.items():
-        d.block(name).meta["position"] = [float(x), float(y)]
+        if name in d:
+            d.block(name).meta["position"] = [float(x), float(y)]
 
 
 def build_driver() -> Subsystem:
@@ -167,7 +168,9 @@ def build_vehicle() -> Subsystem:
     return Subsystem(system=d)
 
 
-def build() -> Diagram:
+def build(cycle_name: str = "ece15") -> Diagram:
+    """The car on a drive cycle: ``ece15`` (default, the tests use it), or ``wltc3b`` / ``ftp75`` from the
+    Drive Cycle block with the official tables."""
     d = Diagram("drive_cycle")
     d.settings.t_final = 195.0
     d.settings.solver = "rk4"
@@ -186,10 +189,18 @@ def build() -> Diagram:
     t_pts = [t for t, _ in ECE15]
     v_pts = [v * KMH for _, v in ECE15]
     slopes = [(v_pts[k + 1] - v_pts[k]) / (t_pts[k + 1] - t_pts[k]) for k in range(len(t_pts) - 1)] + [0.0]
-    cycle = d.add(FromWorkspace(time=t_pts, data=[[v] for v in v_pts], interpolation="linear"), name="drive_cycle")
-    accel = d.add(  # the cycle is piecewise linear, so its acceleration is piecewise constant
-        FromWorkspace(time=t_pts, data=[[a] for a in slopes], interpolation="hold"), name="cycle_accel"
-    )
+    if cycle_name == "ece15":
+        cycle = d.add(FromWorkspace(time=t_pts, data=[[v] for v in v_pts], interpolation="linear"), name="drive_cycle")
+        accel = d.add(  # the cycle is piecewise linear, so its acceleration is piecewise constant
+            FromWorkspace(time=t_pts, data=[[a] for a in slopes], interpolation="hold"), name="cycle_accel"
+        )
+    else:
+        from nervus.blocks import DriveCycle
+        from nervus.cycles import cycle_stats
+
+        cycle = d.add(DriveCycle(cycle=cycle_name, unit="m/s"), name="drive_cycle")
+        accel = cycle.out_port(1)  # type: ignore[assignment]
+        d.settings.t_final = cycle_stats(cycle_name)["duration_s"]
     driver = d.add(build_driver(), name="driver")
     vehicle = d.add(build_vehicle(), name="vehicle")
     cycle_kmh = d.add(Gain(gain=3.6), name="cycle_kmh")

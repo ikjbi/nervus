@@ -272,3 +272,61 @@ class Ground(_Source):
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
         return [np.zeros(1)]
+
+
+@register
+class DriveCycle(_Source):
+    """A standard drive cycle as a speed profile (the target for a driver model):
+
+    - ``wltc3b``: WLTC class 3b (WLTP, the European type approval since 2017), 1800 s, 23.3 km, up to 131 km/h;
+    - ``ftp75``: FTP-75, the US city cycle, 1874 s, 17.8 km;
+    - ``ece15``: ECE-15, the urban part of the old NEDC, 195 s, 1 km;
+    - ``csv_file``: your own: two columns, time [s] and speed [km/h].
+
+    ![The bundled cycles](figures/drive_cycle_block.png)
+
+    Output 0 is the speed (km/h or m/s, *unit*), output 1 the acceleration [m/s²] (the slope of the profile,
+    useful as a feed-forward for a driver model). After the end of the cycle the speed stays 0. The WLTC and
+    FTP-75 tables are the official second-by-second values.
+    """
+
+    type_id = "sources.drive_cycle"
+    label = "Drive Cycle"
+    NUM_OUTPUTS = 2
+    PARAMS = (
+        Param("cycle", "wltc3b", ParamKind.CHOICE, "Cycle", choices=("wltc3b", "ftp75", "ece15", "csv_file")),
+        Param("csv_file", "", ParamKind.STR, "CSV file (time s, speed km/h) for cycle = csv_file"),
+        Param("unit", "km/h", ParamKind.CHOICE, "Speed unit of the output", choices=("km/h", "m/s")),
+        _ST_CONT,
+    )
+
+    def _profile(self) -> tuple[Array, Array]:
+        from nervus.cycles import cycle
+
+        if self.params["cycle"] == "csv_file":
+            path = str(self.params["csv_file"]).strip()
+            if not path:
+                raise ParameterError("choose a CSV file (time [s], speed [km/h])")
+            data = np.loadtxt(path, delimiter=",", comments="#")
+            return data[:, 0], data[:, 1]
+        return cycle(str(self.params["cycle"]))
+
+    def validate_params(self) -> None:
+        if self.params["cycle"] == "csv_file" and not str(self.params["csv_file"]).strip():
+            return  # chosen in the editor next
+        self._profile()
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [1, 1]
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        times, v = self._profile()
+        speed = float(np.interp(t, times, v, right=0.0)) / 3.6
+        k = int(np.clip(np.searchsorted(times, t, side="right") - 1, 0, times.size - 2))
+        accel = (v[k + 1] - v[k]) / 3.6 / (times[k + 1] - times[k]) if t <= times[-1] else 0.0
+        scale = 3.6 if self.params["unit"] == "km/h" else 1.0
+        return [np.array([speed * scale]), np.array([accel])]
+
+    def breakpoints(self, t_start: float, t_final: float) -> list[float]:
+        times, _ = self._profile()
+        return [float(x) for x in times if t_start < x <= t_final] if times.size < 400 else []

@@ -570,7 +570,10 @@
             "params": {
               "initial": 0.0,
               "upper": "inf",
-              "lower": 0.0
+              "lower": 0.0,
+              "external_reset": "none",
+              "initial_source": "internal",
+              "saturation_port": false
             },
             "meta": {
               "position": [
@@ -662,7 +665,10 @@
             "params": {
               "initial": 0.0,
               "upper": "inf",
-              "lower": "-inf"
+              "lower": "-inf",
+              "external_reset": "none",
+              "initial_source": "internal",
+              "saturation_port": false
             },
             "meta": {
               "position": [
@@ -705,7 +711,10 @@
             "params": {
               "initial": 0.0,
               "upper": "inf",
-              "lower": "-inf"
+              "lower": "-inf",
+              "external_reset": "none",
+              "initial_source": "internal",
+              "saturation_port": false
             },
             "meta": {
               "position": [

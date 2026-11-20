@@ -99,6 +99,7 @@ _GLYPHS: dict[str, Callable[[Block], str]] = {
     "sources.pulse": lambda b: "⊓⊓",
     "sources.clock": lambda b: "🕒 t",
     "sources.from_workspace": lambda b: "data",
+    "sources.drive_cycle": lambda b: "⛟ " + str(b.params["cycle"]).upper(),
     "math.gain": lambda b: _num(b.param_source("gain")),
     "math.sum": lambda b: "Σ " + b.params["signs"].replace("|", ""),
     "math.product": lambda b: "× " + b.params["ops"],
