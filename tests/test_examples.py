@@ -9,6 +9,7 @@ import pytest
 from nervus import load, simulate
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
+pytestmark = pytest.mark.timeout(300)  # whole-model runs: several are slow on CI machines
 
 
 def _import(name: str):  # type: ignore[no-untyped-def]
