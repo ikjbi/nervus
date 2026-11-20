@@ -166,6 +166,10 @@ TUTORIALS: list[Tutorial] = [
              "intermediate", 40, "requirements imported from a CSV file, traceability from requirements to blocks "
              "and tests, model coverage to find untested behaviour, closing the gap, review reports",
              ("idle_requirements.nervus",), ("idle-speed-control",)),
+    Tutorial("robustness-monte-carlo", "Robustness and tolerances with Monte Carlo", "Testing and verification", "",
+             "intermediate", 30, "parameter spread in a vehicle range, Monte Carlo studies in the editor and in "
+             "Python, custom metrics, why the average hides the failures", ("cruise_control.nervus",),
+             ("first-model",)),
 ]  # fmt: skip
 
 

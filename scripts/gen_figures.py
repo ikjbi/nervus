@@ -1748,6 +1748,29 @@ def abs_braking() -> plt.Figure:
     return fig
 
 
+@figure("cruise_tolerance")
+def cruise_tolerance() -> plt.Figure:
+    m = _example("cruise_tolerance")
+    a, b = m.study(30.0), m.study(60.0)
+    fig, (a0, a1) = plt.subplots(1, 2, figsize=(7.2, 3.2))
+    bins = np.linspace(9, 24, 31)
+    a0.hist(a.column("settling_s"), bins=bins, color=C1, alpha=0.8, label="Ki = 30")
+    a0.hist(b.column("settling_s"), bins=bins, color=C2, alpha=0.6, label="Ki = 60")
+    a0.axvline(20, color=INK, ls="--", lw=1)
+    a0.text(20.2, a0.get_ylim()[1] * 0.85, "required", color=INK, fontsize=8)
+    a0.set_xlabel("settling time [s]")
+    a0.set_ylabel("cars (of 200)")
+    a0.legend(loc="upper left", fontsize=8)
+    a1.scatter(a.column("m"), a.column("settling_s"), s=8, color=C1, label="Ki = 30")
+    a1.scatter(b.column("m"), b.column("settling_s"), s=8, color=C2, label="Ki = 60")
+    a1.axhline(20, color=INK, ls="--", lw=1)
+    a1.set_xlabel("vehicle mass [kg]")
+    a1.set_ylabel("settling time [s]")
+    fig.suptitle("200 cars each: Ki = 60 is faster on average, but the heavy cars fail", color=INK, fontsize=9)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

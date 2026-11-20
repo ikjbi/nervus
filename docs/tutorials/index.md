@@ -1,6 +1,6 @@
 # Tutorials
 
-27 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+28 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -126,6 +126,7 @@ Showing that a function does what it should: requirements, tests and tolerances.
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
 | [Requirements-based testing and coverage](requirements-testing.md) | intermediate | 40 min | requirements imported from a CSV file, traceability from requirements to blocks and tests, model coverage to find untested behaviour, closing the gap, review reports |
+| [Robustness and tolerances with Monte Carlo](robustness-monte-carlo.md) | intermediate | 30 min | parameter spread in a vehicle range, Monte Carlo studies in the editor and in Python, custom metrics, why the average hides the failures |
 
 ## Tips for every tutorial
 

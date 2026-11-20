@@ -83,6 +83,7 @@ nav:
           - "Tutorial: From model to ECU C code": app-help/tutorial_model_to_code.md
           - "Tutorial: A sensor signal chain in fixed point": app-help/tutorial_fixed_point.md
           - "Tutorial: Requirements-based testing and coverage": app-help/tutorial_requirements_testing.md
+          - "Tutorial: Robustness and tolerances with Monte Carlo": app-help/tutorial_robustness_monte_carlo.md
           - Coming from Simulink (app): app-help/coming_from_simulink.md
           - Model files (app): app-help/model_files.md
           - Keyboard shortcuts: app-help/shortcuts.md
@@ -136,6 +137,7 @@ nav:
               - "A sensor signal chain in fixed point": tutorials/fixed-point.md
       - Testing and verification:
           - "Requirements-based testing and coverage": tutorials/requirements-testing.md
+          - "Robustness and tolerances with Monte Carlo": tutorials/robustness-monte-carlo.md
   - Block reference:
       - Overview: blocks/index.md
       - CAN: blocks/can.md

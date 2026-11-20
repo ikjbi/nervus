@@ -143,5 +143,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
 - `abs_braking.py`: an emergency stop from 100 km/h with and without ABS. See the [tutorial](tutorials/abs.md).
 - `idle_requirements.py`: the idle speed controller with its requirements, traceability and coverage. See the
   [tutorial](tutorials/requirements-testing.md).
+- `cruise_tolerance.py`: a Monte Carlo study of the cruise control over 200 cars. See the
+  [tutorial](tutorials/robustness-monte-carlo.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

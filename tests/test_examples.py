@@ -466,3 +466,10 @@ def test_idle_requirements() -> None:
         rows = trace(d, results)
         assert [r.requirement.id for r in rows if r.status == "not tested"] == untested
         assert all(r.status in ("verified", "not tested") for r in rows) and cov.covered == covered
+
+
+def test_cruise_tolerance() -> None:
+    m = _import("cruise_tolerance")
+    ok30 = m.study(30.0, runs=100).column("settling_s")
+    ok60 = m.study(60.0, runs=100).column("settling_s")
+    assert np.all(ok30 <= 20.0) and np.mean(ok60 > 20.0) > 0.05  # Ki = 60 fails for some (heavy) cars
