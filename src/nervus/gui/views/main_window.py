@@ -45,6 +45,7 @@ from nervus.gui.views.codegen_dialog import CodegenDialog
 from nervus.gui.views.console_panel import ConsolePanel
 from nervus.gui.views.data_inspector import DataInspector
 from nervus.gui.views.diagnostics import DiagnosticsPanel
+from nervus.gui.views.dictionary_panel import DictionaryPanel
 from nervus.gui.views.help_browser import HelpBrowser
 from nervus.gui.views.icons import icon
 from nervus.gui.views.library import LibraryBrowser
@@ -86,6 +87,7 @@ class MainWindow(QMainWindow):
         self.workspace_panel = WorkspacePanel(self.diagram_model, self.editor)
         self.test_panel = TestManagerPanel(self.diagram_model, self.editor, self.tests)
         self.console = ConsolePanel(self.diagram_model, self.editor, self.sim_model, self)
+        self.dictionary_panel = DictionaryPanel(self.diagram_model, self.editor)
         self._inspector: DataInspector | None = None
         self.scopes: dict[int, ScopeWindow] = {}
         from PySide6.QtCore import QTimer
@@ -143,8 +145,12 @@ class MainWindow(QMainWindow):
         )
         self.tests_dock = self._dock("Test Manager", self.test_panel, Qt.DockWidgetArea.BottomDockWidgetArea, "tests")
         self.console_dock = self._dock("Console", self.console, Qt.DockWidgetArea.BottomDockWidgetArea, "console")
+        self.dictionary_dock = self._dock(
+            "Data Dictionary", self.dictionary_panel, Qt.DockWidgetArea.BottomDockWidgetArea, "dictionary"
+        )
         self.tabifyDockWidget(self.diagnostics_dock, self.workspace_dock)
         self.tabifyDockWidget(self.workspace_dock, self.tests_dock)
+        self.tabifyDockWidget(self.workspace_dock, self.dictionary_dock)
         self.tabifyDockWidget(self.tests_dock, self.console_dock)
         self.diagnostics_dock.raise_()
         self.resizeDocks([self.library_dock, self.properties_dock], [230, 300], Qt.Orientation.Horizontal)
@@ -320,6 +326,7 @@ class MainWindow(QMainWindow):
             self.properties_dock,
             self.diagnostics_dock,
             self.workspace_dock,
+            self.dictionary_dock,
             self.tests_dock,
             self.console_dock,
         ):
@@ -434,6 +441,8 @@ class MainWindow(QMainWindow):
         self.workspace_panel.usagesRequested.connect(self.show_usages)
         self.test_panel.statusMessage.connect(self.status_label.setText)
         self.console.statusMessage.connect(self.status_label.setText)
+        self.dictionary_panel.statusMessage.connect(self.status_label.setText)
+        self.dictionary_panel.blockActivated.connect(lambda path: self._highlight((path,)))
         self.test_panel.openResult.connect(self._open_test_result)
         self.sim_model.stateChanged.connect(self._sim_state_changed)
         self.sim_model.progressChanged.connect(lambda f: self.progress.setValue(int(f * 1000)))
@@ -980,6 +989,7 @@ class MainWindow(QMainWindow):
             menu.addAction("Delete Link", lambda: self.editor.delete([], [link]))
         elif isinstance(target, Connection):  # a wire
             wire = target
+            menu.addAction("Name Signal…", lambda: self.name_signal(wire))
             menu.addAction("Delete Wire", lambda: self.editor.delete([], [wire]))
             if wire.meta.get("points"):
                 menu.addAction(
@@ -994,6 +1004,22 @@ class MainWindow(QMainWindow):
             if self.diagram_model.diagram.parent is not None:
                 menu.addAction(self.act_up)
         return menu
+
+    def name_signal(self, wire: Connection, name: str | None = None) -> bool:
+        """Name the signal on a wire (its source output); offers the data dictionary's names."""
+        from nervus.core.dictionary import signal_names
+
+        if name is None:
+            current = signal_names(wire.src).get(wire.src_port, "")
+            choices = [current, *[n for n in self.diagram_model.root.signals if n != current]]
+            name, ok = QInputDialog.getItem(
+                self, "Name Signal", f"Signal name of {wire.src.name} output {wire.src_port + 1}\n"
+                "(a data dictionary object of that name sets its type, unit and range; empty: no name):",
+                choices, 0, True,
+            )  # fmt: skip
+            if not ok:
+                return False
+        return self.editor.name_signal(wire.src, wire.src_port, name)
 
     def flip_selection(self) -> None:
         self.editor.flip_blocks(self.scene.selected_blocks())

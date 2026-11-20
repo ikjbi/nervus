@@ -529,3 +529,23 @@ class ScriptCommand(Command):
 
     def revert(self) -> None:
         self._restore(self.before)
+
+
+class SetSignalObjectCommand(Command):
+    """Add, edit, rename or delete one data-dictionary signal object."""
+
+    def __init__(self, model: DiagramModel, old: Any, new: Any) -> None:
+        verb = "Add" if old is None else "Delete" if new is None else "Change"
+        super().__init__(f"{verb} signal {(new or old).name}")
+        self.model, self.old, self.new = model, old, new
+        names = list(model.root.signals)
+        self._index = names.index(old.name) if old is not None else len(names)
+
+    def do(self) -> None:
+        self.model.set_signal_object(self.old.name if self.old else None, self.new)
+
+    def revert(self) -> None:
+        if self.new is None:
+            self.model.set_signal_object(None, self.old, index=self._index)
+        else:
+            self.model.set_signal_object(self.new.name, self.old, index=self._index)

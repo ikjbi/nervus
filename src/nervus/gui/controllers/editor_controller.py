@@ -31,6 +31,7 @@ from nervus.gui.controllers.commands import (
     SetMetaCommand,
     SetParamsCommand,
     SetSettingsCommand,
+    SetSignalObjectCommand,
     SetTestsCommand,
     SetVariableCommand,
     SetVariantsCommand,
@@ -417,6 +418,72 @@ class EditorController(QObject):
             self.errorOccurred.emit(f"'{name}' is used by {', '.join(users)}; change those parameters first.")
             return False
         return self._push(SetVariableCommand(self.model, Variable(**ws.variable(name).__dict__), None))
+
+    # ------------------------------------------------------------------ data dictionary
+
+    def name_signal(self, block: Block, port: int, name: str | None) -> bool:
+        """Give output ``port`` of ``block`` a signal name ("" or None removes it); one undo step."""
+        from nervus.core.dictionary import META_KEY, named_signals
+
+        name = (name or "").strip()
+        if name and not name.isidentifier():
+            self.errorOccurred.emit(f"Invalid signal name {name!r}: use letters, digits and _.")
+            return False
+        path = self.model.path_of(block)
+        taken = named_signals(self.model.root).get(name) if name else None
+        if taken is not None and taken != (path, port):
+            self.errorOccurred.emit(f"The signal name {name!r} is already used by {taken[0]}:{taken[1]}.")
+            return False
+        names = dict(block.meta.get(META_KEY, {}))
+        if name:
+            names[str(port)] = name
+        else:
+            names.pop(str(port), None)
+        text = f"Name signal {name}" if name else f"Remove the signal name of {block.name}"
+        return self._push(SetMetaCommand(self.model, text, [(block, {META_KEY: names or None})]))
+
+    def add_signal_object(self, name: str | None = None, **fields: Any) -> Any:
+        from nervus.core.dictionary import SignalObject
+
+        dd = self.model.root.signals
+        if name is None:
+            i = 1
+            while f"signal{i}" in dd:
+                i += 1
+            name = f"signal{i}"
+        if name in dd:
+            self.errorOccurred.emit(f"A signal object named '{name}' already exists.")
+            return None
+        try:
+            obj = SignalObject(name, **fields)
+        except NervusError as exc:
+            self.errorOccurred.emit(str(exc))
+            return None
+        return obj if self._push(SetSignalObjectCommand(self.model, None, obj)) else None
+
+    def update_signal_object(self, name: str, /, **changes: Any) -> bool:
+        from nervus.core.dictionary import SignalObject
+
+        dd = self.model.root.signals
+        old = dd[name]
+        fields = {**old.__dict__, **changes}
+        if fields["name"] != name and fields["name"] in dd:
+            self.errorOccurred.emit(f"A signal object named '{fields['name']}' already exists.")
+            return False
+        try:
+            new = SignalObject(**fields)
+        except NervusError as exc:
+            self.errorOccurred.emit(str(exc))
+            return False
+        if new.__dict__ == old.__dict__:
+            return True
+        return self._push(SetSignalObjectCommand(self.model, SignalObject(**old.__dict__), new))
+
+    def delete_signal_object(self, name: str) -> bool:
+        from nervus.core.dictionary import SignalObject
+
+        old = self.model.root.signals[name]
+        return self._push(SetSignalObjectCommand(self.model, SignalObject(**old.__dict__), None))
 
     def import_dbc(self, path: str | Path) -> list[str]:
         """Add the signals and value tables of a DBC file as workspace variables (existing names are kept).

@@ -120,7 +120,14 @@ class _Logger:
         for name, b in zip(m.names, m.blocks, strict=True):
             for alias, port in b.result_aliases().items():
                 aliases[alias] = input_keys[name][port]
-        return SimResult(np.asarray(self.t), signals, input_keys, aliases, stats)
+        aliases.update(_signal_aliases(m.diagram, signals, input_keys))
+        t = np.asarray(self.t)
+        dictionary = m.diagram.root.signals
+        problems = [msg for sig, key in aliases.items() if sig in dictionary
+                    for msg in dictionary[sig].range_problems(t, signals[key])]  # fmt: skip
+        if problems:
+            stats.warnings = [*(stats.warnings or []), *problems]
+        return SimResult(t, signals, input_keys, aliases, stats)
 
 
 def _on_empty_state(ev: Callable[[float, Array], float]) -> Callable[[float, Array], float]:
@@ -536,3 +543,32 @@ def _run_variable(
             zc.fired(fired, t, x)
         else:
             t = t_next
+
+
+def _signal_aliases(diagram: Diagram, signals: dict[str, Array], input_keys: dict[str, list[str]]) -> dict[str, str]:
+    """Signal names (data dictionary) → result keys. An output that is not logged under its own path (e.g. a
+    subsystem's) is found through a block it drives."""
+    from nervus.core.dictionary import named_signals
+
+    out: dict[str, str] = {}
+    try:
+        named = named_signals(diagram)
+    except Exception:  # a name used twice: reported by the editor
+        return out
+    for name, (path, port) in named.items():
+        key = f"{path}:{port}"
+        if key in signals:
+            out[name] = key
+            continue
+        parent, _, block_name = path.rpartition("/")
+        system = diagram
+        for part in [x for x in parent.split("/") if x]:
+            system = getattr(system.block(part), "system", system)
+        prefix = f"{parent}/" if parent else ""
+        for c in system.connections:
+            if c.src.name == block_name and c.src_port == port:
+                consumer = input_keys.get(prefix + c.dst.name)
+                if consumer is not None and c.dst_port < len(consumer):
+                    out[name] = consumer[c.dst_port]
+                    break
+    return out

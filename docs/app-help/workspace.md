@@ -103,6 +103,34 @@ ws.add(Variable("speed_axis", [800, 1500, 3000, 6000], unit="rpm", data_type="ui
 ws.add(Variable("k_sensor", 0.0125, "ADC to volts", "V", calibratable=False))  # const, in ROM
 ```
 
+## Data dictionary: signal objects
+
+Workspace variables describe **parameters**; the **Data Dictionary** (a tab next to the Model Workspace)
+describes **signals**. A signal object has a name, a data type (`inherit` = any), a unit, a range and a
+description. Right-click a wire and choose **Name Signal…** to give the source output a name; the name is
+shown under the wire and binds the output to the signal object of that name. Then:
+
+- the **data type** is checked when the model is compiled (an output that must be `uint16` but is `double`
+  is an error naming the block);
+- the **range** is checked after every simulation: values outside [min, max] are reported as warnings,
+  e.g. *signal engine_speed is above its maximum 7000 from t = 7 s (up to 8000 rpm)*;
+- results can be read by the name: `res["engine_speed"]`, also for a subsystem's output;
+- the generated **A2L** file lists the signal as a measurement with its name, description, unit and limits,
+  so INCA or CANape show `engine_speed [rpm]` instead of an internal variable name.
+
+Each name can be given to one output. Double-click a row to show the block that drives the signal; names
+without an object are listed too, so **Add** with such a row selected creates the object. Signal objects are
+saved with the model, and every change can be undone.
+
+
+```python
+from nervus.core.dictionary import SignalObject
+
+model.signals.add(SignalObject("engine_speed", "double", "rpm", 0, 7000, "Crankshaft speed"))
+model.name_signal("engine", 0, "engine_speed")
+simulate(model)["engine_speed"]
+```
+
 ## Parameter sets (calibrations)
 
 A **parameter set** is a file (`.nervcal`) with values for some or all of the variables:

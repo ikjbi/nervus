@@ -34,6 +34,7 @@ class DiagramModel(QObject):
     linkRemoved = Signal(object)  # Link
     settingsChanged = Signal()
     workspaceChanged = Signal()
+    signalsChanged = Signal()  # the data dictionary (signal objects)
     testsChanged = Signal()
     diagramReset = Signal()  # a whole new diagram was loaded
     currentChanged = Signal(object)  # Diagram: the editor now shows this (sub)system
@@ -268,6 +269,17 @@ class DiagramModel(QObject):
         else:
             ws.add(var)
         self._workspace_changed()
+
+    def set_signal_object(self, old_name: str | None, obj: Any, index: int | None = None) -> None:
+        """Add, replace/rename or delete (``obj`` None) a data-dictionary signal object."""
+        dd = self._root.signals
+        if obj is None:
+            if old_name is not None and old_name in dd:
+                dd.remove(old_name)
+        else:
+            dd.replace(old_name or obj.name, obj, index)
+        self.signalsChanged.emit()
+        self.changed.emit()
 
     def apply_values(self, values: dict[str, object]) -> None:
         self._root.workspace.apply(values)

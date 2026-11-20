@@ -427,9 +427,15 @@ class WireItem(QGraphicsPathItem):
                 return k
         return None
 
+    def signal_name(self) -> str:
+        """The data-dictionary name of the source output, if it has one."""
+        from nervus.core.dictionary import signal_names
+
+        return signal_names(self.connection.src).get(self.connection.src_port, "")
+
     def boundingRect(self) -> QRectF:
         r = super().boundingRect()
-        return r.adjusted(0, -16, 140, 0) if self.type_label else r
+        return r.adjusted(0, -16, 140, 16) if self.type_label or self.signal_name() else r
 
     def shape(self) -> QPainterPath:
         stroker = QPainterPathStroker()
@@ -465,6 +471,17 @@ class WireItem(QGraphicsPathItem):
             painter.drawText(
                 QRectF(start.x() + 4, start.y() - 15, 140, 12), Qt.AlignmentFlag.AlignLeft, self.type_label
             )
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QBrush(color))
+        name = self.signal_name()
+        if name:  # the signal's name, under the wire next to the source
+            start = self.src.scene_anchor()
+            f = QFont(painter.font())
+            f.setPointSizeF(8)
+            f.setItalic(True)
+            painter.setFont(f)
+            painter.setPen(t.color("text") if not self.isSelected() else color)
+            painter.drawText(QRectF(start.x() + 6, start.y() + 4, 140, 12), Qt.AlignmentFlag.AlignLeft, name)
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(color))
         # Branch dot where an output fans out to several inputs.

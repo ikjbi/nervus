@@ -204,6 +204,28 @@ def console_and_can_shots(win) -> None:  # type: ignore[no-untyped-def]
     win.editor.undo_stack.undo()
 
 
+def dictionary_shots(win) -> None:  # type: ignore[no-untyped-def]
+    """The Data Dictionary panel with named wires in the throttle example."""
+    from nervus.core.dictionary import SignalObject
+
+    win.files.open(ROOT / "examples" / "throttle_pi.nervus")
+    root = win.diagram_model.root
+    for obj in (SignalObject("throttle_cmd", "double", "%", 0.0, 100.0, "Duty cycle to the H-bridge"),
+                SignalObject("plate_angle_meas", "double", "deg", 0.0, 90.0, "Throttle position sensor")):  # fmt: skip
+        win.editor.add_signal_object(obj.name, data_type=obj.data_type, unit=obj.unit, min=obj.min, max=obj.max,
+                                     description=obj.description)  # fmt: skip
+    for block, name in (("throttle_pi", "throttle_cmd"), ("tps_sample", "plate_angle_meas")):
+        wire = next(c for c in root.connections if c.src.name == block)
+        win.name_signal(wire, name)
+    win.view.fit()
+    win.dictionary_dock.raise_()
+    win.resizeDocks([win.dictionary_dock], [190], Qt.Orientation.Vertical)
+    QApplication.processEvents()
+    grab(win, "data-dictionary.png")
+    for _ in range(4):
+        win.editor.undo_stack.undo()
+
+
 def grab(widget: QWidget, name: str) -> None:
     QApplication.processEvents()
     widget.grab().save(str(OUT / name))
@@ -218,14 +240,14 @@ def main() -> None:
     app.setStyle("Fusion")
     from nervus.gui.theme import ThemeManager, ThemeMode
 
-    if sys.argv[1:] == ["console"]:  # only the newest shots
+    if sys.argv[1:] in (["console"], ["dictionary"]):  # only the newest shots
         from nervus.gui.views.main_window import MainWindow
 
         ThemeManager.instance().set_mode(ThemeMode.LIGHT)
         win = MainWindow(QSettings(tempfile.mktemp(suffix=".ini"), QSettings.Format.IniFormat))
         win.resize(1400, 860)
         win.show()
-        console_and_can_shots(win)
+        console_and_can_shots(win) if sys.argv[1] == "console" else dictionary_shots(win)
         win.editor.undo_stack.setClean()
         win.close()
         return
@@ -504,6 +526,7 @@ def main() -> None:
             win._help.resize(980, 720)
             grab(win._help, "help-gain.png")
             console_and_can_shots(win)
+            dictionary_shots(win)
             dlg_mod = __import__("nervus.gui.views.settings_dialog", fromlist=["SettingsDialog"])
             dlg = dlg_mod.SettingsDialog(win.diagram_model.diagram.settings, win)
             dlg.show()

@@ -216,7 +216,7 @@ tests/
 - [x] Fixed-point with slope and bias scaling, overflow and saturation modes, rounding
 - [x] Data type propagation and checking across the diagram
 - [x] Simulation that matches the integer behaviour of the generated code bit for bit
-- [ ] Data dictionary: signal and parameter objects with type, unit, range, description
+- [x] Data dictionary: signal and parameter objects with type, unit, range, description
 - [ ] Integer-only arithmetic in generated code (no floating point between conversions), for targets without
       an FPU
 - [x] Typed parameters (e.g. int16 calibration maps) and typed A2L characteristics

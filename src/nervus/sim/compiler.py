@@ -445,6 +445,7 @@ def compile_diagram(
         Kind.CONSTANT if st.is_constant else Kind.DISCRETE if st.is_discrete else Kind.CONTINUOUS for st in sample_times
     ]
 
+    _check_signal_types(diagram, names, out_t)
     model = CompiledModel(
         diagram=diagram,
         blocks=blocks,
@@ -628,3 +629,25 @@ def _combine(times: set[SampleTime]) -> SampleTime:
         return non_const.pop()
     # Mixed continuous / multiple discrete rates: recompute at every evaluation.
     return CONTINUOUS
+
+
+def _check_signal_types(diagram: Diagram, names: list[str], out_t: list[list[DataType]]) -> None:
+    """Named outputs bound to a signal object with a data type must have that type."""
+    from nervus.core.datatypes import parse_datatype
+    from nervus.core.dictionary import named_signals
+
+    dictionary = diagram.root.signals
+    if not len(dictionary):
+        return
+    index = {n: i for i, n in enumerate(names)}
+    for name, (path, port) in named_signals(diagram).items():
+        if name not in dictionary or path not in index:
+            continue
+        want = parse_datatype(dictionary[name].data_type)
+        have = out_t[index[path]][port]
+        if want is not None and have != want:
+            raise ModelError(
+                f"{path}: output {port} is signal {name!r}, which the data dictionary declares as {want.name}, "
+                f"but the block outputs {have.name}",
+                (path,),
+            )

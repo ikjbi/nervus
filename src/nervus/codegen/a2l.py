@@ -105,14 +105,36 @@ def generate_a2l(gen: CGenerator) -> str:
         offset += f.size * f.nbytes
     offset = 0
     m = gen.model
+    from nervus.core.dictionary import named_signals
+
+    try:
+        named = {v: k for k, v in named_signals(m.diagram).items()}  # (path, port) → signal name
+    except Exception:  # a name used twice: no named measurements
+        named = {}
+    dictionary = m.diagram.root.signals
     for i, ws_out in enumerate(m.out_widths):
         for p, w in enumerate(ws_out):
             field = gen.signal_var(i, p).split(".", 1)[1]
+            signal = named.get((m.names[i], p))
+            obj = dictionary[signal] if signal is not None and signal in dictionary else None
+            method, lo, hi, desc = "CM_IDENTICAL", "-1e12", "1e12", m.names[i]
+            if obj is not None:
+                lo, hi = _limit(obj.min, -1e12), _limit(obj.max, 1e12)
+                desc = (obj.description or m.names[i]).replace('"', "'")
+                if obj.unit:
+                    method = f"CM_{_ident(obj.unit) or 'unit'}"
+                    if method not in units:
+                        units.add(method)
+                        lines += [
+                            f'    /begin COMPU_METHOD {method} "unit {obj.unit}" IDENTICAL "%12.6" "{obj.unit}"',
+                            "    /end COMPU_METHOD",
+                        ]
             for k in range(w):
                 suffix = f"[{k}]" if w > 1 else ""
+                label = f"{signal}{suffix}" if signal is not None else f"{pfx}_B.{field}{suffix}"
                 lines += [
-                    f'    /begin MEASUREMENT {pfx}_B.{field}{suffix} "{m.names[i]}"',
-                    "      FLOAT64_IEEE CM_IDENTICAL 0 0 -1e12 1e12",
+                    f'    /begin MEASUREMENT {label} "{desc}"',
+                    f"      FLOAT64_IEEE {method} 0 0 {lo} {hi}",
                     f"      ECU_ADDRESS 0x0 /* @{pfx}_B+{offset + k * DOUBLE} */",
                     f'      SYMBOL_LINK "{pfx}_B.{field}" {k * DOUBLE}',
                     "    /end MEASUREMENT",

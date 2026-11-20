@@ -83,6 +83,11 @@ class Diagram:
         self.workspace = Workspace()
         """Named parameters that block parameters can refer to (``Gain(gain="Kp")``). Only the top-level
         diagram's workspace is used; subsystems see their model's workspace."""
+        from nervus.core.dictionary import DataDictionary
+
+        self.signals = DataDictionary()
+        """Signal objects (data type, unit, range) that named block outputs are bound to; the top-level
+        diagram's is used."""
         self.source_path: str | None = None
         self.link_warnings: list[str] = []
         """Problems updating linked library subsystems when the model was loaded."""
@@ -223,6 +228,33 @@ class Diagram:
             return mask.namespace(base=outer)
         except ModelError as exc:
             raise ModelError(f"mask of {self.parent.name!r}: {exc}", (self.parent.name,)) from exc
+
+    def name_signal(self, block: Block | str, port: int, name: str | None) -> None:
+        """Give output ``port`` of ``block`` a signal name (bound to the data dictionary object of that name, if
+        there is one); ``None`` or ``""`` removes the name."""
+        from nervus.core.dictionary import META_KEY
+        from nervus.core.errors import ParameterError
+
+        b = self.block(block) if isinstance(block, str) else block
+        if not 0 <= port < b.num_outputs():
+            raise ParameterError(f"{b.name} has no output {port}")
+        names = dict(b.meta.get(META_KEY, {}))
+        if name:
+            if not name.isidentifier():
+                raise ParameterError(f"invalid signal name {name!r}: use letters, digits and _")
+            from nervus.core.dictionary import named_signals
+
+            taken = named_signals(self.root).get(name)
+            path = next((q for q, x in self.root.walk() if x is b), b.name)
+            if taken is not None and taken != (path, port):
+                raise ParameterError(f"signal name {name!r} is already used by {taken[0]}:{taken[1]}")
+            names[str(port)] = name
+        else:
+            names.pop(str(port), None)
+        if names:
+            b.meta[META_KEY] = names
+        else:
+            b.meta.pop(META_KEY, None)
 
     def walk_namespaces(
         self, overrides: dict[str, Any] | None = None, prefix: str = ""
