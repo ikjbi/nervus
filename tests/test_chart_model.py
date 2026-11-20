@@ -22,6 +22,8 @@ def _charts() -> list[tuple[str, str]]:
     out = [("ENGINE", test_chart.ENGINE), ("POWER", test_chart_hierarchy.POWER),
            ("HISTORY", test_chart_hierarchy.HISTORY)]  # fmt: skip
     for path in sorted((ROOT / "examples").glob("*.nervus")):
+        if path.stem == "fmi_plant":
+            continue  # needs the FMU that examples/fmi_exchange.py builds (not in the repository)
         for _path, b in load(path).walk():
             if b.type_id == "charts.state_chart":
                 out.append((f"{path.stem}/{b.name}", str(b.params["definition"])))
