@@ -65,6 +65,8 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 - **Electrical Reference**: Ground: the node it is linked to is at 0 V. Every circuit needs one.
 - **Resistor**: An ideal resistor (Ohm's law):
+- **Variable Resistor**: A resistor whose resistance is the input signal (in Ω, at least *R_min*): a potentiometer, a sensor
+- **Thermistor (NTC)**: An NTC thermistor, the sensing element of coolant, intake-air, oil and battery temperature sensors. The
 - **Capacitor**: An ideal capacitor; its voltage is a state:
 - **Inductor**: An ideal inductor; its current is a state:
 - **Voltage Source**: An ideal voltage source: $v_p - v_n = V$. With *controlled* on, the voltage is the input signal (e.g. from

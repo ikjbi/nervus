@@ -1,0 +1,938 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "ntc_sensor",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 300.0,
+    "solver": "BDF",
+    "step": null,
+    "max_step": 0.1,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "R_pull",
+      "value": 2490.0,
+      "description": "Pull-up resistor on the ECU board",
+      "unit": "Ω"
+    },
+    {
+      "name": "R_filter",
+      "value": 10000.0,
+      "description": "Input filter resistor",
+      "unit": "Ω"
+    },
+    {
+      "name": "C_filter",
+      "value": 1e-07,
+      "description": "Input filter capacitor (with R_filter: τ = 1 ms)",
+      "unit": "F"
+    },
+    {
+      "name": "adc_counts_axis",
+      "value": [
+        90.84142996014636,
+        107.99427508385827,
+        129.2228780001518,
+        155.6615523447671,
+        188.79166337169912,
+        230.547763996434,
+        283.44838236628055,
+        350.74708129390535,
+        436.58569133893235,
+        546.1041293994209,
+        685.4124688690355,
+        861.2574358136878,
+        1080.134263801521,
+        1346.5763227518223,
+        1660.5554485842124,
+        2014.5338590940723,
+        2391.657988564645,
+        2767.1178690170123,
+        3113.576352598603,
+        3408.744165709832,
+        3641.07300471116,
+        3810.7117180226705,
+        3926.264074713651
+      ],
+      "description": "Conversion table: ADC counts (rising)",
+      "unit": "counts"
+    },
+    {
+      "name": "adc_temp_table",
+      "value": [
+        150.0,
+        141.36363636363637,
+        132.72727272727272,
+        124.0909090909091,
+        115.45454545454545,
+        106.81818181818181,
+        98.18181818181819,
+        89.54545454545455,
+        80.9090909090909,
+        72.27272727272727,
+        63.636363636363626,
+        55.0,
+        46.36363636363636,
+        37.72727272727272,
+        29.090909090909093,
+        20.45454545454544,
+        11.818181818181813,
+        3.181818181818187,
+        -5.4545454545454675,
+        -14.090909090909093,
+        -22.727272727272748,
+        -31.363636363636374,
+        -40.0
+      ],
+      "description": "Conversion table: temperature at each count value",
+      "unit": "°C"
+    },
+    {
+      "name": "V_low",
+      "value": 0.1,
+      "description": "Below this: short to ground (P0117)",
+      "unit": "V"
+    },
+    {
+      "name": "V_high",
+      "value": 4.9,
+      "description": "Above this: open circuit (P0118)",
+      "unit": "V"
+    },
+    {
+      "name": "T_substitute",
+      "value": 80.0,
+      "description": "Substitute temperature while a code is pending",
+      "unit": "°C"
+    },
+    {
+      "name": "fault",
+      "value": 0.0,
+      "description": "Fault injection: 0 none, 1 open circuit, 2 short to ground",
+      "unit": "-"
+    },
+    {
+      "name": "fault_time",
+      "value": 200.0,
+      "description": "When the fault happens",
+      "unit": "s"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "coolant_temp",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          300.0
+        ],
+        "data": [
+          [
+            -10.0
+          ],
+          [
+            95.0
+          ]
+        ],
+        "csv_file": "",
+        "interpolation": "linear",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "fault_injection",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, temp):\n    \"\"\"Harness resistance [Ω] and resistance of the signal wire to ground [Ω] (fault injection).\"\"\"\n    fault, at = p[0], p[1]\n    broken = t >= at\n    open_ = 1e8 if (fault == 1 and broken) else 0.5\n    short = 0.05 if (fault == 2 and broken) else 1e9\n    return [open_, short]\n",
+        "num_inputs": 1,
+        "num_outputs": 1,
+        "output_width": 2,
+        "parameters": "[fault, fault_time]"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "fault_split",
+      "type": "routing.demux",
+      "params": {
+        "num_outputs": 2
+      },
+      "meta": {
+        "position": [
+          150.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "gnd",
+      "type": "electrical.reference",
+      "params": {},
+      "meta": {
+        "position": [
+          150.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "sensor_supply_5V",
+      "type": "electrical.voltage_source",
+      "params": {
+        "V": 5.0,
+        "controlled": false
+      },
+      "meta": {
+        "position": [
+          150.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "R_pull",
+      "type": "electrical.resistor",
+      "params": {
+        "R": "R_pull"
+      },
+      "meta": {
+        "position": [
+          300.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "ntc",
+      "type": "electrical.thermistor",
+      "params": {
+        "R25": 2000.0,
+        "beta": 3600.0
+      },
+      "meta": {
+        "position": [
+          300.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "harness",
+      "type": "electrical.variable_resistor",
+      "params": {
+        "R_min": 0.001
+      },
+      "meta": {
+        "position": [
+          300.0,
+          230.0
+        ]
+      }
+    },
+    {
+      "name": "short_to_ground",
+      "type": "electrical.variable_resistor",
+      "params": {
+        "R_min": 0.001
+      },
+      "meta": {
+        "position": [
+          450.0,
+          230.0
+        ]
+      }
+    },
+    {
+      "name": "R_filter",
+      "type": "electrical.resistor",
+      "params": {
+        "R": "R_filter"
+      },
+      "meta": {
+        "position": [
+          450.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "C_filter",
+      "type": "electrical.capacitor",
+      "params": {
+        "C": "C_filter",
+        "v0": 0.0
+      },
+      "meta": {
+        "position": [
+          600.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "adc_pin",
+      "type": "electrical.voltage_sensor",
+      "params": {},
+      "meta": {
+        "position": [
+          600.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "adc_sample",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          750.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "volts_to_counts",
+      "type": "math.gain",
+      "params": {
+        "gain": 819.0,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          880.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "adc_counts",
+      "type": "routing.datatype_conversion",
+      "params": {
+        "output_type": "uint16",
+        "rounding": "floor",
+        "overflow": "saturate"
+      },
+      "meta": {
+        "position": [
+          1010.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "counts",
+      "type": "routing.datatype_conversion",
+      "params": {
+        "output_type": "double",
+        "rounding": "nearest",
+        "overflow": "saturate"
+      },
+      "meta": {
+        "position": [
+          1140.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "temp_measured",
+      "type": "lookup.table_1d",
+      "params": {
+        "breakpoints": "adc_counts_axis",
+        "table": "adc_temp_table",
+        "interpolation": "linear",
+        "extrapolation": "clip",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          1270.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "adc_volts",
+      "type": "math.gain",
+      "params": {
+        "gain": 0.001221001221001221,
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1140.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "below_range",
+      "type": "logic.compare_to_constant",
+      "params": {
+        "operator": "<",
+        "constant": "V_low"
+      },
+      "meta": {
+        "position": [
+          1270.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "above_range",
+      "type": "logic.compare_to_constant",
+      "params": {
+        "operator": ">",
+        "constant": "V_high"
+      },
+      "meta": {
+        "position": [
+          1270.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "P0117",
+      "type": "diagnostics.monitor",
+      "params": {
+        "dtc": "P0117",
+        "threshold": 5.0,
+        "fail_step": 1.0,
+        "pass_step": 1.0,
+        "jump_down": true,
+        "confirm_cycles": 1,
+        "heal_cycles": 3,
+        "mil": true,
+        "enable_input": false,
+        "cycle_input": false,
+        "clear_input": false,
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          1400.0,
+          120.0
+        ]
+      }
+    },
+    {
+      "name": "P0118",
+      "type": "diagnostics.monitor",
+      "params": {
+        "dtc": "P0118",
+        "threshold": 5.0,
+        "fail_step": 1.0,
+        "pass_step": 1.0,
+        "jump_down": true,
+        "confirm_cycles": 1,
+        "heal_cycles": 3,
+        "mil": true,
+        "enable_input": false,
+        "cycle_input": false,
+        "clear_input": false,
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          1400.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "sensor_failed",
+      "type": "logic.logical",
+      "params": {
+        "operator": "OR",
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          1530.0,
+          160.0
+        ]
+      }
+    },
+    {
+      "name": "substitute",
+      "type": "sources.constant",
+      "params": {
+        "value": "T_substitute",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          1530.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "temp_used",
+      "type": "routing.switch",
+      "params": {
+        "criterion": "u1 != 0",
+        "threshold": 0.0
+      },
+      "meta": {
+        "position": [
+          1660.0,
+          40.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          1660.0,
+          -80.0
+        ]
+      }
+    },
+    {
+      "name": "true_temp",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1790.0,
+          -40.0
+        ]
+      }
+    },
+    {
+      "name": "measured_temp",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          1790.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "ecu_temp",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          1790.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "signal_volts",
+      "type": "ports.outport",
+      "params": {
+        "port": 4
+      },
+      "meta": {
+        "position": [
+          1790.0,
+          140.0
+        ]
+      }
+    },
+    {
+      "name": "P0117_pending",
+      "type": "ports.outport",
+      "params": {
+        "port": 5
+      },
+      "meta": {
+        "position": [
+          1790.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "P0118_pending",
+      "type": "ports.outport",
+      "params": {
+        "port": 6
+      },
+      "meta": {
+        "position": [
+          1790.0,
+          260.0
+        ]
+      }
+    },
+    {
+      "name": "mil",
+      "type": "ports.outport",
+      "params": {
+        "port": 7
+      },
+      "meta": {
+        "position": [
+          1790.0,
+          320.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "fault_injection",
+      "dst_port": 0
+    },
+    {
+      "src": "fault_injection",
+      "src_port": 0,
+      "dst": "fault_split",
+      "dst_port": 0
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "ntc",
+      "dst_port": 0
+    },
+    {
+      "src": "fault_split",
+      "src_port": 0,
+      "dst": "harness",
+      "dst_port": 0
+    },
+    {
+      "src": "fault_split",
+      "src_port": 1,
+      "dst": "short_to_ground",
+      "dst_port": 0
+    },
+    {
+      "src": "adc_pin",
+      "src_port": 0,
+      "dst": "adc_sample",
+      "dst_port": 0
+    },
+    {
+      "src": "adc_sample",
+      "src_port": 0,
+      "dst": "volts_to_counts",
+      "dst_port": 0
+    },
+    {
+      "src": "volts_to_counts",
+      "src_port": 0,
+      "dst": "adc_counts",
+      "dst_port": 0
+    },
+    {
+      "src": "adc_counts",
+      "src_port": 0,
+      "dst": "counts",
+      "dst_port": 0
+    },
+    {
+      "src": "counts",
+      "src_port": 0,
+      "dst": "temp_measured",
+      "dst_port": 0
+    },
+    {
+      "src": "counts",
+      "src_port": 0,
+      "dst": "adc_volts",
+      "dst_port": 0
+    },
+    {
+      "src": "adc_volts",
+      "src_port": 0,
+      "dst": "below_range",
+      "dst_port": 0
+    },
+    {
+      "src": "adc_volts",
+      "src_port": 0,
+      "dst": "above_range",
+      "dst_port": 0
+    },
+    {
+      "src": "below_range",
+      "src_port": 0,
+      "dst": "P0117",
+      "dst_port": 0
+    },
+    {
+      "src": "above_range",
+      "src_port": 0,
+      "dst": "P0118",
+      "dst_port": 0
+    },
+    {
+      "src": "P0117",
+      "src_port": 1,
+      "dst": "sensor_failed",
+      "dst_port": 0
+    },
+    {
+      "src": "P0118",
+      "src_port": 1,
+      "dst": "sensor_failed",
+      "dst_port": 1
+    },
+    {
+      "src": "substitute",
+      "src_port": 0,
+      "dst": "temp_used",
+      "dst_port": 0
+    },
+    {
+      "src": "sensor_failed",
+      "src_port": 0,
+      "dst": "temp_used",
+      "dst_port": 1
+    },
+    {
+      "src": "temp_measured",
+      "src_port": 0,
+      "dst": "temp_used",
+      "dst_port": 2
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "temp_measured",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "temp_used",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    },
+    {
+      "src": "coolant_temp",
+      "src_port": 0,
+      "dst": "true_temp",
+      "dst_port": 0
+    },
+    {
+      "src": "temp_measured",
+      "src_port": 0,
+      "dst": "measured_temp",
+      "dst_port": 0
+    },
+    {
+      "src": "temp_used",
+      "src_port": 0,
+      "dst": "ecu_temp",
+      "dst_port": 0
+    },
+    {
+      "src": "adc_volts",
+      "src_port": 0,
+      "dst": "signal_volts",
+      "dst_port": 0
+    },
+    {
+      "src": "P0117",
+      "src_port": 1,
+      "dst": "P0117_pending",
+      "dst_port": 0
+    },
+    {
+      "src": "P0118",
+      "src_port": 1,
+      "dst": "P0118_pending",
+      "dst_port": 0
+    },
+    {
+      "src": "P0118",
+      "src_port": 0,
+      "dst": "mil",
+      "dst_port": 0
+    }
+  ],
+  "links": [
+    {
+      "a": "sensor_supply_5V",
+      "a_port": "p",
+      "b": "R_pull",
+      "b_port": "p"
+    },
+    {
+      "a": "sensor_supply_5V",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "R_pull",
+      "a_port": "n",
+      "b": "ntc",
+      "b_port": "p"
+    },
+    {
+      "a": "ntc",
+      "a_port": "n",
+      "b": "harness",
+      "b_port": "p"
+    },
+    {
+      "a": "harness",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "R_pull",
+      "a_port": "n",
+      "b": "short_to_ground",
+      "b_port": "p"
+    },
+    {
+      "a": "short_to_ground",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "R_pull",
+      "a_port": "n",
+      "b": "R_filter",
+      "b_port": "p"
+    },
+    {
+      "a": "R_filter",
+      "a_port": "n",
+      "b": "C_filter",
+      "b_port": "p"
+    },
+    {
+      "a": "C_filter",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    },
+    {
+      "a": "R_filter",
+      "a_port": "n",
+      "b": "adc_pin",
+      "b_port": "p"
+    },
+    {
+      "a": "adc_pin",
+      "a_port": "n",
+      "b": "gnd",
+      "b_port": "p"
+    }
+  ],
+  "tests": [
+    {
+      "name": "accurate from -10 to 95 °C",
+      "description": "The ECU reads the coolant temperature within 0.5 °C over the warm-up (after the filter settles)",
+      "stop_time": 300.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "ecu_temp",
+          "lower": -11.0,
+          "upper": 96.0,
+          "t_from": 0.2
+        },
+        {
+          "kind": "bounds",
+          "signal": "P0118_pending",
+          "upper": 0.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "P0117_pending",
+          "upper": 0.0
+        }
+      ]
+    },
+    {
+      "name": "open circuit: P0118 and the substitute value",
+      "description": "The harness breaks at 200 s: within 0.7 s the code is pending and the ECU uses 80 °C",
+      "stop_time": 210.0,
+      "parameters": {
+        "fault": 1.0
+      },
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "P0118_pending",
+          "lower": 1.0,
+          "t_from": 200.7
+        },
+        {
+          "kind": "bounds",
+          "signal": "ecu_temp",
+          "lower": 80.0,
+          "upper": 80.0,
+          "t_from": 200.7
+        }
+      ]
+    },
+    {
+      "name": "short to ground: P0117",
+      "description": "The signal wire is shorted to ground at 200 s: P0117 within 0.7 s",
+      "stop_time": 210.0,
+      "parameters": {
+        "fault": 2.0
+      },
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "P0117_pending",
+          "lower": 1.0,
+          "t_from": 200.7
+        }
+      ]
+    }
+  ]
+}

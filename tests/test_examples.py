@@ -430,3 +430,14 @@ def test_xcp_calibration_session() -> None:
     assert used[0] == 100.0 and 120.0 in used and used[-1] == 100.0
     assert np.ravel(r["gain_trim_used"])[-1] == 3.0
     assert np.ravel(r["speed_kmh"])[-1] == pytest.approx(100.0, abs=0.5)
+
+
+def test_ntc_sensor() -> None:
+    from nervus.testing import run_tests
+
+    m = _import("ntc_sensor")
+    d = m.build()
+    assert all(r.passed for r in run_tests(d))
+    assert float(m.r_ntc(90.0)) == pytest.approx(230, abs=1)
+    r = simulate(d, params={"R_pull": 470.0})  # the table no longer matches the hardware
+    assert float(np.ravel(r["measured_temp"])[-1]) == pytest.approx(41.5, abs=0.3)

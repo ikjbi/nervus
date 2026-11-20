@@ -61,6 +61,66 @@ class Resistor(_Electrical):
 
 
 @register
+class VariableResistor(_Electrical):
+    r"""A resistor whose resistance is the input signal (in Ω, at least *R_min*): a potentiometer, a sensor
+    element, a contact that wears, or a fault (a few MΩ for an open circuit, a few mΩ for a short).
+
+    $$ v_p - v_n = \max(R_{in}, R_{min})\,i $$
+    """
+
+    type_id = "electrical.variable_resistor"
+    label = "Variable Resistor"
+    PARAMS = (Param("R_min", 1e-3, ParamKind.FLOAT, "Smallest resistance (the input is limited to this)", "Ω"),)
+
+    def validate_params(self) -> None:
+        _positive(self, "R_min")
+
+    def num_inputs(self) -> int:
+        return 1
+
+    def input_names(self) -> list[str]:
+        return ["resistance"]
+
+    def stamp(self, s: Stamper, nodes: list[int], branches: list[int], x: Array, u: Sequence[float]) -> None:
+        s.conductance(nodes[0], nodes[1], 1.0 / max(float(u[0]), float(self.params["R_min"])))
+
+
+@register
+class Thermistor(_Electrical):
+    r"""An NTC thermistor, the sensing element of coolant, intake-air, oil and battery temperature sensors. The
+    input is its temperature in °C; the resistance falls with temperature (β model):
+
+    $$ R(T) = R_{25}\, e^{\beta \left( 1/T - 1/(298.15\,\mathrm{K}) \right)} $$
+
+    Typical automotive sensors have $R_{25}$ = 2 to 3 kΩ and β = 3400 to 4000 K, so the resistance goes from about
+    50 kΩ at −30 °C to 150 Ω at 120 °C.
+    """
+
+    type_id = "electrical.thermistor"
+    label = "Thermistor (NTC)"
+    PARAMS = (
+        Param("R25", 2000.0, ParamKind.FLOAT, "Resistance at 25 °C", "Ω"),
+        Param("beta", 3600.0, ParamKind.FLOAT, "β constant", "K"),
+    )
+
+    def validate_params(self) -> None:
+        _positive(self, "R25", "beta")
+
+    def num_inputs(self) -> int:
+        return 1
+
+    def input_names(self) -> list[str]:
+        return ["temperature"]
+
+    def resistance(self, temp_c: float) -> float:
+        tk = max(float(temp_c) + 273.15, 1.0)
+        return float(self.params["R25"]) * float(np.exp(self.params["beta"] * (1.0 / tk - 1.0 / 298.15)))
+
+    def stamp(self, s: Stamper, nodes: list[int], branches: list[int], x: Array, u: Sequence[float]) -> None:
+        s.conductance(nodes[0], nodes[1], 1.0 / self.resistance(u[0]))
+
+
+@register
 class Capacitor(_Electrical):
     """An ideal capacitor; its voltage is a state:
 

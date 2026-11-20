@@ -70,4 +70,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-That was the last tutorial on electrics and electronics. Continue with ecu software, communication and diagnostics: *A vehicle network (CAN)*, or pick another one from the *tutorial overview*.
+Next in this topic: *An NTC temperature sensor interface*. Or pick another one from the *tutorial overview*.

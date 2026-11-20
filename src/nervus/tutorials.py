@@ -125,7 +125,19 @@ TUTORIALS: list[Tutorial] = [
              "signals): cranking an engine on a weak battery, a drive-by-wire throttle servo",
              ("starter_motor.nervus", "electronic_throttle.nervus"), ("first-model",),
              "[Physical modelling](../physical.md)", app_page="tutorial_physical"),
+    Tutorial("ntc-sensor", "An NTC temperature sensor interface", _EL, "ECU hardware and PCB", "intermediate", 35,
+             "a thermistor in a voltage divider, the ECU's pull-up, input filter and ADC, a conversion table, "
+             "resolution over the range, why software and hardware must match", ("ntc_sensor.nervus",),
+             ("first-model",)),
     # ------------------------------------------------------------------ ECU software
+    Tutorial("obd-diagnostics", "On-board diagnostics and trouble codes", _ECU, "Diagnostics", "intermediate", 35,
+             "diagnostic monitors: debouncing, enable conditions, pending and confirmed codes, two-trip detection, "
+             "the MIL, readiness; reading the codes with an OBD tool", ("obd_ecu.nervus",), ("engine-modes",),
+             "[OBD-II live data](../obd.md)"),
+    Tutorial("sensor-diagnostics", "Sensor fault diagnosis and substitute values", _ECU, "Diagnostics",
+             "intermediate", 30, "range checks on a sensor signal, open circuit and short to ground (P0117/P0118), "
+             "debouncing, substitute values for limp-home, fault injection in a test", ("ntc_sensor.nervus",),
+             ("ntc-sensor",)),
     Tutorial("model-to-code", "From model to ECU C code", _ECU, "From model to ECU code", "intermediate", 40,
              "an ECU software component with an interface, generated C code and its structure, calibration "
              "parameters and the A2L file, a back-to-back (SIL) test of the code", ("throttle_ecu.nervus",),

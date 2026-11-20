@@ -29,6 +29,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Blocks: Variable Resistor (resistance from a signal) and Thermistor (NTC, β model). Example `ntc_sensor.py` and
+  tutorials: NTC sensor interface, sensor fault diagnosis (P0117/P0118), on-board diagnostics.
 - Tutorials grouped by topic (a registry in `nervus.tutorials` generates the overview, navigation and help
   list). New tutorials: mass-spring-damper, DC motor, coupled tanks and inverted pendulum (control lab
   experiments), engine operating modes, radiator fan, from model to ECU C code, fixed point, and live calibration

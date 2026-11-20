@@ -137,5 +137,8 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   See the [tutorial](tutorials/can-network.md).
 - `xcp_calibration.py`, `xcp_tool.py`: live calibration over XCP on CAN: the cruise control as an ECU and a
   command-line calibration tool. See the [tutorial](tutorials/xcp-calibration.md).
+- `ntc_sensor.py`: a coolant temperature sensor from the NTC circuit to the ECU software, with open and short
+  circuit diagnosis. See the tutorials [NTC sensor interface](tutorials/ntc-sensor.md) and
+  [sensor fault diagnosis](tutorials/sensor-diagnostics.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

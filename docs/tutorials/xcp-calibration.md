@@ -95,4 +95,4 @@ details and how to make your own models measurable.
 
 ## Next
 
-Next in this topic: [From model to ECU C code](model-to-code.md). Or pick another one from the [tutorial overview](index.md).
+Next in this topic: [On-board diagnostics and trouble codes](obd-diagnostics.md). Or pick another one from the [tutorial overview](index.md).

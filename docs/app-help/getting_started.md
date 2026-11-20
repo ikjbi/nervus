@@ -73,4 +73,5 @@ The `examples` folder in the repository has complete models you can open with **
 | `truck.nervus` | a 40 t truck: diesel, 12-speed AMT, exhaust brake on a mountain road (tutorial) |
 | `can_network.nervus` | two CAN buses, gateway, rest bus, E2E checks and fault injection (tutorial) |
 | `xcp_calibration.nervus` | the cruise control with an XCP slave: calibrate it live from `xcp_tool.py` (tutorial) |
+| `ntc_sensor.nervus` | a coolant temperature sensor: NTC circuit, ADC, conversion table, P0117/P0118 diagnosis (tutorials) |
 | `obd_ecu.nervus` | an engine ECU with trouble codes that answers OBD-II tools (`python -m nervus.obd simulate`) |

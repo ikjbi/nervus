@@ -1,6 +1,6 @@
 # Tutorials
 
-21 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+24 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -86,6 +86,12 @@ Circuits from the textbook to the car's wiring harness and the ECU's circuit boa
 |---|---|---|---|
 | *Starter motor and electronic throttle* | intermediate | 45 min | physical modelling (circuits, shafts, springs connected by links instead of signals): cranking an engine on a weak battery, a drive-by-wire throttle servo |
 
+### ECU hardware and PCB
+
+| Tutorial | Level | Time | You will learn |
+|---|---|---|---|
+| *An NTC temperature sensor interface* | intermediate | 35 min | a thermistor in a voltage divider, the ECU's pull-up, input filter and ADC, a conversion table, resolution over the range, why software and hardware must match |
+
 ## ECU software, communication and diagnostics
 
 What happens inside and between ECUs: networks, calibration, diagnostics and the C code itself.
@@ -96,6 +102,13 @@ What happens inside and between ECUs: networks, calibration, diagnostics and the
 |---|---|---|---|
 | *A vehicle network (CAN)* | advanced | 40 min | ECUs on simulated CAN buses: DBC files, arbitration and bus load, a gateway, rest-bus simulation, E2E protection, fault injection and timeouts, the bus trace |
 | *Live calibration over XCP* | intermediate | 35 min | how calibration tools work: XCP on CAN, A2L files, measuring and changing values in a running ECU, a command-line calibration tool, real-time simulation |
+
+### Diagnostics
+
+| Tutorial | Level | Time | You will learn |
+|---|---|---|---|
+| *On-board diagnostics and trouble codes* | intermediate | 35 min | diagnostic monitors: debouncing, enable conditions, pending and confirmed codes, two-trip detection, the MIL, readiness; reading the codes with an OBD tool |
+| *Sensor fault diagnosis and substitute values* | intermediate | 30 min | range checks on a sensor signal, open circuit and short to ground (P0117/P0118), debouncing, substitute values for limp-home, fault injection in a test |
 
 ### From model to ECU code
 

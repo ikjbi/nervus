@@ -73,8 +73,11 @@ nav:
           - "Tutorial: Tyre slip and traction control": app-help/tutorial_traction.md
           - "Tutorial: Rectifier, relay driver, buck converter and active filter": app-help/tutorial_circuits.md
           - "Tutorial: Starter motor and electronic throttle": app-help/tutorial_physical.md
+          - "Tutorial: An NTC temperature sensor interface": app-help/tutorial_ntc_sensor.md
           - "Tutorial: A vehicle network (CAN)": app-help/tutorial_can_network.md
           - "Tutorial: Live calibration over XCP": app-help/tutorial_xcp_calibration.md
+          - "Tutorial: On-board diagnostics and trouble codes": app-help/tutorial_obd_diagnostics.md
+          - "Tutorial: Sensor fault diagnosis and substitute values": app-help/tutorial_sensor_diagnostics.md
           - "Tutorial: From model to ECU C code": app-help/tutorial_model_to_code.md
           - "Tutorial: A sensor signal chain in fixed point": app-help/tutorial_fixed_point.md
           - Coming from Simulink (app): app-help/coming_from_simulink.md
@@ -114,10 +117,15 @@ nav:
               - "Rectifier, relay driver, buck converter and active filter": tutorials/circuits.md
           - Vehicle electrical system:
               - "Starter motor and electronic throttle": tutorials/physical-models.md
+          - ECU hardware and PCB:
+              - "An NTC temperature sensor interface": tutorials/ntc-sensor.md
       - ECU software, communication and diagnostics:
           - Vehicle networks:
               - "A vehicle network (CAN)": tutorials/can-network.md
               - "Live calibration over XCP": tutorials/xcp-calibration.md
+          - Diagnostics:
+              - "On-board diagnostics and trouble codes": tutorials/obd-diagnostics.md
+              - "Sensor fault diagnosis and substitute values": tutorials/sensor-diagnostics.md
           - From model to ECU code:
               - "From model to ECU C code": tutorials/model-to-code.md
               - "A sensor signal chain in fixed point": tutorials/fixed-point.md

@@ -1651,6 +1651,77 @@ def xcp_calibration() -> plt.Figure:
     return fig
 
 
+@figure("obd_ecu")
+def obd_ecu() -> plt.Figure:
+    r = simulate(_example("obd_ecu").build())
+    fig, (a0, a1, a2) = plt.subplots(3, 1, figsize=(6.4, 5.0), sharex=True, height_ratios=[1, 0.8, 1.2])
+    a0.plot(r.t, r["coolant_temp"], color=C1, lw=1.6)
+    a0.axhline(40, color=GRID, ls=":", lw=1)
+    a0.text(60, 43, "monitor enabled above 40 °C", color=INK, fontsize=8)
+    a0.set_ylabel("coolant [°C]")
+    a0.set_title("P0302 misfire monitor: pending in the first key cycle, MIL in the second", color=INK, fontsize=9)
+    a1.step(r.t, r["misfire_test"], where="post", color=C2, lw=1.0)
+    a1.set_ylabel("raw test")
+    a1.set_yticks([0, 1], ["pass", "fail"])
+    a2.step(r.t, np.ravel(r["pending"]) + 1.2, where="post", color=C3, lw=1.6, label="pending")
+    a2.step(r.t, r["mil"], where="post", color=C2, lw=1.6, label="MIL (confirmed)")
+    a2.set_yticks([0, 1, 1.2, 2.2], ["off", "on", "no", "yes"])
+    for k in (30, 60, 90):
+        for ax in (a0, a1, a2):
+            ax.axvline(k, color=GRID, lw=1, ls="--")
+    a2.text(30.5, 0.4, "key cycle", color=INK, fontsize=8)
+    a2.legend(loc="center left", fontsize=8)
+    a2.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
+@figure("ntc_divider")
+def ntc_divider() -> plt.Figure:
+    m = _example("ntc_sensor")
+    temps = np.linspace(-40, 150, 400)
+    fig, (a0, a1) = plt.subplots(2, 1, figsize=(6.4, 4.6), sharex=True)
+    for r_pull, color in ((2490.0, C1), (10e3, C3), (470.0, C2)):
+        v = m.v_sig(temps, r_pull)
+        a0.plot(temps, v, color=color, lw=1.6, label=f"R_pull = {r_pull / 1000:g} kΩ")
+        res = 1.0 / (np.abs(np.gradient(v, temps)) / 5.0 * 4095.0)
+        a1.plot(temps, res, color=color, lw=1.6)
+    a0.axhline(0.1, color=GRID, ls=":", lw=1)
+    a0.axhline(4.9, color=GRID, ls=":", lw=1)
+    a0.text(-38, 4.6, "open circuit above 4.9 V", color=INK, fontsize=7)
+    a0.text(-38, 0.2, "short to ground below 0.1 V", color=INK, fontsize=7)
+    a0.set_ylabel("signal [V]")
+    a0.legend(loc="center right", fontsize=8)
+    a0.set_title("NTC voltage divider: the pull-up decides where the sensor is accurate", color=INK, fontsize=9)
+    a1.set_yscale("log")
+    a1.set_ylabel("°C per ADC count")
+    a1.set_xlabel("coolant temperature [°C]")
+    fig.tight_layout()
+    return fig
+
+
+@figure("ntc_fault")
+def ntc_fault() -> plt.Figure:
+    d = _example("ntc_sensor").build()
+    r = simulate(d, 230.0, params={"fault": 1.0})
+    fig, (a0, a1, a2) = plt.subplots(3, 1, figsize=(6.4, 4.8), sharex=True, height_ratios=[1.4, 1, 0.8])
+    a0.plot(r.t, r["true_temp"], color=GRID, lw=3, label="true")
+    a0.plot(r.t, r["measured_temp"], color=C2, lw=1.2, label="measured (raw)")
+    a0.plot(r.t, r["ecu_temp"], color=C1, lw=1.6, label="used by the ECU")
+    a0.set_ylabel("°C")
+    a0.legend(loc="upper left", fontsize=8)
+    a0.set_title("Open circuit at 200 s: P0118 and the 80 °C substitute value", color=INK, fontsize=9)
+    a1.plot(r.t, r["signal_volts"], color=C3, lw=1.4)
+    a1.axhline(4.9, color=GRID, ls=":", lw=1)
+    a1.set_ylabel("signal [V]")
+    a2.step(r.t, r["P0118_pending"], where="post", color=C2, lw=1.6)
+    a2.set_yticks([0, 1], ["ok", "P0118"])
+    a2.set_xlabel("time [s]")
+    a2.set_xlim(150, 230)
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

@@ -28,6 +28,48 @@ $$ v_p - v_n = R\,i $$
 
 ---
 
+## Variable Resistor
+
+`electrical.variable_resistor` · Electrical
+
+A resistor whose resistance is the input signal (in Ω, at least *R_min*): a potentiometer, a sensor
+element, a contact that wears, or a fault (a few MΩ for an open circuit, a few mΩ for a short).
+
+$$ v_p - v_n = \max(R_{in}, R_{min})\,i $$
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `R_min` | `0.001` | Ω | Smallest resistance (the input is limited to this) |
+
+*Direct feedthrough:* yes · no inputs, no outputs
+
+---
+
+## Thermistor (NTC)
+
+`electrical.thermistor` · Electrical
+
+An NTC thermistor, the sensing element of coolant, intake-air, oil and battery temperature sensors. The
+input is its temperature in °C; the resistance falls with temperature (β model):
+
+$$ R(T) = R_{25}\, e^{\beta \left( 1/T - 1/(298.15\,\mathrm{K}) \right)} $$
+
+Typical automotive sensors have $R_{25}$ = 2 to 3 kΩ and β = 3400 to 4000 K, so the resistance goes from about
+50 kΩ at −30 °C to 150 Ω at 120 °C.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `R25` | `2000.0` | Ω | Resistance at 25 °C |
+| `beta` | `3600.0` | K | β constant |
+
+*Direct feedthrough:* yes · no inputs, no outputs
+
+---
+
 ## Capacitor
 
 `electrical.capacitor` · Electrical
