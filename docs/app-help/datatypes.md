@@ -59,4 +59,4 @@ fixed-point value exactly, so this is bit-true.
 
 `examples/fixed_point_sensor.py` runs a pressure sensor chain twice: a 12-bit ADC (`uint16` counts), scaling
 to kPa, a PT1 filter and a limit check, once in `double` and once in `fixdt(0, 16, 6)`. The largest
-difference is 0.008 kPa, half the fixed-point resolution.
+difference is 0.010 kPa, within the fixed-point resolution of 1/64 kPa (see the tutorial on fixed point).

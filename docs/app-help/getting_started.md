@@ -72,4 +72,5 @@ The `examples` folder in the repository has complete models you can open with **
 | `fuel_film.nervus` | wall wetting, switching lambda sensor, fuel trims learned per load cell (tutorial) |
 | `truck.nervus` | a 40 t truck: diesel, 12-speed AMT, exhaust brake on a mountain road (tutorial) |
 | `can_network.nervus` | two CAN buses, gateway, rest bus, E2E checks and fault injection (tutorial) |
+| `xcp_calibration.nervus` | the cruise control with an XCP slave: calibrate it live from `xcp_tool.py` (tutorial) |
 | `obd_ecu.nervus` | an engine ECU with trouble codes that answers OBD-II tools (`python -m nervus.obd simulate`) |

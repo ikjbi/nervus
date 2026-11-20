@@ -58,4 +58,4 @@ To try one: change the value in the **Model Workspace** tab (double-click it), o
 
 ## Next
 
-Pick another topic from the [tutorial overview](index.md), or build your own model.
+Next in this topic: [Live calibration over XCP](xcp-calibration.md). Or pick another one from the [tutorial overview](index.md).

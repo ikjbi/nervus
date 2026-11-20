@@ -223,6 +223,8 @@ class CanTransport:
 
         import can
 
+        while self.bus.recv(timeout=0.0) is not None:  # late answers to earlier (timed-out) commands
+            pass
         self.bus.send(can.Message(arbitration_id=self.request_id, data=frame.ljust(8, b"\0"), is_extended_id=False))
         end = time.monotonic() + timeout
         while (left := end - time.monotonic()) > 0:

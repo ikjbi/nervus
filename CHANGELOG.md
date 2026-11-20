@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- `examples/fixed_point_sensor.py` subtracted the sensor offset in counts instead of kPa, so the ADC read 0;
+  the test now checks that the pressure crosses the limit.
+- XCP: frames from real hardware could be missed when another block polled the interface at the same instant;
+  the XCP master discards late answers to earlier commands.
 - Gain, Sum, Product and Bias inherited the boolean type of a comparison, so `3 · true` gave 1; arithmetic on
   booleans now gives double.
 - A continuous PID with clamping anti-windup followed a wrong trajectory with variable-step solvers when it
@@ -25,6 +29,12 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Tutorials grouped by topic (a registry in `nervus.tutorials` generates the overview, navigation and help
+  list). New tutorials: mass-spring-damper, DC motor, coupled tanks and inverted pendulum (control lab
+  experiments), engine operating modes, radiator fan, from model to ECU C code, fixed point, and live calibration
+  over XCP (`examples/xcp_tool.py`, a command-line calibration tool).
+- CAN Bus block: the `udp_multicast` interface connects several programs on one computer (needs msgpack, now in
+  the `can` extra).
 - State Charts: nested and parallel states, history, events (`send`), transitions across levels; generated C
   matches the simulation.
 - Requirements traceability: a Requirements tab (CSV import, HTML report), links from blocks (right-click ▸

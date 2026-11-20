@@ -17,12 +17,24 @@ on the interface and received frames come from it.
 
 from __future__ import annotations
 
+import contextlib
 import heapq
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 _REGISTRY: dict[str, CanBus] = {}
+
+
+def _close_all() -> None:
+    for b in _REGISTRY.values():
+        with contextlib.suppress(Exception):  # a driver that fails while the program exits: nothing more to do
+            b.disconnect_hardware()
+
+
+import atexit  # noqa: E402
+
+atexit.register(_close_all)
 
 
 def bus(name: str = "can0") -> CanBus:
@@ -235,6 +247,9 @@ class CanBus:
             raise RuntimeError("real CAN hardware needs python-can: uv sync --extra can") from exc
         self.disconnect_hardware()
         kwargs: dict[str, Any] = {"interface": interface, "channel": channel}
+        if interface == "udp_multicast":  # several programs on one computer (needs msgpack)
+            kwargs["channel"] = channel or "239.74.163.2"
+            kwargs["fd"] = False
         if bitrate and interface not in ("virtual", "socketcan"):
             kwargs["bitrate"] = int(bitrate)
         self.hardware = can.Bus(**kwargs)
@@ -249,7 +264,10 @@ class CanBus:
             msg = self.hardware.recv(timeout=0.0)
             if msg is None:
                 return
-            frame = Frame(msg.arbitration_id, bytes(msg.data), t, t, t, "hardware", fd=bool(msg.is_fd))
+            # Stamped just after the poll: whichever block polled, the frame belongs to the next time window,
+            # so a block that already ran at this instant still sees it at its next sample.
+            ts = t + 1e-9
+            frame = Frame(msg.arbitration_id, bytes(msg.data), ts, ts, ts, "hardware", fd=bool(msg.is_fd))
             self.trace.append(frame)
             self._deliver(frame)
 

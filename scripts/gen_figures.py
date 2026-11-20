@@ -1609,6 +1609,48 @@ def coolant_fan() -> plt.Figure:
     return fig
 
 
+@figure("fixed_point_sensor")
+def fixed_point_sensor() -> plt.Figure:
+    m = _example("fixed_point_sensor")
+    r = simulate(m.build())
+    d = m.build()
+    d.block("scale_fix").set_param("output_type", "fixdt(0, 16, 10)")
+    bad = simulate(d)
+    fig, (a0, a1) = plt.subplots(2, 1, figsize=(6.4, 4.6), sharex=True, height_ratios=[2, 1])
+    a0.plot(r.t, r["filtered_dbl"], color=GRID, lw=3, label="double")
+    a0.plot(r.t, r["filtered_fix"], color=C1, lw=1.2, label="fixdt(0, 16, 6)")
+    a0.plot(bad.t, bad["filtered_fix"], color=C2, lw=1.2, label="fixdt(0, 16, 10): saturates at 64")
+    a0.axhline(150, color=INK, ls=":", lw=1)
+    a0.text(0.02, 154, "limit 150 kPa", color=INK, fontsize=8)
+    a0.set_ylabel("pressure [kPa]")
+    a0.legend(loc="lower right", fontsize=8)
+    a0.set_title("Manifold pressure in floating and fixed point", color=INK, fontsize=9)
+    a1.plot(r.t, np.ravel(r["fixed_minus_double"]) * 1000, color=C3, lw=1)
+    a1.axhline(1000 / 64, color=GRID, ls="--", lw=1)
+    a1.axhline(-1000 / 64, color=GRID, ls="--", lw=1)
+    a1.set_ylabel("fix − double [Pa]")
+    a1.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
+@figure("xcp_calibration")
+def xcp_calibration() -> plt.Figure:
+    r = _example("xcp_calibration").main(speedup=8.0, interface="virtual")
+    fig, (a0, a1) = plt.subplots(2, 1, figsize=(6.4, 4.2), sharex=True, height_ratios=[2, 1])
+    a0.plot(r.t, r["set_speed_used"], color=GRID, lw=2, ls="--", label="set speed (calibrated)")
+    a0.plot(r.t, r["speed_kmh"], color=C1, lw=1.6, label="speed")
+    a0.set_ylabel("km/h")
+    a0.legend(loc="lower right", fontsize=8)
+    a0.set_title("A tool changes the set speed at 20 s, the gain trim at 35 s and the set speed at 40 s",
+                 color=INK, fontsize=9)  # fmt: skip
+    a1.step(r.t, r["gain_trim_used"], where="post", color=C3, lw=1.6)
+    a1.set_ylabel("gain trim")
+    a1.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

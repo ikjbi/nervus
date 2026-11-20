@@ -1,6 +1,6 @@
 # Tutorials
 
-18 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+21 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -95,6 +95,14 @@ What happens inside and between ECUs: networks, calibration, diagnostics and the
 | Tutorial | Level | Time | You will learn |
 |---|---|---|---|
 | *A vehicle network (CAN)* | advanced | 40 min | ECUs on simulated CAN buses: DBC files, arbitration and bus load, a gateway, rest-bus simulation, E2E protection, fault injection and timeouts, the bus trace |
+| *Live calibration over XCP* | intermediate | 35 min | how calibration tools work: XCP on CAN, A2L files, measuring and changing values in a running ECU, a command-line calibration tool, real-time simulation |
+
+### From model to ECU code
+
+| Tutorial | Level | Time | You will learn |
+|---|---|---|---|
+| *From model to ECU C code* | intermediate | 40 min | an ECU software component with an interface, generated C code and its structure, calibration parameters and the A2L file, a back-to-back (SIL) test of the code |
+| *A sensor signal chain in fixed point* | intermediate | 30 min | fixed-point data types (word length, fraction bits, resolution, range), an ADC model, quantization error, and the silent failure of a badly chosen range |
 
 ## Tips for every tutorial
 

@@ -1,0 +1,425 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "xcp_calibration",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 60.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true,
+    "pacing": 1.0
+  },
+  "workspace": [
+    {
+      "name": "m",
+      "value": 1500.0,
+      "description": "Vehicle mass",
+      "unit": "kg"
+    },
+    {
+      "name": "c_drag",
+      "value": 8.0,
+      "description": "Drag force per km/h",
+      "unit": "N/(km/h)"
+    },
+    {
+      "name": "Kp",
+      "value": 300.0,
+      "description": "Proportional gain",
+      "unit": "N/(km/h)"
+    },
+    {
+      "name": "Ki",
+      "value": 30.0,
+      "description": "Integral gain",
+      "unit": "N/(km/h·s)"
+    },
+    {
+      "name": "set_speed_cal",
+      "value": 100.0,
+      "description": "Set speed (calibrated over XCP)",
+      "unit": "km/h",
+      "min": 0.0,
+      "max": 180.0
+    },
+    {
+      "name": "gain_trim",
+      "value": 1.0,
+      "description": "Factor on the controller gain (calibrated over XCP)",
+      "unit": "-",
+      "min": 0.0,
+      "max": 10.0
+    }
+  ],
+  "blocks": [
+    {
+      "name": "set_speed",
+      "type": "sources.step",
+      "params": {
+        "time": 1.0,
+        "initial": 0.0,
+        "final": 1.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "error",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          150.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "cruise_control",
+      "type": "control.pid",
+      "params": {
+        "P": "Kp",
+        "I": "Ki",
+        "D": 0.0,
+        "N": 100.0,
+        "initial_integrator": 0.0,
+        "upper": 4000.0,
+        "lower": -6000.0,
+        "anti_windup": "clamping",
+        "Kb": 1.0
+      },
+      "meta": {
+        "position": [
+          290.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "net_force",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          450.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "accel",
+      "type": "math.gain",
+      "params": {
+        "gain": "3.6 / m",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          590.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "speed",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": "-inf",
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          730.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "drag",
+      "type": "math.gain",
+      "params": {
+        "gain": "c_drag",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          590.0,
+          130.0
+        ],
+        "flipped": true
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          900.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "xcp",
+      "type": "can.xcp_slave",
+      "params": {
+        "bus": "can0",
+        "request_id": 2032,
+        "response_id": 2033,
+        "measurements": "speed, force, time",
+        "calibrations": "set_speed_cal, gain_trim",
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          590.0,
+          250.0
+        ]
+      }
+    },
+    {
+      "name": "can",
+      "type": "can.bus",
+      "params": {
+        "bus": "can0",
+        "bitrate": 500000.0,
+        "data_bitrate": 2000000.0,
+        "interface": "virtual",
+        "channel": "239.74.163.2",
+        "sample_time": 0.1
+      },
+      "meta": {
+        "position": [
+          900.0,
+          250.0
+        ]
+      }
+    },
+    {
+      "name": "set_speed_kmh",
+      "type": "math.product",
+      "params": {
+        "ops": "**",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          100.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "trimmed_error",
+      "type": "math.product",
+      "params": {
+        "ops": "**",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          220.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "ecu_time",
+      "type": "sources.clock",
+      "params": {},
+      "meta": {
+        "position": [
+          420.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "speed_kmh",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1050.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "set_speed_used",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          760.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "gain_trim_used",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          760.0,
+          400.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "speed",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 1
+    },
+    {
+      "src": "cruise_control",
+      "src_port": 0,
+      "dst": "net_force",
+      "dst_port": 0
+    },
+    {
+      "src": "drag",
+      "src_port": 0,
+      "dst": "net_force",
+      "dst_port": 1
+    },
+    {
+      "src": "net_force",
+      "src_port": 0,
+      "dst": "accel",
+      "dst_port": 0
+    },
+    {
+      "src": "accel",
+      "src_port": 0,
+      "dst": "speed",
+      "dst_port": 0
+    },
+    {
+      "src": "speed",
+      "src_port": 0,
+      "dst": "drag",
+      "dst_port": 0
+    },
+    {
+      "src": "speed",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "set_speed_kmh",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 0
+    },
+    {
+      "src": "set_speed_kmh",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "set_speed",
+      "src_port": 0,
+      "dst": "set_speed_kmh",
+      "dst_port": 0
+    },
+    {
+      "src": "xcp",
+      "src_port": 0,
+      "dst": "set_speed_kmh",
+      "dst_port": 1
+    },
+    {
+      "src": "error",
+      "src_port": 0,
+      "dst": "trimmed_error",
+      "dst_port": 0
+    },
+    {
+      "src": "xcp",
+      "src_port": 1,
+      "dst": "trimmed_error",
+      "dst_port": 1
+    },
+    {
+      "src": "trimmed_error",
+      "src_port": 0,
+      "dst": "cruise_control",
+      "dst_port": 0
+    },
+    {
+      "src": "speed",
+      "src_port": 0,
+      "dst": "xcp",
+      "dst_port": 0
+    },
+    {
+      "src": "cruise_control",
+      "src_port": 0,
+      "dst": "xcp",
+      "dst_port": 1
+    },
+    {
+      "src": "ecu_time",
+      "src_port": 0,
+      "dst": "xcp",
+      "dst_port": 2
+    },
+    {
+      "src": "speed",
+      "src_port": 0,
+      "dst": "speed_kmh",
+      "dst_port": 0
+    },
+    {
+      "src": "xcp",
+      "src_port": 0,
+      "dst": "set_speed_used",
+      "dst_port": 0
+    },
+    {
+      "src": "xcp",
+      "src_port": 1,
+      "dst": "gain_trim_used",
+      "dst_port": 0
+    }
+  ],
+  "tests": []
+}

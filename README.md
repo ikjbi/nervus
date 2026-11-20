@@ -69,7 +69,8 @@ editor step by step, tune it, and meet integrator windup. Then pick a topic; the
 | Vehicle dynamics and energy: chassis control | [Tyre slip and traction control](docs/tutorials/traction-control.md) |
 | Electrics and electronics: circuit fundamentals | [Rectifier, relay driver, buck converter and active filter](docs/tutorials/circuits.md) |
 | Electrics and electronics: vehicle electrical system | [Starter motor and electronic throttle](docs/tutorials/physical-models.md) |
-| ECU software, communication and diagnostics: vehicle networks | [A vehicle network (CAN)](docs/tutorials/can-network.md) |
+| ECU software, communication and diagnostics: vehicle networks | [A vehicle network (CAN)](docs/tutorials/can-network.md), [Live calibration over XCP](docs/tutorials/xcp-calibration.md) |
+| ECU software, communication and diagnostics: from model to ecu code | [From model to ECU C code](docs/tutorials/model-to-code.md), [A sensor signal chain in fixed point](docs/tutorials/fixed-point.md) |
 <!-- tutorials:end -->
 
 Coming from MATLAB/Simulink? See [Coming from Simulink](docs/coming-from-simulink.md).

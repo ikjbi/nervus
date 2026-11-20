@@ -1,7 +1,8 @@
 """A sensor signal chain in fixed point, the way it runs on an ECU without a floating-point unit.
 
-A manifold pressure sensor gives 0.5–4.5 V, read by a 12-bit ADC (0–4095 counts, ``uint16``). The ECU
-converts counts to kPa and smooths the value with a first-order filter, then compares it against a limit.
+A manifold pressure sensor (20 to 270 kPa) is read by a 12-bit ADC (``uint16`` counts; 20 kPa reads 0 counts,
+0.0763 kPa per count). The ECU converts counts to kPa and smooths the value with a first-order filter, then
+compares it against a 150 kPa limit.
 
 Two versions run side by side:
 
@@ -9,7 +10,7 @@ Two versions run side by side:
 * ``*_fix``: pressure in ``fixdt(0, 16, 6)`` (unsigned 16 bit, resolution 1/64 kPa ≈ 0.016 kPa), like
   production code.
 
-The difference shows the quantization error, which stays below the fixed-point resolution plus the ADC step.
+The difference shows the quantization error, which stays below the fixed-point resolution.
 Run with ``uv run python examples/fixed_point_sensor.py``.
 """
 
@@ -45,7 +46,7 @@ def build() -> Diagram:
     pressure = d.add(Sine(amplitude=60.0, frequency=2 * np.pi * 1.5, bias=100.0), name="true_pressure_kPa")
     # Sensor + ADC: kPa -> volts -> counts (uint16), sampled every 10 ms
     to_counts = d.add(Gain(gain=1 / KPA_PER_COUNT), name="kPa_to_counts")
-    offset = d.add(Bias(bias=-20.0 / KPA_PER_COUNT), name="sensor_offset")
+    offset = d.add(Bias(bias=-20.0), name="sensor_offset")  # 20 kPa reads as 0 counts
     adc = d.add(DataTypeConversion(output_type="uint16", rounding="floor"), name="adc_counts")
     sample = d.add(ZeroOrderHold(sample_time=0.01), name="adc_sample")
     d.chain(pressure, offset, to_counts, adc, sample)

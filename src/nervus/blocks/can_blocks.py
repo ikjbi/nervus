@@ -378,7 +378,7 @@ class CanBusSetup(Block):
         Param("bitrate", 500_000.0, ParamKind.FLOAT, "Bit rate", "bit/s", min=1.0),
         Param("data_bitrate", 2_000_000.0, ParamKind.FLOAT, "CAN FD data-phase bit rate", "bit/s", min=1.0),
         Param("interface", "none", ParamKind.CHOICE, "Real CAN interface (python-can); none = simulated only",
-              choices=("none", "socketcan", "pcan", "kvaser", "vector", "slcan", "virtual")),
+              choices=("none", "socketcan", "pcan", "kvaser", "vector", "slcan", "udp_multicast", "virtual")),
         Param("channel", "", ParamKind.STR, "Interface channel, e.g. can0, PCAN_USBBUS1, 0"),
         Param("sample_time", 0.1, ParamKind.SAMPLE_TIME, "Window for the bus load", "s"),
     )  # fmt: skip

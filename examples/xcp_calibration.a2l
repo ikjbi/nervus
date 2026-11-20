@@ -1,0 +1,33 @@
+ASAP2_VERSION 1 71
+/begin PROJECT cruise "Nervus XCP slave"
+  /begin MODULE cruise ""
+    /begin MOD_COMMON ""
+      BYTE_ORDER MSB_LAST
+    /end MOD_COMMON
+    /begin COMPU_METHOD CM_IDENTICAL "identity" IDENTICAL "%12.6" ""
+    /end COMPU_METHOD
+    /begin RECORD_LAYOUT RL_FLOAT64 FNC_VALUES 1 FLOAT64_IEEE ROW_DIR DIRECT
+    /end RECORD_LAYOUT
+    /* XCP on CAN: CAN_ID_MASTER 0x7F0, CAN_ID_SLAVE 0x7F1 */
+    /begin CHARACTERISTIC set_speed_cal "Set speed (calibrated over XCP)"
+      VALUE 0x10000 RL_FLOAT64 0 CM_IDENTICAL 0.0 180.0
+      PHYS_UNIT "km/h"
+    /end CHARACTERISTIC
+    /begin CHARACTERISTIC gain_trim "Factor on the controller gain (calibrated over XCP)"
+      VALUE 0x10008 RL_FLOAT64 0 CM_IDENTICAL 0.0 10.0
+      PHYS_UNIT "-"
+    /end CHARACTERISTIC
+    /begin MEASUREMENT speed ""
+      FLOAT64_IEEE CM_IDENTICAL 0 0 -1e12 1e12
+      ECU_ADDRESS 0x20000
+    /end MEASUREMENT
+    /begin MEASUREMENT force ""
+      FLOAT64_IEEE CM_IDENTICAL 0 0 -1e12 1e12
+      ECU_ADDRESS 0x20008
+    /end MEASUREMENT
+    /begin MEASUREMENT time ""
+      FLOAT64_IEEE CM_IDENTICAL 0 0 -1e12 1e12
+      ECU_ADDRESS 0x20010
+    /end MEASUREMENT
+  /end MODULE
+/end PROJECT

@@ -140,7 +140,13 @@ def test_fixed_point_sensor() -> None:
     res = _import("fixed_point_sensor").main()
     assert np.max(np.abs(res["fixed_minus_double"])) <= 2**-6
     assert np.allclose(np.mod(res["filtered_fix"] * 64, 1), 0)
-    assert set(np.unique(res["over_150kPa"])) <= {0.0, 1.0}
+    assert set(np.unique(res["over_150kPa"])) == {0.0, 1.0}  # the pressure crosses 150 kPa
+    assert np.max(res["filtered_fix"]) == pytest.approx(153.3, abs=0.1)
+    m = _import("fixed_point_sensor")
+    d = m.build()
+    d.block("scale_fix").set_param("output_type", "fixdt(0, 16, 10)")  # range 0..64 kPa: saturates
+    narrow = simulate(d)
+    assert np.max(narrow["filtered_fix"]) == pytest.approx(64.0, abs=0.01) and not np.any(narrow["over_150kPa"])
 
 
 def test_engine_library_example() -> None:
@@ -415,3 +421,12 @@ def test_inverted_pendulum_lab() -> None:
     assert np.min(x[len(x) // 2 :]) == pytest.approx(-0.026, abs=0.002)  # the wrong way first
     falls = simulate(d, 1.5, params={"K_lqr": [0.0, 0.0, 0.0, 0.0]})
     assert np.max(np.abs(np.ravel(falls["angle"]))) > 0.5
+
+
+def test_xcp_calibration_session() -> None:
+    pytest.importorskip("can")
+    r = _import("xcp_calibration").main(speedup=8.0, interface="virtual")  # faster runs starve the tool thread
+    used = np.ravel(r["set_speed_used"])
+    assert used[0] == 100.0 and 120.0 in used and used[-1] == 100.0
+    assert np.ravel(r["gain_trim_used"])[-1] == 3.0
+    assert np.ravel(r["speed_kmh"])[-1] == pytest.approx(100.0, abs=0.5)

@@ -132,7 +132,7 @@ interface, and frames from the interface reach the CAN Receive blocks. Run the s
 | `bus` | `'can0'` |  | Name of the simulated CAN bus |
 | `bitrate` | `500000.0` | bit/s | Bit rate |
 | `data_bitrate` | `2000000.0` | bit/s | CAN FD data-phase bit rate |
-| `interface` | `'none'` |  | Real CAN interface (python-can); none = simulated only — one of `none`, `socketcan`, `pcan`, `kvaser`, `vector`, `slcan`, `virtual` |
+| `interface` | `'none'` |  | Real CAN interface (python-can); none = simulated only — one of `none`, `socketcan`, `pcan`, `kvaser`, `vector`, `slcan`, `udp_multicast`, `virtual` |
 | `channel` | `''` |  | Interface channel, e.g. can0, PCAN_USBBUS1, 0 |
 | `sample_time` | `0.1` | s | Window for the bus load |
 

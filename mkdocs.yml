@@ -74,6 +74,9 @@ nav:
           - "Tutorial: Rectifier, relay driver, buck converter and active filter": app-help/tutorial_circuits.md
           - "Tutorial: Starter motor and electronic throttle": app-help/tutorial_physical.md
           - "Tutorial: A vehicle network (CAN)": app-help/tutorial_can_network.md
+          - "Tutorial: Live calibration over XCP": app-help/tutorial_xcp_calibration.md
+          - "Tutorial: From model to ECU C code": app-help/tutorial_model_to_code.md
+          - "Tutorial: A sensor signal chain in fixed point": app-help/tutorial_fixed_point.md
           - Coming from Simulink (app): app-help/coming_from_simulink.md
           - Model files (app): app-help/model_files.md
           - Keyboard shortcuts: app-help/shortcuts.md
@@ -114,6 +117,10 @@ nav:
       - ECU software, communication and diagnostics:
           - Vehicle networks:
               - "A vehicle network (CAN)": tutorials/can-network.md
+              - "Live calibration over XCP": tutorials/xcp-calibration.md
+          - From model to ECU code:
+              - "From model to ECU C code": tutorials/model-to-code.md
+              - "A sensor signal chain in fixed point": tutorials/fixed-point.md
   - Block reference:
       - Overview: blocks/index.md
       - CAN: blocks/can.md

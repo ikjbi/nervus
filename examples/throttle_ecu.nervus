@@ -78,7 +78,12 @@
     {
       "name": "ECU",
       "type": "ports.subsystem",
-      "params": {},
+      "params": {
+        "sample_time": -1.0,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
       "meta": {
         "position": [
           160,
@@ -266,7 +271,10 @@
       "params": {
         "initial": 5.0,
         "upper": 90.0,
-        "lower": 0.0
+        "lower": 0.0,
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
       },
       "meta": {
         "position": [

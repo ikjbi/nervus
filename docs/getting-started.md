@@ -135,5 +135,7 @@ The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has
   descent. See the [tutorial](tutorials/truck.md).
 - `can_network.py`: two CAN buses, a gateway, a rest-bus simulation, E2E protection and fault injection.
   See the [tutorial](tutorials/can-network.md).
+- `xcp_calibration.py`, `xcp_tool.py`: live calibration over XCP on CAN: the cruise control as an ECU and a
+  command-line calibration tool. See the [tutorial](tutorials/xcp-calibration.md).
 - `obd_ecu.py`: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See [OBD-II](obd.md).

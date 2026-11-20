@@ -51,7 +51,7 @@
       "name": "sensor_offset",
       "type": "math.bias",
       "params": {
-        "bias": -262.08000000000004,
+        "bias": -20.0,
         "output_type": "inherit"
       },
       "meta": {

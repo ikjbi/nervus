@@ -126,10 +126,22 @@ TUTORIALS: list[Tutorial] = [
              ("starter_motor.nervus", "electronic_throttle.nervus"), ("first-model",),
              "[Physical modelling](../physical.md)", app_page="tutorial_physical"),
     # ------------------------------------------------------------------ ECU software
+    Tutorial("model-to-code", "From model to ECU C code", _ECU, "From model to ECU code", "intermediate", 40,
+             "an ECU software component with an interface, generated C code and its structure, calibration "
+             "parameters and the A2L file, a back-to-back (SIL) test of the code", ("throttle_ecu.nervus",),
+             ("first-model",), "[C code generation](../codegen.md)"),
+    Tutorial("fixed-point", "A sensor signal chain in fixed point", _ECU, "From model to ECU code", "intermediate",
+             30, "fixed-point data types (word length, fraction bits, resolution, range), an ADC model, "
+             "quantization error, and the silent failure of a badly chosen range", ("fixed_point_sensor.nervus",),
+             ("model-to-code",), "[Data types and fixed point](../datatypes.md)"),
     Tutorial("can-network", "A vehicle network (CAN)", _ECU, "Vehicle networks", "advanced", 40,
              "ECUs on simulated CAN buses: DBC files, arbitration and bus load, a gateway, rest-bus simulation, "
              "E2E protection, fault injection and timeouts, the bus trace", ("can_network.nervus",),
              ("first-model",), "[CAN communication](../can.md)"),
+    Tutorial("xcp-calibration", "Live calibration over XCP", _ECU, "Vehicle networks", "intermediate", 35,
+             "how calibration tools work: XCP on CAN, A2L files, measuring and changing values in a running ECU, "
+             "a command-line calibration tool, real-time simulation", ("xcp_calibration.nervus",),
+             ("first-model",)),
 ]  # fmt: skip
 
 
