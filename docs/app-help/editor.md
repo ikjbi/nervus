@@ -112,6 +112,26 @@ kept.
 **Edit → Auto Layout** (⇧⌘L / Ctrl+Shift+L) arranges the blocks of the shown diagram from left to right
 in signal-flow order. It can be undone like any other edit.
 
+## Scripting console
+
+**View ▸ Console** (a tab next to the Model Workspace) runs Python with the open model and its results in
+scope:
+
+| Name | What it is |
+|---|---|
+| `model` | the open model (a `Diagram`): `model.block("pid").params`, `model.workspace["Kp"]` |
+| `res`, `runs` | the last result and all runs in the Data Inspector: `res["speed"].max()` |
+| `simulate`, `load`, `save` | run, open and save models |
+| block classes, `blocks` | `model.add(Gain(gain=2), name="k")` |
+| `np`, `plt` | NumPy and Matplotlib |
+| `window` | the main window, for scripting the app itself |
+
+Statements over several lines work as in the Python prompt (finish with an empty line); ↑ and ↓ recall
+earlier lines. Errors are printed in the console. Changes a statement makes to the model appear in the
+editor at once and are **one undo step** (*Edit ▸ Undo* reverts them). Assigning another model to `model`
+(e.g. `model = load("examples/drive_cycle.nervus")`) opens it.
+
+
 ## Undo
 
 Every change, including moves, can be undone with ⌘Z and redone with ⇧⌘Z (Ctrl+Z / Ctrl+Y).

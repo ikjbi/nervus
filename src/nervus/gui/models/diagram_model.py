@@ -122,7 +122,10 @@ class DiagramModel(QObject):
     def title(self) -> str:
         return self._path.name if self._path else f"{self._root.name}"
 
-    def set_diagram(self, diagram: Diagram, path: Path | None = None) -> None:
+    keeping_history = False
+    """True while :meth:`set_diagram` replaces the model as part of an undoable edit (the undo history stays)."""
+
+    def set_diagram(self, diagram: Diagram, path: Path | None = None, keep_history: bool = False) -> None:
         from nervus.gui.controllers.editor_controller import block_width
 
         auto_layout(diagram, width_of=block_width)  # diagrams built in Python have no positions yet
@@ -132,7 +135,11 @@ class DiagramModel(QObject):
                 auto_layout(system, width_of=block_width)
         self._root = diagram
         self._diagram = diagram
-        self.diagramReset.emit()
+        self.keeping_history = keep_history
+        try:
+            self.diagramReset.emit()
+        finally:
+            self.keeping_history = False
         self.file_path = path
 
     # ------------------------------------------------------------------ primitive edits

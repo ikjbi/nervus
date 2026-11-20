@@ -501,3 +501,31 @@ class FlipBlocksCommand(Command):
 
     def revert(self) -> None:
         self._toggle()
+
+
+class ScriptCommand(Command):
+    """Changes made by a script in the console: the model before and after, as model-file data. The first
+    ``redo`` keeps the edited objects (the script already changed them); undo and later redos rebuild the model
+    from the snapshots."""
+
+    def __init__(self, model: DiagramModel, before: dict[str, Any], after: dict[str, Any], text: str) -> None:
+        super().__init__(f"Script: {text[:40]}")
+        self.model, self.before, self.after = model, before, after
+        self._first = True
+
+    def _restore(self, data: dict[str, Any]) -> None:
+        from nervus.io.model_file import from_dict
+
+        diagram = from_dict(data)
+        diagram.source_path = self.model.root.source_path
+        self.model.set_diagram(diagram, self.model.file_path, keep_history=True)
+
+    def do(self) -> None:
+        if self._first:
+            self._first = False
+            self.model.set_diagram(self.model.root, self.model.file_path, keep_history=True)
+        else:
+            self._restore(self.after)
+
+    def revert(self) -> None:
+        self._restore(self.before)

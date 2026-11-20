@@ -42,6 +42,7 @@ from nervus.gui.views.analysis_dialog import AnalysisDialog
 from nervus.gui.views.can_trace_dialog import CanTraceDialog
 from nervus.gui.views.canvas import DiagramScene, DiagramView
 from nervus.gui.views.codegen_dialog import CodegenDialog
+from nervus.gui.views.console_panel import ConsolePanel
 from nervus.gui.views.data_inspector import DataInspector
 from nervus.gui.views.diagnostics import DiagnosticsPanel
 from nervus.gui.views.help_browser import HelpBrowser
@@ -84,6 +85,7 @@ class MainWindow(QMainWindow):
         self.diagnostics = DiagnosticsPanel(self.diagram_model, self.sim_model)
         self.workspace_panel = WorkspacePanel(self.diagram_model, self.editor)
         self.test_panel = TestManagerPanel(self.diagram_model, self.editor, self.tests)
+        self.console = ConsolePanel(self.diagram_model, self.editor, self.sim_model, self)
         self._inspector: DataInspector | None = None
         self.scopes: dict[int, ScopeWindow] = {}
         from PySide6.QtCore import QTimer
@@ -140,8 +142,10 @@ class MainWindow(QMainWindow):
             "Model Workspace", self.workspace_panel, Qt.DockWidgetArea.BottomDockWidgetArea, "workspace"
         )
         self.tests_dock = self._dock("Test Manager", self.test_panel, Qt.DockWidgetArea.BottomDockWidgetArea, "tests")
+        self.console_dock = self._dock("Console", self.console, Qt.DockWidgetArea.BottomDockWidgetArea, "console")
         self.tabifyDockWidget(self.diagnostics_dock, self.workspace_dock)
         self.tabifyDockWidget(self.workspace_dock, self.tests_dock)
+        self.tabifyDockWidget(self.tests_dock, self.console_dock)
         self.diagnostics_dock.raise_()
         self.resizeDocks([self.library_dock, self.properties_dock], [230, 300], Qt.Orientation.Horizontal)
         self.resizeDocks([self.diagnostics_dock], [130], Qt.Orientation.Vertical)
@@ -317,6 +321,7 @@ class MainWindow(QMainWindow):
             self.diagnostics_dock,
             self.workspace_dock,
             self.tests_dock,
+            self.console_dock,
         ):
             m.addAction(dock.toggleViewAction())
         m.addSeparator()
@@ -428,6 +433,7 @@ class MainWindow(QMainWindow):
         self.workspace_panel.statusMessage.connect(self.status_label.setText)
         self.workspace_panel.usagesRequested.connect(self.show_usages)
         self.test_panel.statusMessage.connect(self.status_label.setText)
+        self.console.statusMessage.connect(self.status_label.setText)
         self.test_panel.openResult.connect(self._open_test_result)
         self.sim_model.stateChanged.connect(self._sim_state_changed)
         self.sim_model.progressChanged.connect(lambda f: self.progress.setValue(int(f * 1000)))

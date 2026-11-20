@@ -258,7 +258,7 @@ tests/
 - [x] Bode and step plots; poles, DC gain, stability margins
 - [x] Nyquist and pole-zero plots, root locus, closed-loop analysis from the model
 - [x] PID auto-tuning against a linearised plant (the loop opened at the PID block)
-- [ ] Scripting console in the GUI (Python, with the model and results in scope)
+- [x] Scripting console in the GUI (Python, with the model and results in scope)
 
 ## Phase 17 – ECU integration and calibration
 - [x] CAN: read DBC files (`cantools`), CAN Pack / CAN Unpack blocks, Intel and Motorola, bit-exact C code

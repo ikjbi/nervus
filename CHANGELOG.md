@@ -25,6 +25,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Scripting console (View ▸ Console): Python with the model, the results and the block classes in scope;
+  changes to the model are one undo step.
 - MDF4 import and export (`nervus.mdf`, extra `mdf`): Data Inspector *Load…* reads `.mf4` measurements,
   *Export* writes them.
 - XCP on CAN (`nervus.xcp`): the XCP Slave block makes a running model measurable and calibratable by INCA,

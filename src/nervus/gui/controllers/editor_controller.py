@@ -66,7 +66,7 @@ class EditorController(QObject):
         self.model = model
         self.undo_stack = QUndoStack(self)
         self._editing_enabled = True
-        model.diagramReset.connect(self.undo_stack.clear)
+        model.diagramReset.connect(lambda: None if model.keeping_history else self.undo_stack.clear())
 
     # ------------------------------------------------------------------ state
 

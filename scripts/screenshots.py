@@ -175,6 +175,35 @@ def tasks_example():  # type: ignore[no-untyped-def]
     return d
 
 
+def console_and_can_shots(win) -> None:  # type: ignore[no-untyped-def]
+    """The scripting console and the CAN bus trace (also runnable alone: ``screenshots.py console``)."""
+    from nervus import simulate
+
+    win.files.open(ROOT / "examples" / "can_network.nervus")
+    simulate(win.diagram_model.root, 0.3)
+    tr = win.show_can_trace()
+    tr.bus_box.setCurrentText("body")
+    tr.refresh()
+    tr.resize(1100, 420)
+    grab(tr, "can-trace.png")
+    tr.close()
+    win.files.open(ROOT / "examples" / "throttle_pi.nervus")
+    win.simulation.run()
+    win.simulation.wait()
+    QApplication.processEvents()
+    win.console_dock.raise_()
+    win.resizeDocks([win.console_dock], [260], Qt.Orientation.Vertical)
+    con = win.console
+    con.output.clear()
+    for line in ("[b.name for b in model.blocks][:6]", "model.workspace['Kp']",
+                 "print(f\"max plate angle {res['plate_angle'].max():.2f} deg\")",
+                 "model.workspace['Kp'] = 1.2", "r = simulate(model)", "r['plate_angle'][-1]"):  # fmt: skip
+        con.run(line if not line.startswith("[") else f"print({line})")
+    QApplication.processEvents()
+    grab(win, "console.png")
+    win.editor.undo_stack.undo()
+
+
 def grab(widget: QWidget, name: str) -> None:
     QApplication.processEvents()
     widget.grab().save(str(OUT / name))
@@ -188,6 +217,18 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     from nervus.gui.theme import ThemeManager, ThemeMode
+
+    if sys.argv[1:] == ["console"]:  # only the newest shots
+        from nervus.gui.views.main_window import MainWindow
+
+        ThemeManager.instance().set_mode(ThemeMode.LIGHT)
+        win = MainWindow(QSettings(tempfile.mktemp(suffix=".ini"), QSettings.Format.IniFormat))
+        win.resize(1400, 860)
+        win.show()
+        console_and_can_shots(win)
+        win.editor.undo_stack.setClean()
+        win.close()
+        return
 
     OUT.mkdir(parents=True, exist_ok=True)
     for mode in (ThemeMode.LIGHT, ThemeMode.DARK):
@@ -462,6 +503,7 @@ def main() -> None:
             win.show_help_for_type("math.gain")
             win._help.resize(980, 720)
             grab(win._help, "help-gain.png")
+            console_and_can_shots(win)
             dlg_mod = __import__("nervus.gui.views.settings_dialog", fromlist=["SettingsDialog"])
             dlg = dlg_mod.SettingsDialog(win.diagram_model.diagram.settings, win)
             dlg.show()

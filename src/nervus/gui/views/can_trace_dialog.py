@@ -77,7 +77,7 @@ class CanTraceDialog(QDialog):
         self.tree.setHeaderLabels(["Time [s]", "ID", "Message", "Sender", "DLC", "Data", "Signals"])
         self.tree.setRootIsDecorated(False)
         self.tree.setUniformRowHeights(True)
-        for col, w in enumerate((90, 60, 120, 110, 40, 180)):
+        for col, w in enumerate((90, 60, 140, 150, 40, 180)):
             self.tree.setColumnWidth(col, w)
         asc = QPushButton("Export ASC…")
         blf = QPushButton("Export BLF…")

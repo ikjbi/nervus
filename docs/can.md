@@ -128,7 +128,10 @@ central gateway does between powertrain and body CAN; it adds up to one task per
 
 **Tools ▸ CAN Bus Trace** lists every frame of the last simulation: time, identifier, message, sender,
 bytes and the decoded signals, with the bus load. Export to **ASC** (text) or **BLF** (binary), the Vector
-log formats that CANalyzer, CANoe, SavvyCAN and python-can read. In Python:
+log formats that CANalyzer, CANoe, SavvyCAN and python-can read. 
+![The body CAN of the vehicle-network example](images/can-trace.png)
+
+In Python:
 
 ```python
 from nervus.canbus import bus
