@@ -12,8 +12,8 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 ## [CAN](can.md)
 
-- **CAN Unpack**: Decodes a CAN frame: the input is the 8 data bytes (a vector of width 8), and there is one output per
-- **CAN Pack**: Encodes a CAN frame: one input per signal (physical units), output = the 8 data bytes (``uint8``).
+- **CAN Unpack**: Decodes a CAN frame: the input is the frame's data bytes (a vector: 8 for classic CAN, up to 64 for CAN
+- **CAN Pack**: Encodes a CAN frame: one input per signal (physical units), output = the data bytes (``uint8``; 8 for
 - **CAN Transmit**: Sends a CAN message on a simulated bus: one input per signal (physical units), packed with the DBC file
 - **CAN Receive**: Receives a CAN message from a simulated bus: one output per signal (physical units, the last frame
 - **CAN Bus**: Settings of a simulated CAN bus, and its load: *bitrate* (125, 250, 500 kbit/s or 1 Mbit/s), and the

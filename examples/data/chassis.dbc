@@ -1,0 +1,44 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: BCM ECU TCU
+
+BO_ 1024 Diagnostics: 8 BCM
+ SG_ Page M : 0|8@1+ (1,0) [0|255] "" ECU
+ SG_ OilTemp m1 : 8|8@1+ (1,-40) [-40|215] "degC" ECU
+ SG_ OilPressure m1 : 16|8@1+ (0.05,0) [0|12.75] "bar" ECU
+ SG_ BatteryVoltage m2 : 8|16@1+ (0.001,0) [0|65.535] "V" ECU
+ SG_ AmbientTemp m2 : 24|8@1- (0.5,0) [-64|63.5] "degC" ECU
+
+BO_ 1280 TransmissionStatus: 8 TCU
+ SG_ GearSelector : 0|4@1+ (1,0) [0|15] "" ECU,BCM
+ SG_ CurrentGear : 4|4@1+ (1,0) [0|15] "" ECU,BCM
+ SG_ OutputSpeed : 8|16@1+ (0.5,0) [0|32767.5] "rpm" ECU
+
+BO_ 1536 WheelSpeeds: 32 BCM
+ SG_ WheelFL : 0|16@1+ (0.01,0) [0|655.35] "km/h" ECU
+ SG_ WheelFR : 16|16@1+ (0.01,0) [0|655.35] "km/h" ECU
+ SG_ WheelRL : 32|16@1+ (0.01,0) [0|655.35] "km/h" ECU
+ SG_ WheelRR : 48|16@1+ (0.01,0) [0|655.35] "km/h" ECU
+ SG_ SteeringAngle : 167|16@0- (0.1,0) [-3276.8|3276.7] "deg" ECU
+ SG_ YawRate : 192|16@1- (0.01,0) [-327.68|327.67] "deg/s" ECU
+
+CM_ BO_ 1024 "Multiplexed: Page 1 = oil, page 2 = electrical";
+CM_ BO_ 1536 "CAN FD frame with 32 data bytes";
+CM_ SG_ 1280 GearSelector "Position of the gear selector lever";
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ BO_ "VFrameFormat" ENUM "StandardCAN","ExtendedCAN","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","reserved","StandardCAN_FD","ExtendedCAN_FD";
+BA_DEF_ SG_ "GenSigStartValue" INT 0 65535;
+BA_DEF_DEF_ "GenMsgCycleTime" 0;
+BA_DEF_DEF_ "VFrameFormat" "StandardCAN";
+BA_DEF_DEF_ "GenSigStartValue" 0;
+BA_ "GenMsgCycleTime" BO_ 1024 100;
+BA_ "GenMsgCycleTime" BO_ 1280 20;
+BA_ "GenMsgCycleTime" BO_ 1536 10;
+BA_ "VFrameFormat" BO_ 1536 14;
+BA_ "GenSigStartValue" SG_ 1280 CurrentGear 1;
+VAL_ 1280 GearSelector 0 "Park" 1 "Reverse" 2 "Neutral" 3 "Drive" 4 "Sport" ;
+VAL_ 1280 CurrentGear 0 "Neutral" 1 "First" 2 "Second" 3 "Third" 4 "Fourth" 5 "Fifth" 6 "Sixth" 7 "Seventh" 8 "Eighth" 15 "Reverse" ;

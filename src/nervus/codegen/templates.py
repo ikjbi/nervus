@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import ast
 from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
@@ -883,22 +884,17 @@ def _state_chart(e: Emitter) -> BlockCode:
 # ---------------------------------------------------------------------------- CAN
 
 
-def _can_words(u: str, need_le: bool, need_be: bool) -> list[str]:
-    """Assemble the frame into 64-bit words: ``le`` (Intel byte order) and/or ``be`` (Motorola)."""
-    decl = ", ".join(n for n, need in (("le = 0u", need_le), ("be = 0u", need_be)) if need)
-    body = []
-    if need_le:
-        body.append("    le |= b << (8 * k);")
-    if need_be:
-        body.append("    be |= b << (56 - 8 * k);")
-    return [
-        f"uint64_T {decl};",
-        "int k;",
-        "for (k = 0; k < 8; k++) {",
-        f"    uint64_T b = (uint64_T)((uint8_T){u}[k]);",
-        *body,
-        "}",
-    ]
+def _can_raw(sig: Any, byte: Callable[[str], str], var: str = "raw") -> list[str]:
+    """C statements assembling the raw bit field of ``sig`` from the frame bytes, run by run (see
+    ``CanSignal.segments``); works for both byte orders and any frame length."""
+    lines = [f"uint64_T {var} = 0u;"]
+    for b, bit, n, pos in sig.segments():
+        lines.append(f"{var} |= ((uint64_T)(((uint8_T){byte(str(b))} >> {bit}) & 0x{(1 << n) - 1:X}u)) << {pos};")
+    return lines
+
+
+def _mux_condition(sig: Any, mux: str) -> str:
+    return " || ".join(f"{mux} == {k}u" for k in sig.mux_ids)
 
 
 def _mask(length: int) -> str:
@@ -907,46 +903,64 @@ def _mask(length: int) -> str:
 
 @template("can.unpack")
 def _can_unpack(e: Emitter) -> BlockCode:
-    sigs = e.block._signals  # type: ignore[attr-defined]
-    need_le, need_be = any(x.little_endian for x in sigs), any(not x.little_endian for x in sigs)
-    lines = ["{", *[f"    {x}" for x in _can_words(e.u_var(0), need_le, need_be)]]
+    b = e.block
+    sigs, msg = b._signals, b._msg  # type: ignore[attr-defined]
+    held = e.state("held", b.initial_discrete_state(), f"{e.path}: last values of multiplexed signals") if any(
+        s.mux_ids is not None for s in sigs
+    ) else None  # fmt: skip
+    lines = ["{"]
+    if held is not None:
+        lines += [f"    {x}" for x in _can_raw(msg.multiplexer, lambda ix: e.u(0, ix), "mux")]
     for p, s in enumerate(sigs):
-        word = "le" if s.little_endian else "be"
-        lines.append(f"    {{ /* {s.name} */")
-        lines.append(f"        uint64_T raw = ({word} >> {s.shift}) & {_mask(s.length)};")
+        body = [f"/* {s.name} */", *_can_raw(s, lambda ix: e.u(0, ix))]
         if s.signed:
-            lines.append(
-                f"        real_T v = (raw & ((uint64_T)1u << {s.length - 1})) ? "
+            body.append(
+                f"real_T v = (raw & ((uint64_T)1u << {s.length - 1})) ? "
                 f"(real_T)((int64_T)raw - ((int64_T)1 << {s.length})) : (real_T)raw;"
             )
         else:
-            lines.append("        real_T v = (real_T)raw;")
-        lines.append(f"        {e.y(p, '0')} = v * {c_float(s.factor)} + {c_float(s.offset)};")
-        lines.append("    }")
+            body.append("real_T v = (real_T)raw;")
+        body.append(f"{e.y(p, '0')} = v * {c_float(s.factor)} + {c_float(s.offset)};")
+        if s.mux_ids is not None:
+            lines += [f"    if ({_mux_condition(s, 'mux')}) {{", *[f"        {x}" for x in body], "    } else {",
+                      f"        {e.y(p, '0')} = {held}[{p}];", "    }"]  # fmt: skip
+        else:
+            lines += ["    {", *[f"        {x}" for x in body], "    }"]
     lines.append("}")
-    return BlockCode(lines)
+    upd = [f"{held}[{p}] = {e.y(p, '0')};" for p in range(len(sigs))] if held is not None else []
+    return BlockCode(lines, upd)
 
 
 @template("can.pack")
 def _can_pack(e: Emitter) -> BlockCode:
-    sigs = e.block._signals  # type: ignore[attr-defined]
-    lines = ["{", "    uint64_T le = 0u, be = 0u;", "    int k;"]
-    for p, s in enumerate(sigs):
+    from nervus.can import raw_value
+
+    b = e.block
+    sigs, msg = b._signals, b._msg  # type: ignore[attr-defined]
+    inputs = {s.name: p for p, s in enumerate(sigs)}
+    n = msg.length
+    lines = ["{", f"    uint8_T bytes[{n}];", "    int k;", f"    for (k = 0; k < {n}; k++) {{ bytes[k] = 0u; }}"]
+
+    def raw_of(s: Any) -> list[str]:
+        if s.name not in inputs:  # not an input: its initial value
+            return [f"uint64_T raw = 0x{raw_value(s, s.initial) & s.mask:X}u;"]
         lo, hi = (-(1 << (s.length - 1)), (1 << (s.length - 1)) - 1) if s.signed else (0, (1 << s.length) - 1)
-        word = "le" if s.little_endian else "be"
-        lines += [
-            f"    {{ /* {s.name} */",
-            f"        real_T r = round(({e.u(p, '0')} - {c_float(s.offset)}) / {c_float(s.factor)});",
-            f"        if (r > {c_float(float(hi))}) {{ r = {c_float(float(hi))}; }} else if (r < {c_float(float(lo))}) {{ r = {c_float(float(lo))}; }}",
-            f"        {word} |= (((uint64_T)(int64_T)r) & {_mask(s.length)}) << {s.shift};",
-            "    }",
+        return [
+            f"real_T r = round(({e.u(inputs[s.name], '0')} - {c_float(s.offset)}) / {c_float(s.factor)});",
+            f"if (r > {c_float(float(hi))}) {{ r = {c_float(float(hi))}; }} else if (r < {c_float(float(lo))}) {{ r = {c_float(float(lo))}; }}",
+            f"uint64_T raw = ((uint64_T)(int64_T)r) & {_mask(s.length)};",
         ]
-    lines += [
-        "    for (k = 0; k < 8; k++) {",
-        f"        {e.y(0, 'k')} = (real_T)((le >> (8 * k)) & 0xFFu) + (real_T)((be >> (56 - 8 * k)) & 0xFFu);",
-        "    }",
-        "}",
-    ]
+
+    mux = msg.multiplexer
+    if mux is not None:
+        lines += ["    uint64_T mux;", "    {", *[f"        {x}" for x in raw_of(mux)], "        mux = raw;", "    }"]
+    for s in msg.signals:
+        body = [f"/* {s.name} */", *raw_of(s)]
+        for byte, bit, nb, pos in s.segments():
+            body.append(f"bytes[{byte}] |= (uint8_T)(((raw >> {pos}) & 0x{(1 << nb) - 1:X}u) << {bit});")
+        cond = _mux_condition(s, "mux") if s.mux_ids is not None else "1"
+        lines += [f"    if ({cond}) {{", *[f"        {x}" for x in body], "    }"]
+    lines += [f"    for (k = 0; k < {n}; k++) {{", f"        {e.y(0, 'k')} = (real_T)bytes[k];", "    }", "}"]
     return BlockCode(lines)
 
 
@@ -1028,13 +1042,13 @@ def _diagnostic_monitor(e: Emitter) -> BlockCode:
     return BlockCode(out, upd)
 
 
-def _e2e_crc_lines(byte: Callable[[str], str], data_id: int, crc_byte: int) -> list[str]:
+def _e2e_crc_lines(byte: Callable[[str], str], data_id: int, crc_byte: int, width: int = 8) -> list[str]:
     """C statements computing ``crc`` (E2E CRC-8 SAE J1850) of the frame bytes ``byte("k")`` (real_T 0..255)."""
     return [
         "uint8_T crc = 0xFFu;",
         "int k, j;",
         f"uint8_T head[2] = {{0x{data_id & 0xFF:02X}u, 0x{(data_id >> 8) & 0xFF:02X}u}};",
-        "for (k = -2; k < 8; k++) {",
+        f"for (k = -2; k < {width}; k++) {{",
         f"    if (k == {crc_byte}) {{ continue; }}",
         f"    crc ^= (k < 0) ? head[k + 2] : (uint8_T){byte('k')};",
         "    for (j = 0; j < 8; j++) {",
@@ -1053,12 +1067,12 @@ def _e2e_protect(e: Emitter) -> BlockCode:
     out = [
         "{",
         "    int i;",
-        "    for (i = 0; i < 8; i++) {",
+        f"    for (i = 0; i < {e.out_widths[0]}; i++) {{",
         f"        {e.y(0, 'i')} = {e.u(0, 'i')};",
         "    }",
         f"    {e.y(0, str(cb))} = (real_T)(((uint8_T){e.u(0, str(cb))} & 0xF0u) | (uint8_T){x}[0]);",
         "    {",
-        *[f"        {line}" for line in _e2e_crc_lines(lambda ix: e.y(0, ix), did, kb)],
+        *[f"        {line}" for line in _e2e_crc_lines(lambda ix: e.y(0, ix), did, kb, e.out_widths[0])],
         f"        {e.y(0, str(kb))} = (real_T)crc;",
         "    }",
         "}",
@@ -1079,7 +1093,7 @@ def _e2e_check(e: Emitter) -> BlockCode:
         f"    if ({e.u(1, '0')} < 0.5) {{",
         "        status = 1.0; /* no new data */",
         "    } else {",
-        *[f"        {line}" for line in _e2e_crc_lines(lambda ix: e.u(0, ix), did, kb)],
+        *[f"        {line}" for line in _e2e_crc_lines(lambda ix: e.u(0, ix), did, kb, e.in_widths[0])],
         f"        if ((uint8_T){e.u(0, str(kb))} != crc) {{",
         "            status = 2.0; /* wrong CRC */",
         "        } else {",

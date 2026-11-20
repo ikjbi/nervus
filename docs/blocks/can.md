@@ -4,13 +4,14 @@
 
 `can.unpack` · CAN
 
-Decodes a CAN frame: the input is the 8 data bytes (a vector of width 8), and there is one output per
-signal, in physical units (``raw · factor + offset`` from the DBC file).
+Decodes a CAN frame: the input is the frame's data bytes (a vector: 8 for classic CAN, up to 64 for CAN
+FD), and there is one output per signal, in physical units (``raw · factor + offset`` from the DBC file).
 
 ![Decoding a CAN frame](../images/blocks/can_frame.png)
 
-Intel (little-endian) and Motorola (big-endian) byte order, signed and unsigned signals are supported. The
-block can be generated as C code.
+Intel (little-endian) and Motorola (big-endian) byte order, signed and unsigned signals are supported.
+**Multiplexed** signals are only in the frame when the multiplexer selects them; their outputs hold the
+last value received. The block can be generated as C code.
 
 ### Parameters
 
@@ -28,10 +29,13 @@ block can be generated as C code.
 
 `can.pack` · CAN
 
-Encodes a CAN frame: one input per signal (physical units), output = the 8 data bytes (``uint8``).
+Encodes a CAN frame: one input per signal (physical units), output = the data bytes (``uint8``; 8 for
+classic CAN, up to 64 for CAN FD).
 
 Values are converted to the raw integer with rounding to nearest and saturated to the bit field, exactly
-as the generated C code does. Signals that are not selected are sent as 0.
+as the generated C code does. Signals that are not selected are sent with their initial value from the
+DBC file (``GenSigStartValue``, else raw 0). Multiplexed signals are written only when the multiplexer value
+selects them.
 
 ### Parameters
 
@@ -127,6 +131,7 @@ interface, and frames from the interface reach the CAN Receive blocks. Run the s
 |---|---|---|---|
 | `bus` | `'can0'` |  | Name of the simulated CAN bus |
 | `bitrate` | `500000.0` | bit/s | Bit rate |
+| `data_bitrate` | `2000000.0` | bit/s | CAN FD data-phase bit rate |
 | `interface` | `'none'` |  | Real CAN interface (python-can); none = simulated only — one of `none`, `socketcan`, `pcan`, `kvaser`, `vector`, `slcan`, `virtual` |
 | `channel` | `''` |  | Interface channel, e.g. can0, PCAN_USBBUS1, 0 |
 | `sample_time` | `0.1` | s | Window for the bus load |

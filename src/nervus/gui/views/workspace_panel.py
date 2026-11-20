@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Qt, Signal
@@ -61,11 +62,13 @@ class WorkspacePanel(QWidget):
         self.usages_button.setToolTip("List the blocks that use the selected variable")
         self.load_button = QPushButton("Load set…")
         self.save_button = QPushButton("Save set…")
+        self.dbc_button = QPushButton("Import DBC…")
+        self.dbc_button.setToolTip("Add the signals and value tables of a DBC file as variables")
         self.add_button.setToolTip("Add a workspace variable")
         self.load_button.setToolTip("Load a parameter set (calibration) and apply its values")
         self.save_button.setToolTip("Save the current values as a parameter set")
         buttons = QHBoxLayout()
-        for b in (self.add_button, self.delete_button, self.usages_button):
+        for b in (self.add_button, self.delete_button, self.usages_button, self.dbc_button):
             buttons.addWidget(b)
         buttons.addStretch(1)
         for b in (self.load_button, self.save_button):
@@ -80,6 +83,7 @@ class WorkspacePanel(QWidget):
         self.usages_button.clicked.connect(self._find_usages)
         self.load_button.clicked.connect(self._load)
         self.save_button.clicked.connect(self._save)
+        self.dbc_button.clicked.connect(lambda: self.import_dbc())
         self.table.itemChanged.connect(self._edited)
         model.workspaceChanged.connect(self.refresh)
         model.diagramReset.connect(self.refresh)
@@ -182,6 +186,15 @@ class WorkspacePanel(QWidget):
     def _delete(self) -> None:
         for name in self.selected_names():
             self.controller.delete_variable(name)
+
+    def import_dbc(self, path: str | None = None) -> list[str]:
+        if path is None:
+            path, _ = QFileDialog.getOpenFileName(self, "Import DBC", "", "DBC files (*.dbc);;All files (*)")
+            if not path:
+                return []
+        added = self.controller.import_dbc(path)
+        self.statusMessage.emit(f"Imported {len(added)} variables from {Path(path).name}")
+        return added
 
     def _load(self) -> None:
         path, _ = QFileDialog.getOpenFileName(self, "Load parameter set", "", CAL_FILTER)

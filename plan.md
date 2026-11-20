@@ -262,7 +262,7 @@ tests/
 
 ## Phase 17 – ECU integration and calibration
 - [x] CAN: read DBC files (`cantools`), CAN Pack / CAN Unpack blocks, Intel and Motorola, bit-exact C code
-- [ ] CAN FD, multiplexed signals, value tables, DBC signals as workspace variables
+- [x] CAN FD, multiplexed signals, value tables, DBC signals as workspace variables
 - [x] A2L file generation for calibration tools (measurements and characteristics), addresses from `nm`
 - [ ] XCP-on-CAN basics for live measurement and calibration
 - [ ] Target: a development board (e.g. STM32 or ESP32 with CAN), as a scheduler template and HAL stubs

@@ -418,6 +418,25 @@ class EditorController(QObject):
             return False
         return self._push(SetVariableCommand(self.model, Variable(**ws.variable(name).__dict__), None))
 
+    def import_dbc(self, path: str | Path) -> list[str]:
+        """Add the signals and value tables of a DBC file as workspace variables (existing names are kept).
+        Returns the names added."""
+        from nervus.can import dbc_variables
+
+        try:
+            new = [v for v in dbc_variables(path) if v.name not in self.model.root.workspace]
+        except NervusError as exc:
+            self.errorOccurred.emit(str(exc))
+            return []
+        if not new:
+            return []
+        self.undo_stack.beginMacro(f"Import {Path(path).name}")
+        try:
+            added = [v.name for v in new if self._push(SetVariableCommand(self.model, None, v))]
+        finally:
+            self.undo_stack.endMacro()
+        return added
+
     def load_parameter_set(self, path: str | Path) -> bool:
         try:
             ps = ParameterSet.load(path)

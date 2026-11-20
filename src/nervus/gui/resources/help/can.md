@@ -7,8 +7,8 @@ CAN buses (below):
 
 | Block | Input | Output |
 |---|---|---|
-| **CAN Unpack** | the frame's 8 data bytes (a vector of width 8) | one output per signal, in physical units |
-| **CAN Pack** | one input per signal, in physical units | the 8 data bytes (`uint8`) |
+| **CAN Unpack** | the frame's data bytes (a vector: 8, or up to 64 for CAN FD) | one output per signal, in physical units |
+| **CAN Pack** | one input per signal, in physical units | the data bytes (`uint8`) |
 
 Set *dbc_file* (relative paths are relative to the model file), choose the *message* from the drop-down, and
 optionally list the *signals* to use (empty = all, in DBC order).
@@ -36,6 +36,37 @@ Packing and unpacking use the same 64-bit integer arithmetic in the simulation a
 The test suite checks the decoding against the `cantools` library for random frames, and checks the
 generated C against the simulation with zero tolerance. A typical use is an ECU subsystem with a CAN Unpack
 at its inputs and a CAN Pack at its outputs; the generated `step()` function then reads and writes raw frames.
+
+## CAN FD, multiplexing and value tables
+
+**CAN FD** frames carry up to 64 data bytes, and the data part is sent at a faster bit rate (e.g. 2 Mbit/s
+after arbitration at 500 kbit/s). Messages that the DBC file marks as FD (`VFrameFormat`) work everywhere:
+CAN Pack outputs and CAN Unpack expects as many bytes as the message has, the bus computes the frame time with
+both bit rates (*data_bitrate* on the CAN Bus block), and the trace and log files mark them as FD frames.
+
+**Multiplexed** messages reuse the same bytes for different signals, chosen by a **multiplexer** signal
+(`M` in the DBC; the multiplexed ones are `m1`, `m2`, ...). For example `Diagnostics` in
+`examples/data/chassis.dbc` sends the oil temperature and pressure when `Page` = 1 and the battery voltage
+and ambient temperature when `Page` = 2. CAN Pack writes a multiplexed signal only when the multiplexer value
+selects it; CAN Unpack outputs it when it is in the frame and **holds the last value** otherwise.
+
+Signals with a **value table** (`VAL_`, e.g. `GearSelector`: 0 Park, 1 Reverse, 2 Neutral, 3 Drive) are
+shown with their names in the CAN Bus Trace (`GearSelector=3 (Drive)`).
+
+How each signal's bits are spread over the bytes (both byte orders, any frame length) is computed once from
+the DBC file; the simulation and the generated C code extract the same runs of bits, so FD and multiplexed
+messages are bit-exact in C too.
+
+### DBC signals in the workspace
+
+**Model Workspace ▸ Import DBC…** adds the signals and value tables of a DBC file as workspace variables:
+
+- every value-table entry as a constant `<Signal>_<Name>`, e.g. `GearSelector_Drive = 3`, so the model
+  compares with `GearSelector_Drive` instead of a magic 3;
+- every signal as a variable with its initial value, unit, range and comment: a data dictionary of the bus.
+
+They are constants (not calibratable); names that already exist are kept, and one Undo removes the whole
+import. In Python: `nervus.can.dbc_variables("chassis.dbc")`.
 
 ## Simulated CAN buses
 
@@ -130,5 +161,4 @@ unpack(engine.signal("EngineSpeed"), frame)  # 812.25 (0.25 rpm resolution)
 
 ## Planned
 
-CAN FD (64-byte frames), multiplexed signals, value tables, DBC signals in the workspace, and XCP on CAN for
-live measurement and calibration.
+XCP on CAN for live measurement and calibration.

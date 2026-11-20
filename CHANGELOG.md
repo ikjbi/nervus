@@ -25,6 +25,9 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- CAN FD frames (up to 64 bytes, bit-rate switching on the bus), multiplexed signals (held when not sent),
+  value tables in the trace, and Model Workspace ▸ Import DBC (signals and value tables as variables); pack and
+  unpack C code now extracts runs of bits, for any frame length. Example DBC `examples/data/chassis.dbc`.
 - Simulated CAN buses (`nervus.canbus`): CAN Transmit / Receive / Bus / Rest Bus / Gateway blocks with
   arbitration, stuff-bit timing, bus load, fault injection (lost, delayed, corrupted frames, bus-off), E2E
   Protect / Check (CRC-8 and alive counter, with C code), Tools ▸ CAN Bus Trace with ASC/BLF export, and real

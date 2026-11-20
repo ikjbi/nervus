@@ -43,12 +43,21 @@ def dbc_messages(diagram: Diagram) -> dict[int, CanMessage]:
 
 
 def decode(msg: CanMessage | None, data: bytes) -> str:
-    from nervus.can import unpack
+    from nervus.can import present, unpack, unpack_raw
 
     if msg is None:
         return ""
-    raw = np.frombuffer(data.ljust(8, b"\0"), dtype=np.uint8).astype(float)
-    return ", ".join(f"{s.name}={unpack(s, raw):g}{(' ' + s.unit) if s.unit else ''}" for s in msg.signals)
+    raw = np.frombuffer(data.ljust(msg.length, b"\0"), dtype=np.uint8).astype(float)
+    mux = msg.multiplexer
+    mux_value = unpack_raw(mux, raw) if mux is not None else None
+    parts = []
+    for s in msg.signals:
+        if present(s, mux_value):
+            label = s.label(unpack_raw(s, raw))
+            parts.append(
+                f"{s.name}={unpack(s, raw):g}{(' ' + s.unit) if s.unit else ''}" + (f" ({label})" if label else "")
+            )
+    return ", ".join(parts)
 
 
 class CanTraceDialog(QDialog):

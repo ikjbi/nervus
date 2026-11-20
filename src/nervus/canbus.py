@@ -43,6 +43,38 @@ def crc15(bits: list[int]) -> int:
     return crc
 
 
+def _stuffed(bits: list[int]) -> int:
+    """Number of stuff bits the sender inserts into ``bits`` (one after every five equal bits)."""
+    stuff, run, last = 0, 0, -1
+    for b in bits:
+        if b == last:
+            run += 1
+        else:
+            run, last = 1, b
+        if run == 5:  # a stuff bit of the opposite value, which also starts a new run
+            stuff += 1
+            run, last = 1, 1 - b
+    return stuff
+
+
+def fd_frame_time(can_id: int, data: bytes, bitrate: float, data_bitrate: float) -> float:
+    """Duration [s] of a CAN FD frame with bit-rate switching: the arbitration (identifier) and the end of frame
+    at the nominal *bitrate*, the control field, data and CRC at *data_bitrate*. Stuff bits are counted in the
+    identifier and data, plus the fixed stuff bits of the CRC field."""
+    from nervus.can import FD_LENGTHS
+
+    n = len(data)
+    dlc = next(k for k, length in enumerate(FD_LENGTHS) if length >= n)
+    arb = [0, *((can_id >> (10 - k)) & 1 for k in range(11)), 0, 0, 1, 0, 1]  # SOF, ID, RRS, IDE, FDF, res, BRS
+    fast = [0, *((dlc >> (3 - k)) & 1 for k in range(4))]  # ESI, DLC
+    for byte in data:
+        fast += [(byte >> (7 - k)) & 1 for k in range(8)]
+    crc = 17 if n <= 16 else 21
+    nominal = len(arb) + _stuffed(arb) + 1 + 2 + 7 + 3  # (BRS→) CRC delimiter, ACK, EOF, IFS
+    data_bits = len(fast) + _stuffed(fast) + 4 + crc + (4 + crc + 3) // 4  # stuff count, CRC, fixed stuff bits
+    return nominal / bitrate + data_bits / data_bitrate
+
+
 def frame_bits(can_id: int, data: bytes) -> int:
     """Number of bits of a standard (11-bit) data frame on the wire, including stuff bits and the 3-bit
     inter-frame space."""
@@ -55,16 +87,7 @@ def frame_bits(can_id: int, data: bytes) -> int:
         head += [(byte >> (7 - k)) & 1 for k in range(8)]
     crc = crc15(head)
     stuffed = head + [(crc >> (14 - k)) & 1 for k in range(15)]
-    stuff, run, last = 0, 0, -1
-    for b in stuffed:
-        if b == last:
-            run += 1
-        else:
-            run, last = 1, b
-        if run == 5:  # a stuff bit of the opposite value, which also starts a new run
-            stuff += 1
-            run, last = 1, 1 - b
-    return len(stuffed) + stuff + 1 + 2 + 7 + 3  # CRC delimiter, ACK slot + delimiter, EOF, IFS
+    return len(stuffed) + _stuffed(stuffed) + 1 + 2 + 7 + 3  # CRC delimiter, ACK slot + delimiter, EOF, IFS
 
 
 @dataclass(order=True)
@@ -75,6 +98,7 @@ class _Pending:
     data: bytes = field(compare=False)
     sender: str = field(compare=False, default="")
     sent: float = field(compare=False, default=0.0)
+    fd: bool = field(compare=False, default=False)
 
 
 @dataclass
@@ -88,12 +112,15 @@ class Frame:
     end: float
     sender: str = ""
     lost: bool = False
+    fd: bool = False
 
 
 @dataclass
 class CanBus:
     name: str
     bitrate: float = 500_000.0
+    data_bitrate: float = 2_000_000.0
+    """CAN FD data-phase bit rate."""
     trace: list[Frame] = field(default_factory=list)
     hardware: Any = None
     """A ``python-can`` bus: frames are also sent to it, and frames from it are delivered."""
@@ -129,18 +156,23 @@ class CanBus:
 
     # ------------------------------------------------------------------ sending and receiving
 
-    def send(self, t: float, can_id: int, data: bytes, sender: str = "") -> None:
+    def send(self, t: float, can_id: int, data: bytes, sender: str = "", fd: bool = False) -> None:
         """Queue a frame at time ``t`` (from a CAN Transmit block)."""
         self._touch(t)
         f = self._faults.get(can_id, {})
         if f.get("off"):
             return
         self._seq += 1
-        heapq.heappush(self._queue, _Pending(t + float(f.get("delay", 0.0)), can_id, self._seq, bytes(data), sender, t))
+        heapq.heappush(
+            self._queue,
+            _Pending(t + float(f.get("delay", 0.0)), can_id, self._seq, bytes(data), sender, t, fd or len(data) > 8),
+        )
         if self.hardware is not None:
             import can
 
-            self.hardware.send(can.Message(arbitration_id=can_id, data=bytes(data), is_extended_id=False))
+            self.hardware.send(
+                can.Message(arbitration_id=can_id, data=bytes(data), is_extended_id=False, is_fd=fd or len(data) > 8)
+            )
 
     def _run(self, t: float) -> None:
         """Put frames on the wire until time ``t``: when the bus is idle, the lowest identifier among the
@@ -154,7 +186,10 @@ class CanBus:
             win = min(ready, key=lambda p: (p.can_id, p.seq))
             self._queue.remove(win)
             heapq.heapify(self._queue)
-            duration = frame_bits(win.can_id, win.data) / self.bitrate
+            if win.fd:
+                duration = fd_frame_time(win.can_id, win.data, self.bitrate, self.data_bitrate)
+            else:
+                duration = frame_bits(win.can_id, win.data) / self.bitrate
             f = self._faults.get(win.can_id, {})
             lost = bool(f.get("drop")) and _random(self.name, win.seq) < float(f["drop"])
             data = win.data
@@ -163,7 +198,7 @@ class CanBus:
                 flipped = bytearray(data)
                 flipped[bit // 8] ^= 1 << (bit % 8)
                 data = bytes(flipped)
-            frame = Frame(win.can_id, data, win.sent, start, start + duration, win.sender, lost)
+            frame = Frame(win.can_id, data, win.sent, start, start + duration, win.sender, lost, win.fd)
             self.trace.append(frame)
             if not lost:
                 self._deliver(frame)
@@ -214,7 +249,7 @@ class CanBus:
             msg = self.hardware.recv(timeout=0.0)
             if msg is None:
                 return
-            frame = Frame(msg.arbitration_id, bytes(msg.data), t, t, t, "hardware")
+            frame = Frame(msg.arbitration_id, bytes(msg.data), t, t, t, "hardware", fd=bool(msg.is_fd))
             self.trace.append(frame)
             self._deliver(frame)
 
@@ -233,6 +268,14 @@ class CanBus:
 
     def write_asc(self, path: str | Path, channel: int = 1) -> Path:
         """The trace as a Vector ASC log (readable by CANalyzer, CANoe, python-can, SavvyCAN, ...)."""
+        if any(f.fd for f in self.trace):  # CAN FD lines: let python-can write them
+            import can
+
+            with can.ASCWriter(str(path), channel=channel) as writer:
+                for f in self.trace:
+                    if not f.lost:
+                        writer.on_message_received(self._message(f, channel))
+            return Path(path)
         lines = ["date Thu Jan 1 00:00:00.000 am 1970", "base hex  timestamps absolute", "no internal events logged"]
         for f in self.trace:
             if f.lost:
@@ -250,12 +293,15 @@ class CanBus:
         with can.BLFWriter(str(path)) as writer:
             for f in self.trace:
                 if not f.lost:
-                    writer.on_message_received(
-                        can.Message(
-                            timestamp=f.end, arbitration_id=f.can_id, data=f.data, is_extended_id=False, channel=channel
-                        )
-                    )
+                    writer.on_message_received(self._message(f, channel))
         return Path(path)
+
+    @staticmethod
+    def _message(f: Frame, channel: int) -> Any:
+        import can
+
+        return can.Message(timestamp=f.end, arbitration_id=f.can_id, data=f.data, is_extended_id=False,
+                           channel=channel, is_fd=f.fd, bitrate_switch=f.fd)  # fmt: skip
 
 
 def _random(name: str, k: int) -> float:

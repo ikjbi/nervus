@@ -33,3 +33,13 @@ def test_trace_shows_decoded_frames(window, tmp_path) -> None:  # type: ignore[n
     assert "load" in dlg.info.text()
     assert dlg.export("asc", str(tmp_path / "t.asc")).read_text().count(" Rx ") == n
     dlg.close()
+
+
+def test_import_dbc_into_workspace(window) -> None:  # type: ignore[no-untyped-def]
+    chassis = str(Path(DBC).with_name("chassis.dbc"))
+    added = window.workspace_panel.import_dbc(chassis)
+    ws = window.diagram_model.root.workspace
+    assert "GearSelector_Drive" in added and ws.variable("GearSelector_Drive").value == 3.0
+    assert window.workspace_panel.import_dbc(chassis) == []  # names that exist are kept
+    window.editor.undo_stack.undo()  # one undo step for the whole import
+    assert "GearSelector_Drive" not in window.diagram_model.root.workspace

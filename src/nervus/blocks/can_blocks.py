@@ -10,7 +10,7 @@ from typing import Any, ClassVar
 import numpy as np
 
 from nervus.blocks.registry import register
-from nervus.can import CanMessage, load_dbc, pack, unpack
+from nervus.can import CanMessage, load_dbc, pack, present, unpack, unpack_raw
 from nervus.core.block import Block, Width
 from nervus.core.errors import ParameterError
 from nervus.core.params import Param, ParamKind
@@ -55,6 +55,12 @@ class _CanBlock(Block):
             raise ParameterError(f"message {name!r} not in {path.name}; messages: {', '.join(messages)}")
         return messages[name]
 
+    def _length(self) -> int:
+        try:
+            return self.message().length
+        except ParameterError:
+            return 8
+
     def selected(self) -> list[Any]:
         try:
             msg = self.message()
@@ -98,13 +104,14 @@ class _CanBlock(Block):
 
 @register
 class CanUnpack(_CanBlock):
-    """Decodes a CAN frame: the input is the 8 data bytes (a vector of width 8), and there is one output per
-    signal, in physical units (``raw · factor + offset`` from the DBC file).
+    """Decodes a CAN frame: the input is the frame's data bytes (a vector: 8 for classic CAN, up to 64 for CAN
+    FD), and there is one output per signal, in physical units (``raw · factor + offset`` from the DBC file).
 
     ![Decoding a CAN frame](figures/can_frame.png)
 
-    Intel (little-endian) and Motorola (big-endian) byte order, signed and unsigned signals are supported. The
-    block can be generated as C code.
+    Intel (little-endian) and Motorola (big-endian) byte order, signed and unsigned signals are supported.
+    **Multiplexed** signals are only in the frame when the multiplexer selects them; their outputs hold the
+    last value received. The block can be generated as C code.
     """
 
     type_id = "can.unpack"
@@ -119,19 +126,36 @@ class CanUnpack(_CanBlock):
 
     def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
         super().configure(in_widths, out_widths)
-        if in_widths[0] != 8:
-            raise ValueError("the input must be the 8 data bytes of the frame (width 8)")
+        if in_widths[0] != self._msg.length:
+            raise ValueError(f"the input must be the {self._msg.length} data bytes of {self._msg.name}")
+
+    def _has_mux(self) -> bool:
+        return any(s.mux_ids is not None for s in self.selected())
+
+    def initial_discrete_state(self) -> Array:
+        return np.zeros(len(self.selected())) if self._has_mux() else np.zeros(0)
+
+    def _values(self, u: Array, xd: Array) -> list[float]:
+        mux = self._msg.multiplexer
+        mux_value = unpack_raw(mux, u) if mux is not None else None
+        return [unpack(s, u) if present(s, mux_value) else float(xd[k]) for k, s in enumerate(self._signals)]
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
-        return [np.array([unpack(s, u[0])]) for s in self._signals]
+        return [np.array([v]) for v in self._values(u[0], xd)]
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        return np.array(self._values(u[0], xd)) if xd.size else xd
 
 
 @register
 class CanPack(_CanBlock):
-    """Encodes a CAN frame: one input per signal (physical units), output = the 8 data bytes (``uint8``).
+    """Encodes a CAN frame: one input per signal (physical units), output = the data bytes (``uint8``; 8 for
+    classic CAN, up to 64 for CAN FD).
 
     Values are converted to the raw integer with rounding to nearest and saturated to the bit field, exactly
-    as the generated C code does. Signals that are not selected are sent as 0.
+    as the generated C code does. Signals that are not selected are sent with their initial value from the
+    DBC file (``GenSigStartValue``, else raw 0). Multiplexed signals are written only when the multiplexer value
+    selects them.
     """
 
     type_id = "can.pack"
@@ -141,7 +165,10 @@ class CanPack(_CanBlock):
         return max(1, len(self.selected()))
 
     def output_widths(self, in_widths: list[Width]) -> list[Width]:
-        return [8]
+        try:
+            return [self.message().length]
+        except ParameterError:
+            return [8]
 
     def output_types(self, in_types: list[Any]) -> list[Any]:
         from nervus.core.datatypes import parse_datatype
@@ -229,7 +256,11 @@ class CanTransmit(_CanBlock):
         return []
 
     def initial_discrete_state(self) -> Array:
-        return np.full(10, -1.0)  # last sent bytes (8), last trigger value, last send time
+        try:
+            n = self.message().length
+        except ParameterError:
+            n = 8
+        return np.full(n + 2, -1.0)  # last sent bytes, last trigger value, last send time
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
         return []
@@ -240,8 +271,8 @@ class CanTransmit(_CanBlock):
         p = self.params
         if self._raw():
             n = 1
-            data = np.zeros(8)
-            raw = np.ravel(u[0])[:8]
+            data = np.zeros(self._msg.length)
+            raw = np.ravel(u[0])[: self._msg.length]
             data[: raw.size] = raw
         else:
             n = len(self._signals)
@@ -251,8 +282,8 @@ class CanTransmit(_CanBlock):
         mode = p["mode"]
         send = (
             mode == "periodic"
-            or (mode == "on_change" and not np.array_equal(data, xd[:8]))
-            or (mode == "on_trigger" and trig >= 0.5 > xd[8])
+            or (mode == "on_change" and not np.array_equal(data, xd[:-2]))
+            or (mode == "on_trigger" and trig >= 0.5 > xd[-2])
         )
         b = bus(str(p["bus"]))
         if t >= p["fault_time"]:
@@ -262,8 +293,8 @@ class CanTransmit(_CanBlock):
         else:
             b.set_fault(self._msg.frame_id, drop=0.0, delay=0.0, off=False, corrupt=0.0)
         if send:
-            b.send(t, self._msg.frame_id, bytes(int(x) for x in data[: self._msg.length]), str(p["node"]))
-        return np.array([*data, trig, t if send else xd[9]])
+            b.send(t, self._msg.frame_id, bytes(int(x) for x in data), str(p["node"]), fd=self._msg.is_fd)
+        return np.array([*data, trig, t if send else xd[-1]])
 
 
 @register
@@ -294,11 +325,11 @@ class CanReceive(_CanBlock):
         return (1 if self._raw() else max(1, len(self.selected()))) + 2
 
     def output_widths(self, in_widths: list[Width]) -> list[Width]:
-        widths: list[Width] = [8] if self._raw() else [1] * (self.num_outputs() - 2)
+        widths: list[Width] = [self._length()] if self._raw() else [1] * (self.num_outputs() - 2)
         return [*widths, 1, 1]
 
     def initial_discrete_state(self) -> Array:
-        n = 8 if self._raw() else max(1, len(self.selected()))
+        n = self._length() if self._raw() else max(1, len(self.selected()))
         return np.array([*np.zeros(n), 0.0, -1.0, 0.0])  # values, new flag, end time of the last frame, age
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
@@ -313,11 +344,14 @@ class CanReceive(_CanBlock):
         frame = bus(str(self.params["bus"])).receive(t, self._msg.frame_id)
         values, new, last = xd[:n].copy(), 0.0, xd[n + 1]
         if frame is not None and frame.end > xd[n + 1]:
-            data = np.frombuffer(frame.data.ljust(8, b"\0"), dtype=np.uint8).astype(float)
+            data = np.frombuffer(frame.data.ljust(self._msg.length, b"\0"), dtype=np.uint8).astype(float)
             if self._raw():
-                values = data
+                values = data[:n]
             elif self._signals:
-                values = np.array([unpack(s, data) for s in self._signals])
+                mux = self._msg.multiplexer
+                mux_value = unpack_raw(mux, data) if mux is not None else None
+                values = np.array([unpack(s, data) if present(s, mux_value) else values[k]
+                                   for k, s in enumerate(self._signals)])  # fmt: skip
             new, last = 1.0, frame.end
         age = t - last if last >= 0 else t - self.t_start
         return np.array([*values, new, last, age])
@@ -342,6 +376,7 @@ class CanBusSetup(Block):
     PARAMS = (
         _BUS,
         Param("bitrate", 500_000.0, ParamKind.FLOAT, "Bit rate", "bit/s", min=1.0),
+        Param("data_bitrate", 2_000_000.0, ParamKind.FLOAT, "CAN FD data-phase bit rate", "bit/s", min=1.0),
         Param("interface", "none", ParamKind.CHOICE, "Real CAN interface (python-can); none = simulated only",
               choices=("none", "socketcan", "pcan", "kvaser", "vector", "slcan", "virtual")),
         Param("channel", "", ParamKind.STR, "Interface channel, e.g. can0, PCAN_USBBUS1, 0"),
@@ -358,6 +393,7 @@ class CanBusSetup(Block):
         b = bus(str(self.params["bus"]))
         b.reset()
         b.bitrate = float(self.params["bitrate"])
+        b.data_bitrate = float(self.params["data_bitrate"])
         if self.params["interface"] != "none":
             try:
                 b.connect_hardware(str(self.params["interface"]), str(self.params["channel"]), b.bitrate)
@@ -383,13 +419,21 @@ class CanBusSetup(Block):
 _E2E = (
     Param("data_id", 0x100, ParamKind.INT, "E2E data ID (16 bit, agreed between sender and receiver)", min=0,
           max=0xFFFF),
-    Param("crc_byte", 0, ParamKind.INT, "Byte that holds the CRC", min=0, max=7),
-    Param("counter_byte", 1, ParamKind.INT, "Byte whose low 4 bits hold the alive counter", min=0, max=7),
+    Param("crc_byte", 0, ParamKind.INT, "Byte that holds the CRC", min=0, max=63),
+    Param("counter_byte", 1, ParamKind.INT, "Byte whose low 4 bits hold the alive counter", min=0, max=63),
 )  # fmt: skip
 
 
+def _check_e2e_width(block: Block, width: int) -> None:
+    if not 2 <= width <= 64:
+        raise ValueError("the data input must be the frame's data bytes (2 to 64)")
+    for name in ("crc_byte", "counter_byte"):
+        if int(block.params[name]) >= width:
+            raise ValueError(f"{name} {block.params[name]} is beyond the frame's {width} bytes")
+
+
 def _bytes(u: Array) -> bytes:
-    return bytes(int(v) & 0xFF for v in np.ravel(u)[:8])
+    return bytes(int(v) & 0xFF for v in np.ravel(u))
 
 
 @register
@@ -406,7 +450,7 @@ class E2EProtect(Block):
     PARAMS = (*_E2E, Param("sample_time", -1.0, ParamKind.SAMPLE_TIME, "-1 = inherited", "s"))
 
     def output_widths(self, in_widths: list[Width]) -> list[Width]:
-        return [8]
+        return [in_widths[0]]
 
     def output_types(self, in_types: list[Any]) -> list[Any]:
         from nervus.core.datatypes import parse_datatype
@@ -415,8 +459,7 @@ class E2EProtect(Block):
 
     def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
         super().configure(in_widths, out_widths)
-        if in_widths[0] != 8:
-            raise ValueError("the input must be the 8 data bytes of the frame (width 8)")
+        _check_e2e_width(self, in_widths[0])
         if self.params["crc_byte"] == self.params["counter_byte"]:
             raise ValueError("the CRC and the counter need different bytes")
 
@@ -477,8 +520,7 @@ class E2ECheck(Block):
 
     def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
         super().configure(in_widths, out_widths)
-        if in_widths[0] != 8:
-            raise ValueError("the data input must be the 8 data bytes of the frame (width 8)")
+        _check_e2e_width(self, in_widths[0])
 
     def initial_discrete_state(self) -> Array:
         return np.array([-1.0])  # last accepted counter (-1: none yet)
