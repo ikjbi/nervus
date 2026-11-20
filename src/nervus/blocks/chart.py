@@ -39,7 +39,7 @@ from __future__ import annotations
 import ast
 import math
 import re
-from collections.abc import Sequence
+from collections.abc import Sequence, Set
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -115,6 +115,10 @@ transition high -> low: u < 0
 """
 
 
+MAX_EVENT_PASSES = 8
+"""How many broadcast events one sample may process (each runs the chart once more)."""
+
+
 @dataclass
 class ChartState:
     name: str
@@ -124,6 +128,19 @@ class ChartState:
     entry_src: str = ""
     during_src: str = ""
     exit_src: str = ""
+    parent: int | None = None
+    """Index of the enclosing state (``None`` at the top level)."""
+    children: list[int] = field(default_factory=list)
+    parallel: bool = False
+    """All children are active at the same time (parallel regions); otherwise exactly one is."""
+    initial: int | None = None
+    """The child entered by default (the first one unless ``initial NAME`` says otherwise)."""
+    history: bool = False
+    """Re-entering the state goes back to the child that was active when it was left."""
+
+    @property
+    def composite(self) -> bool:
+        return bool(self.children)
 
 
 @dataclass
@@ -144,24 +161,67 @@ class ChartSpec:
     states: list[ChartState]
     transitions: list[ChartTransition]
     initial: int
+    """The top-level state entered first."""
     params: list[str] = field(default_factory=list)
     """Read-only names whose values come from the model workspace or a mask (calibration parameters)."""
+    events: list[str] = field(default_factory=list)
+    """Local events: ``send(name)`` broadcasts one; a guard sees ``name`` as 1 while it is processed."""
 
     @property
     def variables(self) -> list[str]:
         return [n for n, _ in self.outputs] + [n for n, _ in self.locals]
 
+    @property
+    def top(self) -> list[int]:
+        return [k for k, st in enumerate(self.states) if st.parent is None]
 
-def _check_ast(node: ast.AST, names: set[str], assignable: set[str], where: str) -> None:
+    @property
+    def hierarchical(self) -> bool:
+        return any(st.composite for st in self.states) or bool(self.events)
+
+    def ancestors(self, k: int) -> list[int]:
+        """``k`` and its enclosing states, innermost first."""
+        out = [k]
+        while self.states[out[-1]].parent is not None:
+            out.append(self.states[out[-1]].parent)  # type: ignore[arg-type]
+        return out
+
+    def default_entered(self) -> set[int]:
+        """States that are entered by default (initial states and parallel regions), from the top."""
+        out = {self.initial}
+        for st in self.states:
+            if st.composite:
+                out |= set(st.children) if st.parallel else {st.initial}  # type: ignore[arg-type]
+        return {k for k in out if k is not None}
+
+    def leaf_of(self, k: int, active: Sequence[float] | Array) -> int:
+        """The innermost active state under ``k`` (first region of a parallel state)."""
+        st = self.states[k]
+        while st.composite:
+            nxt = next((c for c in st.children if active[c]), None)
+            if nxt is None:
+                break
+            k, st = nxt, self.states[nxt]
+        return k
+
+
+def _check_ast(
+    node: ast.AST, names: set[str], assignable: set[str], where: str, events: Set[str] = frozenset()
+) -> None:
     for sub in ast.walk(node):
         if not isinstance(sub, _ALLOWED):
             raise ParameterError(f"{where}: '{type(sub).__name__}' is not allowed in charts")
         if isinstance(sub, ast.Call):
-            if not isinstance(sub.func, ast.Name) or (sub.func.id not in _FUNCS and sub.func.id != "after"):
-                raise ParameterError(f"{where}: only {', '.join([*_FUNCS, 'after'])} can be called")
+            if not isinstance(sub.func, ast.Name) or (
+                sub.func.id not in _FUNCS and sub.func.id not in ("after", "send")
+            ):
+                raise ParameterError(f"{where}: only {', '.join([*_FUNCS, 'after', 'send'])} can be called")
             if sub.keywords:
                 raise ParameterError(f"{where}: keyword arguments are not supported")
-        known = names | set(_FUNCS) | set(_CONSTS) | {"after"}
+            if sub.func.id == "send" and (len(sub.args) != 1 or not isinstance(sub.args[0], ast.Name)
+                                          or sub.args[0].id not in events):  # fmt: skip
+                raise ParameterError(f"{where}: send() takes the name of a declared event, e.g. send(go)")
+        known = names | set(_FUNCS) | set(_CONSTS) | {"after", "send"} | set(events)
         if isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Load) and sub.id not in known:
             raise ParameterError(f"{where}: unknown name '{sub.id}'")
         if isinstance(sub, ast.Assign):
@@ -173,7 +233,8 @@ def _check_ast(node: ast.AST, names: set[str], assignable: set[str], where: str)
             raise ParameterError(f"{where}: can only update outputs and locals")
 
 
-def _parse_actions(text: str, names: set[str], assignable: set[str], where: str) -> list[ast.stmt]:
+def _parse_actions(text: str, names: set[str], assignable: set[str], where: str,
+                   events: Set[str] = frozenset()) -> list[ast.stmt]:  # fmt: skip
     text = text.strip()
     if not text:
         return []
@@ -181,10 +242,12 @@ def _parse_actions(text: str, names: set[str], assignable: set[str], where: str)
         mod = ast.parse("\n".join(part.strip() for part in text.split(";")), mode="exec")
     except SyntaxError as exc:
         raise ParameterError(f"{where}: syntax error in '{text}'") from exc
-    _check_ast(mod, names, assignable, where)
+    _check_ast(mod, names, assignable, where, events)
     for stmt in mod.body:
-        if not isinstance(stmt, ast.Assign | ast.AugAssign):
-            raise ParameterError(f"{where}: actions must be assignments like 'y = 1'")
+        is_send = (isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call)
+                   and isinstance(stmt.value.func, ast.Name) and stmt.value.func.id == "send")  # fmt: skip
+        if not isinstance(stmt, ast.Assign | ast.AugAssign) and not is_send:
+            raise ParameterError(f"{where}: actions must be assignments like 'y = 1' or send(event)")
     return mod.body
 
 
@@ -211,27 +274,57 @@ def parse_chart(text: str) -> ChartSpec:
     """Parse the chart language (see the module docstring). Raises :class:`ParameterError` with the line."""
     inputs: list[str] = []
     params: list[str] = []
+    events: list[str] = []
     outputs: list[tuple[str, float]] = []
     locals_: list[tuple[str, float]] = []
     states: list[ChartState] = []
     raw_transitions: list[tuple[int, str, str, str, str]] = []
-    initial_name: str | None = None
-    current: ChartState | None = None
+    initial_names: list[tuple[int | None, str, int]] = []  # (owner state, name, line)
     pending: list[tuple[ChartState, str, str, int]] = []
+    stack: list[tuple[int, int]] = []  # (indentation of a state line, state index), outermost first
     for lineno, raw in enumerate(text.splitlines(), 1):
-        line = raw.split("#", 1)[0].rstrip()
+        line = raw.split("#", 1)[0].rstrip().replace("\t", "    ")
         if not line.strip():
             continue
         where = f"line {lineno}"
         stripped = line.strip()
-        indented = line[0] in " \t"
+        indent = len(line) - len(line.lstrip())
         keyword, _, rest = stripped.partition(" ")
-        if indented and current is not None and re.match(r"^(entry|during|exit)\s*:", stripped):
+        while stack and stack[-1][0] >= indent:
+            stack.pop()  # this line is not inside those states
+        owner = stack[-1][1] if stack else None
+        if re.match(r"^(entry|during|exit)\s*:", stripped):
+            if owner is None:
+                raise ParameterError(f"{where}: entry/during/exit must be indented under a state")
             kind, _, actions = stripped.partition(":")
-            pending.append((current, kind.strip(), actions, lineno))
+            pending.append((states[owner], kind.strip(), actions, lineno))
             continue
-        current = None
-        if keyword == "input":
+        if keyword == "state":
+            words = rest.split()
+            name = words[0] if words else ""
+            if not name.isidentifier() or any(w != "parallel" for w in words[1:]):
+                raise ParameterError(f"{where}: write 'state NAME' or 'state NAME parallel'")
+            if any(st.name == name for st in states):
+                raise ParameterError(f"{where}: state '{name}' is defined twice")
+            states.append(ChartState(name, parent=owner, parallel="parallel" in words[1:]))
+            if owner is not None:
+                states[owner].children.append(len(states) - 1)
+            stack.append((indent, len(states) - 1))
+        elif keyword == "history" and not rest.strip():
+            if owner is None:
+                raise ParameterError(f"{where}: 'history' must be indented under a state with children")
+            states[owner].history = True
+        elif keyword == "initial":
+            initial_names.append((owner, rest.strip(), lineno))
+        elif keyword == "transition":
+            m = re.match(r"^(\w+)\s*->\s*(\w+)\s*:(.*)$", rest.strip())
+            if not m:
+                raise ParameterError(f"{where}: write 'transition A -> B: guard' (optionally '/ action')")
+            guard, _, action = m.group(3).partition("/")
+            raw_transitions.append((lineno, m.group(1), m.group(2), guard.strip(), action.strip()))
+        elif owner is not None:
+            raise ParameterError(f"{where}: inside a state only entry, during, exit, state, initial and history")
+        elif keyword == "input":
             inputs += [n for n, _ in _parse_vars(rest, where, with_init=False)]
         elif keyword == "output":
             outputs += _parse_vars(rest, where, with_init=True)
@@ -239,105 +332,216 @@ def parse_chart(text: str) -> ChartSpec:
             locals_ += _parse_vars(rest, where, with_init=True)
         elif keyword == "param":
             params += [n for n, _ in _parse_vars(rest, where, with_init=False)]
-        elif keyword == "state":
-            name = rest.strip()
-            if not name.isidentifier():
-                raise ParameterError(f"{where}: invalid state name '{name}'")
-            if any(s.name == name for s in states):
-                raise ParameterError(f"{where}: state '{name}' is defined twice")
-            current = ChartState(name)
-            states.append(current)
-        elif keyword == "initial":
-            initial_name = rest.strip()
-        elif keyword == "transition":
-            m = re.match(r"^(\w+)\s*->\s*(\w+)\s*:(.*)$", rest.strip())
-            if not m:
-                raise ParameterError(f"{where}: write 'transition A -> B: guard' (optionally '/ action')")
-            guard, _, action = m.group(3).partition("/")
-            raw_transitions.append((lineno, m.group(1), m.group(2), guard.strip(), action.strip()))
+        elif keyword == "event":
+            events += [n for n, _ in _parse_vars(rest, where, with_init=False)]
         else:
-            raise ParameterError(f"{where}: expected input, output, local, param, state, initial or transition")
+            raise ParameterError(f"{where}: expected input, output, local, param, event, state, initial or transition")
     if not states:
         raise ParameterError("a chart needs at least one state")
     names = set(inputs) | {n for n, _ in outputs} | {n for n, _ in locals_} | set(params) | {"t_in_state"}
     assignable = {n for n, _ in outputs} | {n for n, _ in locals_}
-    declared = [*inputs, *(o for o, _ in outputs), *(v for v, _ in locals_), *params]
-    dupes = [n for n in names if declared.count(n) > 1]
+    declared = [*inputs, *(o for o, _ in outputs), *(v for v, _ in locals_), *params, *events]
+    dupes = [n for n in declared if declared.count(n) > 1]
     if dupes:
         raise ParameterError(f"names used twice: {', '.join(sorted(set(dupes)))}")
+    ev = set(events)
     for state, kind, actions, lineno in pending:
-        setattr(state, kind, _parse_actions(actions, names, assignable, f"line {lineno}"))
+        setattr(state, kind, _parse_actions(actions, names, assignable, f"line {lineno}", ev))
         setattr(state, f"{kind}_src", actions.strip())
-    index = {s.name: k for k, s in enumerate(states)}
+    index = {st.name: k for k, st in enumerate(states)}
+    top = [k for k, st in enumerate(states) if st.parent is None]
+    root_initial = top[0]
+    for owner, name, lineno in initial_names:
+        if name not in index:
+            raise ParameterError(f"line {lineno}: initial state '{name}' does not exist")
+        siblings = top if owner is None else states[owner].children
+        if index[name] not in siblings:
+            raise ParameterError(f"line {lineno}: initial state '{name}' must be directly inside "
+                                 f"{'the chart' if owner is None else repr(states[owner].name)}")  # fmt: skip
+        if owner is None:
+            root_initial = index[name]
+        else:
+            states[owner].initial = index[name]
+    for st in states:
+        if st.composite and st.initial is None:
+            st.initial = st.children[0]
+        if st.history and (not st.composite or st.parallel):
+            raise ParameterError(f"state '{st.name}': history needs child states (and not parallel ones)")
     transitions = []
     for lineno, a, b, guard, action in raw_transitions:
         for sname in (a, b):
             if sname not in index:
                 raise ParameterError(f"line {lineno}: unknown state '{sname}'")
+        src, dst = index[a], index[b]
+        anc_s, anc_d = _ancestry(states, src), _ancestry(states, dst)
+        lca = next((x for x in anc_s[1:] if x in anc_d), None)
+        below = [x for x in anc_s if x != lca][-1:] + [x for x in anc_d if x != lca][-1:]
+        if lca is not None and states[lca].parallel and len(set(below)) == 2 and below[0] != below[1]:
+            raise ParameterError(f"line {lineno}: no transitions between parallel regions ({a} -> {b})")
         try:
             g = ast.parse(guard or "True", mode="eval")
         except SyntaxError as exc:
             raise ParameterError(f"line {lineno}: syntax error in guard '{guard}'") from exc
-        _check_ast(g, names, assignable, f"line {lineno}")
-        transitions.append(
-            ChartTransition(
-                index[a],
-                index[b],
-                g.body,
-                _parse_actions(action, names, assignable, f"line {lineno}"),
-                guard or "true",
-                action,
-            )
-        )
-    if initial_name is not None and initial_name not in index:
-        raise ParameterError(f"initial state '{initial_name}' does not exist")
-    return ChartSpec(inputs, outputs, locals_, states, transitions, index[initial_name] if initial_name else 0, params)
+        _check_ast(g, names, assignable, f"line {lineno}", ev)
+        transitions.append(ChartTransition(src, dst, g.body, _parse_actions(action, names, assignable,
+                                                                            f"line {lineno}", ev),
+                                           guard or "true", action))  # fmt: skip
+    return ChartSpec(inputs, outputs, locals_, states, transitions, root_initial, params, events)
+
+
+def _ancestry(states: list[ChartState], k: int) -> list[int]:
+    out = [k]
+    while states[out[-1]].parent is not None:
+        out.append(states[out[-1]].parent)  # type: ignore[arg-type]
+    return out
+
+
+def _send_to_index(stmts: list[ast.stmt], events: list[str]) -> list[ast.stmt]:
+    """``send(go)`` → ``send(<index of go>)`` (an event name is otherwise a 0/1 value)."""
+    out = []
+    for st in stmts:
+        if isinstance(st, ast.Expr) and isinstance(st.value, ast.Call) and getattr(st.value.func, "id", "") == "send":
+            arg = st.value.args[0]
+            assert isinstance(arg, ast.Name)
+            st = ast.Expr(ast.Call(ast.Name("send", ast.Load()), [ast.Constant(events.index(arg.id))], []))
+        out.append(st)
+    return out
 
 
 class _Interpreter:
-    """Executes parsed chart code on a dictionary of variables (compiled once to Python code objects)."""
+    """Runs a chart on a dictionary of variables (code compiled once). The configuration is kept in arrays:
+    ``active`` (0/1 per state), ``ticks`` (samples since each state was entered) and ``hist`` (last active child
+    of each state with history, -1 if none)."""
 
     def __init__(self, spec: ChartSpec) -> None:
         self.spec = spec
 
-        def comp_stmts(stmts: list[ast.stmt]) -> Any:
+        def comp(stmts: list[ast.stmt]) -> Any:
+            stmts = _send_to_index(stmts, spec.events)
             mod = ast.Module(body=stmts, type_ignores=[])
             return compile(ast.fix_missing_locations(mod), "<chart>", "exec") if stmts else None
 
-        self.entry = [comp_stmts(s.entry) for s in spec.states]
-        self.during = [comp_stmts(s.during) for s in spec.states]
-        self.exit = [comp_stmts(s.exit) for s in spec.states]
+        self.entry = [comp(st.entry) for st in spec.states]
+        self.during = [comp(st.during) for st in spec.states]
+        self.exit = [comp(st.exit) for st in spec.states]
         self.guards = [
             compile(ast.fix_missing_locations(ast.Expression(t.guard)), "<chart>", "eval") for t in spec.transitions
         ]
-        self.actions = [comp_stmts(t.action) for t in spec.transitions]
+        self.actions = [comp(t.action) for t in spec.transitions]
         self.outgoing: list[list[int]] = [[] for _ in spec.states]
         for k, t in enumerate(spec.transitions):
             self.outgoing[t.source].append(k)
+        self.fired: list[int] = []
+        """Transitions that fired in the last step (for coverage)."""
 
     @staticmethod
     def _run(code: Any, env: dict[str, Any]) -> None:
         if code is not None:
             exec(code, {"__builtins__": {}}, env)
 
-    def step(self, active: int, ticks: int, env: dict[str, Any], period: float) -> tuple[int, int]:
-        elapsed = ticks + 1  # periods since the state was entered (one has passed at the first step after entry)
+    def _clock(self, k: int, env: dict[str, Any], period: float) -> None:
+        elapsed = self.ticks[k] + 1  # periods since entry (one has passed at the first step after it)
         env["t_in_state"] = elapsed * period
         env["after"] = lambda n: elapsed >= n
-        for k in self.outgoing[active]:
-            if eval(self.guards[k], {"__builtins__": {}}, env):
-                target = self.spec.transitions[k].target
-                self._run(self.exit[active], env)
-                self._run(self.actions[k], env)
-                self._run(self.entry[target], env)
-                return target, 0
-        self._run(self.during[active], env)
-        return active, ticks + 1
 
-    def enter_initial(self, env: dict[str, Any]) -> None:
+    # ------------------------------------------------------------------ configuration changes
+
+    def _enter_one(self, k: int, env: dict[str, Any]) -> None:
         env["t_in_state"] = 0.0
         env["after"] = lambda n: n <= 0
-        self._run(self.entry[self.spec.initial], env)
+        self.active[k], self.ticks[k] = 1.0, 0.0
+        self.entered.add(k)
+        self._run(self.entry[k], env)
+
+    def _enter_default(self, k: int, env: dict[str, Any]) -> None:
+        self._enter_one(k, env)
+        st = self.spec.states[k]
+        if st.parallel:
+            for c in st.children:
+                self._enter_default(c, env)
+        elif st.composite:
+            h = int(self.hist[k])
+            self._enter_default(h if st.history and h >= 0 else st.initial, env)  # type: ignore[arg-type]
+
+    def _exit(self, k: int, env: dict[str, Any]) -> None:
+        st = self.spec.states[k]
+        for c in reversed(st.children):
+            if self.active[c]:
+                if not st.parallel:
+                    self.hist[k] = float(c)
+                self._exit(c, env)
+        self._run(self.exit[k], env)
+        self.active[k] = 0.0
+
+    def _fire(self, k: int, env: dict[str, Any]) -> None:
+        t = self.spec.transitions[k]
+        anc_s, anc_d = self.spec.ancestors(t.source), self.spec.ancestors(t.target)
+        # The innermost state that contains both ends and is left neither way (a self-transition leaves and
+        # re-enters its state). Everything below it on the source side is exited, on the target side entered.
+        lca = next((x for x in anc_s[1:] if x in anc_d), None)
+        leave = anc_s[anc_s.index(lca) - 1] if lca is not None else anc_s[-1]
+        self._exit(leave, env)
+        self._run(self.actions[k], env)
+        path = anc_d[: anc_d.index(lca)] if lca is not None else anc_d
+        for x in reversed(path[1:]):  # down to the target: enter each level, and the other parallel regions
+            if not self.active[x]:
+                self._enter_one(x, env)
+            st = self.spec.states[x]
+            if st.parallel:
+                for c in st.children:
+                    if not self.active[c] and c not in path:
+                        self._enter_default(c, env)
+        self._enter_default(t.target, env)
+        self.fired.append(k)
+
+    # ------------------------------------------------------------------ one sample
+
+    def _process(self, k: int, env: dict[str, Any], period: float, act0: Array) -> None:
+        """Outer transitions first; if none fires, ``during`` and then the active children."""
+        self._clock(k, env, period)
+        for tk in self.outgoing[k]:
+            if eval(self.guards[tk], {"__builtins__": {}}, env):
+                self._fire(tk, env)
+                return
+        self._run(self.during[k], env)
+        for c in self.spec.states[k].children:
+            if act0[c] and self.active[c]:
+                self._process(c, env, period, act0)
+
+    def step(self, active: Array, ticks: Array, hist: Array, env: dict[str, Any], period: float) -> None:
+        """One sample: process the chart, then every broadcast event (in order), then advance the clocks.
+        Changes ``active``, ``ticks`` and ``hist`` in place."""
+        self.active, self.ticks, self.hist = active, ticks, hist
+        self.entered: set[int] = set()
+        self.fired = []
+        queue: list[int] = []
+        env["send"] = lambda e: queue.append(int(e)) if len(queue) < MAX_EVENT_PASSES else None
+        for name in self.spec.events:
+            env[name] = 0.0
+        event: int | None = None
+        for _ in range(MAX_EVENT_PASSES + 1):
+            if event is not None:
+                env[self.spec.events[event]] = 1.0
+            act0 = active.copy()
+            for k in self.spec.top:
+                if act0[k] and active[k]:
+                    self._process(k, env, period, act0)
+            if event is not None:
+                env[self.spec.events[event]] = 0.0
+            if not queue:
+                break
+            event = queue.pop(0)
+        for k in range(len(active)):
+            if active[k] and k not in self.entered:
+                ticks[k] += 1.0
+
+    def enter_initial(self, active: Array, ticks: Array, hist: Array, env: dict[str, Any]) -> None:
+        self.active, self.ticks, self.hist = active, ticks, hist
+        self.entered = set()
+        env["send"] = lambda e: None
+        for name in self.spec.events:
+            env[name] = 0.0
+        self._enter_default(self.spec.initial, env)
 
 
 @register
@@ -418,15 +622,20 @@ class StateChart(Block):
         if bad:
             raise ValueError(f"chart inputs must be scalar: {', '.join(bad)}")
 
-    # discrete state layout: [active state, ticks in state, outputs..., locals...]
+    # discrete state layout: [active (one 0/1 per state), ticks per state, history per state, outputs..., locals...]
+
+    def _layout(self) -> tuple[int, int]:
+        n = len(self.spec.states)
+        return n, 3 * n
 
     def _env(self, u: Sequence[Array], xd: Array) -> dict[str, Any]:
         env: dict[str, Any] = {n: float(u[k][0]) for k, n in enumerate(self.spec.inputs)}
         env.update(_FUNCS)
         env.update(_CONSTS)
         env.update(self._params())
+        _n, v0 = self._layout()
         for k, name in enumerate(self.spec.variables):
-            env[name] = float(xd[2 + k])
+            env[name] = float(xd[v0 + k])
         return env
 
     def initial_discrete_state(self) -> Array:
@@ -436,8 +645,10 @@ class StateChart(Block):
         env.update(self._params())
         for name, init in self.spec.outputs + self.spec.locals:
             env[name] = init
-        self._interp.enter_initial(env)
-        return np.array([float(self.spec.initial), 0.0, *[float(env[n]) for n in self.spec.variables]])
+        n, _v0 = self._layout()
+        active, ticks, hist = np.zeros(n), np.zeros(n), np.full(n, -1.0)
+        self._interp.enter_initial(active, ticks, hist, env)
+        return np.array([*active, *ticks, *hist, *[float(env[v]) for v in self.spec.variables]])
 
     def _params(self) -> dict[str, float]:
         missing = [n for n in self.spec.params if n not in self.param_values]
@@ -447,40 +658,39 @@ class StateChart(Block):
 
     def _step(self, u: Sequence[Array], xd: Array) -> Array:
         env = self._env(u, xd)
-        active, ticks = self._interp.step(int(xd[0]), int(xd[1]), env, self.period())
-        return np.array([float(active), float(ticks), *[float(env[n]) for n in self.spec.variables]])
+        n, v0 = self._layout()
+        active, ticks, hist = xd[:n].copy(), xd[n : 2 * n].copy(), xd[2 * n : v0].copy()
+        self._interp.step(active, ticks, hist, env, self.period())
+        return np.array([*active, *ticks, *hist, *[float(env[v]) for v in self.spec.variables]])
+
+    def active_state(self, xd: Array) -> int:
+        """Number of the innermost active state (in the first parallel region), as the state output gives it."""
+        top = next((k for k in self.spec.top if xd[k]), self.spec.initial)
+        return self.spec.leaf_of(top, xd)
 
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
         nxt = self._step(u, xd)
-        outs = [np.array([nxt[2 + k]]) for k in range(len(self.spec.outputs))]
+        _n, v0 = self._layout()
+        outs = [np.array([nxt[v0 + k]]) for k in range(len(self.spec.outputs))]
         if self.params["state_output"]:
-            outs.append(np.array([nxt[0]]))
+            outs.append(np.array([float(self.active_state(nxt))]))
         return outs
 
     def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
         return self._step(u, xd)
 
+    def _transition_label(self, k: int) -> str:
+        t = self.spec.transitions[k]
+        return f"{self.spec.states[t.source].name} -> {self.spec.states[t.target].name} ({t.guard_src})"
+
     def coverage_outcomes(self) -> list[str]:
-        states = [f"state {s.name}" for s in self.spec.states]
-        trans = [
-            f"{self.spec.states[t.source].name} -> {self.spec.states[t.target].name} ({t.guard_src})"
-            for t in self.spec.transitions
+        return [f"state {st.name}" for st in self.spec.states] + [
+            self._transition_label(k) for k in range(len(self.spec.transitions))
         ]
-        return states + trans
 
     def coverage_hits(self, t: float, u: Sequence[Array], y: Sequence[Array], xd: Array) -> list[str]:
-        before = int(xd[0])
-        env = self._env(u, xd)
-        elapsed_ticks = int(xd[1])
-        hits = [f"state {self.spec.states[before].name}"]
-        env["t_in_state"] = (elapsed_ticks + 1) * self.period()
-        env["after"] = lambda n: elapsed_ticks + 1 >= n
-        for k in self._interp.outgoing[before]:
-            if eval(self._interp.guards[k], {"__builtins__": {}}, env):
-                tr = self.spec.transitions[k]
-                hits.append(
-                    f"{self.spec.states[tr.source].name} -> {self.spec.states[tr.target].name} ({tr.guard_src})"
-                )
-                hits.append(f"state {self.spec.states[tr.target].name}")
-                break
-        return hits
+        n, _v0 = self._layout()
+        before = {k for k in range(n) if xd[k]}
+        after = self._step(u, xd)
+        hits = [f"state {self.spec.states[k].name}" for k in sorted(before | {k for k in range(n) if after[k]})]
+        return hits + [self._transition_label(k) for k in self._interp.fired]

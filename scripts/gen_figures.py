@@ -1423,6 +1423,64 @@ def xcp_live() -> plt.Figure:
     return fig
 
 
+CHART_POWER = """input key, rpm, fault
+output mode = 0, mil = 0, stalls = 0
+event stalled
+
+state off
+  entry: mode = 0
+state on parallel
+  state engine
+    state cranking
+      entry: mode = 1
+    state running
+      entry: mode = 2
+  state diagnosis
+    state ok
+      entry: mil = 0
+    state failed
+      entry: mil = 1
+
+transition off -> on: key > 0.5
+transition on -> off: key < 0.5
+transition cranking -> running: rpm > 600
+transition running -> cranking: rpm < 300 / stalls += 1; send(stalled)
+transition ok -> failed: fault > 0.5 or stalled
+transition failed -> ok: fault < 0.5 and after(30)
+"""
+
+
+@figure("chart_hierarchy")
+def chart_hierarchy() -> plt.Figure:
+    from nervus import Diagram
+    from nervus.blocks import FromWorkspace, StateChart, Terminator
+
+    t = np.arange(0, 12.0, 0.1)
+    key = (t >= 1.0) & (t < 10.5)
+    rpm = np.interp(t, [0, 1, 2.5, 5.0, 5.5, 6.0, 7.5, 12], [0, 0, 800, 800, 150, 150, 800, 800])
+    d = Diagram("power")
+    c = d.add(StateChart(definition=CHART_POWER, sample_time=0.1, state_output=False), name="chart")
+    for k, (name, data) in enumerate((("key", key * 1.0), ("rpm", rpm), ("fault", 0 * t))):
+        d.connect(d.add(FromWorkspace(time=t, data=data, interpolation="hold"), name=name), (c, k))
+    for k in range(3):
+        d.connect((c, k), d.add(Terminator()))
+    r = simulate(d, 12.0, solver="rk4", step=0.1)
+    fig, (a0, a1, a2) = plt.subplots(3, 1, figsize=(6.4, 4.6), sharex=True, height_ratios=[1, 1.2, 0.8])
+    a0.plot(t, rpm, color=C1, lw=1.5, label="rpm")
+    a0.step(t, key * 800, where="post", color=GRID, lw=2, label="key (×800)")
+    a0.legend(loc="upper right", fontsize=8)
+    a0.set_title("Engine region and diagnosis region, linked by the event 'stalled'", color=INK, fontsize=9)
+    a1.step(r.t, r.signal("chart", 0), where="post", color=C2, lw=2)
+    a1.set_yticks([0, 1, 2], ["off", "cranking", "running"])
+    a1.set_ylabel("mode")
+    a2.step(r.t, r.signal("chart", 1), where="post", color=C3, lw=2)
+    a2.set_yticks([0, 1], ["ok", "failed"])
+    a2.set_ylabel("diagnosis")
+    a2.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

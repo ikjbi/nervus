@@ -25,6 +25,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- State Charts: nested and parallel states, history, events (`send`), transitions across levels; generated C
+  matches the simulation.
 - Requirements traceability: a Requirements tab (CSV import, HTML report), links from blocks (right-click ▸
   Requirements…) and test cases, status per requirement from the test results, and a Model Advisor rule.
 - Algebraic loop solver (Simulation ▸ Settings ▸ Algebraic loops = solve): loops are torn and solved with

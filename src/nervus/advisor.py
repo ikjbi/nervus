@@ -97,13 +97,13 @@ def _chart_unreachable(d: Diagram, facts: dict[str, object]) -> Iterator[Finding
         spec = getattr(b, "spec", None)
         if b.type_id != "charts.state_chart" or spec is None:
             continue
-        targets = {t.target for t in spec.transitions} | {spec.initial}
+        targets = {t.target for t in spec.transitions} | spec.default_entered()
         for k, s in enumerate(spec.states):
             if k not in targets:
                 yield Finding(
                     "chart-unreachable",
                     "warning",
-                    f"state '{s.name}' has no incoming transition and is not the initial state, so it is never active.",
+                    f"state '{s.name}' has no incoming transition and is not an initial state, so it is never active.",
                     (path,),
                 )
 

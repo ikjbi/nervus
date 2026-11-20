@@ -64,6 +64,64 @@ The chart runs at its sample time (set *sample_time*, or let it inherit a discre
 With *state_output* on, an extra last output gives the active state's number (0, 1, 2, ... in the order the
 states are written). It's handy for plotting.
 
+## Nested states, parallel states, history and events
+
+Larger charts are easier to read with **hierarchy**. Indent a `state` under another one to nest it:
+
+```
+input key, rpm, fault
+output mode = 0, mil = 0, stalls = 0
+event stalled
+
+state off
+  entry: mode = 0
+state on parallel             # two regions, both active while 'on' is
+  state engine
+    state cranking            # the first child is the initial one
+      entry: mode = 1
+    state running
+      entry: mode = 2
+  state diagnosis
+    state ok
+      entry: mil = 0
+    state failed
+      entry: mil = 1
+
+transition off -> on: key > 0.5
+transition on -> off: key < 0.5                  # leaves every state inside 'on'
+transition cranking -> running: rpm > 600
+transition running -> cranking: rpm < 300 / stalls += 1; send(stalled)
+transition ok -> failed: fault > 0.5 or stalled
+transition failed -> ok: fault < 0.5 and after(30)
+```
+
+- **Nested (OR) states**: a state with child states has exactly one active child. Entering it enters its
+  initial child: the first one, or the one named by an indented `initial NAME`.
+- **Parallel (AND) states**: `state NAME parallel` makes all its children active at the same time, as
+  independent regions (here the engine and its diagnosis). There are no transitions between regions; they
+  communicate through variables and events.
+- **History**: an indented `history` line makes a state remember which child was active when it was left;
+  entering it again goes back to that child instead of the initial one.
+- **Events**: `event NAME` declares an event. An action `send(NAME)` broadcasts it: after the current pass
+  the chart runs once more with `NAME` true in the guards. Here the stall in the engine region sets the
+  diagnosis region to *failed* in the same sample. At most 8 events are processed per sample.
+- **Transitions across levels**: a transition may connect any two states (not in different parallel regions).
+  It exits the states it leaves from the inside out (`exit` actions, innermost first), runs its action, and
+  enters the states down to the target from the outside in (`entry` actions), then the target's initial
+  children.
+
+**Priority**: outer transitions are checked first: while `on` is active, `on -> off` is checked before anything
+inside it. If no transition of a state fires, its `during` actions run and then its active children are
+processed in the order they are written. `after(n)` and `t_in_state` count the time in the state whose
+transition or `during` action is being evaluated. The state output gives the innermost active state of the
+first region.
+
+![The chart above: the stall at 5.4 s switches the diagnosis region to failed through the event; it recovers 3 s later](figures/chart_hierarchy.png)
+
+Hierarchical charts are generated as C code like flat ones (the same algorithm, unrolled over the states), and
+back-to-back tests check them sample by sample. The Model Advisor knows that initial children and parallel
+regions are entered by default.
+
 ## Calibration parameters in a chart
 
 Thresholds and times in an ECU's mode logic are calibrated like any other value. Declare them with
@@ -109,10 +167,10 @@ time in a gear and the hysteresis between the up- and downshift maps keep it fro
 
 ## C code
 
-Charts are generated as a `switch` over the states, so they can be part of the ECU code. A back-to-back test
+Charts are generated as C code (the transitions of each state as `if` / `else if`, and the entry and exit
+actions inlined), so they can be part of the ECU code. A back-to-back test
 in the test suite checks the generated chart against the simulation sample by sample, with zero tolerance.
 
 ## Planned
 
-A graphical chart editor, hierarchical (nested) and parallel states, and events are on the
-roadmap.
+A graphical chart editor is on the roadmap.

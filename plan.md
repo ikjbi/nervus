@@ -224,7 +224,7 @@ tests/
 ## Phase 14 – State machines
 - [x] State chart block (a Stateflow-like subset): states, transitions, guards, entry/during/exit actions,
       locals, `after(n)`, `t_in_state`, defined in a small text language
-- [ ] Hierarchical (nested) and parallel states, events, history junctions
+- [x] Hierarchical (nested) and parallel states, events, history junctions
 - [ ] Graphical state-chart editor
 - [x] C code generation for charts (back-to-back tested with zero tolerance)
 - [x] Example: engine operating modes (crank, idle, run, fuel cut-off, stall) with chart `param`s

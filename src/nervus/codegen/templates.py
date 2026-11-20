@@ -746,8 +746,14 @@ _C_CMPS = {ast.Eq: "==", ast.NotEq: "!=", ast.Lt: "<", ast.LtE: "<=", ast.Gt: ">
 class _ChartC:
     """Translates the (whitelisted) chart AST into C expressions and statements."""
 
-    def __init__(self, names: dict[str, str], ticks: str, period: str) -> None:
+    def __init__(self, names: dict[str, str], ticks: str, period: str, events: list[str] | None = None,
+                 max_events: int = 8) -> None:  # fmt: skip
         self.names, self.ticks, self.period = names, ticks, period
+        self.events, self.max_events = list(events or []), max_events
+
+    def at(self, ticks: str) -> _ChartC:
+        """The same translator with another state's clock (``after`` and ``t_in_state``)."""
+        return _ChartC(self.names, ticks, self.period, self.events, self.max_events)
 
     def expr(self, n: ast.AST) -> str:
         if isinstance(n, ast.Constant):
@@ -805,7 +811,12 @@ class _ChartC:
     def stmts(self, body: list[ast.stmt]) -> list[str]:
         lines = []
         for st in body:
-            if isinstance(st, ast.Assign):
+            if isinstance(st, ast.Expr) and isinstance(st.value, ast.Call):  # send(event)
+                arg = st.value.args[0]
+                assert isinstance(arg, ast.Name)
+                k = self.events.index(arg.id)
+                lines.append(f"if (nq < {self.max_events}) {{ q[nq] = {k}; nq++; }} /* send({arg.id}) */")
+            elif isinstance(st, ast.Assign):
                 target = st.targets[0]
                 assert isinstance(target, ast.Name)
                 lines.append(f"{self.names[target.id]} = {self.cond_value(st.value)};")
@@ -827,58 +838,148 @@ def _is_bool(n: ast.AST) -> bool:
 
 @template("charts.state_chart")
 def _state_chart(e: Emitter) -> BlockCode:
+    """The chart as C: the same algorithm as the simulation (``nervus.blocks.chart._Interpreter``), unrolled over
+    the state tree. The state array holds the active flags, the ticks and the history of every state, then the
+    variables."""
+    from nervus.blocks.chart import MAX_EVENT_PASSES
+
     blk = e.block
     spec = blk.spec  # type: ignore[attr-defined]
-    s = e.state("chart", blk.initial_discrete_state(), "[0] active state, [1] samples in state, then variables")
-    names = {n: e.u(k, "0") for k, n in enumerate(spec.inputs)}
-    for n in spec.params:  # calibration parameters
-        names[n] = e.named_param(n, blk.param_values[n])  # type: ignore[attr-defined]
-    for k, n in enumerate(spec.variables):
-        names[n] = f"{s}[{2 + k}]"
-    cg = _ChartC(names, "ticks", c_float(e.period))
-    lines = [
-        "{",
-        f"    int st = (int){s}[0];",
-        f"    real_T ticks = {s}[1];",
-        "    int fired = 0;",
-        "    switch (st) {",
-    ]
-    by_source: dict[int, list[int]] = {}
-    for k, tr in enumerate(spec.transitions):
-        by_source.setdefault(tr.source, []).append(k)
-    for si, state in enumerate(spec.states):
-        lines.append(f"    case {si}: /* {state.name} */")
-        for n, k in enumerate(by_source.get(si, [])):
-            tr = spec.transitions[k]
-            target = spec.states[tr.target]
-            body = cg.stmts(state.exit) + cg.stmts(tr.action) + cg.stmts(target.entry)
-            kw = "if" if n == 0 else "else if"
-            lines.append(f"        {kw} ({cg.expr(tr.guard)}) {{ /* -> {target.name} */")
-            lines += [f"            {x}" for x in body]
-            lines.append(f"            st = {tr.target}; ticks = 0.0; fired = 1;")
-            lines.append("        }")
-        lines.append("        break;")
-    lines += ["    default: break;", "    }", "    if (!fired) {", "        switch (st) {"]
-    for si, state in enumerate(spec.states):
-        during = cg.stmts(state.during)
-        if during:
-            lines.append(f"        case {si}:")
-            lines += [f"            {x}" for x in during]
-            lines.append("            break;")
+    n = len(spec.states)
+    s = e.state("chart", blk.initial_discrete_state(),
+                f"[0..{n - 1}] active flags, [{n}..{2 * n - 1}] samples in state, [{2 * n}..{3 * n - 1}] history, "
+                "then the variables")  # fmt: skip
+
+    def act(k: int) -> str:
+        return f"{s}[{k}]"
+
+    def tck(k: int) -> str:
+        return f"{s}[{n + k}]"
+
+    def hst(k: int) -> str:
+        return f"{s}[{2 * n + k}]"
+
+    names = {v: e.u(k, "0") for k, v in enumerate(spec.inputs)}
+    for v in spec.params:  # calibration parameters
+        names[v] = e.named_param(v, blk.param_values[v])  # type: ignore[attr-defined]
+    for k, v in enumerate(spec.variables):
+        names[v] = f"{s}[{3 * n + k}]"
+    for k, v in enumerate(spec.events):
+        names[v] = f"((ev == {k}) ? 1.0 : 0.0)"
+    cg = _ChartC(names, "0.0", c_float(e.period), spec.events, MAX_EVENT_PASSES)
+    states = spec.states
+
+    def enter_one(k: int) -> list[str]:
+        return [f"{act(k)} = 1.0; {tck(k)} = 0.0; entered[{k}] = 1; /* enter {states[k].name} */",
+                *cg.at("(-1.0)").stmts(states[k].entry)]  # fmt: skip
+
+    def enter_default(k: int) -> list[str]:
+        out = enter_one(k)
+        st = states[k]
+        if st.parallel:
+            for c in st.children:
+                out += enter_default(c)
+        elif st.composite:
+            if st.history:
+                branches = [c for c in st.children if c != st.initial]
+                out.append(f"{{ int h = (int){hst(k)};")
+                for c in branches:
+                    out += [f"    if (h == {c}) {{", *[f"        {x}" for x in enter_default(c)], "    } else"]
+                out += ["    {", *[f"        {x}" for x in enter_default(st.initial)], "    }", "}"]
+            else:
+                out += enter_default(st.initial)
+        return out
+
+    def exit_state(k: int) -> list[str]:
+        st, out = states[k], []
+        for c in reversed(st.children):
+            body = ([] if st.parallel else [f"{hst(k)} = {c}.0;"]) + exit_state(c)
+            out += [f"if ({act(c)} != 0.0) {{", *[f"    {x}" for x in body], "}"]
+        return [*out, *cg.at(tck(k)).stmts(st.exit), f"{act(k)} = 0.0; /* exit {st.name} */"]
+
+    def fire(tk: int) -> list[str]:
+        t = spec.transitions[tk]
+        anc_s, anc_d = spec.ancestors(t.source), spec.ancestors(t.target)
+        lca = next((x for x in anc_s[1:] if x in anc_d), None)
+        leave = anc_s[anc_s.index(lca) - 1] if lca is not None else anc_s[-1]
+        out = exit_state(leave) + cg.at(tck(t.source)).stmts(t.action)
+        path = anc_d[: anc_d.index(lca)] if lca is not None else anc_d
+        for x in reversed(path[1:]):
+            out += [f"if ({act(x)} == 0.0) {{", *[f"    {y}" for y in enter_one(x)], "}"]
+            if states[x].parallel:
+                for c in states[x].children:
+                    if c not in path:
+                        out += [f"if ({act(c)} == 0.0) {{", *[f"    {y}" for y in enter_default(c)], "}"]
+        return out + enter_default(t.target)
+
+    def process(k: int) -> list[str]:
+        here = cg.at(tck(k))
+        body: list[str] = []
+        outgoing = [tk for tk, t in enumerate(spec.transitions) if t.source == k]
+        for m, tk in enumerate(outgoing):
+            t = spec.transitions[tk]
+            kw = "if" if m == 0 else "} else if"
+            body += [f"{kw} ({here.expr(t.guard)}) {{ /* -> {states[t.target].name} */",
+                     *[f"    {x}" for x in fire(tk)]]  # fmt: skip
+        rest = here.stmts(states[k].during)
+        for c in states[k].children:
+            rest += process(c)
+        if outgoing:
+            body += ["} else {", *[f"    {x}" for x in rest], "}"] if rest else ["}"]
+        else:
+            body += rest
+        return [f"if (act0[{k}] != 0.0 && {act(k)} != 0.0) {{ /* {states[k].name} */",
+                *[f"    {x}" for x in body], "}"]  # fmt: skip
+
+    body = [f"for (i = 0; i < {n}; i++) {{ act0[i] = {s}[i]; }}"]
+    for k in spec.top:
+        body += process(k)
+    lines = ["{", f"    real_T act0[{n}];", f"    int entered[{n}];", "    int i;",
+             f"    for (i = 0; i < {n}; i++) {{ entered[i] = 0; }}"]  # fmt: skip
+    if spec.events:  # one pass, then one more for each broadcast event
+        lines += [
+            f"    int q[{MAX_EVENT_PASSES}];",
+            "    int nq = 0, ev = -1, pass;",
+            f"    for (pass = 0; pass <= {MAX_EVENT_PASSES}; pass++) {{",
+            *[f"        {x}" for x in body],
+            "        if (nq == 0) { break; }",
+            "        ev = q[0];",
+            "        for (i = 1; i < nq; i++) { q[i - 1] = q[i]; }",
+            "        nq--;",
+            "    }",
+        ]
+    else:
+        lines += [f"    {x}" for x in body]
     lines += [
-        "        default: break;",
-        "        }",
-        "        ticks += 1.0;",
+        f"    for (i = 0; i < {n}; i++) {{",
+        f"        if ({s}[i] != 0.0 && !entered[i]) {{ {s}[{n} + i] += 1.0; }}",
         "    }",
-        f"    {s}[0] = (real_T)st;",
-        f"    {s}[1] = ticks;",
     ]
     for k, (name, _init) in enumerate(spec.outputs):
         lines.append(f"    {e.y(k, '0')} = {names[name]};")
     if blk.params["state_output"]:
-        lines.append(f"    {e.y(len(spec.outputs), '0')} = (real_T)st;")
+        leaf = _leaf_expr(spec, act)
+        lines.append(f"    {e.y(len(spec.outputs), '0')} = {leaf};")
     lines.append("}")
     return BlockCode(lines)
+
+
+def _leaf_expr(spec: Any, act: Callable[[int], str]) -> str:
+    """C expression for the innermost active state (first parallel region), like ``StateChart.active_state``."""
+
+    def leaf(k: int) -> str:
+        st = spec.states[k]
+        if not st.composite:
+            return f"{k}.0"
+        expr = f"{k}.0"
+        for c in reversed(st.children):
+            expr = f"(({act(c)} != 0.0) ? {leaf(c)} : {expr})"
+        return expr
+
+    expr = f"{spec.initial}.0"
+    for k in reversed(spec.top):
+        expr = f"(({act(k)} != 0.0) ? {leaf(k)} : {expr})"
+    return expr
 
 
 # ---------------------------------------------------------------------------- CAN
