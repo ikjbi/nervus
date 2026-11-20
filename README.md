@@ -24,16 +24,21 @@ tool for designing, simulating and eventually generating C code for that kind of
 
 | Area | Features | Guide |
 |---|---|---|
-| Editor | block library, drag and drop, wires, undo, copy/paste, right-click menus, flip blocks, auto layout, light/dark theme, F1 help for every block | [Editor](docs/editor.md) |
-| Simulation | continuous, discrete and multirate models; fixed-step and variable-step solvers; zero-crossing detection; stop and assertion blocks | [Concepts](docs/concepts.md) |
-| Parameters | model workspace with units and limits, expressions, parameter sets (`.nervcal`), parameter sweeps from Python | [Workspace](docs/workspace.md) |
-| Structure | subsystems, masks, enabled/triggered subsystems, atomic tasks with their own period, variants, component libraries | [Subsystems](docs/subsystems.md), [Libraries](docs/libraries.md) |
-| Logic | State Chart block (states, transitions, guards, timers) | [State machines](docs/statecharts.md) |
+| Editor | block library with search, drag and drop, wires that route around blocks, undo, copy/paste, subsystems, flip/rotate/resize, auto layout, light and dark theme, F1 help with equations for every block, a Python **console** with the model in scope | [Editor](docs/editor.md) |
+| Simulation | continuous, discrete and multirate models; fixed-step and variable-step solvers (also stiff: BDF); zero-crossing detection; real-time pacing; live scopes | [Concepts](docs/concepts.md) |
+| Parameters and data | model workspace with units, limits and data types; expressions; calibration sets (`.nervcal`); a **data dictionary** of signal objects (type, unit, range) bound to named wires | [Workspace](docs/workspace.md) |
+| Structure | subsystems, masks, enabled/triggered/function-call subsystems, atomic ECU tasks with their own period, variants, linked component libraries | [Subsystems](docs/subsystems.md), [Libraries](docs/libraries.md) |
+| Logic | State Chart block: states, transitions, guards, timers, calibration parameters | [State machines](docs/statecharts.md) |
+| Physical modelling | electrical, rotational, thermal and hydraulic networks connected like real parts; batteries, motors, solenoids, injectors, relays, alternator, glow plugs | [Physical modelling](docs/physical.md) |
+| Electronics | LTspice-style circuit simulation: diodes, BJTs, MOSFETs, op-amps, switches; operating point and DC sweeps; SPICE netlist import and export | [Physical modelling](docs/physical.md), [Tutorial 11](docs/tutorials/circuits.md) |
+| Automotive models | mean-value engine, vehicle and driveline, tyres (magic formula), automatic and automated gearboxes, sensor and actuator models, diagnostic monitors with DTCs, adaptive maps, the official **WLTC and FTP-75 drive cycles** | [Tutorials](docs/tutorials/index.md) |
 | ECU code | C code generation (multirate, calibratable parameters, A2L file, HTML report), fixed-point data types, software-in-the-loop check | [C code](docs/codegen.md), [Data types](docs/datatypes.md) |
-| Testing | test cases stored with the model, Test Manager, Data Inspector, results files, model coverage, Model Advisor | [Testing](docs/testing.md), [Verification](docs/verification.md) |
-| Analysis | linearisation, trim, Bode, stability margins, step response | [Analysis](docs/analysis.md) |
-| Vehicle networks | CAN Pack/Unpack with DBC files; OBD-II live data and trouble codes from a real car | [CAN](docs/can.md), [OBD-II](docs/obd.md) |
-| Learning | examples and tutorials: idle speed control, lambda control and fuel trims, a car on a drive cycle, gear-shift logic | [Tutorials](docs/tutorials/idle-speed-control.md) |
+| Vehicle networks | CAN Pack/Unpack with DBC files (also **CAN FD**, multiplexed signals, value tables); **simulated CAN buses** with arbitration, bus load, gateways, rest-bus simulation, fault injection and E2E protection; bus trace with ASC/BLF export; real CAN adapters through python-can | [CAN](docs/can.md) |
+| Measurement and calibration | **XCP on CAN**: calibrate a running model from INCA/CANape or Python, or a real ECU from Python; **MDF4** (`.mf4`) import and export | [CAN: XCP](docs/can.md#xcp-live-measurement-and-calibration), [Testing](docs/testing.md) |
+| OBD-II | live data and trouble codes from a real car (ELM327 or CAN), and a simulated ECU to practise with | [OBD-II](docs/obd.md) |
+| Testing | test cases stored with the model, Test Manager, Data Inspector, parameter sweeps and Monte Carlo runs, model coverage, Model Advisor | [Testing](docs/testing.md), [Verification](docs/verification.md) |
+| Analysis | linearisation, trim, Bode, Nyquist, root locus, stability margins, step response, PID tuning | [Analysis](docs/analysis.md) |
+| Learning | 12 tutorials from your first model to CAN networks, each with a finished example model | [Tutorials](docs/tutorials/index.md) |
 
 ## Installation (development)
 
@@ -44,7 +49,23 @@ git clone git@github.com:ikjbi/nervus.git
 cd nervus
 uv sync                 # engine + dev tools
 uv sync --extra gui     # also install the desktop editor (PySide6, pyqtgraph, matplotlib)
+uv sync --all-extras    # everything: editor, CAN/DBC (cantools), OBD-II (pyserial), MDF4 (asammdf)
 ```
+
+## Learn Nervus
+
+Start with [Tutorial 1: your first model](docs/tutorials/first-model.md): you build a cruise control in the
+editor step by step, tune it, and meet integrator windup. Then pick a path in the
+[tutorial overview](docs/tutorials/index.md):
+
+| Path | Tutorials |
+|---|---|
+| Engine control | idle speed, lambda control and fuel trims, ignition and knock, wall wetting |
+| Vehicle and driveline | drive cycles (WLTP, FTP-75), gear-shift logic, traction control, a truck on a mountain road |
+| Electrics and electronics | starter motor and electronic throttle, electronic circuits |
+| ECU communication | a vehicle network on CAN, OBD-II, XCP calibration |
+
+Coming from MATLAB/Simulink? See [Coming from Simulink](docs/coming-from-simulink.md).
 
 ## The editor
 

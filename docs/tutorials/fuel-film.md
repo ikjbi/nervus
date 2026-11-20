@@ -1,4 +1,11 @@
-# Tutorial: wall wetting, switching sensors and learned fuel trims
+# Tutorial 5: wall wetting and learned fuel trims
+
+| | |
+|---|---|
+| **You will learn** | fuel film dynamics (x-tau) and transient compensation, a switching lambda sensor, long-term trims learned per load cell (Adaptive Map) |
+| **Before this** | Tutorial 3 |
+| **Time** | about 30 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/fuel_film.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 This tutorial follows `examples/fuel_film.py` and continues [lambda control](lambda-control.md) with three
 things every production fuel system has.
@@ -40,8 +47,14 @@ single long-term trim would be pulled back and forth between the two regions.
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 | Try | What you will see |
 |---|---|
 | `xtau_comp` = 0 | 28 % lean and rich spikes on every tip-in and tip-out |
 | `X_film` = 0.5 and `xtau_comp` = 0 (a cold engine, no compensation) | 46 % spikes; a real ECU makes X and τ depend on the coolant temperature |
 | `ltft_rate` = 0.1 | the map learns slowly: after 20 s it has 6.7 % and the short-term trim still carries the rest |
+
+## Next
+
+[Tutorial 6: a car on a drive cycle](drive-cycle.md), or pick another one from the [tutorial overview](index.md).

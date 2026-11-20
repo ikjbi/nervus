@@ -25,6 +25,11 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Tutorial 1, *your first model*: a cruise control built step by step in the editor, with screenshots
+  (`examples/cruise_control.py`); a tutorial overview with learning paths; every tutorial now starts with what
+  you will learn, what to do first and how to follow along, and ends with a link to the next one. The app's
+  tutorial pages are generated from the docs.
+- README and docs home list all features.
 - Data dictionary: signal objects (type, unit, range, description) bound to named block outputs (*Name
   Signal…* on a wire); type checks, range warnings, results by signal name, named A2L measurements.
 - Scripting console (View ▸ Console): Python with the model, the results and the block classes in scope;

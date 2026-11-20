@@ -1,4 +1,11 @@
-# Tutorial: a truck on a mountain road
+# Tutorial 9: a truck on a mountain road
+
+| | |
+|---|---|
+| **You will learn** | heavy-duty vehicles: a diesel's narrow torque band, a 12-speed automated gearbox (State Chart), cruise control, an exhaust brake on a descent |
+| **Before this** | Tutorials 6 and 7 |
+| **Time** | about 30 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/truck.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 `examples/truck.py` puts a 40-tonne truck on a 6 % climb and a 6 % descent: a heavy-duty diesel engine, a
 12-speed automated manual gearbox (AMT) with its shift logic as a State Chart, cruise control and an exhaust
@@ -30,8 +37,14 @@ the workspace.
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 | Try | What you will see |
 |---|---|
 | `exhaust_brake` = 0 | the truck runs away on the descent |
 | `shift_time` = 2.0 | longer interruptions: the truck loses more speed with every downshift on the climb |
 | `down_rpm` = 900 | later downshifts: the engine labours below its torque band |
+
+## Next
+
+[Tutorial 10: starter motor and electronic throttle](physical-models.md), or pick another one from the [tutorial overview](index.md).

@@ -1,4 +1,11 @@
-# Tutorial: lambda control and fuel trims
+# Tutorial 3: lambda control and fuel trims
+
+| | |
+|---|---|
+| **You will learn** | why petrol engines run at lambda = 1, closed-loop fuel control with a lambda sensor, short- and long-term fuel trims (as read over OBD-II), an ECU task in an atomic subsystem |
+| **Before this** | Tutorial 2 |
+| **Time** | about 45 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/lambda_control.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 This tutorial follows `examples/lambda_control.py`. It shows how a petrol engine's ECU keeps the air-fuel
 ratio at the value the catalytic converter needs, and what the **fuel trims** that you can read from your car
@@ -29,7 +36,7 @@ only in a narrow window around λ = 1, so the ECU controls λ to 1 at part load 
 - the exhaust gas needs $n_{exh}$ = 8 samples × 10 ms to reach the lambda sensor, and the sensor itself has a
   time constant $\tau$ = 0.1 s.
 
-**ECU**: the `ECU` block is an atomic subsystem (see *Subsystems*) with
+**ECU**: the `ECU` block is an *atomic subsystem* with
 `sample_time = Ts` (10 ms), the fuel task:
 
 $$ m_{fuel,cmd} = \frac{m_{air,MAF}}{14.7}\,(1 + STFT + LTFT), \qquad t_{inj} = \frac{m_{fuel,cmd}}{q_{inj}} + t_{dead} $$
@@ -44,7 +51,7 @@ $$ m_{fuel,cmd} = \frac{m_{air,MAF}}{14.7}\,(1 + STFT + LTFT), \qquad t_{inj} = 
 
 ## What happens
 
-![Lambda and the fuel trims](figures/lambda_trims.png)
+![](figures/lambda_trims.png)
 
 1. Up to 12 s λ stays at 1, even during the tip-in: the base fuel follows the measured air.
 2. At 12 s the leak makes the mixture 6 % lean. The lambda sensor sees it about 0.2 s later (exhaust delay
@@ -70,6 +77,8 @@ uv run python -m nervus.obd record --port /dev/tty.usbserial-1110 \
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 Change the workspace variables in the **Model Workspace** panel and run again:
 
 | Try | What you will see |
@@ -81,3 +90,7 @@ Change the workspace variables in the **Model Workspace** panel and run again:
 
 The test cases in the **Test Manager** check the leak and clogged-injector cases, and that λ stays at 1
 during the tip-in. Generate C code for the `ECU` block (Code → Generate C) to get the fuel task as ECU code.
+
+## Next
+
+*Tutorial 4: ignition timing and knock control*, or pick another one from the *tutorial overview*.

@@ -1,4 +1,11 @@
-# Tutorial: ignition timing and knock control
+# Tutorial 4: ignition timing and knock control
+
+| | |
+|---|---|
+| **You will learn** | spark advance from a speed/load map (2-D lookup table), knock and the knock limit, a knock controller that retards and recovers, noisy sensors |
+| **Before this** | Tutorials 2 and 3 |
+| **Time** | about 30 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/ignition_knock.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 This tutorial follows `examples/ignition_knock.py`. It is the third part of the engine-control series, after
 [idle speed control](idle-speed-control.md) and [lambda control](lambda-control.md).
@@ -48,8 +55,14 @@ The ECU subsystem generates C code; the test compares it back to back with the s
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 | Try | What you will see |
 |---|---|
 | `knock_recover` = 3 | the advance creeps up faster: twice as many knock events, but less time far below the limit (82 % torque) |
 | `knock_step` = 1 | smaller steps: the advance stays closer to the limit (3° average retard, 86 % torque) |
 | `knock_threshold` = 0.2 | noise starts to count as knock: the ECU retards almost 12° and the torque falls to 57 % |
+
+## Next
+
+[Tutorial 5: wall wetting and learned fuel trims](fuel-film.md), or pick another one from the [tutorial overview](index.md).

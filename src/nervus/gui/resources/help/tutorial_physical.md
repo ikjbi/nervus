@@ -1,17 +1,23 @@
-# Tutorial: starter motor and electronic throttle
+# Tutorial 10: starter motor and electronic throttle
+
+| | |
+|---|---|
+| **You will learn** | physical modelling (circuits, shafts, springs connected by links instead of signals): cranking an engine on a weak battery, a drive-by-wire throttle servo |
+| **Before this** | Tutorial 1; read *Physical modelling* first |
+| **Time** | about 45 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/starter_motor.nervus`, `examples/electronic_throttle.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 Two physical models that mix circuits, mechanics and control: cranking an engine with the starter motor, and
-the drive-by-wire throttle. Both are built from physical blocks (see the help page *Physical modelling*).
+the drive-by-wire throttle. Both are built from physical blocks (see *Physical modelling*).
 
 ```bash
 uv run python examples/starter_motor.py
 uv run python examples/electronic_throttle.py
 ```
 
-![Cranking (left) and the electronic throttle (right)](figures/physical_models.png)
+![](figures/physical_models.png)
 
 ## Cranking: why ECUs must survive 8 V
-
 
 The key switches the **starter relay**; the relay connects the **starter motor** to the **battery**. At standstill
 the motor has no back-EMF, so the current is limited only by the resistances of the battery (10 mΩ), the motor
@@ -29,7 +35,6 @@ battery. The rotor's inertia is lumped with the crankshaft's ($J_{engine} + 12^2
 between two separate inertias has no unique solution.
 
 ## Electronic throttle: a position servo
-
 
 The ECU reads the throttle position sensor every millisecond and sets the H-bridge's duty cycle; the motor turns
 the plate through a 20:1 gear against a return spring, whose preload closes the throttle if the motor is off
@@ -54,8 +59,14 @@ back against the simulation.
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 | Try | What you will see |
 |---|---|
 | starter: battery `R_internal` = 0.03 | the battery collapses to 4.5 V while cranking: an ECU without enough reserve resets |
 | throttle: `Kd_etc` = 0 | 10° of overshoot and 0.25 s to settle: the derivative damps the motor |
 | throttle: `R_motor` = 3 | a weaker motor: 56 ms instead of 45 ms to 90 %, and more overshoot |
+
+## Next
+
+*Tutorial 11: electronic circuits*, or pick another one from the *tutorial overview*.

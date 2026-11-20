@@ -38,6 +38,4 @@ it loads them. Version 2 added `workspace`; version 3 added subsystems (a block 
 `"system"` with its own `blocks` and `connections`); version 4 added `tests` (test cases with inputs,
 parameters and checks, see *Test cases and results*). Files from a *newer* version of Nervus are rejected with a message asking you to upgrade.
 
-**Warning:** "Python Function blocks run code"
-    A model containing a Python Function block runs that code when it is loaded and simulated.
-    Only open model files you trust.
+> **Python Function blocks run code:** A model containing a Python Function block runs that code when it is loaded and simulated. Only open model files you trust.

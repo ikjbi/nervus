@@ -226,6 +226,78 @@ def dictionary_shots(win) -> None:  # type: ignore[no-untyped-def]
         win.editor.undo_stack.undo()
 
 
+def first_model_shots(win) -> None:  # type: ignore[no-untyped-def]
+    """The first tutorial, step by step: blocks, wires, parameters, scope, Data Inspector."""
+    import importlib.util
+
+    from PySide6.QtCore import QPointF
+
+    spec = importlib.util.spec_from_file_location("cruise", ROOT / "examples" / "cruise_control.py")
+    assert spec is not None and spec.loader is not None
+    cruise = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cruise)
+    win.files.new()
+    ed, model = win.editor, win.diagram_model
+    types = {"set_speed": ("sources.step", {"time": 1.0, "final": 100.0}), "error": ("math.sum", {"signs": "+-"}),
+             "cruise_control": ("control.pid", {}), "net_force": ("math.sum", {"signs": "+-"}),
+             "accel": ("math.gain", {}), "speed": ("continuous.integrator", {}), "drag": ("math.gain", {}),
+             "scope": ("sinks.scope", {"num_inputs": 2})}  # fmt: skip
+    blocks = {}
+    for name, (type_id, params) in types.items():
+        x, y = cruise.POSITIONS[name]
+        b = ed.add_block(type_id, QPointF(x, y), **params)
+        ed.rename(b, name)
+        blocks[name] = b
+    win.view.fit()
+    grab(win, "first-model-1-blocks.png")
+    for src, sp, dst, dp in (("set_speed", 0, "error", 0), ("speed", 0, "error", 1), ("error", 0, "cruise_control", 0),
+                             ("cruise_control", 0, "net_force", 0), ("drag", 0, "net_force", 1),
+                             ("net_force", 0, "accel", 0), ("accel", 0, "speed", 0), ("speed", 0, "drag", 0),
+                             ("set_speed", 0, "scope", 0), ("speed", 0, "scope", 1)):  # fmt: skip
+        ed.connect_ports(blocks[src], sp, blocks[dst], dp)
+    ed.flip_blocks([blocks["drag"]])
+    win.view.fit()
+    grab(win, "first-model-2-wired.png")
+    for name, value, unit in (("m", 1500.0, "kg"), ("c_drag", 8.0, "N/(km/h)"), ("Kp", 300.0, "N/(km/h)"),
+                              ("Ki", 0.0, "N/(km/h·s)")):  # fmt: skip
+        ed.add_variable(name, value)
+        ed.update_variable(name, unit=unit)
+    ed.set_params(blocks["cruise_control"], {"P": "Kp", "I": "Ki", "upper": 4000.0, "lower": -6000.0})
+    ed.set_params(blocks["accel"], {"gain": "3.6 / m"})
+    ed.set_params(blocks["drag"], {"gain": "c_drag"})
+    from dataclasses import replace
+
+    ed.set_settings(replace(model.root.settings, t_final=40.0))
+    win.scene.select_blocks(["cruise_control"])
+    win.workspace_dock.raise_()
+    win.resizeDocks([win.workspace_dock], [270], Qt.Orientation.Vertical)
+    QApplication.processEvents()
+    grab(win, "first-model-3-parameters.png")
+    for ki, aw in ((0.0, "none"), (30.0, "none"), (30.0, "clamping")):
+        ed.update_variable("Ki", value=ki)
+        ed.set_params(blocks["cruise_control"], {"anti_windup": aw})
+        win.simulation.run()
+        win.simulation.wait()
+        for _ in range(10):
+            QApplication.processEvents()
+        if ki == 0.0:
+            scope = win.open_scope(blocks["scope"])
+            scope.resize(760, 420)
+            grab(scope, "first-model-4-scope.png")
+            scope.close()
+    inspector = win.show_inspector()
+    inspector.resize(1100, 560)
+    labels = [r.label for r in win.sim_model.runs[-3:]]
+    inspector.select(labels, ["speed"])
+    grab(inspector, "first-model-5-inspector.png")
+    inspector.close()
+    import shutil
+
+    for shot in OUT.glob("first-model-*.png"):  # Tutorial 1 shows its screenshots in the app's help too
+        shutil.copy(shot, ROOT / "src" / "nervus" / "gui" / "resources" / "figures" / shot.name)
+    ed.undo_stack.setClean()
+
+
 def grab(widget: QWidget, name: str) -> None:
     QApplication.processEvents()
     widget.grab().save(str(OUT / name))
@@ -240,14 +312,14 @@ def main() -> None:
     app.setStyle("Fusion")
     from nervus.gui.theme import ThemeManager, ThemeMode
 
-    if sys.argv[1:] in (["console"], ["dictionary"]):  # only the newest shots
+    if sys.argv[1:] in (["console"], ["dictionary"], ["first"]):  # only the newest shots
         from nervus.gui.views.main_window import MainWindow
 
         ThemeManager.instance().set_mode(ThemeMode.LIGHT)
         win = MainWindow(QSettings(tempfile.mktemp(suffix=".ini"), QSettings.Format.IniFormat))
         win.resize(1400, 860)
         win.show()
-        console_and_can_shots(win) if sys.argv[1] == "console" else dictionary_shots(win)
+        {"console": console_and_can_shots, "dictionary": dictionary_shots, "first": first_model_shots}[sys.argv[1]](win)
         win.editor.undo_stack.setClean()
         win.close()
         return
@@ -527,6 +599,7 @@ def main() -> None:
             grab(win._help, "help-gain.png")
             console_and_can_shots(win)
             dictionary_shots(win)
+            first_model_shots(win)
             dlg_mod = __import__("nervus.gui.views.settings_dialog", fromlist=["SettingsDialog"])
             dlg = dlg_mod.SettingsDialog(win.diagram_model.diagram.settings, win)
             dlg.show()

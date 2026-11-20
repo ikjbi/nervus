@@ -1,4 +1,11 @@
-# Tutorial: a vehicle network
+# Tutorial 12: a vehicle network (CAN)
+
+| | |
+|---|---|
+| **You will learn** | ECUs on simulated CAN buses: DBC files, arbitration and bus load, a gateway, rest-bus simulation, E2E protection, fault injection and timeouts, the bus trace |
+| **Before this** | Tutorial 1; read *CAN communication* first |
+| **Time** | about 40 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/can_network.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 `examples/can_network.py` connects ECUs over two simulated CAN buses: an engine ECU (ECM) on the
 **powertrain CAN** (500 kbit/s), an instrument cluster on the **body CAN** (125 kbit/s), a **gateway**
@@ -30,7 +37,7 @@ From 1 s, 20 % of the ECM's frames get a flipped data bit (`corrupt_rate`). The 
 error on the wire, so this models a fault behind it, in a gateway's memory or the sender's software. Only the
 E2E CRC can see it:
 
-![Corrupted frames rejected; bus-off detected after the timeout](figures/can_network.png)
+![](figures/can_network.png)
 
 The check reports *wrong CRC* for each corrupted frame; after two corrupted frames in a row the counter has
 jumped by 3 and it reports *wrong sequence* (`max_delta` = 2). The needle never shows a corrupted value,
@@ -39,9 +46,15 @@ drops to 0 and U0100 is pending.
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 | Try | What you will see |
 |---|---|
 | `corrupt_rate` = 0.6 | many frames in a row fail: the needle lags, and eventually the timeout fires |
 | E2E Check removed (CAN Unpack straight after CAN Receive) | corrupted engine speeds reach the needle |
 | body CAN `bitrate` = 50 kbit/s | the body bus load rises to about 37 % and the latency grows |
 | `comm_timeout` = 0.03 | with corrupted frames the timeout fires after three samples without a valid frame: too sensitive |
+
+## Next
+
+You have done them all. Pick a topic from the *tutorial overview* to go deeper, or build your own model.

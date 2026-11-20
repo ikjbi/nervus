@@ -1,4 +1,11 @@
-# Tutorial: electronic circuits
+# Tutorial 11: electronic circuits
+
+| | |
+|---|---|
+| **You will learn** | circuit simulation like LTspice: a rectifier, a relay driver and its freewheeling diode, a buck converter, an active filter; SPICE netlists |
+| **Before this** | Tutorial 10 |
+| **Time** | about 45 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/rectifier.nervus`, `examples/relay_driver.nervus`, `examples/buck_converter.nervus`, `examples/active_filter.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 This tutorial follows `examples/circuits.py`: four circuits that every ECU engineer meets, simulated the way
 LTspice does it. You will see a rectifier's ripple, the voltage spike of a relay coil, a switching regulator
@@ -9,7 +16,7 @@ uv run python examples/circuits.py     # simulates the four circuits, saves them
 uv run nervus examples/relay_driver.nervus
 ```
 
-![The four circuits](figures/circuits.png)
+![](figures/circuits.png)
 
 ## 1. Rectifier with a smoothing capacitor (from a SPICE netlist)
 
@@ -82,9 +89,15 @@ a second-order filter. This is SPICE's `.ac` analysis.
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 | Try | What you will see |
 |---|---|
 | rectifier: `C1` = 470 µF | the ripple falls below 0.4 V |
 | relay driver: remove `D_flyback` | the 60 V breakdown spike (or `relay_driver(flyback=False)`) |
 | buck converter: `duty` of `pwm_20kHz` = 25 % | about 2.8 V out |
 | filter: `R1` = `R2` = 20 kΩ | the cut-off moves to 500 Hz |
+
+## Next
+
+*Tutorial 12: a vehicle network (CAN)*, or pick another one from the *tutorial overview*.

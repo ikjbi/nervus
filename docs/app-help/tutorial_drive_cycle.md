@@ -1,4 +1,11 @@
-# Tutorial: a car on a drive cycle
+# Tutorial 6: a car on a drive cycle
+
+| | |
+|---|---|
+| **You will learn** | vehicle longitudinal dynamics, a driver model, standard drive cycles (ECE-15, WLTC, FTP-75), where the energy goes, fuel consumption |
+| **Before this** | Tutorial 1 |
+| **Time** | about 40 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/drive_cycle.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 This tutorial follows `examples/drive_cycle.py`: a car with a driver model drives the **ECE-15** urban
 cycle. You will see where the energy for city driving goes, and how vehicle mass changes it.
@@ -33,7 +40,7 @@ $\tanh(10\,v)$ instead of a sign function, so it fades out smoothly at standstil
 
 ## Results
 
-![Speed and wheel power over the cycle](figures/drive_cycle.png)
+![](figures/drive_cycle.png)
 
 | | 1300 kg | 1800 kg |
 |---|---|---|
@@ -76,6 +83,8 @@ the square of the speed. Use `nervus.cycles.cycle_stats("wltc3b")` for the cycle
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 | Try | What you will see |
 |---|---|
 | `m = 1800` | about 35 % more energy: accelerating and rolling grow with the mass, only drag does not |
@@ -84,3 +93,7 @@ the square of the speed. Use `nervus.cycles.cycle_stats("wltc3b")` for the cycle
 | `Kp_driver = 0.1` | a lazier driver: the speed error reaches 2.1 km/h, just enough to fail the tracking test |
 
 The test cases in the **Test Manager** check the tracking, the distance and the energy of both masses.
+
+## Next
+
+*Tutorial 7: gear-shift logic*, or pick another one from the *tutorial overview*.

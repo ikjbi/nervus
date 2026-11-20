@@ -1,4 +1,11 @@
-# Tutorial: idle speed control
+# Tutorial 2: idle speed control
+
+| | |
+|---|---|
+| **You will learn** | how an ECU holds the idle speed: a mean-value engine model, a PI controller with feed-forward, requirements as test cases, C code |
+| **Before this** | Tutorial 1 |
+| **Time** | about 45 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/idle_speed_control.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 This tutorial walks through `examples/idle_speed_control.py`. It's a complete engine-control loop: a
 physical engine model, an ECU function that holds the idle speed, a calibration, requirement tests, and C
@@ -44,7 +51,7 @@ dropped, and the manifold delay makes the reaction slow, so the speed falls to a
 receive the AC *request* about 200 ms before the compressor clutch engages, and open the throttle in
 advance. With `alpha_ac = 3°` the dip shrinks to about 775 rpm:
 
-![Engine speed with and without AC feed-forward](figures/idle_speed_control.png)
+![](figures/idle_speed_control.png)
 
 Try it: set `alpha_ac` to 0 in the Model Workspace and run again, or compare both in the Data Inspector.
 
@@ -66,9 +73,15 @@ code.
 
 ## Things to try
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 - Make the controller faster: increase `Kp_idle`. When does it start to oscillate, and why does the
   manifold delay limit it?
 - Replace the PI controller's feed-forward with a 2-D lookup table of base opening over coolant temperature
   and target speed. Real ECUs need more air when the engine is cold.
 - Add a State Chart that switches between *crank*, *idle* and *drive* modes and only enables idle control in
   *idle*.
+
+## Next
+
+*Tutorial 3: lambda control and fuel trims*, or pick another one from the *tutorial overview*.

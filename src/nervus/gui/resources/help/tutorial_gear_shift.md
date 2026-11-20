@@ -1,4 +1,11 @@
-# Tutorial: gear-shift logic
+# Tutorial 7: gear-shift logic
+
+| | |
+|---|---|
+| **You will learn** | an automatic gearbox's shift schedule, hysteresis, a State Chart in its own ECU task, kickdown and hills, fuel consumption per gear |
+| **Before this** | Tutorials 1 and 6; *State machines* helps |
+| **Time** | about 60 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/gear_shift.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 This tutorial follows `examples/gear_shift.py`: the shift logic of an automatic gearbox, running in its own
 ECU (the TCU, transmission control unit), and a car to try it on. You will see how a shift schedule works,
@@ -10,7 +17,6 @@ uv run nervus examples/gear_shift.nervus  # open it in the editor
 ```
 
 ## The model
-
 
 The pedal and the road grade come from **From Workspace** blocks. The **tcu** subsystem reads the vehicle
 speed and the pedal and decides the gear; the **car** subsystem turns the gear and the pedal into speed and
@@ -38,7 +44,6 @@ With more pedal both thresholds rise. The engine revs further before each upshif
 when the driver asks for it. With a light foot the gearbox shifts up early, and the engine runs at low speed,
 where it uses less fuel. Pressing the pedal fully at speed raises the downshift speed above the current speed,
 and the gearbox drops a gear or two: **kickdown**.
-
 
 In the TCU, two **2-D Lookup Tables** (`up_map`, `down_map`) read the maps for the current gear and the pedal.
 The current gear comes from the chart through a **Unit Delay**: the maps for this step use the gear of the
@@ -85,7 +90,6 @@ code = generate_c(d.block("tcu"))
 
 ## The car
 
-
 **gearbox**: the ratio of the current gear times the final drive, $i = i_{gear}\,i_{final}$. The engine speed
 follows from the wheel speed, $n = \frac{v}{r_{wheel}}\,i \cdot \frac{60}{2\pi}$ rpm. The clutch is locked,
 except below idle speed, where it slips (`clutch_slip` takes the maximum of the two).
@@ -93,7 +97,6 @@ except below idle speed, where it slips (`clutch_slip` takes the maximum of the 
 **engine**: the torque is the pedal fraction times the full-load torque at the current speed, minus the
 friction torque. With the pedal released, the friction brakes the car (engine braking). While shifting, the
 torque is cut to zero.
-
 
 **body**: Newton's second law along the road, with aerodynamic drag, rolling resistance and the grade
 $\alpha = \arctan(\text{grade}/100)$:
@@ -121,7 +124,7 @@ Half as much fuel again, for the same speed. The model integrates the fuel (`fue
 
 ## Results
 
-![Pedal, speed, engine speed and gear](figures/gear_shift.png)
+![](figures/gear_shift.png)
 
 - **Full-throttle launch** (0–9 s): the upshifts come at 40 and 70 km/h, at almost 5000 rpm. Each upshift
   drops the engine speed, and the speed curve has a short flat step: the torque cut.
@@ -138,6 +141,8 @@ gears as the simulation.
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 | Try | What you will see |
 |---|---|
 | `min_gear_time = 0` | the kickdown goes from 5th to 3rd within 0.07 s, and the launch shifts 4 → 5 after only 0.2 s in 4th |
@@ -145,3 +150,7 @@ gears as the simulation.
 | `upshift_map` 1 → 2 at full pedal = 60 (first row: 15, 25, 60) | 1st gear tops out at 55 km/h, where the engine reaches 6400 rpm and its full-load torque runs out: the car is stuck in 1st until the pedal is released at 9 s. Shift maps must fit the gear ratios |
 | `mass = 2500` | the heavier car never reaches 5th: the kickdown drops one gear, and the hill pulls it down to 3rd |
 | `gear_ratios = [4.0, 2.4, 1.6, 1.2, 1.0]` | shorter gears: 85 instead of 80 km/h at 9 s, but 2800 instead of 2100 rpm when cruising |
+
+## Next
+
+*Tutorial 8: tyre slip and traction control*, or pick another one from the *tutorial overview*.

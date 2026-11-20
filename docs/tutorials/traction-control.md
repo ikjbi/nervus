@@ -1,4 +1,11 @@
-# Tutorial: tyre slip and traction control
+# Tutorial 8: tyre slip and traction control
+
+| | |
+|---|---|
+| **You will learn** | tyre slip and Pacejka's magic formula, wheel and vehicle dynamics, a traction control ECU on dry, wet and snowy roads |
+| **Before this** | Tutorial 1 |
+| **Time** | about 30 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/traction_control.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 This tutorial follows `examples/traction_control.py`: a car launching at full throttle on dry, wet and snowy
 roads, and a traction control (TCS) ECU that keeps the driven wheels from spinning.
@@ -43,8 +50,14 @@ systems use the brakes and an engine torque model for the start.
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 | Try | What you will see |
 |---|---|
 | `slip_target` = 0.2 | 20 % slip and a little faster (60 instead of 58 km/h after 6 s): this tyre's peak is broad |
 | `J_wheels` = 2.5 (the wheels alone) | the wheels spin up much faster than the 10 ms task: slip peaks at 67 % |
 | `mu_road` = 0.2, `T_wheel_max` = 500, `tcs_enable` = 0 | below the 550 N·m the snowy tyres can carry: little slip even without TCS |
+
+## Next
+
+[Tutorial 9: a truck on a mountain road](truck.md), or pick another one from the [tutorial overview](index.md).

@@ -8,6 +8,7 @@ from __future__ import annotations
 import inspect
 import math
 import re
+from pathlib import Path
 
 from nervus.blocks.registry import categories
 from nervus.core.block import Block
@@ -147,7 +148,22 @@ SHARED_PAGES = {
     "coming-from-simulink.md": "coming_from_simulink.md",
     "model-files.md": "model_files.md",
     "physical.md": "physical.md",
+    "tutorials/index.md": "tutorials.md",
+    "tutorials/first-model.md": "tutorial_first_model.md",
+    "tutorials/idle-speed-control.md": "tutorial_idle.md",
+    "tutorials/lambda-control.md": "tutorial_lambda.md",
+    "tutorials/ignition-knock.md": "tutorial_ignition.md",
+    "tutorials/fuel-film.md": "tutorial_fuel_film.md",
+    "tutorials/drive-cycle.md": "tutorial_drive_cycle.md",
+    "tutorials/gear-shift.md": "tutorial_gear_shift.md",
+    "tutorials/traction-control.md": "tutorial_traction.md",
+    "tutorials/truck.md": "tutorial_truck.md",
+    "tutorials/physical-models.md": "tutorial_physical.md",
+    "tutorials/circuits.md": "tutorial_circuits.md",
+    "tutorials/can-network.md": "tutorial_can_network.md",
 }
+"""Pages written for GitHub (docs/...) and converted for the in-app help by ``scripts/gen_block_reference.py``.
+Edit the docs version; the app version is generated."""
 
 
 def docs_page_for_app(markdown: str) -> str:
@@ -155,7 +171,18 @@ def docs_page_for_app(markdown: str) -> str:
     to other pages become plain text (the Help window has its own page list)."""
     import re
 
-    s = re.sub(r"!\[[^\]]*\]\(images/blocks/([^)]+)\)", r"![](figures/\1)", markdown)
-    s = re.sub(r"!\[[^\]]*\]\((\.\./)?images/[^)]+\)\n\n?", "", s)
-    s = re.sub(r"\[([^\]]+)\]\((?!https?:)[^)]+\.md(#[^)]*)?\)", r"*\1*", s)
-    return s.replace("!!! note", "**Note:**").replace("!!! warning", "**Warning:**")
+    s = re.sub(r"!\[[^\]]*\]\((?:\.\./)?images/blocks/([^)]+)\)", r"![](figures/\1)", markdown)
+    figures = Path(__file__).parent / "gui" / "resources" / "figures"
+
+    def screenshot(m: re.Match[str]) -> str:  # bundled screenshots stay (Tutorial 1), others are left out
+        return f"![]({'figures/' + m.group(2)})\n\n" if (figures / m.group(2)).exists() else ""
+
+    s = re.sub(r"!\[[^\]]*\]\((\.\./)?images/([^)/]+)\)\n\n?", screenshot, s)
+    s = re.sub(r"\[([^\]]+)\]\((?!https?:)[^)]*\.md(#[^)]*)?\)", r"*\1*", s)
+
+    def admonition(m: re.Match[str]) -> str:  # !!! tip "Title" + indented body → a quoted paragraph
+        title = m.group(2) or m.group(1).capitalize()
+        body = " ".join(line.strip() for line in m.group(3).splitlines() if line.strip())
+        return f"> **{title}:** {body}\n"
+
+    return re.sub(r'!!! (\w+)(?: "([^"]*)")?\n((?:    .*\n?)+)', admonition, s)

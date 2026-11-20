@@ -14,8 +14,9 @@ uv sync --extra plot          # + matplotlib for the example plots
 
 ## The editor
 
-`uv run nervus` starts the desktop editor; see [The editor](editor.md). The rest of this page builds a model
-in Python.
+`uv run nervus` starts the desktop editor. To learn it, follow
+[Tutorial 1: your first model](tutorials/first-model.md), which builds a cruise control step by step; the
+[editor guide](editor.md) lists everything it can do. The rest of this page builds a model in Python.
 
 ## Your first model
 
@@ -90,6 +91,8 @@ See [Concepts](concepts.md#solvers) for how to choose a solver.
 
 The [`examples/`](https://github.com/ikjbi/nervus/tree/main/examples) folder has complete models:
 
+- `cruise_control.py`: the cruise control of [Tutorial 1](tutorials/first-model.md), with P, PI and
+  anti-windup versions.
 - `mass_spring_damper_pid.py`: continuous PID position control with actuator limits.
 - `throttle_pi.py`: electronic throttle control with a 10 ms discrete PI controller, as on an ECU, with its
   gains as workspace variables and a second calibration file.

@@ -1,4 +1,11 @@
-# Tutorial: lambda control and fuel trims
+# Tutorial 3: lambda control and fuel trims
+
+| | |
+|---|---|
+| **You will learn** | why petrol engines run at lambda = 1, closed-loop fuel control with a lambda sensor, short- and long-term fuel trims (as read over OBD-II), an ECU task in an atomic subsystem |
+| **Before this** | Tutorial 2 |
+| **Time** | about 45 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/lambda_control.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 This tutorial follows `examples/lambda_control.py`. It shows how a petrol engine's ECU keeps the air-fuel
 ratio at the value the catalytic converter needs, and what the **fuel trims** that you can read from your car
@@ -74,6 +81,8 @@ uv run python -m nervus.obd record --port /dev/tty.usbserial-1110 \
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 Change the workspace variables in the **Model Workspace** panel and run again:
 
 | Try | What you will see |
@@ -85,3 +94,7 @@ Change the workspace variables in the **Model Workspace** panel and run again:
 
 The test cases in the **Test Manager** check the leak and clogged-injector cases, and that λ stays at 1
 during the tip-in. Generate C code for the `ECU` block (Code → Generate C) to get the fuel task as ECU code.
+
+## Next
+
+[Tutorial 4: ignition timing and knock control](ignition-knock.md), or pick another one from the [tutorial overview](index.md).

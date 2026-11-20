@@ -348,3 +348,14 @@ def test_can_network_example() -> None:
     again = load(EXAMPLES / "can_network.nervus")  # relative DBC paths inside subsystems
     assert [t.name for t in again.tests] == [t.name for t in d.tests]
     assert all(r.passed for r in run_tests(again))
+
+
+def test_cruise_control_example() -> None:
+    from nervus.testing import run_tests
+
+    mod = _import("cruise_control")
+    assert all(r.passed for r in run_tests(mod.build()))
+    p_only = simulate(mod.build(ki=0.0, anti_windup="none"))
+    windup = simulate(mod.build(anti_windup="none"))
+    assert p_only["speed"][-1] == pytest.approx(97.4, abs=0.1)  # the numbers quoted in Tutorial 1
+    assert np.max(windup["speed"]) == pytest.approx(138.6, abs=0.2)

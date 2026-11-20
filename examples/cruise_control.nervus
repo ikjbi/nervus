@@ -1,0 +1,255 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "cruise_control",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 40.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "m",
+      "value": 1500.0,
+      "description": "Vehicle mass",
+      "unit": "kg"
+    },
+    {
+      "name": "c_drag",
+      "value": 8.0,
+      "description": "Drag force per km/h",
+      "unit": "N/(km/h)"
+    },
+    {
+      "name": "Kp",
+      "value": 300.0,
+      "description": "Proportional gain",
+      "unit": "N/(km/h)"
+    },
+    {
+      "name": "Ki",
+      "value": 30.0,
+      "description": "Integral gain",
+      "unit": "N/(km/h·s)"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "set_speed",
+      "type": "sources.step",
+      "params": {
+        "time": 1.0,
+        "initial": 0.0,
+        "final": 100.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "error",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          150.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "cruise_control",
+      "type": "control.pid",
+      "params": {
+        "P": "Kp",
+        "I": "Ki",
+        "D": 0.0,
+        "N": 100.0,
+        "initial_integrator": 0.0,
+        "upper": 4000.0,
+        "lower": -6000.0,
+        "anti_windup": "clamping",
+        "Kb": 1.0
+      },
+      "meta": {
+        "position": [
+          290.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "net_force",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          450.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "accel",
+      "type": "math.gain",
+      "params": {
+        "gain": "3.6 / m",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          590.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "speed",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 0.0,
+        "upper": "inf",
+        "lower": "-inf",
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          730.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "drag",
+      "type": "math.gain",
+      "params": {
+        "gain": "c_drag",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          590.0,
+          130.0
+        ],
+        "flipped": true
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          900.0,
+          0.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "set_speed",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 0
+    },
+    {
+      "src": "speed",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 1
+    },
+    {
+      "src": "error",
+      "src_port": 0,
+      "dst": "cruise_control",
+      "dst_port": 0
+    },
+    {
+      "src": "cruise_control",
+      "src_port": 0,
+      "dst": "net_force",
+      "dst_port": 0
+    },
+    {
+      "src": "drag",
+      "src_port": 0,
+      "dst": "net_force",
+      "dst_port": 1
+    },
+    {
+      "src": "net_force",
+      "src_port": 0,
+      "dst": "accel",
+      "dst_port": 0
+    },
+    {
+      "src": "accel",
+      "src_port": 0,
+      "dst": "speed",
+      "dst_port": 0
+    },
+    {
+      "src": "speed",
+      "src_port": 0,
+      "dst": "drag",
+      "dst_port": 0
+    },
+    {
+      "src": "set_speed",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "speed",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    }
+  ],
+  "tests": [
+    {
+      "name": "reaches the set speed without overshoot",
+      "description": "With anti-windup the speed stays below 101 km/h and is within 1 km/h of 100 after 20 s",
+      "stop_time": 40.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "speed",
+          "upper": 101.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "speed",
+          "lower": 99.0,
+          "upper": 101.0,
+          "t_from": 20.0
+        }
+      ]
+    }
+  ]
+}

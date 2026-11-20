@@ -1,4 +1,11 @@
-# Tutorial: starter motor and electronic throttle
+# Tutorial 10: starter motor and electronic throttle
+
+| | |
+|---|---|
+| **You will learn** | physical modelling (circuits, shafts, springs connected by links instead of signals): cranking an engine on a weak battery, a drive-by-wire throttle servo |
+| **Before this** | Tutorial 1; read [Physical modelling](../physical.md) first |
+| **Time** | about 45 minutes |
+| **Follow along** | start the editor (`uv run nervus`), **File ▸ Open** `examples/starter_motor.nervus`, `examples/electronic_throttle.nervus`, press **▶** and double-click the scopes; the figures below come from the same model |
 
 Two physical models that mix circuits, mechanics and control: cranking an engine with the starter motor, and
 the drive-by-wire throttle. Both are built from physical blocks (see [Physical modelling](../physical.md)).
@@ -56,8 +63,14 @@ back against the simulation.
 
 ## Experiments
 
+To try one: change the value in the **Model Workspace** tab (double-click it), or for a block parameter select the block and edit it in **Properties**; press **▶** and compare with the previous run in the **Data Inspector** (Ctrl+I). **Ctrl+Z** undoes the change.
+
 | Try | What you will see |
 |---|---|
 | starter: battery `R_internal` = 0.03 | the battery collapses to 4.5 V while cranking: an ECU without enough reserve resets |
 | throttle: `Kd_etc` = 0 | 10° of overshoot and 0.25 s to settle: the derivative damps the motor |
 | throttle: `R_motor` = 3 | a weaker motor: 56 ms instead of 45 ms to 90 %, and more overshoot |
+
+## Next
+
+[Tutorial 11: electronic circuits](circuits.md), or pick another one from the [tutorial overview](index.md).
