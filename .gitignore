@@ -17,3 +17,6 @@ site/
 
 # FMUs are built for one platform; the examples create them
 *.fmu
+
+# Conflict copies made by macOS file sync ("name 2.md")
+* [0-9].*
