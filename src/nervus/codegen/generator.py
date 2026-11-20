@@ -623,6 +623,7 @@ class CGenerator:
         consts = self.param_fields(const=True)
         const_init = ",\n".join(f"    {init_values(f)} /* {f.name} */" for f in consts)
         multirate = len(steps) > 1 or any(n > 1 or off for n, off in steps)
+        offset_rates = {k for k, (n, off) in enumerate(steps) if (n - off) % n != 0} if multirate else set()
 
         body_out: list[str] = []
         body_upd: list[str] = []
@@ -637,7 +638,11 @@ class CGenerator:
             guard = f"rt_hit[{rate}] != 0u" if (kind is Kind.DISCRETE and multirate) else None
             if code.outputs:
                 if guard:
-                    body_out += [label, f"if ({guard}) {{", *[f"    {x}" for x in code.outputs], "}"]
+                    # A rate with an offset first runs later, but its outputs are computed at the start, as in the
+                    # simulation (the state updates wait for the first hit).
+                    first = rate in offset_rates
+                    out_guard = f"({guard}) || (rt_first != 0u)" if first else guard
+                    body_out += [label, f"if ({out_guard}) {{", *[f"    {x}" for x in code.outputs], "}"]
                 else:
                     body_out += [label, *code.outputs]
             if code.update:
@@ -665,6 +670,7 @@ class CGenerator:
         if multirate:
             lines += [
                 f"static uint32_T rt_count[{len(steps)}];",
+                *(["static uint8_T rt_first; /* 1 until the end of the first step */"] if offset_rates else []),
                 *(
                     [f"static uint8_T rt_hit[{len(steps)}]; /* shared by the task functions */"]
                     if self.task_plan is not None
@@ -684,6 +690,8 @@ class CGenerator:
                 lines.append(
                     f"    rt_count[{k}] = {(n - off) % n}u; /* rate {k}: every {n} base steps, offset {off} */"
                 )
+            if offset_rates:
+                lines.append("    rt_first = 1u;")
         lines += [f"    {x}" for x in init_out]
         if self.task_plan is not None:
             lines += ["}", "", *self._task_functions(codes, steps)]
@@ -696,6 +704,8 @@ class CGenerator:
             lines += [f"    for (i = 0u; i < {len(steps)}u; i++) {{ rt_hit[i] = (rt_count[i] == 0u) ? 1u : 0u; }}"]
         lines += ["", "    /* outputs */", *[f"    {x}" for x in body_out]]
         lines += ["", "    /* state updates */", *[f"    {x}" for x in body_upd]]
+        if offset_rates:
+            lines += ["    rt_first = 0u;"]
         if multirate:
             lines += [
                 "",

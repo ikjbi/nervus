@@ -191,7 +191,7 @@ tests/
 - [x] Code generation report (HTML): block-to-code traceability, memory use
 - [x] Generated code follows MISRA C guidelines (checked with cppcheck's MISRA addon; three documented
       deviations); compiles with `-Wall -Wextra -Werror -pedantic`
-- [ ] Generate code for blocks with offsets exactly like the simulation's first step
+- [x] Generate code for blocks with offsets exactly like the simulation's first step
 - [x] Optional `const` parameters (ROM) instead of calibratable RAM (variable not calibratable)
 - [ ] Reusable functions for subsystems instead of inlining
 - [x] GUI: Code → Generate C Code, with a report and "run SIL comparison"

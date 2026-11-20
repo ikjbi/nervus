@@ -155,6 +155,10 @@ if (rt_hit[1] != 0u) {  /* blocks of the 50 ms rate */
 }
 ```
 
+A rate with an **offset** (a sample time `[period, offset]`) runs first at its offset, but its blocks' outputs are
+computed in the first call already (a delay's initial value, a hold's first input), as in the simulation; their
+states change from the first hit on.
+
 ## One function per task (RTOS)
 
 On a real ECU an operating system (an RTOS, e.g. AUTOSAR OS or FreeRTOS) runs the software in periodic
@@ -202,8 +206,6 @@ Custom blocks can provide their own C template with `@nervus.codegen.template("m
 
 - Integer and fixed-point types are supported at the interface and are bit-true (see
   [Data types](datatypes.md)), but arithmetic between conversions is done in `double`.
-- Discrete blocks with a sample-time **offset** start in their first hit; their output before the
-  first hit is 0 in the generated code.
 
 ## From Python
 

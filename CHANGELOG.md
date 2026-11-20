@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- Variable-step solvers: a zero crossing whose bracket is lost to rounding (platform dependent) is located at
+  the step's end instead of stopping the simulation with "f(a) and f(b) must have different signs".
+- Generated code: blocks with a sample-time offset output their initial values from the first step, as in
+  the simulation (they were 0 until their first hit).
 - `examples/fixed_point_sensor.py` subtracted the sensor offset in counts instead of kPa, so the ADC read 0;
   the test now checks that the pressure crosses the limit.
 - XCP: frames from real hardware could be missed when another block polled the interface at the same instant;

@@ -347,3 +347,26 @@ def test_masked_subsystems_codegen(tmp_path) -> None:  # type: ignore[no-untyped
     assert res.passed, res.summary()
     assert res.c["yb"][5, 0] == 30.0 and res.c["ya"][5, 0] == 10.0
     assert "K" not in generate_c(d).params  # the masked K is per-block, not the workspace K
+
+
+def test_sample_time_offsets_match_the_first_step(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Blocks with an offset run first at their offset, but their outputs exist from the start (a delay's initial
+    value, a hold's first input), exactly as in the simulation."""
+    from nervus.blocks import DiscreteIntegrator, UnitDelay
+
+    d = Diagram("offsets")
+    u = d.add(Inport(port=1), name="u")
+    z = d.add(ZeroOrderHold(sample_time=0.01), name="z")
+    hold = d.add(ZeroOrderHold(sample_time=[0.05, 0.02]), name="hold")
+    delay = d.add(UnitDelay(initial=5.0, sample_time=[0.04, 0.03]), name="delay")
+    integ = d.add(DiscreteIntegrator(initial=3.0, sample_time=[0.05, 0.02]), name="integ")
+    scaled = d.add(Gain(gain=2.0), name="scaled")  # inherits the offset rate of the hold
+    d.chain(u, z, hold, scaled)
+    d.chain(z, delay)
+    d.chain(z, integ)
+    for k, blk in enumerate((scaled, delay, integ, z)):
+        d.connect(blk, d.add(Outport(port=k + 1), name=f"y{k}"))
+    res = back_to_back(d, {"u": np.arange(60.0) + 1.0}, 60, tolerance=0.0, folder=tmp_path)
+    assert res.passed, res.summary()
+    assert res.c["y0"][0, 0] == 2.0 and res.c["y1"][0, 0] == 5.0 and res.c["y2"][0, 0] == 3.0
+    assert "rt_first" in generate_c(d).files["offsets.c"]

@@ -79,6 +79,18 @@ def test_integer_and_fixed_point_types(tmp_path: Path) -> None:
     _strict_compile(code, tmp_path)
 
 
+def test_sample_time_offsets() -> None:
+    from nervus import Diagram
+    from nervus.blocks import Inport, Outport, UnitDelay, ZeroOrderHold
+
+    d = Diagram("offsets")
+    z = d.add(ZeroOrderHold(sample_time=0.01), name="z")
+    delay = d.add(UnitDelay(initial=5.0, sample_time=[0.04, 0.03]), name="delay")
+    d.chain(d.add(Inport(port=1), name="u"), z, delay)
+    d.connect(delay, d.add(Outport(port=1), name="y"))
+    assert [str(f) for f in misra_check(generate_c(d))] == []
+
+
 def test_one_function_per_task() -> None:
     from test_tasks_codegen import two_tasks
 
