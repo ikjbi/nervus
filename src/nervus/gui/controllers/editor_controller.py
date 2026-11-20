@@ -30,6 +30,7 @@ from nervus.gui.controllers.commands import (
     SetMaskCommand,
     SetMetaCommand,
     SetParamsCommand,
+    SetRequirementsCommand,
     SetSettingsCommand,
     SetSignalObjectCommand,
     SetTestsCommand,
@@ -484,6 +485,79 @@ class EditorController(QObject):
 
         old = self.model.root.signals[name]
         return self._push(SetSignalObjectCommand(self.model, SignalObject(**old.__dict__), None))
+
+    # ------------------------------------------------------------------ requirements
+
+    def set_requirement(self, old_id: str | None, req: Any, text: str | None = None) -> bool:
+        """Add (``old_id`` None), change or rename (``req`` with another id) or delete (``req`` None) one
+        requirement; links of blocks and tests follow a rename."""
+        reqs = self.model.root.requirements.copy()
+        if req is not None and req.id != old_id and req.id in reqs:
+            self.errorOccurred.emit(f"A requirement {req.id!r} already exists.")
+            return False
+        items = reqs.items
+        if old_id is None:
+            items.append(req)
+        else:
+            k = [r.id for r in items].index(old_id)
+            if req is None:
+                del items[k]
+            else:
+                items[k] = req
+        from nervus.core.requirements import Requirements
+
+        new = Requirements({r.id: r for r in items})
+        verb = "Add" if old_id is None else "Delete" if req is None else "Change"
+        if old_id is None or req is None or req.id == old_id:
+            rid = req.id if req is not None else old_id
+            return self._push(SetRequirementsCommand(self.model, new, text or f"{verb} requirement {rid}"))
+        self.undo_stack.beginMacro(f"Rename requirement {old_id} to {req.id}")
+        try:
+            ok = self._push(SetRequirementsCommand(self.model, new, "Rename requirement"))
+            self._relink(old_id, req.id)
+        finally:
+            self.undo_stack.endMacro()
+        return ok
+
+    def _relink(self, old: str, new: str) -> None:
+        from nervus.core.requirements import META_KEY
+
+        changes = [(b, {META_KEY: [new if r == old else r for r in b.meta[META_KEY]]})
+                   for _p, b in self.model.root.walk() if old in b.meta.get(META_KEY, [])]  # fmt: skip
+        if changes:
+            self._push(SetMetaCommand(self.model, "Relink blocks", changes))
+        if any(old in c.requirements for c in self.model.root.tests):
+            import copy
+
+            tests = copy.deepcopy(self.model.root.tests)
+            for c in tests:
+                c.requirements = [new if r == old else r for r in c.requirements]
+            self.set_tests(tests, "Relink test cases")
+
+    def import_requirements(self, path: str | Path) -> list[str]:
+        """Add or update requirements from a CSV file; returns the ids read (one undo step)."""
+        from nervus.core.requirements import read_csv
+
+        try:
+            read = read_csv(path)
+        except (OSError, ValueError, NervusError) as exc:
+            self.errorOccurred.emit(f"Could not read {Path(path).name}: {exc}")
+            return []
+        if not read:
+            self.errorOccurred.emit(f"No requirements found in {Path(path).name}.")
+            return []
+        reqs = self.model.root.requirements.copy()
+        for r in read:
+            reqs.add(r)
+        self._push(SetRequirementsCommand(self.model, reqs, f"Import {Path(path).name}"))
+        return [r.id for r in read]
+
+    def link_requirements(self, block: Block, ids: list[str]) -> bool:
+        from nervus.core.requirements import META_KEY
+
+        return self._push(
+            SetMetaCommand(self.model, f"Requirements of {block.name}", [(block, {META_KEY: list(ids) or None})])
+        )
 
     def import_dbc(self, path: str | Path) -> list[str]:
         """Add the signals and value tables of a DBC file as workspace variables (existing names are kept).

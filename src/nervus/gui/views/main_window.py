@@ -51,6 +51,7 @@ from nervus.gui.views.icons import icon
 from nervus.gui.views.library import LibraryBrowser
 from nervus.gui.views.obd_dialog import ObdRecordDialog
 from nervus.gui.views.properties import PropertyPanel
+from nervus.gui.views.requirements_panel import LinkRequirementsDialog, RequirementsPanel
 from nervus.gui.views.scope_window import ScopeWindow
 from nervus.gui.views.settings_dialog import SettingsDialog
 from nervus.gui.views.sweep_dialog import SweepDialog
@@ -88,6 +89,7 @@ class MainWindow(QMainWindow):
         self.test_panel = TestManagerPanel(self.diagram_model, self.editor, self.tests)
         self.console = ConsolePanel(self.diagram_model, self.editor, self.sim_model, self)
         self.dictionary_panel = DictionaryPanel(self.diagram_model, self.editor)
+        self.requirements_panel = RequirementsPanel(self.diagram_model, self.editor, self.tests)
         self._inspector: DataInspector | None = None
         self.scopes: dict[int, ScopeWindow] = {}
         from PySide6.QtCore import QTimer
@@ -150,7 +152,11 @@ class MainWindow(QMainWindow):
         )
         self.tabifyDockWidget(self.diagnostics_dock, self.workspace_dock)
         self.tabifyDockWidget(self.workspace_dock, self.tests_dock)
+        self.requirements_dock = self._dock(
+            "Requirements", self.requirements_panel, Qt.DockWidgetArea.BottomDockWidgetArea, "requirements"
+        )
         self.tabifyDockWidget(self.workspace_dock, self.dictionary_dock)
+        self.tabifyDockWidget(self.tests_dock, self.requirements_dock)
         self.tabifyDockWidget(self.tests_dock, self.console_dock)
         self.diagnostics_dock.raise_()
         self.resizeDocks([self.library_dock, self.properties_dock], [230, 300], Qt.Orientation.Horizontal)
@@ -328,6 +334,7 @@ class MainWindow(QMainWindow):
             self.workspace_dock,
             self.dictionary_dock,
             self.tests_dock,
+            self.requirements_dock,
             self.console_dock,
         ):
             m.addAction(dock.toggleViewAction())
@@ -442,6 +449,8 @@ class MainWindow(QMainWindow):
         self.test_panel.statusMessage.connect(self.status_label.setText)
         self.console.statusMessage.connect(self.status_label.setText)
         self.dictionary_panel.statusMessage.connect(self.status_label.setText)
+        self.requirements_panel.statusMessage.connect(self.status_label.setText)
+        self.requirements_panel.blockActivated.connect(lambda path: self._highlight((path,)))
         self.dictionary_panel.blockActivated.connect(lambda path: self._highlight((path,)))
         self.test_panel.openResult.connect(self._open_test_result)
         self.sim_model.stateChanged.connect(self._sim_state_changed)
@@ -967,6 +976,7 @@ class MainWindow(QMainWindow):
                 elif target.type_id == "sinks.scope":
                     menu.addAction("Open Scope", lambda: self.open_scope(target))
                 menu.addAction("Rename…", lambda: self.rename_block(target))
+                menu.addAction("Requirements…", lambda: self.link_requirements(target))
                 menu.addAction(self.act_block_help)
                 if is_sub:
                     menu.addSeparator()
@@ -1004,6 +1014,16 @@ class MainWindow(QMainWindow):
             if self.diagram_model.diagram.parent is not None:
                 menu.addAction(self.act_up)
         return menu
+
+    def link_requirements(self, block: Block, ids: list[str] | None = None) -> bool:
+        """Choose the requirements a block implements (right-click ▸ Requirements…)."""
+        if ids is None:
+            reqs = self.diagram_model.root.requirements
+            dlg = LinkRequirementsDialog(block, list(reqs), {r.id: r.title for r in reqs.items}, self)
+            if dlg.exec() != LinkRequirementsDialog.DialogCode.Accepted:
+                return False
+            ids = dlg.chosen()
+        return self.editor.link_requirements(block, ids)
 
     def name_signal(self, wire: Connection, name: str | None = None) -> bool:
         """Name the signal on a wire (its source output); offers the data dictionary's names."""

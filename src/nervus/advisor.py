@@ -234,6 +234,20 @@ def _default_names(d: Diagram, facts: dict[str, object]) -> Iterator[Finding]:
             )
 
 
+@rule("requirements", "requirements without blocks or tests, and links to unknown requirements")
+def _requirements(d: Diagram, facts: dict[str, object]) -> Iterator[Finding]:
+    from nervus.core.requirements import trace, unknown_links
+
+    for row in trace(d):
+        if row.status == "not implemented":
+            yield Finding("requirements", "warning", f"requirement {row.requirement.id} is not linked to any block.")
+        elif row.status == "not tested":
+            yield Finding("requirements", "warning", f"requirement {row.requirement.id} has no test case.",
+                          tuple(row.blocks))  # fmt: skip
+    for msg in unknown_links(d):  # "block <path> is linked ..." or "test case ..."
+        yield Finding("requirements", "warning", msg + ".", (msg.split()[1],) if msg.startswith("block ") else ())
+
+
 def advise(diagram: Diagram, rules: list[str] | None = None) -> list[Finding]:
     """Run the Model Advisor rules (all by default) and return the findings, warnings first."""
     facts = _types(diagram)

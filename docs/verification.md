@@ -1,4 +1,4 @@
-# Verification: coverage and the Model Advisor
+# Verification: coverage, requirements and the Model Advisor
 
 ## Model coverage
 
@@ -36,6 +36,49 @@ cov.save_html("coverage.html")
 ```
 
 `simulate(model, coverage=cov)` measures a single run. One `Coverage` object can collect several runs.
+
+## Requirements traceability
+
+ECU software is written against **requirements** ("the engine idles at 800 ± 50 rpm when warm"), and a review
+asks for each one: which part of the model implements it, and which test shows that it works? The
+**Requirements** tab (next to the Test Manager) keeps that link.
+
+1. **Add requirements**: press **Add** and type the id, title and text in the table, or **Import CSV…** a file
+   exported from Excel, DOORS, Polarion or Jira. The file needs an `id` column; `title` (or `name`), `text`
+   (or `description`) and `source` are optional, and both `,` and `;` separators work.
+2. **Link blocks**: right-click a block (usually an ECU subsystem) ▸ **Requirements…** and tick the
+   requirements it implements.
+3. **Link test cases**: in the Test Manager's test editor, list the ids in the **Requirements** field.
+4. **Run the tests** (Ctrl+T). Each requirement's **status** updates:
+
+| Status | Meaning |
+|---|---|
+| verified | it has test cases and all of them passed |
+| failed | a test case linked to it failed |
+| not run | it has test cases that have not run yet |
+| not tested | a block implements it, but no test case checks it |
+| not implemented | no block is linked to it |
+
+![Requirements of the idle speed example after running its tests](images/requirements.png)
+
+**Report…** writes the traceability matrix as an HTML page for reviews; double-click a row to show its block.
+Renaming a requirement's id updates the links in blocks and test cases. The **Model Advisor** warns about
+requirements without blocks or tests, and about links to ids that do not exist. Requirements are saved in the
+model file.
+
+```python
+from nervus.core.requirements import Requirement, read_csv, trace, write_report
+from nervus.testing import run_tests
+
+for req in read_csv("requirements.csv"):
+    model.requirements.add(req)
+model.block("ECU").meta["requirements"] = ["IDLE-01", "IDLE-02"]
+model.tests[0].requirements = ["IDLE-02"]
+results = {r.case.name: r.passed for r in run_tests(model)}
+for row in trace(model, results):
+    print(row.requirement.id, row.status)
+write_report(model, "traceability.html", results)
+```
 
 ## Model Advisor
 

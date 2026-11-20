@@ -84,7 +84,10 @@ class Diagram:
         """Named parameters that block parameters can refer to (``Gain(gain="Kp")``). Only the top-level
         diagram's workspace is used; subsystems see their model's workspace."""
         from nervus.core.dictionary import DataDictionary
+        from nervus.core.requirements import Requirements
 
+        self.requirements = Requirements()
+        """Requirements that blocks (``meta["requirements"]``) and test cases (``requirements``) are linked to."""
         self.signals = DataDictionary()
         """Signal objects (data type, unit, range) that named block outputs are bound to; the top-level
         diagram's is used."""

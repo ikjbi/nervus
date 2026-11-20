@@ -278,7 +278,7 @@ tests/
 - [x] Model coverage: decision outcomes of switches, comparisons, limits, lookups and charts; HTML report;
       shown in the Test Manager
 - [ ] Condition/MC-DC coverage for logic, coverage of generated C (gcov)
-- [ ] Requirements traceability (link requirements to blocks and tests)
+- [x] Requirements traceability (link requirements to blocks and tests)
 - [x] Model Advisor: 10 rules (float equality, division, anti-windup, implicit sampling, chart reachability, ...)
 - [ ] Packaging: PyPI release, standalone installers (PyInstaller / Briefcase) for macOS, Windows and Linux
 - [ ] Versioned docs, release notes; publish docs to GitHub Pages

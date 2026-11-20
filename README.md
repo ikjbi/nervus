@@ -36,7 +36,7 @@ tool for designing, simulating and eventually generating C code for that kind of
 | Vehicle networks | CAN Pack/Unpack with DBC files (also **CAN FD**, multiplexed signals, value tables); **simulated CAN buses** with arbitration, bus load, gateways, rest-bus simulation, fault injection and E2E protection; bus trace with ASC/BLF export; real CAN adapters through python-can | [CAN](docs/can.md) |
 | Measurement and calibration | **XCP on CAN**: calibrate a running model from INCA/CANape or Python, or a real ECU from Python; **MDF4** (`.mf4`) import and export | [CAN: XCP](docs/can.md#xcp-live-measurement-and-calibration), [Testing](docs/testing.md) |
 | OBD-II | live data and trouble codes from a real car (ELM327 or CAN), and a simulated ECU to practise with | [OBD-II](docs/obd.md) |
-| Testing | test cases stored with the model, Test Manager, Data Inspector, parameter sweeps and Monte Carlo runs, model coverage, Model Advisor | [Testing](docs/testing.md), [Verification](docs/verification.md) |
+| Testing | test cases stored with the model, Test Manager, Data Inspector, parameter sweeps and Monte Carlo runs, model coverage, **requirements traceability**, Model Advisor | [Testing](docs/testing.md), [Verification](docs/verification.md) |
 | Analysis | linearisation, trim, Bode, Nyquist, root locus, stability margins, step response, PID tuning | [Analysis](docs/analysis.md) |
 | Learning | 12 tutorials from your first model to CAN networks, each with a finished example model | [Tutorials](docs/tutorials/index.md) |
 

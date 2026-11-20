@@ -60,7 +60,7 @@ HELP_PAGES = [
     ("analysis", "Linear analysis"),
     ("codegen", "C code generation"),
     ("testing", "Test cases and the Data Inspector"),
-    ("verification", "Coverage and Model Advisor"),
+    ("verification", "Coverage, requirements, Model Advisor"),
     ("tutorials", "Tutorials: where to start"),
     ("tutorial_first_model", "Tutorial 1: your first model"),
     ("tutorial_idle", "Tutorial 2: idle speed control"),

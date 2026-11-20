@@ -37,7 +37,7 @@ nav:
       - Linear analysis: analysis.md
       - C code generation: codegen.md
       - Test cases and results: testing.md
-      - Coverage and Model Advisor: verification.md
+      - Coverage, requirements and Model Advisor: verification.md
       - In-app help pages:
           - Getting started (app): app-help/getting_started.md
           - Concepts (app): app-help/concepts.md

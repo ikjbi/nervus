@@ -35,6 +35,7 @@ class DiagramModel(QObject):
     settingsChanged = Signal()
     workspaceChanged = Signal()
     signalsChanged = Signal()  # the data dictionary (signal objects)
+    requirementsChanged = Signal()
     testsChanged = Signal()
     diagramReset = Signal()  # a whole new diagram was loaded
     currentChanged = Signal(object)  # Diagram: the editor now shows this (sub)system
@@ -279,6 +280,11 @@ class DiagramModel(QObject):
         else:
             dd.replace(old_name or obj.name, obj, index)
         self.signalsChanged.emit()
+        self.changed.emit()
+
+    def set_requirements(self, reqs: Any) -> None:
+        self._root.requirements = reqs.copy()
+        self.requirementsChanged.emit()
         self.changed.emit()
 
     def apply_values(self, values: dict[str, object]) -> None:

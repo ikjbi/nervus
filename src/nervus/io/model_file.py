@@ -128,6 +128,7 @@ def to_dict(diagram: Diagram) -> dict[str, Any]:
         "settings": diagram.settings.to_dict(),
         "workspace": diagram.workspace.to_list(),
         **({"signals": diagram.signals.to_list()} if len(diagram.signals) else {}),
+        **({"requirements": diagram.requirements.to_list()} if len(diagram.requirements) else {}),
         **{k: v for k, v in system_to_dict(diagram).items() if k != "meta"},
         "tests": [t.to_dict() for t in diagram.tests],
     }
@@ -180,6 +181,12 @@ def from_dict(data: dict[str, Any]) -> Diagram:
         d.signals = DataDictionary.from_list(list(data.get("signals", [])))
     except (KeyError, TypeError, ValueError) as exc:
         raise ModelError(f"invalid data dictionary: {exc}") from exc
+    try:
+        from nervus.core.requirements import Requirements
+
+        d.requirements = Requirements.from_list(list(data.get("requirements", [])))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ModelError(f"invalid requirements: {exc}") from exc
     _fill_system(d, data, "")
     try:
         d.tests = [TestCase.from_dict(t) for t in data.get("tests", [])]

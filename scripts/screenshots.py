@@ -298,6 +298,37 @@ def first_model_shots(win) -> None:  # type: ignore[no-untyped-def]
     ed.undo_stack.setClean()
 
 
+def requirements_shots(win) -> None:  # type: ignore[no-untyped-def]
+    """The Requirements panel on the idle speed example, after running its tests."""
+    import copy
+
+    from nervus.core.requirements import Requirement
+
+    win.files.open(ROOT / "examples" / "idle_speed_control.nervus")
+    ed, root = win.editor, win.diagram_model.root
+    for req in (Requirement("IDLE-01", "Idle speed", "The engine idles at the target speed ± 50 rpm when warm.",
+                            "ECU spec 4.2"),
+                Requirement("IDLE-02", "Load changes", "Switching on the AC compressor drops the speed by < 100 rpm.",
+                            "ECU spec 4.3"),
+                Requirement("IDLE-03", "Cold start", "The idle target is raised while the coolant is below 60 °C.",
+                            "ECU spec 4.5")):  # fmt: skip
+        ed.set_requirement(None, req)
+    ed.link_requirements(root.block("ECU"), ["IDLE-01", "IDLE-02", "IDLE-03"])
+    tests = copy.deepcopy(root.tests)
+    tests[0].requirements = ["IDLE-02"]
+    tests[2].requirements = ["IDLE-01"]
+    ed.set_tests(tests)
+    win.test_panel.run_all()
+    win.tests.wait()
+    for _ in range(30):
+        QApplication.processEvents()
+    win.requirements_dock.raise_()
+    win.resizeDocks([win.requirements_dock], [220], Qt.Orientation.Vertical)
+    QApplication.processEvents()
+    grab(win.requirements_panel, "requirements.png")
+    ed.undo_stack.setClean()
+
+
 def grab(widget: QWidget, name: str) -> None:
     QApplication.processEvents()
     widget.grab().save(str(OUT / name))
@@ -312,14 +343,16 @@ def main() -> None:
     app.setStyle("Fusion")
     from nervus.gui.theme import ThemeManager, ThemeMode
 
-    if sys.argv[1:] in (["console"], ["dictionary"], ["first"]):  # only the newest shots
+    if sys.argv[1:] in (["console"], ["dictionary"], ["first"], ["requirements"]):  # only the newest shots
         from nervus.gui.views.main_window import MainWindow
 
         ThemeManager.instance().set_mode(ThemeMode.LIGHT)
         win = MainWindow(QSettings(tempfile.mktemp(suffix=".ini"), QSettings.Format.IniFormat))
         win.resize(1400, 860)
         win.show()
-        {"console": console_and_can_shots, "dictionary": dictionary_shots, "first": first_model_shots}[sys.argv[1]](win)
+        shots = {"console": console_and_can_shots, "dictionary": dictionary_shots, "first": first_model_shots,
+                 "requirements": requirements_shots}  # fmt: skip
+        shots[sys.argv[1]](win)
         win.editor.undo_stack.setClean()
         win.close()
         return
@@ -600,6 +633,7 @@ def main() -> None:
             console_and_can_shots(win)
             dictionary_shots(win)
             first_model_shots(win)
+            requirements_shots(win)
             dlg_mod = __import__("nervus.gui.views.settings_dialog", fromlist=["SettingsDialog"])
             dlg = dlg_mod.SettingsDialog(win.diagram_model.diagram.settings, win)
             dlg.show()

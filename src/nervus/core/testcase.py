@@ -76,6 +76,8 @@ class TestCase:
     """Optional path to a ``.nervcal`` file (relative to the model file), applied before ``parameters``."""
     stop_time: float | None = None
     checks: list[Check] = field(default_factory=list)
+    requirements: list[str] = field(default_factory=list)
+    """Ids of the requirements this test case verifies (see :mod:`nervus.core.requirements`)."""
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {"name": self.name}
@@ -91,6 +93,8 @@ class TestCase:
             }
         d["inputs"] = {k: s.to_dict() for k, s in self.inputs.items()}
         d["checks"] = [c.to_dict() for c in self.checks]
+        if self.requirements:
+            d["requirements"] = list(self.requirements)
         return d
 
     @classmethod
@@ -103,4 +107,5 @@ class TestCase:
             parameter_set=str(d.get("parameter_set", "")),
             stop_time=d.get("stop_time"),
             checks=[Check.from_dict(c) for c in d.get("checks", [])],
+            requirements=[str(r) for r in d.get("requirements", [])],
         )

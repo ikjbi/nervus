@@ -95,6 +95,8 @@ class TestCaseDialog(QDialog):
         self.stop = QLineEdit("" if case.stop_time is None else format_value(case.stop_time))
         self.stop.setPlaceholderText("model stop time")
         self.pset = QLineEdit(case.parameter_set)
+        self.reqs = QLineEdit(", ".join(case.requirements))
+        self.reqs.setPlaceholderText("ids of the requirements this test verifies, e.g. IDLE-01, IDLE-02")
         self.pset.setPlaceholderText("optional .nervcal file")
         browse = QPushButton("…")
         browse.setFixedWidth(32)
@@ -151,6 +153,7 @@ class TestCaseDialog(QDialog):
         form.addRow("Description", self.description)
         form.addRow("Stop time [s]", self.stop)
         form.addRow("Parameter set", pset_row)
+        form.addRow("Requirements", self.reqs)
         layout = QVBoxLayout(self)
         layout.addLayout(form)
         layout.addWidget(QLabel("<b>Inputs</b> (empty = use the In block's value)"))
@@ -226,7 +229,9 @@ class TestCaseDialog(QDialog):
                 continue
             kind = combo.currentText() if isinstance(combo, QComboBox) else "bounds"
             checks.append(Check(kind, signal, parse_args(self._text(self.checks, r, 2))))
-        return TestCase(name, self.description.text().strip(), inputs, params, self.pset.text().strip(), stop, checks)
+        reqs = [r.strip() for r in self.reqs.text().replace(";", ",").split(",") if r.strip()]
+        return TestCase(name, self.description.text().strip(), inputs, params, self.pset.text().strip(), stop, checks,
+                        reqs)  # fmt: skip
 
     def _accept(self) -> None:
         try:

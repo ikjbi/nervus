@@ -549,3 +549,17 @@ class SetSignalObjectCommand(Command):
             self.model.set_signal_object(None, self.old, index=self._index)
         else:
             self.model.set_signal_object(self.new.name, self.old, index=self._index)
+
+
+class SetRequirementsCommand(Command):
+    """Replace the model's requirements (add, edit, delete or import)."""
+
+    def __init__(self, model: DiagramModel, new: Any, text: str) -> None:
+        super().__init__(text)
+        self.model, self.old, self.new = model, model.root.requirements.copy(), new.copy()
+
+    def do(self) -> None:
+        self.model.set_requirements(self.new)
+
+    def revert(self) -> None:
+        self.model.set_requirements(self.old)
