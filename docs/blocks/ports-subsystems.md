@@ -13,7 +13,7 @@ subsystem. The ports appear on the subsystem in the order of *port*; *domain* mu
 | Name | Default | Unit | Description |
 |---|---|---|---|
 | `port` | `1` |  | Position among the subsystem's physical ports |
-| `domain` | `'electrical'` |  | Physical domain — one of `electrical`, `rotational`, `thermal` |
+| `domain` | `'electrical'` |  | Physical domain — one of `electrical`, `rotational`, `thermal`, `hydraulic` |
 
 *Direct feedthrough:* yes · no inputs, no outputs
 

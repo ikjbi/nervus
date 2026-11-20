@@ -10,6 +10,7 @@ electrical circuits, rotating shafts and heat paths with **physical blocks** who
 | electrical | voltage [V] | current [A] | Electrical: Resistor, Capacitor, Inductor, Voltage/Current Source, Switch, Diode, Battery, DC Motor, H-Bridge, sensors |
 | rotational | angular velocity [rad/s] | torque [N·m] | Rotational: Inertia, Spring, Damper, Torque/Speed Source, Ideal Gear, sensors |
 | thermal | temperature [°C] | heat flow [W] | Thermal: Thermal Mass, Thermal Resistance, Heat Source, Temperature Source, sensors |
+| hydraulic | pressure [bar] | volume flow [L/min] | Hydraulic: Tank, Pump (Flow Source), Pressure Source, Orifice, Relief Valve, Volume, sensors |
 
 ## Drawing circuits in the editor
 
@@ -53,6 +54,31 @@ Every circuit needs an **Electrical Reference** (ground). Sensors turn physical 
 controlled sources (*controlled* = on) turn signals into voltages, currents, torques or heat flows. So a
 controller built from signal blocks can drive a physical plant: a PI controller that reads a Speed Sensor and
 sets a Voltage Source driving a DC Motor.
+
+## Automotive electrics
+
+The **Automotive Electrics** library has components with their typical behaviour built in:
+
+| Block | What it models |
+|---|---|
+| Solenoid | a coil (R, L) whose armature pulls in above a current and drops out below a lower one |
+| Fuel Injector | a solenoid injector: the needle opens a little after the ECU switches it on (the opening delay); outputs lift and fuel flow |
+| Relay | coil plus a contact that closes while the armature is pulled in |
+| Glow Plug | a heater whose resistance rises with its temperature, so it limits its own current; thermal port to the cylinder head |
+| Alternator | the regulated generator: holds 14.2 V up to a current limit that depends on its speed, and loads the engine with the electrical power divided by its efficiency |
+
+The opening delay of an injector, for example, follows from its coil: the current rises as
+$i(t) = \frac{V}{R}\left(1 - e^{-tR/L}\right)$, so a 12 Ω, 10 mH injector at 12 V reaches its 0.6 A pull-in current
+after $-\frac{L}{R}\ln(1 - 0.6) = 0.76$ ms. With a weaker battery the delay grows; ECUs correct the injection
+time for the battery voltage for this reason.
+
+## Hydraulics
+
+Pressure in bar (above the tank) and volume flow in L/min. A **Hydraulic Volume** (a fuel rail, a hose) stores
+fluid: $\frac{V}{\beta}\frac{dp}{dt} = q$, with the bulk modulus β. An **Orifice** is a turbulent restriction,
+$q \propto \sqrt{\Delta p}$, with a laminar region near zero so the equations stay smooth. A **Relief Valve** opens
+above its cracking pressure, like the pressure regulator of a fuel system: a pump feeding a rail with a 4 bar
+regulator and injectors settles just above 4 bar, with the excess returning to the tank.
 
 ## Electronic circuits: semiconductors, like SPICE
 

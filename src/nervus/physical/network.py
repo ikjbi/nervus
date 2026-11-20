@@ -52,6 +52,7 @@ DOMAINS = {
     "electrical": ("voltage", "V", "current", "A"),
     "rotational": ("angular velocity", "rad/s", "torque", "N·m"),
     "thermal": ("temperature", "°C", "heat flow", "W"),
+    "hydraulic": ("pressure", "bar", "volume flow", "L/min"),
 }
 
 

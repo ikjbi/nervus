@@ -287,10 +287,10 @@ tests/
 - [x] Basic components: resistor, capacitor, inductor, voltage and current sources (controlled by signals),
       ground, ideal switch, diode
 - [x] Sensors: voltage and current measurement as signals
-- [ ] Automotive electrics: battery (open-circuit voltage map + internal resistance), DC motor, H-bridge with PWM
+- [x] Automotive electrics: battery (open-circuit voltage map + internal resistance), DC motor, H-bridge with PWM
       (averaged), solenoid / injector, relay coil, glow plug, alternator
 - [ ] Throttle body and electronic throttle with a real DC motor and H-bridge instead of a first-order lag
-- [ ] Other physical domains on the same solver: rotational mechanics (inertia, spring, damper, gear), thermal
+- [x] Other physical domains on the same solver: rotational mechanics (inertia, spring, damper, gear), thermal
       (heat capacity, conduction, convection), hydraulic/fluid basics
 - [ ] Editor: physical ports and wires drawn differently from signal lines; component library; examples and
       tutorials (battery + starter motor, electronic throttle)

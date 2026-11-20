@@ -3,6 +3,8 @@
 Importing this package registers every block, so they can be created by ``type_id`` from model files.
 """
 
+from nervus.blocks.automotive_electrics import Alternator, FuelInjector, GlowPlug, Solenoid
+from nervus.blocks.automotive_electrics import Relay as RelayContact
 from nervus.blocks.can_blocks import CanPack, CanUnpack
 from nervus.blocks.chart import StateChart
 from nervus.blocks.continuous import Derivative, Integrator, StateSpace, TransferFunction
@@ -41,6 +43,16 @@ from nervus.blocks.electrical import (
 from nervus.blocks.electrical import (
     Switch as ElectricalSwitch,
 )
+from nervus.blocks.hydraulic import (
+    FlowSensor,
+    FlowSource,
+    HydraulicReference,
+    HydraulicVolume,
+    Orifice,
+    PressureSensor,
+    PressureSource,
+    ReliefValve,
+)
 from nervus.blocks.logic import CompareToConstant, LogicalOperator, RelationalOperator
 from nervus.blocks.lookup import Interpolation, Lookup1D, Lookup2D, Prelookup
 from nervus.blocks.math_ops import Abs, Bias, Gain, MathFunction, MinMax, Product, Saturation, Sum
@@ -78,6 +90,7 @@ __all__ = [
     "VCCS",
     "VCVS",
     "Abs",
+    "Alternator",
     "AngleSensor",
     "Assertion",
     "Battery",
@@ -107,12 +120,18 @@ __all__ = [
     "EdgeDetect",
     "ElectricalReference",
     "ElectricalSwitch",
+    "FlowSensor",
+    "FlowSource",
     "FromWorkspace",
+    "FuelInjector",
     "Gain",
+    "GlowPlug",
     "Ground",
     "HBridge",
     "HeatFlowSensor",
     "HeatSource",
+    "HydraulicReference",
+    "HydraulicVolume",
     "IdealGear",
     "Inductor",
     "Inertia",
@@ -130,8 +149,11 @@ __all__ = [
     "Mux",
     "ObdResponder",
     "OpAmp",
+    "Orifice",
     "Outport",
     "Prelookup",
+    "PressureSensor",
+    "PressureSource",
     "Product",
     "Pulse",
     "PythonFunction",
@@ -141,6 +163,8 @@ __all__ = [
     "RateTransition",
     "RelationalOperator",
     "Relay",
+    "RelayContact",
+    "ReliefValve",
     "Resistor",
     "RotationalDamper",
     "RotationalReference",
@@ -149,6 +173,7 @@ __all__ = [
     "Scope",
     "SemiconductorDiode",
     "Sine",
+    "Solenoid",
     "SpeedSensor",
     "SpeedSource",
     "StateChart",

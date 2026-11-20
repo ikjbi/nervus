@@ -2,6 +2,14 @@
 
 This reference is generated from the block source code (`scripts/gen_block_reference.py`).
 
+## [Automotive Electrics](automotive-electrics.md)
+
+- **Solenoid**: A solenoid (an actuator coil with an armature): the coil current builds up with τ = L/R; above the
+- **Fuel Injector**: A solenoid fuel injector: the needle opens when the coil current passes the pull-in current, so the
+- **Relay**: A relay: a coil (``p``, ``n``) and a normally-open contact (``a``, ``b``) that closes while the armature
+- **Glow Plug**: A diesel glow plug: a heater whose resistance rises with its temperature, which limits its current as it
+- **Alternator**: An alternator with its voltage regulator, driven by the engine through a belt:
+
 ## [CAN](can.md)
 
 - **CAN Unpack**: Decodes a CAN frame: the input is the 8 data bytes (a vector of width 8), and there is one output per
@@ -62,6 +70,17 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **DC Motor**: A permanent-magnet DC motor: electrical port ``p``/``n``, mechanical port ``shaft``:
 - **Voltage-Controlled Voltage Source**: A voltage-controlled voltage source (SPICE element E): $v_p - v_n = gain\,(v_{cp} - v_{cn})$. No current
 - **Voltage-Controlled Current Source**: A voltage-controlled current source (SPICE element G): the current $gm\,(v_{cp} - v_{cn})$ flows from
+
+## [Hydraulic](hydraulic.md)
+
+- **Tank**: The tank: the port linked to it is at 0 bar (ambient).
+- **Flow Source (Pump)**: A pump with a given flow from ``a`` (suction) to ``b`` (outlet), whatever the pressure: the parameter
+- **Pressure Source**: Holds port ``a`` at a pressure above the tank: the parameter *p* or the input signal.
+- **Orifice**: A restriction with turbulent flow (an injector nozzle, a valve seat, a filter):
+- **Relief Valve**: A pressure relief (or pressure regulator) valve: closed below the cracking pressure, then opening in
+- **Hydraulic Volume**: A volume of fluid (a fuel rail, an accumulator, a hose): its pressure rises as fluid flows in,
+- **Pressure Sensor**: Measures the pressure of a port (above the tank) as a signal, in bar.
+- **Flow Sensor**: Measures the flow through it from ``a`` to ``b`` as a signal, in L/min.
 
 ## [Logic and Bit Operations](logic-and-bit-operations.md)
 
