@@ -32,6 +32,7 @@ class Gain(_Math):
     $$ y_i = k_i\\,u_i \\qquad\\qquad y = K\\,u $$
     """
 
+    ARITHMETIC = True
     type_id = "math.gain"
     label = "Gain"
     PARAMS = (
@@ -82,6 +83,7 @@ class Sum(_Math):
     $$ y = \\sum_i s_i\\,u_i, \\quad s_i \\in \\{+1, -1\\} $$
     """
 
+    ARITHMETIC = True
     type_id = "math.sum"
     label = "Sum"
     PARAMS = (Param("signs", "++", ParamKind.STR, "One + or - per input"), output_type_param())
@@ -113,6 +115,7 @@ class Product(_Math):
     $$ y = \\prod_i u_i^{\\,p_i}, \\quad p_i \\in \\{+1, -1\\} $$
     """
 
+    ARITHMETIC = True
     type_id = "math.product"
     label = "Product"
     PARAMS = (Param("ops", "**", ParamKind.STR, "One * or / per input"), output_type_param())
@@ -281,6 +284,7 @@ class MinMax(_Math):
 class Bias(_Math):
     """Adds a constant: ``y = u + bias``."""
 
+    ARITHMETIC = True
     type_id = "math.bias"
     label = "Bias"
     PARAMS = (Param("bias", 0.0, ParamKind.ARRAY, "Value added to the input"), output_type_param())

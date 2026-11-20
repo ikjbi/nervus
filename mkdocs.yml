@@ -57,6 +57,7 @@ nav:
           - Coverage and Model Advisor: app-help/verification.md
           - "Tutorial: idle speed control": app-help/tutorial_idle.md
           - "Tutorial: lambda control": app-help/tutorial_lambda.md
+          - "Tutorial: ignition and knock": app-help/tutorial_ignition.md
           - "Tutorial: drive cycle": app-help/tutorial_drive_cycle.md
           - "Tutorial: gear-shift logic": app-help/tutorial_gear_shift.md
           - "Tutorial: electronic circuits": app-help/tutorial_circuits.md
@@ -71,6 +72,7 @@ nav:
   - Tutorials:
       - Idle speed control: tutorials/idle-speed-control.md
       - Lambda control and fuel trims: tutorials/lambda-control.md
+      - Ignition timing and knock control: tutorials/ignition-knock.md
       - A car on a drive cycle: tutorials/drive-cycle.md
       - Gear-shift logic: tutorials/gear-shift.md
       - Electronic circuits: tutorials/circuits.md

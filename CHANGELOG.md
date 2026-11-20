@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- Gain, Sum, Product and Bias inherited the boolean type of a comparison, so `3 · true` gave 1; arithmetic on
+  booleans now gives double.
 - A continuous PID with clamping anti-windup followed a wrong trajectory with variable-step solvers when it
   slid along its output limit (the integrator stayed clamped too long; only the final value was right), or
   chattered for tens of seconds. Clamping now uses a boundary layer during variable-step integration and
@@ -23,6 +25,7 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Example `ignition_knock.py` and tutorial: spark advance map, knock sensor and knock control.
 - Sensor Model and Actuator Model blocks: gain/offset errors, reproducible noise, delay, quantization, range,
   rate limit, and injected faults (stuck, open circuit, short to supply, drift).
 - Example `traction_control.py` (tyre slip, magic formula, TCS ECU) with a tutorial; a BSFC fuel map in

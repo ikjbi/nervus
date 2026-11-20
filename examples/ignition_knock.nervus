@@ -1,0 +1,876 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "ignition_knock",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 12.0,
+    "solver": "rk4",
+    "step": 0.01,
+    "max_step": null,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "rpm_axis",
+      "value": [
+        1000.0,
+        2000.0,
+        3000.0,
+        4000.0,
+        5000.0,
+        6000.0
+      ],
+      "description": "Speed axis of the ignition maps",
+      "unit": "rpm"
+    },
+    {
+      "name": "load_axis",
+      "value": [
+        20.0,
+        50.0,
+        80.0,
+        100.0
+      ],
+      "description": "Load axis of the ignition maps",
+      "unit": "%"
+    },
+    {
+      "name": "advance_map",
+      "value": [
+        [
+          24.0,
+          18.0,
+          12.0,
+          9.0
+        ],
+        [
+          32.0,
+          25.0,
+          17.0,
+          13.0
+        ],
+        [
+          38.0,
+          30.0,
+          21.0,
+          17.0
+        ],
+        [
+          40.0,
+          33.0,
+          24.0,
+          20.0
+        ],
+        [
+          41.0,
+          35.0,
+          26.0,
+          22.0
+        ],
+        [
+          42.0,
+          36.0,
+          27.0,
+          23.0
+        ]
+      ],
+      "description": "Base spark advance",
+      "unit": "°"
+    },
+    {
+      "name": "knock_limit_map",
+      "value": [
+        [
+          27.0,
+          21.0,
+          15.0,
+          12.0
+        ],
+        [
+          35.0,
+          28.0,
+          20.0,
+          16.0
+        ],
+        [
+          41.0,
+          33.0,
+          24.0,
+          20.0
+        ],
+        [
+          43.0,
+          36.0,
+          27.0,
+          23.0
+        ],
+        [
+          44.0,
+          38.0,
+          29.0,
+          25.0
+        ],
+        [
+          45.0,
+          39.0,
+          30.0,
+          26.0
+        ]
+      ],
+      "description": "Knock-limited advance with 95 RON fuel (engine)",
+      "unit": "°"
+    },
+    {
+      "name": "mbt_map",
+      "value": [
+        [
+          29.6,
+          24.5,
+          19.4,
+          17.0
+        ],
+        [
+          37.6,
+          31.5,
+          24.4,
+          21.0
+        ],
+        [
+          43.6,
+          36.5,
+          28.4,
+          25.0
+        ],
+        [
+          45.6,
+          39.5,
+          31.4,
+          28.0
+        ],
+        [
+          46.6,
+          41.5,
+          33.4,
+          30.0
+        ],
+        [
+          47.6,
+          42.5,
+          34.4,
+          31.0
+        ]
+      ],
+      "description": "Advance for best torque (engine)",
+      "unit": "°"
+    },
+    {
+      "name": "knock_step",
+      "value": 3.0,
+      "description": "Retard per detected knock event",
+      "unit": "°"
+    },
+    {
+      "name": "knock_recover",
+      "value": 1.0,
+      "description": "How fast the retard is taken back",
+      "unit": "°/s"
+    },
+    {
+      "name": "max_retard",
+      "value": 12.0,
+      "description": "Largest retard",
+      "unit": "°"
+    },
+    {
+      "name": "knock_threshold",
+      "value": 0.5,
+      "description": "Knock sensor intensity that counts as knock",
+      "unit": "-"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "engine_rpm",
+      "type": "sources.constant",
+      "params": {
+        "value": 2500.0,
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "load",
+      "type": "sources.constant",
+      "params": {
+        "value": 100.0,
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          0.0,
+          80.0
+        ]
+      }
+    },
+    {
+      "name": "low_octane_fuel",
+      "type": "sources.step",
+      "params": {
+        "time": 4.0,
+        "initial": 0.0,
+        "final": -6.0,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          300.0
+        ]
+      }
+    },
+    {
+      "name": "ECU",
+      "type": "ports.subsystem",
+      "params": {
+        "sample_time": 0.01,
+        "enable_port": false,
+        "when_enabled": "held",
+        "trigger": "none"
+      },
+      "meta": {
+        "position": [
+          200.0,
+          20.0
+        ]
+      },
+      "system": {
+        "blocks": [
+          {
+            "name": "rpm",
+            "type": "ports.inport",
+            "params": {
+              "port": 1,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "load_pct",
+            "type": "ports.inport",
+            "params": {
+              "port": 2,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                80.0
+              ]
+            }
+          },
+          {
+            "name": "knock_sensor",
+            "type": "ports.inport",
+            "params": {
+              "port": 3,
+              "value": 0.0,
+              "sample_time": -1.0,
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                0.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "base_advance",
+            "type": "lookup.table_2d",
+            "params": {
+              "row_breakpoints": "rpm_axis",
+              "column_breakpoints": "load_axis",
+              "table": "advance_map",
+              "interpolation": "linear",
+              "extrapolation": "clip",
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                140.0,
+                30.0
+              ]
+            }
+          },
+          {
+            "name": "knock_detected",
+            "type": "logic.compare_to_constant",
+            "params": {
+              "operator": ">",
+              "constant": "knock_threshold"
+            },
+            "meta": {
+              "position": [
+                140.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "retard_step",
+            "type": "math.gain",
+            "params": {
+              "gain": "knock_step",
+              "multiplication": "elementwise",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                270.0,
+                200.0
+              ]
+            }
+          },
+          {
+            "name": "recover_per_sample",
+            "type": "sources.constant",
+            "params": {
+              "value": "knock_recover * 0.01",
+              "sample_time": "inf",
+              "output_type": "double"
+            },
+            "meta": {
+              "position": [
+                270.0,
+                290.0
+              ]
+            }
+          },
+          {
+            "name": "retard_update",
+            "type": "math.sum",
+            "params": {
+              "signs": "++-",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                400.0,
+                220.0
+              ]
+            }
+          },
+          {
+            "name": "retard_limits",
+            "type": "math.saturation",
+            "params": {
+              "upper": "max_retard",
+              "lower": 0.0
+            },
+            "meta": {
+              "position": [
+                520.0,
+                220.0
+              ]
+            }
+          },
+          {
+            "name": "retard",
+            "type": "discrete.unit_delay",
+            "params": {
+              "initial": 0.0,
+              "sample_time": 0.01
+            },
+            "meta": {
+              "position": [
+                640.0,
+                220.0
+              ]
+            }
+          },
+          {
+            "name": "spark_advance",
+            "type": "math.sum",
+            "params": {
+              "signs": "+-",
+              "output_type": "inherit"
+            },
+            "meta": {
+              "position": [
+                520.0,
+                60.0
+              ]
+            }
+          },
+          {
+            "name": "advance",
+            "type": "ports.outport",
+            "params": {
+              "port": 1
+            },
+            "meta": {
+              "position": [
+                660.0,
+                60.0
+              ]
+            }
+          },
+          {
+            "name": "knock_retard",
+            "type": "ports.outport",
+            "params": {
+              "port": 2
+            },
+            "meta": {
+              "position": [
+                780.0,
+                220.0
+              ]
+            }
+          }
+        ],
+        "connections": [
+          {
+            "src": "rpm",
+            "src_port": 0,
+            "dst": "base_advance",
+            "dst_port": 0
+          },
+          {
+            "src": "load_pct",
+            "src_port": 0,
+            "dst": "base_advance",
+            "dst_port": 1
+          },
+          {
+            "src": "knock_sensor",
+            "src_port": 0,
+            "dst": "knock_detected",
+            "dst_port": 0
+          },
+          {
+            "src": "knock_detected",
+            "src_port": 0,
+            "dst": "retard_step",
+            "dst_port": 0
+          },
+          {
+            "src": "retard",
+            "src_port": 0,
+            "dst": "retard_update",
+            "dst_port": 0
+          },
+          {
+            "src": "retard_step",
+            "src_port": 0,
+            "dst": "retard_update",
+            "dst_port": 1
+          },
+          {
+            "src": "recover_per_sample",
+            "src_port": 0,
+            "dst": "retard_update",
+            "dst_port": 2
+          },
+          {
+            "src": "retard_update",
+            "src_port": 0,
+            "dst": "retard_limits",
+            "dst_port": 0
+          },
+          {
+            "src": "retard_limits",
+            "src_port": 0,
+            "dst": "retard",
+            "dst_port": 0
+          },
+          {
+            "src": "base_advance",
+            "src_port": 0,
+            "dst": "spark_advance",
+            "dst_port": 0
+          },
+          {
+            "src": "retard",
+            "src_port": 0,
+            "dst": "spark_advance",
+            "dst_port": 1
+          },
+          {
+            "src": "spark_advance",
+            "src_port": 0,
+            "dst": "advance",
+            "dst_port": 0
+          },
+          {
+            "src": "retard",
+            "src_port": 0,
+            "dst": "knock_retard",
+            "dst_port": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "knock_limit_95",
+      "type": "lookup.table_2d",
+      "params": {
+        "row_breakpoints": "rpm_axis",
+        "column_breakpoints": "load_axis",
+        "table": "knock_limit_map",
+        "interpolation": "linear",
+        "extrapolation": "clip",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          200.0,
+          220.0
+        ]
+      }
+    },
+    {
+      "name": "knock_limit",
+      "type": "math.sum",
+      "params": {
+        "signs": "++",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          360.0,
+          260.0
+        ]
+      }
+    },
+    {
+      "name": "mbt",
+      "type": "lookup.table_2d",
+      "params": {
+        "row_breakpoints": "rpm_axis",
+        "column_breakpoints": "load_axis",
+        "table": "mbt_map",
+        "interpolation": "linear",
+        "extrapolation": "clip",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          200.0,
+          380.0
+        ]
+      }
+    },
+    {
+      "name": "knock_intensity",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, advance, knock_limit):\n    \"\"\"Knock intensity [-]: 0 below the knock limit, then growing quickly with the advance beyond it.\"\"\"\n    over = advance - knock_limit\n    return 0.0 if over <= 0 else over * over\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          520.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "knock_sensor",
+      "type": "sensors.sensor",
+      "params": {
+        "gain": 1.0,
+        "offset": 0.0,
+        "noise": 0.1,
+        "delay": 0,
+        "resolution": 0.0,
+        "y_min": 0.0,
+        "y_max": "inf",
+        "fault": "none",
+        "fault_time": 0.0,
+        "drift_rate": 1.0,
+        "seed": 7,
+        "sample_time": 0.01
+      },
+      "meta": {
+        "position": [
+          660.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "spark_efficiency",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, advance, mbt):\n    \"\"\"Torque efficiency of the spark timing: 1 at MBT, falling off quadratically (1 % at 3°, 4 % at 6°).\"\"\"\n    return 1.0 - 0.0011 * (advance - mbt) ** 2\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": -1,
+        "parameters": []
+      },
+      "meta": {
+        "position": [
+          520.0,
+          360.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          660.0,
+          -60.0
+        ]
+      }
+    },
+    {
+      "name": "advance",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          820.0,
+          20.0
+        ]
+      }
+    },
+    {
+      "name": "retard",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          820.0,
+          90.0
+        ]
+      }
+    },
+    {
+      "name": "torque_factor",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          820.0,
+          360.0
+        ]
+      }
+    },
+    {
+      "name": "knock_limit_deg",
+      "type": "ports.outport",
+      "params": {
+        "port": 4
+      },
+      "meta": {
+        "position": [
+          520.0,
+          290.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "knock_limit_95",
+      "dst_port": 0
+    },
+    {
+      "src": "load",
+      "src_port": 0,
+      "dst": "knock_limit_95",
+      "dst_port": 1
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "mbt",
+      "dst_port": 0
+    },
+    {
+      "src": "load",
+      "src_port": 0,
+      "dst": "mbt",
+      "dst_port": 1
+    },
+    {
+      "src": "knock_limit_95",
+      "src_port": 0,
+      "dst": "knock_limit",
+      "dst_port": 0
+    },
+    {
+      "src": "low_octane_fuel",
+      "src_port": 0,
+      "dst": "knock_limit",
+      "dst_port": 1
+    },
+    {
+      "src": "engine_rpm",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 0
+    },
+    {
+      "src": "load",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 1
+    },
+    {
+      "src": "knock_sensor",
+      "src_port": 0,
+      "dst": "ECU",
+      "dst_port": 2
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "knock_intensity",
+      "dst_port": 0
+    },
+    {
+      "src": "knock_limit",
+      "src_port": 0,
+      "dst": "knock_intensity",
+      "dst_port": 1
+    },
+    {
+      "src": "knock_intensity",
+      "src_port": 0,
+      "dst": "knock_sensor",
+      "dst_port": 0
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "spark_efficiency",
+      "dst_port": 0
+    },
+    {
+      "src": "mbt",
+      "src_port": 0,
+      "dst": "spark_efficiency",
+      "dst_port": 1
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "knock_limit",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "ECU",
+      "src_port": 1,
+      "dst": "scope",
+      "dst_port": 2
+    },
+    {
+      "src": "ECU",
+      "src_port": 0,
+      "dst": "advance",
+      "dst_port": 0
+    },
+    {
+      "src": "ECU",
+      "src_port": 1,
+      "dst": "retard",
+      "dst_port": 0
+    },
+    {
+      "src": "spark_efficiency",
+      "src_port": 0,
+      "dst": "torque_factor",
+      "dst_port": 0
+    },
+    {
+      "src": "knock_limit",
+      "src_port": 0,
+      "dst": "knock_limit_deg",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "no knock with good fuel",
+      "description": "With 95 RON the calibration keeps 3° from the knock limit: no retard",
+      "stop_time": 4.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "retard",
+          "lower": 0.0,
+          "upper": 0.0
+        }
+      ]
+    },
+    {
+      "name": "low-octane fuel: knock control finds the limit",
+      "description": "The knock limit drops 6°; the ECU retards until the engine runs just at the new limit",
+      "stop_time": 12.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "retard",
+          "lower": 2.0,
+          "upper": 9.0,
+          "t_from": 8.0,
+          "t_to": 12.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "torque_factor",
+          "lower": 0.7,
+          "upper": 0.9,
+          "t_from": 8.0,
+          "t_to": 12.0
+        }
+      ]
+    }
+  ]
+}

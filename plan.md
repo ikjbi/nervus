@@ -237,7 +237,7 @@ tests/
 - [x] Fuel control: injector model, lambda (AFR) closed-loop control, short and long term fuel trim
       (`examples/lambda_control.py`, tutorial)
 - [ ] Fuel control, more: wall wetting (x-tau), narrow-band switching sensor, LTFT maps per load/speed cell
-- [ ] Ignition timing from speed/load maps, knock retard
+- [x] Ignition timing from speed/load maps, knock retard (`examples/ignition_knock.py`, tutorial)
 - [x] Idle speed control (PI + base opening + AC feed-forward), with tutorial
 - [x] Electronic throttle control (DC motor, return spring, PID): `examples/electronic_throttle.py`
 - [x] Vehicle longitudinal dynamics: aero and rolling resistance, force and power limits, brakes
@@ -248,7 +248,8 @@ tests/
 - [ ] Bundled WLTP / FTP-75 tables (from the official sources) and a drive-cycle block
 - [x] Sensor and actuator models: quantisation, noise, delay, faults (Sensor Model, Actuator Model blocks)
 - [ ] Truck-specific models: heavy-duty diesel, exhaust brake, AMT gearbox
-- [ ] Tutorial series: "Learn engine control with Nervus" (first: idle speed control)
+- [x] Tutorial series: "Learn engine control with Nervus": idle speed, lambda, ignition and knock, throttle,
+      gear shift, traction control
 
 ## Phase 16 – Control design and analysis tools
 - [x] Linearise a model around an operating point (state-space / transfer function)

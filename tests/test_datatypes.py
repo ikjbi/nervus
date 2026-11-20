@@ -116,3 +116,19 @@ def test_invalid_type_parameter() -> None:
     with pytest.raises(ParameterError):
         Gain(output_type="int128")
     assert DOUBLE.is_double
+
+
+def test_arithmetic_on_booleans_gives_numbers() -> None:
+    from nervus.blocks import CompareToConstant, Constant, Gain, Scope, Sum
+
+    d = Diagram()
+    flag = d.add(CompareToConstant(operator=">", constant=0.0), name="flag")
+    d.chain(d.add(Constant(value=1.0)), flag)
+    g = d.add(Gain(gain=3.0), name="g")
+    total = d.add(Sum(signs="++"), name="count")
+    d.chain(flag, g, d.add(Scope()))
+    d.connect(flag, (total, 0))
+    d.connect(flag, (total, 1))
+    d.connect(total, d.add(Scope()))
+    r = simulate(d, 0.1, solver="rk4", step=0.1)
+    assert r["g"][-1] == 3.0 and r["count"][-1] == 2.0

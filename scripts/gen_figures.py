@@ -1215,6 +1215,27 @@ def sensor_model() -> plt.Figure:
     return fig
 
 
+@figure("ignition_knock")
+def ignition_knock() -> plt.Figure:
+    from nervus import load
+
+    r = simulate(load(Path(__file__).parent.parent / "examples" / "ignition_knock.nervus"))
+    fig, (a1, a2, a3) = plt.subplots(3, 1, figsize=(6.4, 5.0), sharex=True)
+    a1.plot(r.t, r["advance"], color=C1, lw=2)
+    a1.plot(r.t, r["knock_limit_deg"], color=INK, lw=1.2, ls="--")
+    a1.text(0.2, 16.4, "knock limit (dashed)", color=INK, fontsize=8)
+    a1.set_ylabel("advance [°]")
+    a1.set_title("Low-octane fuel at 4 s: knock control retards the spark", color=INK, fontsize=10)
+    a2.plot(r.t, r["knock_sensor"], color=C2, lw=1)
+    a2.axhline(0.5, color=INK, ls=":", lw=1)
+    a2.set_ylabel("knock sensor")
+    a3.plot(r.t, np.ravel(r["torque_factor"]) * 100, color=C3, lw=2)
+    a3.set_ylabel("torque [%]")
+    a3.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

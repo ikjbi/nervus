@@ -302,3 +302,19 @@ def test_traction_control_example() -> None:
     off = simulate(d, params={"mu_road": 0.5, "tcs_enable": 0.0})
     assert off["slip"][-1] > 0.6  # without TCS the wheels spin
     assert [t.name for t in load(EXAMPLES / "traction_control.nervus").tests] == [t.name for t in d.tests]
+
+
+def test_ignition_knock_example(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from nervus.codegen.sil import back_to_back, find_compiler
+    from nervus.testing import run_tests
+
+    mod = _import("ignition_knock")
+    d = mod.build()
+    assert all(r.passed for r in run_tests(d))
+    assert [t.name for t in load(EXAMPLES / "ignition_knock.nervus").tests] == [t.name for t in d.tests]
+    if find_compiler() is not None:
+        k = np.arange(400)
+        knock = (np.sin(k / 7.0) > 0.9) * 2.0
+        sil = back_to_back(d.block("ECU"), {"rpm": 2500 + 0 * k, "load_pct": 100 + 0 * k, "knock_sensor": knock}, 400,
+                           tolerance=1e-12, folder=tmp_path)  # fmt: skip
+        assert sil.passed, sil.summary()

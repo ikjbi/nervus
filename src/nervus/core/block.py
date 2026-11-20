@@ -92,6 +92,9 @@ class Block:
     CAN_BE_CONSTANT: ClassVar[bool] = True
     """``False``: the block never becomes a constant block, even if all its inputs are constant (e.g. an Initial
     Condition, whose output changes after the first step)."""
+    ARITHMETIC: ClassVar[bool] = False
+    """Inherits its type, but arithmetic on booleans gives numbers: boolean inputs make a double output
+    (``3 * true`` is 3, and a sum of flags is a count)."""
     LOGS_INPUTS: ClassVar[bool] = False
     TYPE_RULE: ClassVar[str] = "inherit"
     """How output data types are chosen when the block has no ``output_type`` parameter (or it is
@@ -305,7 +308,10 @@ class Block:
         known = [t for t in picked if t is not None]
         if not known:
             return [None] * n
-        return [common_type(known)] * n
+        common = common_type(known)
+        if self.ARITHMETIC and common == BOOLEAN:
+            return [DOUBLE] * n
+        return [common] * n
 
     def coverage_outcomes(self) -> list[str]:
         """All decision outcomes of this block for model coverage, e.g. ``["true", "false"]``. Empty if the
