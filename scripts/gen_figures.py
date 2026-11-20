@@ -1356,6 +1356,73 @@ def can_network() -> plt.Figure:
     return fig
 
 
+@figure("xcp_live")
+def xcp_live() -> plt.Figure:
+    import tempfile
+    import threading
+
+    import can
+
+    from nervus import Diagram
+    from nervus.blocks import CanBusSetup, Gain, Outport, Product, Sine, XcpSlave
+    from nervus.canbus import bus
+    from nervus.core import Variable
+    from nervus.xcp import CanTransport, XcpMaster
+
+    d = Diagram("xcp")
+    d.workspace.add(Variable("Kp", 2.0, "Controller gain"))
+    src = d.add(Sine(amplitude=1.0, frequency=6.0), name="sensor")
+    slave = d.add(XcpSlave(measurements="sensor, output", calibrations="Kp"), name="xcp")
+    prod = d.add(Product(ops="**"), name="out")
+    g = d.add(Gain(gain=1.0), name="g")
+    d.connect(src, (prod, 0))
+    d.connect((slave, 0), (prod, 1))
+    d.chain(prod, g)
+    d.connect(src, (slave, 0))
+    d.connect(g, (slave, 1))
+    d.connect(g, d.add(Outport(port=1), name="y"))
+    d.connect((slave, 0), d.add(Outport(port=2), name="kp"))
+    d.add(CanBusSetup(interface="virtual", channel="nervus_fig"), name="can")
+    d.settings.pacing, d.settings.solver, d.settings.step = 1.0, "rk4", 0.001
+    simulate(d, 0.0)
+    a2l = d.block("xcp").write_a2l(Path(tempfile.mkdtemp()) / "slave.a2l")
+    tool_bus = can.Bus(interface="virtual", channel="nervus_fig")
+    reads: list[tuple[float, float]] = []
+
+    def tool() -> None:
+        import time
+
+        m = XcpMaster(CanTransport(tool_bus), a2l=a2l, timeout=0.5)
+        t0 = time.monotonic()
+        time.sleep(0.1)
+        m.connect()
+        for k in range(30):
+            if k == 10:
+                m.write("Kp", 4.0)
+            if k == 22:
+                m.write("Kp", 1.0)
+            reads.append((time.monotonic() - t0, float(m.read("output"))))
+            time.sleep(0.04)
+
+    th = threading.Thread(target=tool)
+    th.start()
+    r = simulate(d, 2.2)
+    th.join(5)
+    tool_bus.shutdown()
+    bus("can0").disconnect_hardware()
+    fig, (a0, a1) = plt.subplots(2, 1, figsize=(6.4, 3.8), sharex=True, height_ratios=[2, 1])
+    a0.plot(r.t, r["y"], color=C1, lw=1.5, label="model output")
+    a0.plot(*zip(*reads, strict=True), "o", color=C2, ms=4, label="read by the tool (XCP polling)")
+    a0.legend(loc="upper right", fontsize=8)
+    a0.set_ylabel("output")
+    a0.set_title("Live calibration over XCP on CAN: the tool writes Kp while the model runs", color=INK, fontsize=9)
+    a1.step(r.t, r["kp"], where="post", color=C3, lw=2)
+    a1.set_ylabel("Kp")
+    a1.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

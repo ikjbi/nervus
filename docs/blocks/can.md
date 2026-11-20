@@ -239,3 +239,34 @@ time on the second bus.
 *Direct feedthrough:* yes · no inputs, no outputs
 
 ---
+
+## XCP Slave
+
+`can.xcp_slave` · CAN
+
+Makes the simulated ECU reachable for a calibration tool over **XCP on CAN** (INCA, CANape, or
+``nervus.xcp.XcpMaster``): the inputs are **measurements** that the tool can read, the outputs are
+**calibration** values that the tool can change while the simulation runs (like the ECU's calibration
+RAM). Use the outputs where the model needs the tunable value, e.g. as the gain of a controller.
+
+*calibrations* lists workspace variables (scalars); each output starts at the variable's value.
+*measurements* names the inputs. The memory map (8-byte IEEE doubles, Intel byte order): calibration
+*k* at 0x10000 + 8·k, measurement *k* at 0x20000 + 8·k; `write_a2l` writes the matching A2L file.
+
+Requests arrive on *request_id*, answers go out on *response_id* (both on *bus*). With an interface on
+the CAN Bus block and real-time pacing, a real tool on a real CAN adapter can connect.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `bus` | `'can0'` |  | Name of the simulated CAN bus |
+| `request_id` | `2032` |  | CAN identifier of the requests (master → slave) |
+| `response_id` | `2033` |  | CAN identifier of the answers (slave → master) |
+| `measurements` | `''` |  | Names of the measured inputs, comma separated |
+| `calibrations` | `''` |  | Workspace variables to calibrate (one output each) |
+| `sample_time` | `0.001` | s | Task period: requests are answered at this rate |
+
+*Direct feedthrough:* no
+
+---

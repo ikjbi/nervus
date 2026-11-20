@@ -264,7 +264,7 @@ tests/
 - [x] CAN: read DBC files (`cantools`), CAN Pack / CAN Unpack blocks, Intel and Motorola, bit-exact C code
 - [x] CAN FD, multiplexed signals, value tables, DBC signals as workspace variables
 - [x] A2L file generation for calibration tools (measurements and characteristics), addresses from `nm`
-- [ ] XCP-on-CAN basics for live measurement and calibration
+- [x] XCP-on-CAN basics for live measurement and calibration (`nervus.xcp`, XCP Slave block)
 - [ ] Target: a development board (e.g. STM32 or ESP32 with CAN), as a scheduler template and HAL stubs
 - [ ] Processor-in-the-loop (PIL) testing
 - [ ] Hardware-in-the-loop (HIL): run the plant model in real time against a real ECU

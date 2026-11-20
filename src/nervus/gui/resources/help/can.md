@@ -159,6 +159,37 @@ frame = pack(engine, {"EngineSpeed": 812.3, "CoolantTemp": 90})
 unpack(engine.signal("EngineSpeed"), frame)  # 812.25 (0.25 rpm resolution)
 ```
 
-## Planned
+## XCP: live measurement and calibration
 
-XCP on CAN for live measurement and calibration.
+**XCP** (ASAM MCD-1) is how calibration tools such as INCA and CANape read and change an ECU's memory while it
+runs. The tool (the *master*) sends a command in one CAN frame (`request_id`, e.g. 0x7F0) and the ECU (the
+*slave*) answers in one frame (`response_id`, e.g. 0x7F1). The tool knows where each variable is from the A2L
+file. Nervus implements the basic commands (CONNECT, DISCONNECT, GET_STATUS, SET_MTA, UPLOAD, SHORT_UPLOAD,
+DOWNLOAD, SHORT_DOWNLOAD): enough for polled measurement and for calibration. Event-driven measurement (DAQ
+lists) is not implemented.
+
+**The simulation as a slave.** The **XCP Slave** block makes a running model reachable. Its inputs are
+**measurements** (*measurements*: their names) and its outputs are **calibration values** (*calibrations*:
+workspace variables), which start at the variables' values and change when the tool writes them, like an
+ECU's calibration RAM. Wire the outputs where the tunable value is needed. `write_a2l("slave.a2l")` on the
+block writes the matching A2L file (8-byte doubles: calibrations from 0x10000, measurements from 0x20000).
+Connect the CAN Bus block to an interface and turn on real-time pacing (Simulation ▸ Settings), and a
+calibration tool on a real CAN adapter can measure and tune the model.
+
+![A tool reading the output and writing Kp while the model runs](figures/xcp_live.png)
+
+**Nervus as the tool.** `nervus.xcp.XcpMaster` connects to any XCP-on-CAN slave, the simulated one or a real
+ECU, through python-can, and reads and writes variables by name from an A2L file (the one Nervus generates
+with the C code, after `fill_addresses`, or the ECU supplier's):
+
+```python
+import can
+from nervus.xcp import CanTransport, XcpMaster
+
+ecu = can.Bus(interface="pcan", channel="PCAN_USBBUS1", bitrate=500000)
+tool = XcpMaster(CanTransport(ecu, request_id=0x7F0, response_id=0x7F1), a2l="ecu.a2l")
+tool.connect()
+tool.read("engine_rpm")  # polled measurement
+tool.write("Kp_idle", 0.8)  # calibration
+```
+

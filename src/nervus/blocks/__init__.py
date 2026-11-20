@@ -15,6 +15,7 @@ from nervus.blocks.can_blocks import (
     CanUnpack,
     E2ECheck,
     E2EProtect,
+    XcpSlave,
 )
 from nervus.blocks.chart import StateChart
 from nervus.blocks.continuous import Derivative, Integrator, StateSpace, TransferFunction
@@ -217,6 +218,7 @@ __all__ = [
     "UnitDelay",
     "VoltageSensor",
     "VoltageSource",
+    "XcpSlave",
     "ZeroOrderHold",
     "block_types",
     "categories",

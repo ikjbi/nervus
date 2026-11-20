@@ -21,6 +21,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **E2E Check**: Checks a frame protected by E2E Protect. Inputs: the 8 data bytes and **new** (from CAN Receive).
 - **CAN Rest Bus**: Rest-bus simulation: sends every message of the ECUs (*nodes*) that are not modelled, at their cycle
 - **CAN Gateway**: Forwards frames from one bus to another, like the central gateway between the powertrain and the body
+- **XCP Slave**: Makes the simulated ECU reachable for a calibration tool over **XCP on CAN** (INCA, CANape, or
 
 ## [Continuous](continuous.md)
 

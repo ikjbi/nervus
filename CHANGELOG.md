@@ -25,6 +25,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- XCP on CAN (`nervus.xcp`): the XCP Slave block makes a running model measurable and calibratable by INCA,
+  CANape or `XcpMaster`; `XcpMaster` reads and writes a real ECU by A2L name; `read_a2l`.
 - CAN FD frames (up to 64 bytes, bit-rate switching on the bus), multiplexed signals (held when not sent),
   value tables in the trace, and Model Workspace ▸ Import DBC (signals and value tables as variables); pack and
   unpack C code now extracts runs of bits, for any frame length. Example DBC `examples/data/chassis.dbc`.

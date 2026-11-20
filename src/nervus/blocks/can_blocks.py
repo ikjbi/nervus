@@ -676,3 +676,145 @@ class CanGateway(Block):
             if (not self._routes or f.can_id in self._routes) and f.sender != f"gateway {dst.name}":
                 dst.send(t, f.can_id, f.data, f"gateway {src.name}")
         return np.array([t])
+
+
+XCP_CAL_BASE = 0x00010000
+XCP_MEAS_BASE = 0x00020000
+
+
+def _names(text: str) -> list[str]:
+    return [n.strip() for n in str(text).split(",") if n.strip()]
+
+
+@register
+class XcpSlave(Block):
+    """Makes the simulated ECU reachable for a calibration tool over **XCP on CAN** (INCA, CANape, or
+    ``nervus.xcp.XcpMaster``): the inputs are **measurements** that the tool can read, the outputs are
+    **calibration** values that the tool can change while the simulation runs (like the ECU's calibration
+    RAM). Use the outputs where the model needs the tunable value, e.g. as the gain of a controller.
+
+    *calibrations* lists workspace variables (scalars); each output starts at the variable's value.
+    *measurements* names the inputs. The memory map (8-byte IEEE doubles, Intel byte order): calibration
+    *k* at 0x10000 + 8·k, measurement *k* at 0x20000 + 8·k; :meth:`write_a2l` writes the matching A2L file.
+
+    Requests arrive on *request_id*, answers go out on *response_id* (both on *bus*). With an interface on
+    the CAN Bus block and real-time pacing, a real tool on a real CAN adapter can connect.
+    """
+
+    type_id = "can.xcp_slave"
+    label = "XCP Slave"
+    category = CATEGORY
+    DIRECT_FEEDTHROUGH = False
+    PARAMS = (
+        _BUS,
+        Param("request_id", 0x7F0, ParamKind.INT, "CAN identifier of the requests (master → slave)", min=0,
+              max=0x7FF),
+        Param("response_id", 0x7F1, ParamKind.INT, "CAN identifier of the answers (slave → master)", min=0,
+              max=0x7FF),
+        Param("measurements", "", ParamKind.STR, "Names of the measured inputs, comma separated"),
+        Param("calibrations", "", ParamKind.STR, "Workspace variables to calibrate (one output each)"),
+        Param("sample_time", 0.001, ParamKind.SAMPLE_TIME, "Task period: requests are answered at this rate", "s"),
+    )  # fmt: skip
+
+    def num_inputs(self) -> int:
+        return len(_names(self.params["measurements"]))
+
+    def input_names(self) -> list[str]:
+        return _names(self.params["measurements"])
+
+    def num_outputs(self) -> int:
+        return len(_names(self.params["calibrations"]))
+
+    def output_widths(self, in_widths: list[Width]) -> list[Width]:
+        return [1] * self.num_outputs()
+
+    def validate_params(self) -> None:
+        if self.params["request_id"] == self.params["response_id"]:
+            raise ParameterError("the request and response identifiers must differ")
+        for n in (*_names(self.params["measurements"]), *_names(self.params["calibrations"])):
+            if not n.isidentifier():
+                raise ParameterError(f"invalid name {n!r}")
+
+    def _cal_values(self) -> list[float]:
+        ns = self._namespace() or {}
+        out = []
+        for n in _names(self.params["calibrations"]):
+            if n not in ns:
+                raise ValueError(f"calibration {n!r} is not a workspace variable")
+            out.append(float(np.ravel(ns[n])[0]))
+        return out
+
+    def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
+        from nervus.canbus import bus
+
+        super().configure(in_widths, out_widths)
+        if any(w != 1 for w in in_widths):
+            raise ValueError("measurements must be scalar signals")
+        self._initial = self._cal_values()
+        bus(str(self.params["bus"])).reset()
+
+    def initial_discrete_state(self) -> Array:
+        try:
+            cal = self._cal_values()
+        except ValueError:
+            cal = [0.0] * self.num_outputs()
+        return np.array([0.0, 0.0, -1.0, *cal])  # connected, MTA, time up to which requests were read, values
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        return [np.array([v]) for v in xd[3:]]
+
+    def memory(self, u: Sequence[Array], cal: np.ndarray) -> Any:
+        from nervus.xcp import Memory, Region
+
+        meas = np.array([float(np.ravel(x)[0]) for x in u], dtype="<f8")
+
+        def write(offset: int, data: bytes) -> None:
+            raw = bytearray(cal.astype("<f8").tobytes())
+            raw[offset : offset + len(data)] = data
+            cal[:] = np.frombuffer(bytes(raw), dtype="<f8")
+
+        return Memory([
+            Region(XCP_CAL_BASE, 8 * cal.size, lambda: cal.astype("<f8").tobytes(), write),
+            Region(XCP_MEAS_BASE, 8 * meas.size, meas.tobytes),
+        ])  # fmt: skip
+
+    def update(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> Array:
+        from nervus.canbus import bus
+        from nervus.xcp import XcpServer
+
+        b = bus(str(self.params["bus"]))
+        req_id, resp_id = int(self.params["request_id"]), int(self.params["response_id"])
+        cal = xd[3:].copy()
+        server = XcpServer(self.memory(u, cal))
+        server.connected, server.mta = bool(xd[0]), int(xd[1])
+        for f in b.delivered_between(float(xd[2]), t):
+            if f.can_id == req_id:
+                b.send(t, resp_id, server.handle(f.data), "XCP slave")
+        return np.array([float(server.connected), float(server.mta), t, *cal])
+
+    def write_a2l(self, path: str | Path, name: str = "nervus_xcp") -> Path:
+        """An A2L file describing this slave's memory and its CAN identifiers, for INCA/CANape or XcpMaster."""
+        ns_ws = self.diagram.root.workspace if self.diagram is not None else None
+        lines = ["ASAP2_VERSION 1 71", f'/begin PROJECT {name} "Nervus XCP slave"', f'  /begin MODULE {name} ""',
+                 '    /begin MOD_COMMON ""', "      BYTE_ORDER MSB_LAST", "    /end MOD_COMMON",
+                 '    /begin COMPU_METHOD CM_IDENTICAL "identity" IDENTICAL "%12.6" ""', "    /end COMPU_METHOD",
+                 "    /begin RECORD_LAYOUT RL_FLOAT64 FNC_VALUES 1 FLOAT64_IEEE ROW_DIR DIRECT",
+                 "    /end RECORD_LAYOUT",
+                 f"    /* XCP on CAN: CAN_ID_MASTER 0x{self.params['request_id']:X}, "
+                 f"CAN_ID_SLAVE 0x{self.params['response_id']:X} */"]  # fmt: skip
+        for k, n in enumerate(_names(self.params["calibrations"])):
+            var = ns_ws.variable(n) if ns_ws is not None and n in ns_ws else None
+            lo = var.min if var is not None and var.min is not None else -1e12
+            hi = var.max if var is not None and var.max is not None else 1e12
+            desc = (var.description if var is not None else "").replace('"', "'")
+            lines += [f'    /begin CHARACTERISTIC {n} "{desc}"',
+                      f"      VALUE 0x{XCP_CAL_BASE + 8 * k:X} RL_FLOAT64 0 CM_IDENTICAL {lo!r} {hi!r}",
+                      *([f'      PHYS_UNIT "{var.unit}"'] if var is not None and var.unit else []),
+                      "    /end CHARACTERISTIC"]  # fmt: skip
+        for k, n in enumerate(_names(self.params["measurements"])):
+            lines += [f'    /begin MEASUREMENT {n} ""', "      FLOAT64_IEEE CM_IDENTICAL 0 0 -1e12 1e12",
+                      f"      ECU_ADDRESS 0x{XCP_MEAS_BASE + 8 * k:X}", "    /end MEASUREMENT"]  # fmt: skip
+        lines += ["  /end MODULE", "/end PROJECT", ""]
+        p = Path(path)
+        p.write_text("\n".join(lines), encoding="utf-8")
+        return p
