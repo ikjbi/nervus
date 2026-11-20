@@ -1,0 +1,470 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "inverted_pendulum",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 10.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": 0.001,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "M_cart",
+      "value": 0.94,
+      "description": "Cart mass (with its motor)",
+      "unit": "kg"
+    },
+    {
+      "name": "m_pend",
+      "value": 0.23,
+      "description": "Pendulum mass",
+      "unit": "kg"
+    },
+    {
+      "name": "l_pend",
+      "value": 0.3207,
+      "description": "Hinge to the pendulum's centre of mass (half the 0.64 m rod)",
+      "unit": "m"
+    },
+    {
+      "name": "b_cart",
+      "value": 5.4,
+      "description": "Cart viscous friction (motor and belt)",
+      "unit": "N·s/m"
+    },
+    {
+      "name": "B_pend",
+      "value": 0.0024,
+      "description": "Pendulum hinge friction",
+      "unit": "N·m·s/rad"
+    },
+    {
+      "name": "F_max",
+      "value": 10.0,
+      "description": "Motor force limit",
+      "unit": "N"
+    },
+    {
+      "name": "K_lqr",
+      "value": [
+        -7.07106781186563,
+        -57.15473489078422,
+        -15.14721488392524,
+        -11.28984787478195
+      ],
+      "description": "State-feedback gain [x, theta, x_dot, theta_dot] (from lqr_gain)",
+      "unit": "N/m, N/rad, N·s/m, N·s/rad"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "cart_pole",
+      "type": "user.python_function",
+      "params": {
+        "code": "def f(t, s, F):\n    \"\"\"Cart-pole: s = [x, theta, x_dot, theta_dot], theta = 0 upright, positive leaning towards +x.\"\"\"\n    M, m, l, b, Bp = p[0], p[1], p[2], p[3], p[4]\n    x, th, xd, thd = s[0], s[1], s[2], s[3]\n    J = m * l * l / 3.0          # rod about its centre of mass is m (2l)^2 / 12 = m l^2 / 3\n    c, sn = math.cos(th), math.sin(th)\n    a11, a12 = M + m, m * l * c\n    a21, a22 = m * l * c, J + m * l * l\n    r1 = F - b * xd + m * l * thd * thd * sn\n    r2 = m * 9.81 * l * sn - Bp * thd\n    det = a11 * a22 - a12 * a21\n    return [xd, thd, (r1 * a22 - a12 * r2) / det, (a11 * r2 - a21 * r1) / det]\n",
+        "num_inputs": 2,
+        "num_outputs": 1,
+        "output_width": 4,
+        "parameters": "[M_cart, m_pend, l_pend, b_cart, B_pend]"
+      },
+      "meta": {
+        "position": [
+          780.0,
+          50.0
+        ]
+      }
+    },
+    {
+      "name": "state",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": [
+          0.0,
+          0.05,
+          0.0,
+          0.0
+        ],
+        "upper": "inf",
+        "lower": "-inf",
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          920.0,
+          50.0
+        ]
+      }
+    },
+    {
+      "name": "sensors",
+      "type": "discrete.zero_order_hold",
+      "params": {
+        "sample_time": 0.002
+      },
+      "meta": {
+        "position": [
+          920.0,
+          170.0
+        ]
+      }
+    },
+    {
+      "name": "cart_ref",
+      "type": "sources.step",
+      "params": {
+        "time": 5.0,
+        "initial": 0.0,
+        "final": 0.3,
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "ref_state",
+      "type": "math.gain",
+      "params": {
+        "gain": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          130.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "state_error",
+      "type": "math.sum",
+      "params": {
+        "signs": "-+",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          280.0,
+          30.0
+        ]
+      }
+    },
+    {
+      "name": "K",
+      "type": "math.gain",
+      "params": {
+        "gain": "[K_lqr]",
+        "multiplication": "matrix",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          400.0,
+          30.0
+        ]
+      }
+    },
+    {
+      "name": "motor_limit",
+      "type": "math.saturation",
+      "params": {
+        "upper": "F_max",
+        "lower": "-F_max"
+      },
+      "meta": {
+        "position": [
+          520.0,
+          30.0
+        ]
+      }
+    },
+    {
+      "name": "tap",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          3.0,
+          3.0001,
+          3.1,
+          3.1001,
+          10.0
+        ],
+        "data": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            5.0
+          ],
+          [
+            5.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "csv_file": "",
+        "interpolation": "linear",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          520.0,
+          130.0
+        ]
+      }
+    },
+    {
+      "name": "force",
+      "type": "math.sum",
+      "params": {
+        "signs": "++",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          650.0,
+          50.0
+        ]
+      }
+    },
+    {
+      "name": "states",
+      "type": "routing.demux",
+      "params": {
+        "num_outputs": 4
+      },
+      "meta": {
+        "position": [
+          1060.0,
+          50.0
+        ]
+      }
+    },
+    {
+      "name": "cart_position",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1190.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "angle",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          1190.0,
+          100.0
+        ]
+      }
+    },
+    {
+      "name": "Terminator",
+      "type": "sinks.terminator",
+      "params": {}
+    },
+    {
+      "name": "Terminator1",
+      "type": "sinks.terminator",
+      "params": {}
+    },
+    {
+      "name": "motor_force",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          650.0,
+          -60.0
+        ]
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 2
+      },
+      "meta": {
+        "position": [
+          1190.0,
+          200.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "state",
+      "src_port": 0,
+      "dst": "cart_pole",
+      "dst_port": 0
+    },
+    {
+      "src": "force",
+      "src_port": 0,
+      "dst": "cart_pole",
+      "dst_port": 1
+    },
+    {
+      "src": "cart_pole",
+      "src_port": 0,
+      "dst": "state",
+      "dst_port": 0
+    },
+    {
+      "src": "state",
+      "src_port": 0,
+      "dst": "sensors",
+      "dst_port": 0
+    },
+    {
+      "src": "cart_ref",
+      "src_port": 0,
+      "dst": "ref_state",
+      "dst_port": 0
+    },
+    {
+      "src": "sensors",
+      "src_port": 0,
+      "dst": "state_error",
+      "dst_port": 0
+    },
+    {
+      "src": "ref_state",
+      "src_port": 0,
+      "dst": "state_error",
+      "dst_port": 1
+    },
+    {
+      "src": "state_error",
+      "src_port": 0,
+      "dst": "K",
+      "dst_port": 0
+    },
+    {
+      "src": "K",
+      "src_port": 0,
+      "dst": "motor_limit",
+      "dst_port": 0
+    },
+    {
+      "src": "motor_limit",
+      "src_port": 0,
+      "dst": "force",
+      "dst_port": 0
+    },
+    {
+      "src": "tap",
+      "src_port": 0,
+      "dst": "force",
+      "dst_port": 1
+    },
+    {
+      "src": "state",
+      "src_port": 0,
+      "dst": "states",
+      "dst_port": 0
+    },
+    {
+      "src": "states",
+      "src_port": 0,
+      "dst": "cart_position",
+      "dst_port": 0
+    },
+    {
+      "src": "states",
+      "src_port": 1,
+      "dst": "angle",
+      "dst_port": 0
+    },
+    {
+      "src": "states",
+      "src_port": 2,
+      "dst": "Terminator",
+      "dst_port": 0
+    },
+    {
+      "src": "states",
+      "src_port": 3,
+      "dst": "Terminator1",
+      "dst_port": 0
+    },
+    {
+      "src": "motor_limit",
+      "src_port": 0,
+      "dst": "motor_force",
+      "dst_port": 0
+    },
+    {
+      "src": "states",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "states",
+      "src_port": 1,
+      "dst": "scope",
+      "dst_port": 1
+    }
+  ],
+  "tests": [
+    {
+      "name": "balances and moves the cart",
+      "description": "The pendulum stays within 0.15 rad of upright, and the cart reaches 0.3 m ± 1 cm after 9 s",
+      "stop_time": 10.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "angle",
+          "lower": -0.15,
+          "upper": 0.15
+        },
+        {
+          "kind": "bounds",
+          "signal": "cart_position",
+          "lower": 0.29,
+          "upper": 0.31,
+          "t_from": 9.0
+        }
+      ]
+    }
+  ]
+}

@@ -385,3 +385,33 @@ def test_dc_motor_lab() -> None:
     assert k == pytest.approx(23.8, abs=0.1) and tau == pytest.approx(0.100, abs=0.003)
     assert simulate(sp, params={"Ki_w": 0.0})["speed"][-1] == pytest.approx(37.2, abs=0.1)
     assert np.max(simulate(po, params={"Kd_th": 0.0})["angle"]) == pytest.approx(1.70, abs=0.01)
+
+
+def test_coupled_tanks_lab() -> None:
+    from nervus.testing import run_tests
+
+    m = _import("coupled_tanks")
+    d = m.build()
+    assert all(r.passed for r in run_tests(d))
+    v, h1 = m.equilibrium(15.0)
+    assert v == pytest.approx(9.26, abs=0.01) and h1 == pytest.approx(4.74, abs=0.01)
+    r = simulate(d)
+    assert m.settling(r, 50, 150, 17) == pytest.approx(44, abs=1)
+    assert m.settling(r, 250, 400, 5) == pytest.approx(62, abs=1)
+    assert np.ravel(simulate(d, params={"closed_loop": 0.0, "V_open": 10.25})["level_2"])[-1] == pytest.approx(
+        18.4, abs=0.05
+    )
+
+
+def test_inverted_pendulum_lab() -> None:
+    from nervus.testing import run_tests
+
+    m = _import("inverted_pendulum")
+    d = m.build()
+    assert all(r.passed for r in run_tests(d))
+    a, _b = m.linear_model()
+    assert np.max(np.real(np.linalg.eigvals(a))) == pytest.approx(4.94, abs=0.01)
+    x = np.ravel(simulate(d)["cart_position"])
+    assert np.min(x[len(x) // 2 :]) == pytest.approx(-0.026, abs=0.002)  # the wrong way first
+    falls = simulate(d, 1.5, params={"K_lqr": [0.0, 0.0, 0.0, 0.0]})
+    assert np.max(np.abs(np.ravel(falls["angle"]))) > 0.5

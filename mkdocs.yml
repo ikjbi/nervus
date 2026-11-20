@@ -59,6 +59,8 @@ nav:
           - "Tutorial: Your first model: a cruise control": app-help/tutorial_first_model.md
           - "Tutorial: Position control of a mass-spring-damper": app-help/tutorial_mass_spring_damper.md
           - "Tutorial: DC motor speed and position control": app-help/tutorial_dc_motor.md
+          - "Tutorial: Level control of coupled water tanks": app-help/tutorial_coupled_tanks.md
+          - "Tutorial: Balancing an inverted pendulum with state feedback": app-help/tutorial_inverted_pendulum.md
           - "Tutorial: Idle speed control": app-help/tutorial_idle.md
           - "Tutorial: Lambda control and fuel trims": app-help/tutorial_lambda.md
           - "Tutorial: Ignition timing and knock control": app-help/tutorial_ignition.md
@@ -84,6 +86,8 @@ nav:
           - Classic lab experiments:
               - "Position control of a mass-spring-damper": tutorials/mass-spring-damper.md
               - "DC motor speed and position control": tutorials/dc-motor.md
+              - "Level control of coupled water tanks": tutorials/coupled-tanks.md
+              - "Balancing an inverted pendulum with state feedback": tutorials/inverted-pendulum.md
       - Powertrain and engine control:
           - Engine management:
               - "Idle speed control": tutorials/idle-speed-control.md

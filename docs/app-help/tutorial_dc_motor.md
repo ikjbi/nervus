@@ -76,4 +76,4 @@ servo: 70 % overshoot and a long ringing.
 
 ## Next
 
-That was the last tutorial on control engineering. Continue with powertrain and engine control: *Idle speed control*, or pick another one from the *tutorial overview*.
+Next in this topic: *Level control of coupled water tanks*. Or pick another one from the *tutorial overview*.

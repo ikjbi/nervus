@@ -1539,6 +1539,50 @@ def lab_dc_motor() -> plt.Figure:
     return fig
 
 
+@figure("lab_coupled_tanks")
+def lab_coupled_tanks() -> plt.Figure:
+    m = _example("coupled_tanks")
+    d = m.build()
+    r = simulate(d)
+    fig, (a0, a1) = plt.subplots(2, 1, figsize=(6.4, 4.6), sharex=True, height_ratios=[2, 1])
+    t, ref = zip(*m.REFERENCE, strict=True)
+    a0.plot(t, ref, color=GRID, lw=1.5, ls="--", label="reference")
+    a0.plot(r.t, r["level_2"], color=C1, lw=1.8, label="lower tank")
+    a0.plot(r.t, r["level_1"], color=C3, lw=1.2, label="upper tank")
+    a0.set_ylabel("level [cm]")
+    a0.legend(loc="upper right", fontsize=8)
+    a0.set_title("PI level control: 44 s to settle near 15 cm, 62 s at 5 cm", color=INK, fontsize=9)
+    a1.plot(r.t, r["voltage"], color=C2, lw=1.4)
+    a1.set_ylabel("pump [V]")
+    a1.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
+@figure("lab_inverted_pendulum")
+def lab_inverted_pendulum() -> plt.Figure:
+    m = _example("inverted_pendulum")
+    d = m.build()
+    r, fast = simulate(d), simulate(d, params={"K_lqr": m.lqr_gain(q_x=200.0)})
+    fig, (a0, a1, a2) = plt.subplots(3, 1, figsize=(6.4, 5.4), sharex=True)
+    a0.plot(r.t, np.ravel(r["angle"]) * 180 / np.pi, color=C1, lw=1.6)
+    a0.axvline(3.0, color=GRID, ls=":", lw=1)
+    a0.text(3.05, 2.2, "tap", color=INK, fontsize=8)
+    a0.set_ylabel("angle [°]")
+    a0.set_title("Balancing: start at 3°, a tap at 3 s, the cart moves to 0.3 m at 5 s", color=INK, fontsize=9)
+    a1.plot(r.t, np.ravel(r["cart_position"]) * 1000, color=C1, lw=1.6, label="q_x = 50")
+    a1.plot(fast.t, np.ravel(fast["cart_position"]) * 1000, color=C3, lw=1.2, label="q_x = 200")
+    a1.set_ylabel("cart [mm]")
+    a1.legend(loc="center left", fontsize=8)
+    a1.annotate("first the wrong way", xy=(5.15, -24), xytext=(6.3, -120), color=INK, fontsize=8,
+                arrowprops={"arrowstyle": "->", "color": INK})  # fmt: skip
+    a2.plot(r.t, r["motor_force"], color=C2, lw=1.2)
+    a2.set_ylabel("force [N]")
+    a2.set_xlabel("time [s]")
+    fig.tight_layout()
+    return fig
+
+
 def main() -> None:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)

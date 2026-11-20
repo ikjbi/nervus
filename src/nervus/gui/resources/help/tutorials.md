@@ -1,6 +1,6 @@
 # Tutorials
 
-14 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
+16 tutorials, grouped by topic. Each one uses a finished model in `examples/`: open it in the editor, run it, read why it behaves as it does, then change it. They are built around problems from the automotive industry and the classic experiments of engineering lab courses.
 
 Every tutorial has the same parts:
 
@@ -29,6 +29,8 @@ The experiments of a control-engineering lab course, each with a plant you can t
 |---|---|---|---|
 | *Position control of a mass-spring-damper* | beginner | 30 min | what the P, I and D terms do, natural frequency and damping ratio, steady-state error, actuator limits and anti-windup |
 | *DC motor speed and position control* | intermediate | 45 min | system identification from a step response, PI design by pole-zero cancellation, PD design from damping and natural frequency, a physical motor model and a 1 kHz controller |
+| *Level control of coupled water tanks* | intermediate | 40 min | a nonlinear process, linearization at an operating point, PI design for a second-order process, gain scheduling, actuator limits |
+| *Balancing an inverted pendulum with state feedback* | advanced | 45 min | an unstable plant, state-space models, LQR state feedback, non-minimum-phase behaviour, redesigning a gain in the Console |
 
 ## Powertrain and engine control
 

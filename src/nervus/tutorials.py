@@ -70,6 +70,14 @@ TUTORIALS: list[Tutorial] = [
              "intermediate", 45, "system identification from a step response, PI design by pole-zero "
              "cancellation, PD design from damping and natural frequency, a physical motor model and a 1 kHz "
              "controller", ("dc_motor_speed.nervus", "dc_motor_position.nervus"), ("mass-spring-damper",)),
+    Tutorial("coupled-tanks", "Level control of coupled water tanks", "Control engineering", "Classic lab experiments",
+             "intermediate", 40, "a nonlinear process, linearization at an operating point, PI design for a "
+             "second-order process, gain scheduling, actuator limits", ("coupled_tanks.nervus",),
+             ("dc-motor",)),
+    Tutorial("inverted-pendulum", "Balancing an inverted pendulum with state feedback", "Control engineering",
+             "Classic lab experiments", "advanced", 45, "an unstable plant, state-space models, LQR state "
+             "feedback, non-minimum-phase behaviour, redesigning a gain in the Console",
+             ("inverted_pendulum.nervus",), ("dc-motor",)),
     # ------------------------------------------------------------------ engine
     Tutorial("idle-speed-control", "Idle speed control", _ENGINE, "Engine management", "beginner", 45,
              "how an ECU holds the idle speed: a mean-value engine model, a PI controller with feed-forward, "

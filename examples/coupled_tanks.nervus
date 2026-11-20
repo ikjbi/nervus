@@ -1,0 +1,616 @@
+{
+  "format": "nervus-model",
+  "schema_version": 4,
+  "name": "coupled_tanks",
+  "meta": {},
+  "settings": {
+    "t_start": 0.0,
+    "t_final": 400.0,
+    "solver": "auto",
+    "step": null,
+    "max_step": 0.5,
+    "rtol": 1e-06,
+    "atol": 1e-08,
+    "zero_crossing": true
+  },
+  "workspace": [
+    {
+      "name": "A_tank",
+      "value": 15.52,
+      "description": "Tank cross-section (both tanks)",
+      "unit": "cm²"
+    },
+    {
+      "name": "a1",
+      "value": 0.3167,
+      "description": "Outlet orifice of the upper tank",
+      "unit": "cm²"
+    },
+    {
+      "name": "a2",
+      "value": 0.1781,
+      "description": "Outlet orifice of the lower tank",
+      "unit": "cm²"
+    },
+    {
+      "name": "K_pump",
+      "value": 3.3,
+      "description": "Pump flow per volt",
+      "unit": "cm³/(s·V)"
+    },
+    {
+      "name": "V_max",
+      "value": 22.0,
+      "description": "Pump amplifier limit",
+      "unit": "V"
+    },
+    {
+      "name": "h_max",
+      "value": 30.0,
+      "description": "Tank height (overflow)",
+      "unit": "cm"
+    },
+    {
+      "name": "Kc",
+      "value": 0.47,
+      "description": "PI controller: proportional gain",
+      "unit": "V/cm"
+    },
+    {
+      "name": "Ti",
+      "value": 15.2,
+      "description": "PI controller: integral time (= the lower tank's time constant at 15 cm)",
+      "unit": "s"
+    },
+    {
+      "name": "closed_loop",
+      "value": 1.0,
+      "description": "1: PI level control, 0: constant pump voltage V_open",
+      "unit": "-"
+    },
+    {
+      "name": "V_open",
+      "value": 9.25,
+      "description": "Pump voltage in open loop (equilibrium at 15 cm)",
+      "unit": "V"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "level_ref",
+      "type": "sources.from_workspace",
+      "params": {
+        "time": [
+          0.0,
+          50.0,
+          50.01,
+          150.0,
+          150.01,
+          250.0,
+          250.01,
+          400.0
+        ],
+        "data": [
+          [
+            15.0
+          ],
+          [
+            15.0
+          ],
+          [
+            17.0
+          ],
+          [
+            17.0
+          ],
+          [
+            13.0
+          ],
+          [
+            13.0
+          ],
+          [
+            5.0
+          ],
+          [
+            5.0
+          ]
+        ],
+        "csv_file": "",
+        "interpolation": "linear",
+        "sample_time": 0.0
+      },
+      "meta": {
+        "position": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "error",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          130.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "pi",
+      "type": "control.pid",
+      "params": {
+        "P": "Kc",
+        "I": "Kc / Ti",
+        "D": 0.0,
+        "N": 100.0,
+        "initial_integrator": 9.258595501541096,
+        "upper": "V_max",
+        "lower": 0.0,
+        "anti_windup": "clamping",
+        "Kb": 1.0
+      },
+      "meta": {
+        "position": [
+          250.0,
+          10.0
+        ]
+      }
+    },
+    {
+      "name": "open_loop_voltage",
+      "type": "sources.constant",
+      "params": {
+        "value": "V_open",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          250.0,
+          110.0
+        ]
+      }
+    },
+    {
+      "name": "mode",
+      "type": "sources.constant",
+      "params": {
+        "value": "closed_loop",
+        "sample_time": "inf",
+        "output_type": "double"
+      },
+      "meta": {
+        "position": [
+          250.0,
+          200.0
+        ]
+      }
+    },
+    {
+      "name": "pump_voltage",
+      "type": "routing.switch",
+      "params": {
+        "criterion": "u1 >= threshold",
+        "threshold": 0.5
+      },
+      "meta": {
+        "position": [
+          390.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "pump_flow",
+      "type": "math.gain",
+      "params": {
+        "gain": "K_pump",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          520.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "net_flow_1",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          650.0,
+          70.0
+        ]
+      }
+    },
+    {
+      "name": "dh1",
+      "type": "math.gain",
+      "params": {
+        "gain": "1 / A_tank",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          770.0,
+          70.0
+        ]
+      }
+    },
+    {
+      "name": "h1",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 4.7437628671663274,
+        "upper": "h_max",
+        "lower": 0.0,
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          890.0,
+          70.0
+        ]
+      }
+    },
+    {
+      "name": "sqrt_h1",
+      "type": "math.function",
+      "params": {
+        "function": "sqrt"
+      },
+      "meta": {
+        "position": [
+          1010.0,
+          70.0
+        ]
+      }
+    },
+    {
+      "name": "flow_1_to_2",
+      "type": "math.gain",
+      "params": {
+        "gain": "a1 * 44.294469",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1130.0,
+          70.0
+        ],
+        "flipped": true
+      }
+    },
+    {
+      "name": "net_flow_2",
+      "type": "math.sum",
+      "params": {
+        "signs": "+-",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          650.0,
+          230.0
+        ]
+      }
+    },
+    {
+      "name": "dh2",
+      "type": "math.gain",
+      "params": {
+        "gain": "1 / A_tank",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          770.0,
+          230.0
+        ]
+      }
+    },
+    {
+      "name": "h2",
+      "type": "continuous.integrator",
+      "params": {
+        "initial": 15.0,
+        "upper": "h_max",
+        "lower": 0.0,
+        "external_reset": "none",
+        "initial_source": "internal",
+        "saturation_port": false
+      },
+      "meta": {
+        "position": [
+          890.0,
+          230.0
+        ]
+      }
+    },
+    {
+      "name": "sqrt_h2",
+      "type": "math.function",
+      "params": {
+        "function": "sqrt"
+      },
+      "meta": {
+        "position": [
+          1010.0,
+          230.0
+        ]
+      }
+    },
+    {
+      "name": "outflow",
+      "type": "math.gain",
+      "params": {
+        "gain": "a2 * 44.294469",
+        "multiplication": "elementwise",
+        "output_type": "inherit"
+      },
+      "meta": {
+        "position": [
+          1130.0,
+          230.0
+        ],
+        "flipped": true
+      }
+    },
+    {
+      "name": "scope",
+      "type": "sinks.scope",
+      "params": {
+        "num_inputs": 3
+      },
+      "meta": {
+        "position": [
+          1130.0,
+          -80.0
+        ]
+      }
+    },
+    {
+      "name": "level_2",
+      "type": "ports.outport",
+      "params": {
+        "port": 1
+      },
+      "meta": {
+        "position": [
+          1010.0,
+          330.0
+        ]
+      }
+    },
+    {
+      "name": "level_1",
+      "type": "ports.outport",
+      "params": {
+        "port": 2
+      },
+      "meta": {
+        "position": [
+          1010.0,
+          -20.0
+        ]
+      }
+    },
+    {
+      "name": "voltage",
+      "type": "ports.outport",
+      "params": {
+        "port": 3
+      },
+      "meta": {
+        "position": [
+          520.0,
+          -60.0
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "src": "level_ref",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 0
+    },
+    {
+      "src": "h2",
+      "src_port": 0,
+      "dst": "error",
+      "dst_port": 1
+    },
+    {
+      "src": "error",
+      "src_port": 0,
+      "dst": "pi",
+      "dst_port": 0
+    },
+    {
+      "src": "pi",
+      "src_port": 0,
+      "dst": "pump_voltage",
+      "dst_port": 0
+    },
+    {
+      "src": "mode",
+      "src_port": 0,
+      "dst": "pump_voltage",
+      "dst_port": 1
+    },
+    {
+      "src": "open_loop_voltage",
+      "src_port": 0,
+      "dst": "pump_voltage",
+      "dst_port": 2
+    },
+    {
+      "src": "pump_voltage",
+      "src_port": 0,
+      "dst": "pump_flow",
+      "dst_port": 0
+    },
+    {
+      "src": "pump_flow",
+      "src_port": 0,
+      "dst": "net_flow_1",
+      "dst_port": 0
+    },
+    {
+      "src": "flow_1_to_2",
+      "src_port": 0,
+      "dst": "net_flow_1",
+      "dst_port": 1
+    },
+    {
+      "src": "net_flow_1",
+      "src_port": 0,
+      "dst": "dh1",
+      "dst_port": 0
+    },
+    {
+      "src": "dh1",
+      "src_port": 0,
+      "dst": "h1",
+      "dst_port": 0
+    },
+    {
+      "src": "h1",
+      "src_port": 0,
+      "dst": "sqrt_h1",
+      "dst_port": 0
+    },
+    {
+      "src": "sqrt_h1",
+      "src_port": 0,
+      "dst": "flow_1_to_2",
+      "dst_port": 0
+    },
+    {
+      "src": "flow_1_to_2",
+      "src_port": 0,
+      "dst": "net_flow_2",
+      "dst_port": 0
+    },
+    {
+      "src": "outflow",
+      "src_port": 0,
+      "dst": "net_flow_2",
+      "dst_port": 1
+    },
+    {
+      "src": "net_flow_2",
+      "src_port": 0,
+      "dst": "dh2",
+      "dst_port": 0
+    },
+    {
+      "src": "dh2",
+      "src_port": 0,
+      "dst": "h2",
+      "dst_port": 0
+    },
+    {
+      "src": "h2",
+      "src_port": 0,
+      "dst": "sqrt_h2",
+      "dst_port": 0
+    },
+    {
+      "src": "sqrt_h2",
+      "src_port": 0,
+      "dst": "outflow",
+      "dst_port": 0
+    },
+    {
+      "src": "level_ref",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 0
+    },
+    {
+      "src": "h2",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 1
+    },
+    {
+      "src": "h1",
+      "src_port": 0,
+      "dst": "scope",
+      "dst_port": 2
+    },
+    {
+      "src": "h2",
+      "src_port": 0,
+      "dst": "level_2",
+      "dst_port": 0
+    },
+    {
+      "src": "h1",
+      "src_port": 0,
+      "dst": "level_1",
+      "dst_port": 0
+    },
+    {
+      "src": "pump_voltage",
+      "src_port": 0,
+      "dst": "voltage",
+      "dst_port": 0
+    }
+  ],
+  "tests": [
+    {
+      "name": "follows the steps around 15 cm",
+      "description": "After the step to 17 cm the level is within 0.2 cm after 60 s, and overshoots by less than 1 cm",
+      "stop_time": 150.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "level_2",
+          "lower": 16.8,
+          "upper": 17.2,
+          "t_from": 110.0
+        },
+        {
+          "kind": "bounds",
+          "signal": "level_2",
+          "upper": 18.0
+        }
+      ]
+    },
+    {
+      "name": "the upper tank never overflows",
+      "description": "The pump limit and the anti-windup keep the upper tank below 30 cm",
+      "stop_time": 400.0,
+      "inputs": {},
+      "checks": [
+        {
+          "kind": "bounds",
+          "signal": "level_1",
+          "upper": 29.9
+        }
+      ]
+    }
+  ]
+}
