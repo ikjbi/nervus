@@ -69,6 +69,8 @@ class CompiledModel:
     reset_on_enable: list[bool] = field(default_factory=list)
     trigger: list[list[tuple[int, int, str]]] = field(default_factory=list)
     """Trigger signals and edges gating each block (triggered subsystems); empty = always runs."""
+    loops: list[tuple[list[int], list[int]]] = field(default_factory=list)
+    """Algebraic loops solved by iteration: (blocks of the loop in evaluation order, tear blocks)."""
     xd: list[Array] = field(default_factory=list)
     y: list[list[Array]] = field(default_factory=list)
     _validated: bool = False
@@ -123,6 +125,10 @@ class CompiledModel:
         self._en_prev = [True] * len(self.blocks)  # its enable was on at its last execution
         self._trig_prev: list[list[float | None]] = [[None] * len(tr) for tr in self.trigger]
         self._monitors = [(i, b, self.inputs[i]) for i, b, *_ in self._plan if hasattr(b, "check_major")]
+        self._loop_at = {members[0]: (members, tears) for members, tears in self.loops}
+        self._in_loop = {m for members, _ in self.loops for m in members}
+        self.loop_iterations = 0
+        """Residual evaluations spent solving algebraic loops (for statistics)."""
 
     def _u(self, i: int) -> list[Array]:
         y = self.y
@@ -158,7 +164,7 @@ class CompiledModel:
         ``hits`` is the set of discrete rates that have a sample hit now (``None`` during minor solver steps,
         when discrete outputs are held). ``init`` forces every block, including constant ones, to compute.
         """
-        y, xd = self.y, self.xd
+        y = self.y
         validated = self._validated
         constant, discrete = Kind.CONSTANT, Kind.DISCRETE
         gates = [bool(e or tr) for e, tr in zip(self.enable, self.trigger, strict=True)]
@@ -177,21 +183,76 @@ class CompiledModel:
                     continue  # not decided yet: keep the initial outputs
                 if not self._enabled[i]:
                     continue  # disabled or not triggered: outputs held
-            try:
-                out = b.outputs(t, [y[s][p] for s, p in inputs], xc[sl], xd[i])
-            except Exception as exc:
-                name = self.names[i]
-                raise SimulationError(f"{name}: error computing outputs at t={t:g}: {exc}", (name,)) from exc
-            if not validated:
-                out = self._check_outputs(i, out)
-            q = self._quantize.get(i)
-            if q is not None:
-                out = list(out)
-                ports, rounding, overflow = q
-                for p, dtype in ports:
-                    out[p] = dtype.quantize(out[p], rounding, overflow)
-            y[i] = out
+            if i in self._in_loop:
+                if i in self._loop_at:
+                    self._solve_loop(t, xc, *self._loop_at[i])
+                continue
+            y[i] = self._compute(i, b, t, xc, sl, inputs, validated)
         self._validated = True
+
+    def _compute(self, i: int, b: Block, t: float, xc: Array, sl: slice, inputs: list[tuple[int, int]],
+                 validated: bool) -> list[Array]:  # fmt: skip
+        y = self.y
+        try:
+            out = b.outputs(t, [y[s][p] for s, p in inputs], xc[sl], self.xd[i])
+        except Exception as exc:
+            name = self.names[i]
+            raise SimulationError(f"{name}: error computing outputs at t={t:g}: {exc}", (name,)) from exc
+        if not validated:
+            out = self._check_outputs(i, out)
+        q = self._quantize.get(i)
+        if q is not None:
+            out = list(out)
+            ports, rounding, overflow = q
+            for p, dtype in ports:
+                out[p] = dtype.quantize(out[p], rounding, overflow)
+        return list(out)
+
+    def _solve_loop(self, t: float, xc: Array, members: list[int], tears: list[int]) -> None:
+        """Solve an algebraic loop: find the tear blocks' outputs x such that computing the loop from x gives x
+        again (Newton's method, starting from the last solution)."""
+        from scipy.optimize import root
+
+        y, plan = self.y, self._plan
+        sizes = [[a.size for a in y[k]] for k in tears]
+        computed: dict[int, list[Array]] = {}
+
+        def put(x: Array) -> None:
+            pos = 0
+            for k, ws in zip(tears, sizes, strict=True):
+                y[k] = [np.array(x[pos + o : pos + o + w]) for o, w in zip(np.cumsum([0, *ws[:-1]]), ws, strict=True)]
+                pos += sum(ws)
+
+        def residual(x: Array) -> Array:
+            self.loop_iterations += 1
+            put(x)
+            for m in members:
+                _, b, _k, _r, sl, inputs = plan[m]
+                out = self._compute(m, b, t, xc, sl, inputs, True)
+                if m in tears:  # the tear's output computed from the guess: compared with the guess
+                    computed[m] = out
+                else:
+                    y[m] = out
+            return np.concatenate([a for k in tears for a in computed[k]]) - x
+
+        x0 = np.concatenate([a for k in tears for a in y[k]]).astype(float)
+        if not np.all(np.isfinite(x0)):
+            x0 = np.zeros_like(x0)
+        r0 = residual(x0)
+        if np.max(np.abs(r0), initial=0.0) <= 1e-12 * (1 + np.max(np.abs(x0), initial=0.0)):
+            put(x0 + r0)
+            return
+        sol = root(residual, x0, method="hybr", options={"xtol": 1e-12})
+        r = residual(sol.x)
+        scale = 1.0 + np.max(np.abs(sol.x), initial=0.0)
+        if not np.all(np.isfinite(r)) or np.max(np.abs(r), initial=0.0) > 1e-6 * scale:
+            names = [self.names[m] for m in members]
+            raise SimulationError(
+                f"the algebraic loop {' -> '.join(names)} has no solution at t={t:g} (Newton's method did not "
+                f"converge: {sol.message})",
+                tuple(names),
+            )
+        put(sol.x + r)
 
     def _check_outputs(self, i: int, out: Sequence[Array]) -> list[Array]:
         name = self.names[i]
@@ -338,7 +399,10 @@ class CompiledModel:
 
 
 def compile_diagram(
-    diagram: Diagram, params: dict[str, Any] | None = None, default_rate: SampleTime | None = None
+    diagram: Diagram,
+    params: dict[str, Any] | None = None,
+    default_rate: SampleTime | None = None,
+    algebraic_loops: str | None = None,
 ) -> CompiledModel:
     """Compile ``diagram``. Raises :class:`ModelError` describing the first problem found.
 
@@ -382,7 +446,8 @@ def compile_diagram(
     feedthrough = [bool(p) for p in ft_ports]
     gating = [[*e, *[(s, p) for s, p, _ in tr]] for e, tr in zip(graph.enable, graph.trigger, strict=True)]
     ft_inputs = [[src for k, src in enumerate(inputs[i]) if k in ft_ports[i]] for i in range(len(blocks))]
-    order = _sort(blocks, ft_inputs, feedthrough, names, gating)
+    solve_loops = (algebraic_loops or diagram.root.settings.algebraic_loops) == "solve"
+    order, loop_groups = _sort(blocks, ft_inputs, feedthrough, names, gating, solve_loops)
 
     # Re-index everything into execution order.
     pos = {old: new for new, old in enumerate(order)}
@@ -397,6 +462,7 @@ def compile_diagram(
     reset_on_enable = [graph.reset_on_enable[i] for i in order]
     trigger = [[(pos[s], p, e) for s, p, e in graph.trigger[i]] for i in order]
     feedthrough = [feedthrough[i] for i in order]
+    loops = [([pos[m] for m in members], [pos[t] for t in tears]) for members, tears in loop_groups]
 
     task_rate = [graph.task_rate[i] if graph.task_rate[i] is not None else default_rate for i in order]
     sample_times = _resolve_sample_times(blocks, inputs, task_rate)
@@ -466,7 +532,9 @@ def compile_diagram(
         enable=enable,
         reset_on_enable=reset_on_enable,
         trigger=trigger,
+        loops=loops,
     )
+    _check_loops(model)
     model.reset()
     return model
 
@@ -528,9 +596,14 @@ def _sort(
     feedthrough: list[bool],
     names: list[str],
     enable: list[list[tuple[int, int]]] | None = None,
-) -> list[int]:
-    """Topological sort over direct-feedthrough dependencies (Kahn's algorithm, stable). Blocks in an enabled
-    subsystem also depend on its enable signal."""
+    solve_loops: bool = False,
+) -> tuple[list[int], list[tuple[list[int], list[int]]]]:
+    """Topological sort over direct-feedthrough dependencies (stable). Blocks in an enabled subsystem also
+    depend on its enable signal.
+
+    With ``solve_loops`` an algebraic loop (a strongly connected group of blocks) is kept together in the order
+    and returned with its **tear** blocks, whose outputs are iterated on; otherwise it is an error. Returns the
+    order and the loops as (members in evaluation order, tear blocks)."""
     n = len(blocks)
     deps: list[set[int]] = [set() for _ in range(n)]
     for i in range(n):
@@ -538,30 +611,132 @@ def _sort(
             deps[i] = {s for s, _ in inputs[i]}
         if enable is not None:
             deps[i] |= {s for s, _ in enable[i]}
-    users: list[list[int]] = [[] for _ in range(n)]
-    for i in range(n):
-        for s in deps[i]:
-            users[s].append(i)
-    remaining = [len(d) for d in deps]
-    ready = [i for i in range(n) if remaining[i] == 0]
+    groups = _strongly_connected(deps) if solve_loops else [[i] for i in range(n)]
+    group_of = {m: g for g, members in enumerate(groups) for m in members}
+    gdeps = [{group_of[d] for m in members for d in deps[m]} for members in groups]
+    if solve_loops:  # a loop is one node in the order; it does not wait for itself
+        gdeps = [d - {g} for g, d in enumerate(gdeps)]
+    users: list[list[int]] = [[] for _ in groups]
+    for g, ds in enumerate(gdeps):
+        for d in ds:
+            users[d].append(g)
+    remaining = [len(d) for d in gdeps]
+    ready = [g for g in range(len(groups)) if remaining[g] == 0]
     order: list[int] = []
+    loops: list[tuple[list[int], list[int]]] = []
     while ready:
-        ready.sort()
-        i = ready.pop(0)
-        order.append(i)
-        for j in users[i]:
-            remaining[j] -= 1
-            if remaining[j] == 0:
-                ready.append(j)
+        ready.sort(key=lambda g: min(groups[g]))
+        g = ready.pop(0)
+        members = groups[g]
+        if len(members) > 1 or members[0] in deps[members[0]]:
+            inner, tears = _tear(members, deps)
+            order.extend(inner)
+            loops.append((inner, tears))
+        else:
+            order.extend(members)
+        for h in users[g]:
+            remaining[h] -= 1
+            if remaining[h] == 0:
+                ready.append(h)
     if len(order) < n:
-        cycle = _find_cycle([i for i in range(n) if remaining[i] > 0], deps)
+        cycle = _find_cycle([i for i in range(n) if i not in set(order)], deps)
         loop = tuple(names[i] for i in cycle)
         raise AlgebraicLoopError(
             "algebraic loop: " + " -> ".join((*loop, loop[0])) + ". Every feedback loop needs a block "
-            "with state, such as an Integrator or Unit Delay, whose output does not depend directly on its input.",
+            "with state, such as an Integrator or Unit Delay, whose output does not depend directly on its input "
+            "(or set Simulation Settings ▸ Algebraic loops to 'solve').",
             loop,
         )
-    return order
+    return order, loops
+
+
+def _strongly_connected(deps: list[set[int]]) -> list[list[int]]:
+    """Strongly connected components (Tarjan, iterative), each sorted."""
+    index: dict[int, int] = {}
+    low: dict[int, int] = {}
+    stack: list[int] = []
+    on_stack: set[int] = set()
+    out: list[list[int]] = []
+    counter = 0
+    for root in range(len(deps)):
+        if root in index:
+            continue
+        work = [(root, iter(sorted(deps[root])))]
+        index[root] = low[root] = counter
+        counter += 1
+        stack.append(root)
+        on_stack.add(root)
+        while work:
+            v, it = work[-1]
+            advanced = False
+            for w in it:
+                if w not in index:
+                    index[w] = low[w] = counter
+                    counter += 1
+                    stack.append(w)
+                    on_stack.add(w)
+                    work.append((w, iter(sorted(deps[w]))))
+                    advanced = True
+                    break
+                if w in on_stack:
+                    low[v] = min(low[v], index[w])
+            if advanced:
+                continue
+            work.pop()
+            if work:
+                low[work[-1][0]] = min(low[work[-1][0]], low[v])
+            if low[v] == index[v]:
+                comp = []
+                while True:
+                    w = stack.pop()
+                    on_stack.discard(w)
+                    comp.append(w)
+                    if w == v:
+                        break
+                out.append(sorted(comp))
+    return out
+
+
+def _tear(members: list[int], deps: list[set[int]]) -> tuple[list[int], list[int]]:
+    """Order the blocks of an algebraic loop: choose tear blocks (their outputs are guessed) until the rest can
+    be sorted. Returns (members in evaluation order, tears)."""
+    group = set(members)
+    tears: list[int] = []
+    while True:
+        inner = {m: {d for d in deps[m] if d in group and d not in tears} for m in members}
+        remaining = {m: len(d) for m, d in inner.items()}
+        users: dict[int, list[int]] = {m: [] for m in members}
+        for m, ds in inner.items():
+            for d in ds:
+                users[d].append(m)
+        ready = sorted(m for m in members if remaining[m] == 0)
+        order: list[int] = []
+        while ready:
+            m = ready.pop(0)
+            order.append(m)
+            for u in users[m]:
+                remaining[u] -= 1
+                if remaining[u] == 0:
+                    ready.append(u)
+                    ready.sort()
+        if len(order) == len(members):
+            return order, tears
+        left = [m for m in members if m not in order]
+        cycle = _find_cycle(left, {m: inner[m] for m in left})  # type: ignore[arg-type]
+        tears.append(cycle[0])
+
+
+def _check_loops(model: CompiledModel) -> None:
+    for members, _tears in model.loops:
+        kinds = {(model.kinds[m], model.rate_index[m]) for m in members}
+        gated = [model.names[m] for m in members if model.enable[m] or model.trigger[m]]
+        if len(kinds) > 1 or gated:
+            names = [model.names[m] for m in members]
+            raise ModelError(
+                "algebraic loop " + " -> ".join(names) + ": a loop can only be solved when all its blocks run at the "
+                "same rate and none is in an enabled or triggered subsystem",
+                tuple(names),
+            )
 
 
 def _find_cycle(candidates: list[int], deps: list[set[int]]) -> list[int]:

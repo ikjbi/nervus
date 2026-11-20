@@ -33,6 +33,24 @@ AlgebraicLoopError: algebraic loop: s -> g -> s. Every feedback loop needs a blo
 Put an Integrator (continuous) or a Unit Delay (discrete) in the loop. In a real control system that
 delay always exists anyway.
 
+### Solving algebraic loops
+
+Some models are naturally algebraic: a voltage divider with a load that depends on its own voltage, a
+mass-flow balance, a controller with a direct feedthrough on purpose. For these, set **Simulation ▸ Settings ▸
+Algebraic loops** to *Solve iteratively* (in Python: `model.settings.algebraic_loops = "solve"`). Nervus then
+
+1. finds each loop (a group of blocks that depend on each other directly),
+2. chooses **tear** blocks in it, whose outputs it guesses, so that the rest of the loop can be computed in
+   order,
+3. adjusts the guess with Newton's method until computing the loop from the guess gives the guess back:
+   for $y = u - 2y$ it finds $y = u/3$, and for $x = \cos x$ it finds 0.739085.
+
+Each evaluation of the model then solves the loop, which is slower; the simulation reports every solved loop
+as a warning, with its tear blocks. A loop without a solution (e.g. $y = u + y$ with $u \ne 0$) stops the
+simulation with an error naming the blocks. A loop must run at one rate and outside enabled or triggered
+subsystems, and a model with a solved loop cannot become C code: an ECU cannot iterate in its tasks, so break
+the loop with a Unit Delay before generating code.
+
 ## Sample times
 
 Each block runs at a **sample time**, using the same values as Simulink:

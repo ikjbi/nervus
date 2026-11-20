@@ -55,3 +55,15 @@ def test_history(window) -> None:  # type: ignore[no-untyped-def]
     assert con.input.text() == "b = 2"
     con.input.keyPressEvent(up)
     assert con.input.text() == "a = 1"
+
+
+def test_settings_dialog_algebraic_loops(qtbot) -> None:  # type: ignore[no-untyped-def]
+    from nervus import SimulationSettings
+    from nervus.gui.views.settings_dialog import SettingsDialog
+
+    dlg = SettingsDialog(SimulationSettings(algebraic_loops="solve"))
+    qtbot.addWidget(dlg)
+    assert dlg.loops.currentData() == "solve"
+    dlg.loops.setCurrentIndex(0)
+    dlg._accept()
+    assert dlg.result_settings.algebraic_loops == "error"

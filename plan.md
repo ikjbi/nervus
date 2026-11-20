@@ -203,7 +203,7 @@ tests/
 - [x] Discrete-Time Integrator external reset (rising/falling/either/level), with C code
 - [x] Continuous Integrator external reset (rising/falling/either/level, exact with zero crossings, solver restart)
 - [x] Integrator saturation output port and external initial condition
-- [ ] Algebraic loop solver (optional), with warnings
+- [x] Algebraic loop solver (optional), with warnings
 - [x] Clamped continuous PID at its limit: sliding mode with a boundary layer (it chattered, or stayed clamped too
       long); blocks are told when the Zeno guard switches them to `sliding`; no derivative-filter dynamics with D = 0
 - [x] Simulation stop block and assertions

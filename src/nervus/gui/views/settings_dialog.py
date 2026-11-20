@@ -52,6 +52,11 @@ class SettingsDialog(QDialog):
         self.atol = QLineEdit(format_value(settings.atol))
         self.zero_crossing = QCheckBox("Locate discontinuities exactly (zero-crossing detection)")
         self.zero_crossing.setChecked(settings.zero_crossing)
+        self.loops = QComboBox()
+        self.loops.addItem("Error (add a delay or a state to break the loop)", "error")
+        self.loops.addItem("Solve iteratively (Newton; slower, no C code)", "solve")
+        self.loops.setCurrentIndex(1 if settings.algebraic_loops == "solve" else 0)
+        self.loops.setToolTip("A feedback loop of blocks whose outputs depend directly on their inputs")
         self.pacing = QLineEdit(format_value(settings.pacing) if settings.pacing else "")
         self.pacing.setPlaceholderText("off (as fast as possible)")
         self.pacing.setToolTip("1 = real time, 0.5 = half speed; to watch live scopes or to run against hardware")
@@ -69,6 +74,7 @@ class SettingsDialog(QDialog):
         form.addRow("Relative tolerance", self.rtol)
         form.addRow("Absolute tolerance", self.atol)
         form.addRow("", self.zero_crossing)
+        form.addRow("Algebraic loops", self.loops)
         form.addRow("Pacing (× real time)", self.pacing)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self._accept)
@@ -108,6 +114,7 @@ class SettingsDialog(QDialog):
                 rtol=self._num(self.rtol) or 0.0,
                 atol=self._num(self.atol) or 0.0,
                 zero_crossing=self.zero_crossing.isChecked(),
+                algebraic_loops=str(self.loops.currentData()),
                 pacing=self._num(self.pacing, optional=True) or 0.0,
             )
             s.validate()

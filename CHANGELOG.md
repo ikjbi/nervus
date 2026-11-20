@@ -25,6 +25,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Algebraic loop solver (Simulation ▸ Settings ▸ Algebraic loops = solve): loops are torn and solved with
+  Newton's method at every evaluation, reported as warnings; code generation refuses them.
 - Tutorial 1, *your first model*: a cruise control built step by step in the editor, with screenshots
   (`examples/cruise_control.py`); a tutorial overview with learning paths; every tutorial now starts with what
   you will learn, what to do first and how to follow along, and ends with a link to the next one. The app's

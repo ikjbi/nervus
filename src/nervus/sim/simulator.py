@@ -317,7 +317,7 @@ def simulate(
         )
     attached = _attach_inputs(diagram, inputs or {})
     try:
-        model = compile_diagram(diagram, params)
+        model = compile_diagram(diagram, params, algebraic_loops=(settings or diagram.settings).algebraic_loops)
         return _simulate_compiled(
             model, t_final, t_start, solver, step, max_step, rtol, atol, settings, progress, should_stop, coverage, live
         )
@@ -387,6 +387,12 @@ def _simulate_compiled(
     else:
         h = None
         n_major, stopped = _run_variable(model, opts, t0, tf, log, progress, should_stop, zc_info)
+    loop_notes = [
+        "algebraic loop solved by iteration: "
+        + " -> ".join(model.names[m] for m in members)
+        + f" (tear: {', '.join(model.names[k] for k in tears)}; {model.loop_iterations} loop evaluations)"
+        for members, tears in model.loops
+    ]
     stats = SimStats(
         opts.method,
         h,
@@ -395,7 +401,7 @@ def _simulate_compiled(
         time.perf_counter() - wall0,
         stopped,
         zc_info["count"],
-        zc_info["warnings"] or None,
+        [*zc_info["warnings"], *loop_notes] or None,
     )
     return log.result(stats)
 

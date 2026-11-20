@@ -382,6 +382,9 @@ class CGenerator:
                 problems.append(f"{m.names[i]}: continuous states (only discrete-time blocks can become C code)")
             elif b.type_id not in TEMPLATES and not isinstance(b, PortProxy):
                 problems.append(f"{m.names[i]}: no C code template for block type {b.type_id or type(b).__name__!r}")
+        for members, _tears in m.loops:
+            problems.append(f"{m.names[members[0]]}: in an algebraic loop ({' -> '.join(m.names[k] for k in members)}); "
+                            "break it with a Unit Delay to generate code")  # fmt: skip
         if problems:
             raise CodegenError(
                 "cannot generate C code:\n  - "
