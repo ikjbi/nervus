@@ -210,6 +210,8 @@ tests/
       long); blocks are told when the Zeno guard switches them to `sliding`; no derivative-filter dynamics with D = 0
 - [x] Simulation stop block and assertions
 - [x] First performance pass: precomputed execution tables, scalar fast paths (~25 % faster)
+- [x] Second performance pass (10-25 % faster): physical networks assemble in plain lists and solve once per
+      time point, cheaper sources and integrators; `scripts/benchmark.py` times the examples
 - [ ] Performance: avoid per-step Python overhead (vectorised execution, Numba, or simulate the generated C:
       "accelerator mode")
 

@@ -61,10 +61,13 @@ class Stamper:
 
     def __init__(self, n_nodes: int, n_branches: int) -> None:
         self.n = n_nodes
-        size = n_nodes + n_branches
-        self.A = np.zeros((size, size))
-        self.b = np.zeros(size)
-        self.A[np.arange(n_nodes), np.arange(n_nodes)] = GMIN
+        self.size = size = n_nodes + n_branches
+        # Plain lists: components add their contributions one number at a time, which is several times faster in
+        # a list than in a numpy array; :meth:`matrix` makes the arrays for the solve.
+        self._a = [0.0] * (size * size)
+        self.b = [0.0] * size
+        for k in range(n_nodes):
+            self._a[k * size + k] = GMIN
         self.guess: Solution | None = None
         """The previous Newton iterate: nonlinear components linearize around it (``None``: first iteration)."""
         self.limited = False
@@ -82,14 +85,22 @@ class Stamper:
     def add(self, row: int, col: int, value: float) -> None:
         """Add ``value`` at (row, col); rows/cols of nodes are node indices, of branches ``n + k`` (see below)."""
         if row >= 0 and col >= 0:
-            self.A[row, col] += value
+            self._a[row * self.size + col] += value
+
+    def matrix(self) -> Array:
+        """The matrix A (an array, for the solve)."""
+        return np.array(self._a).reshape(self.size, self.size)
 
     def conductance(self, a: int, b: int, g: float) -> None:
         """A through value g·(across_a - across_b) from a to b (a resistor, a damper, a thermal resistance)."""
-        self.add(a, a, g)
-        self.add(b, b, g)
-        self.add(a, b, -g)
-        self.add(b, a, -g)
+        m, n = self._a, self.size
+        if a >= 0:
+            m[a * n + a] += g
+            if b >= 0:
+                m[a * n + b] -= g
+                m[b * n + a] -= g
+        if b >= 0:
+            m[b * n + b] += g
 
     def flow(self, a: int, b: int, value: float) -> None:
         """A known through value from node a, through the component, to node b (a current source)."""
@@ -104,11 +115,13 @@ class Stamper:
 
     def effort(self, k: int, a: int, b: int, value: float) -> None:
         """Branch k fixes across_a - across_b = value; its through value (from a to b) is unknown."""
-        r = self.branch(k)
-        self.add(a, r, 1.0)
-        self.add(b, r, -1.0)
-        self.add(r, a, 1.0)
-        self.add(r, b, -1.0)
+        r, m, n = self.n + k, self._a, self.size
+        if a >= 0:
+            m[a * n + r] += 1.0
+            m[r * n + a] += 1.0
+        if b >= 0:
+            m[b * n + r] -= 1.0
+            m[r * n + b] -= 1.0
         self.b[r] = value
 
 
@@ -216,8 +229,28 @@ class PhysicalNetwork:
     """Outputs that depend directly on input signals (computed by the algebraic node)."""
     _last: Solution | None = None
     """The last solution of a nonlinear network: the starting point of the next Newton iteration."""
+    _memo: tuple[bytes, bytes, Solution] | None = None
+    """The last solution of a network whose solution depends only on x and u (no component with modes; a nonlinear
+    one converges to the same solution within the Newton tolerance): the outputs and the derivatives at one time
+    point use the same solution, solved once."""
+
+    def _pure(self) -> bool:
+        if not hasattr(self, "_is_pure"):
+            self._is_pure = not any(type(m.block).update_mode is not PhysicalBlock.update_mode for m in self.members)
+        return self._is_pure
 
     def solve(self, x: Array, u: Array) -> Solution:
+        if self._pure():
+            kx, ku = x.tobytes(), u.tobytes()
+            memo = self._memo
+            if memo is not None and memo[0] == kx and memo[1] == ku:
+                return memo[2]
+            sol = self._solve(x, u)
+            self._memo = (kx, ku, sol)
+            return sol
+        return self._solve(x, u)
+
+    def _solve(self, x: Array, u: Array) -> Solution:
         """Solve the network for states ``x`` and inputs ``u``. Nonlinear components (transistors, diodes)
         are linearized around the previous iterate (Newton-Raphson), starting from the last solution; components
         with modes are iterated until their modes are consistent."""
@@ -226,11 +259,13 @@ class PhysicalNetwork:
         guess = self._last if (nonlinear and self._last is not None and self._last.z.size == size) else None
         sol: Solution | None = None
         limit = MAX_NEWTON_ITERATIONS if nonlinear else MAX_MODE_ITERATIONS
+        ulist = u.tolist()
+        inputs = [ulist[m.inputs] for m in self.members]  # the same in every iteration
         for _ in range(limit):
             s = Stamper(self.n_nodes, self.n_branches)
             s.guess = guess
-            for m in self.members:
-                m.block.stamp(s, m.nodes, m.branches, x[m.states], u[m.inputs].tolist())
+            for m, um in zip(self.members, inputs, strict=True):
+                m.block.stamp(s, m.nodes, m.branches, x[m.states], um)
             z = self._linear_solve(s)
             sol = Solution(z, self.n_nodes)
             changed = False
@@ -257,15 +292,16 @@ class PhysicalNetwork:
 
     def _linear_solve(self, s: Stamper) -> Array:
         try:
-            if s.A.shape[0] > SPARSE_ABOVE:
+            a, b = s.matrix(), np.array(s.b)
+            if a.shape[0] > SPARSE_ABOVE:
                 from scipy.sparse import csc_matrix
                 from scipy.sparse.linalg import spsolve
 
-                z = spsolve(csc_matrix(s.A), s.b)
+                z = spsolve(csc_matrix(a), b)
                 if not np.all(np.isfinite(z)):
                     raise np.linalg.LinAlgError("singular")
             else:
-                z = np.linalg.solve(s.A, s.b)
+                z = np.linalg.solve(a, b)
         except (np.linalg.LinAlgError, RuntimeError) as exc:
             raise SimulationError(self._singular_message(), tuple(m.path for m in self.members)) from exc
         return np.asarray(z, dtype=float)

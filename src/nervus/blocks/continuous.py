@@ -13,7 +13,7 @@ from nervus.core.block import Block, Width
 from nervus.core.errors import ParameterError
 from nervus.core.params import Param, ParamKind
 from nervus.core.sample_time import CONTINUOUS
-from nervus.core.types import Array, as_signal
+from nervus.core.types import Array, as_signal, widened
 
 CATEGORY = "Continuous"
 
@@ -133,7 +133,7 @@ class Integrator(_Continuous):
         return [y, sat]
 
     def _rate(self, u: Sequence[Array], x: Array) -> Array:
-        du = np.broadcast_to(u[0], x.shape).copy()
+        du = widened(u[0], x.shape)
         if self._reset == "level" and float(np.ravel(u[1])[0]) != 0:
             return np.zeros_like(x)  # held at the initial value while the reset is active
         if not self._limited:

@@ -72,9 +72,15 @@ class Step(_Source):
         a, b = as_signal(self.params["initial"]), as_signal(self.params["final"])
         return [np.broadcast_shapes(a.shape, b.shape)[0]]
 
+    def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
+        super().configure(in_widths, out_widths)
+        w = (out_widths[0],)
+        self._before = np.broadcast_to(as_signal(self.params["initial"]), w).copy()
+        self._after = np.broadcast_to(as_signal(self.params["final"]), w).copy()
+        self._at = float(self.params["time"])
+
     def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
-        key = "final" if t >= self.params["time"] else "initial"
-        return [np.broadcast_to(as_signal(self.params[key]), (self.out_widths[0],)).copy()]
+        return [(self._after if t >= self._at else self._before).copy()]
 
     def breakpoints(self, t_start: float, t_final: float) -> list[float]:
         return [float(self.params["time"])]

@@ -121,6 +121,7 @@ class CompiledModel:
             for i, b, _k, _r, sl, _inp in self._plan
             if sl.stop > sl.start and type(b).major_step is not _Block.major_step
         ]
+        self._gated = [bool(e or tr) for e, tr in zip(self.enable, self.trigger, strict=True)]
         self._enabled = [True] * len(self.blocks)  # the block ran at its last execution
         self._en_prev = [True] * len(self.blocks)  # its enable was on at its last execution
         self._trig_prev: list[list[float | None]] = [[None] * len(tr) for tr in self.trigger]
@@ -167,7 +168,7 @@ class CompiledModel:
         y = self.y
         validated = self._validated
         constant, discrete = Kind.CONSTANT, Kind.DISCRETE
-        gates = [bool(e or tr) for e, tr in zip(self.enable, self.trigger, strict=True)]
+        gates = self._gated
         for i, b, kind, rate, sl, inputs in self._plan:
             if not init:
                 if kind is constant:
@@ -206,7 +207,7 @@ class CompiledModel:
             ports, rounding, overflow = q
             for p, dtype in ports:
                 out[p] = dtype.quantize(out[p], rounding, overflow)
-        return list(out)
+        return out if type(out) is list else list(out)
 
     def _solve_loop(self, t: float, xc: Array, members: list[int], tears: list[int]) -> None:
         """Solve an algebraic loop: find the tear blocks' outputs x such that computing the loop from x gives x

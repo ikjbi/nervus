@@ -37,6 +37,11 @@ uv run pre-commit install
 
 See [docs/developer/custom-blocks.md](docs/developer/custom-blocks.md).
 
+## Performance
+
+`uv run python scripts/benchmark.py` times the simulation of some example models (best of three); run it before
+and after a change to the engine. `--profile MODEL` shows where the time goes.
+
 ## Releasing
 
 Releases go to PyPI from GitHub Actions (`.github/workflows/release.yml`), with

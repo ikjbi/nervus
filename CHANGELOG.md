@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Simulation 10-25 % faster: physical networks are assembled in plain lists and solved once per time point;
+  cheaper Step sources and integrators.
+
 ### Fixed
 - A model that needs an optional package says which and how to install it (e.g. `pip install "nervus[can]"`),
   instead of an error about missing ports.

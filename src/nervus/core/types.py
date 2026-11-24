@@ -18,4 +18,11 @@ def as_signal(value: object) -> Array:
     return np.atleast_1d(np.asarray(value, dtype=np.float64)).ravel()
 
 
+def widened(value: Array, shape: tuple[int, ...]) -> Array:
+    """A copy of ``value`` with ``shape`` (a scalar is repeated); fast when it already has the shape."""
+    if value.shape == shape:
+        return value.copy()
+    return np.broadcast_to(value, shape).copy()
+
+
 EMPTY: Array = np.zeros(0)
