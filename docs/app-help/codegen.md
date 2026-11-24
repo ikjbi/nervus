@@ -146,7 +146,8 @@ cov.save_html("ecu_coverage.html")
 ```
 
 Many blocks become one-line conditionals (a Switch, a Saturation), so a missing test shows as a branch never taken
-rather than a line. Needs a C compiler and gcov.
+rather than a line. Needs a C compiler and gcov. In the editor: **C coverage (tests)** in the code generation
+dialog shows the percentages and opens the annotated report.
 
 ## MISRA C
 

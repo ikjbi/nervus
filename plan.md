@@ -287,7 +287,7 @@ tests/
 - [x] Condition and MC/DC coverage for logic (Logical Operator decisions; the report names the missing
       evaluations)
 - [x] Coverage of the generated C by the test cases (gcov: lines and branches; `coverage_of_tests`)
-- [ ] C coverage button in the code generation dialog; MC/DC for chart guards with and/or
+- [x] C coverage button in the code generation dialog; MC/DC for chart guards with and/or/not
 - [x] Requirements traceability (link requirements to blocks and tests)
 - [x] Model Advisor: 10 rules (float equality, division, anti-windup, implicit sampling, chart reachability, ...)
 - [x] Packaging for PyPI: wheel with the examples (`nervus --copy-examples`, File ▸ Open Example), clean source

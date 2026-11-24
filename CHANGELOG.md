@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- MC/DC for state chart guards with several conditions; "C coverage (tests)" in the code generation dialog.
 - Coverage of the generated C code by the model's test cases (gcov lines and branches, HTML report):
   `nervus.codegen.c_coverage.coverage_of_tests`.
 - The documentation is online: https://ikjbi.github.io/nervus/. Releases get a GitHub Release with their notes.
