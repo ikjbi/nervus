@@ -47,10 +47,13 @@ Nervus uses [uv](https://docs.astral.sh/uv/) to manage the environment.
 ```bash
 git clone git@github.com:ikjbi/nervus.git
 cd nervus
-uv sync                 # engine + dev tools
-uv sync --extra gui     # also install the desktop editor (PySide6, pyqtgraph, matplotlib)
-uv sync --all-extras    # everything: editor, CAN/DBC (cantools), OBD-II (pyserial), MDF4 (asammdf)
+uv sync --extra gui     # the engine and the desktop editor (PySide6, pyqtgraph, matplotlib)
+uv run nervus           # start the editor
 ```
+
+`uv sync` alone installs only the engine (for scripts); `uv sync --all-extras` installs everything: the editor,
+CAN/DBC (cantools), OBD-II (pyserial), MDF4 (asammdf) and FMI (fmpy). If the editor does not start, see
+[Troubleshooting](docs/getting-started.md#troubleshooting).
 
 ## Learn Nervus
 

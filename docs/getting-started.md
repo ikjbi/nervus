@@ -7,10 +7,22 @@ Nervus needs Python 3.11 or newer. The project uses [uv](https://docs.astral.sh/
 ```bash
 git clone git@github.com:ikjbi/nervus.git
 cd nervus
-uv sync                       # the engine
-uv sync --extra gui           # + the desktop editor (PySide6)
-uv sync --extra plot          # + matplotlib for the example plots
+uv sync --extra gui           # the engine and the desktop editor (PySide6, matplotlib)
+uv run nervus                 # start the editor
 ```
+
+`uv sync` alone installs only the engine, for models in Python scripts. Other extras: `can` (CAN and DBC files),
+`obd` (OBD-II over a serial adapter), `mdf` (MDF4 measurement files), `fmi` (FMUs); `uv sync --all-extras` installs
+all of them.
+
+### Troubleshooting
+
+| You see | Do this |
+|---|---|
+| `ModuleNotFoundError: No module named 'PySide6'`, or *the desktop editor needs PySide6* | the editor's packages are not installed: `uv sync --extra gui` (or `uv run --extra gui nervus`) |
+| *VIRTUAL_ENV … does not match the project environment path .venv and will be ignored* | harmless: another virtual environment is active, and uv uses the project's `.venv` anyway. `deactivate` removes the message. Do not use `uv run --active`: that runs Nervus in the other environment |
+| Linux: *Could not load the Qt platform plugin "xcb"* | Qt needs a system library: `sudo apt install libxcb-cursor0` (Debian/Ubuntu) or `sudo dnf install xcb-util-cursor` (Fedora/RHEL) |
+| Linux over SSH or without a display: *could not connect to display* | the editor needs a desktop session (or X forwarding: `ssh -X`); scripts and tests run without one, with `QT_QPA_PLATFORM=offscreen` |
 
 ## The editor
 

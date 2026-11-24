@@ -1,0 +1,3722 @@
+{
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_cycles.py": {
+    "mtime": 1795162030.6087434,
+    "hash": "ec5a6e3cc2f9222a183a3b6ff2b2080f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_library.py": {
+    "mtime": 1795079648.0311592,
+    "hash": "efeb92debe3209d84e3436f5c3e42d67"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_diagnostics.py": {
+    "mtime": 1795113577.7290258,
+    "hash": "60eace7c7ca1efcbb849185b96e0a8fa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_zero_crossing.py": {
+    "mtime": 1795102885.9101064,
+    "hash": "d9cca89927c52179aa9f49d6a1449fe4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_dictionary.py": {
+    "mtime": 1795165393.2980843,
+    "hash": "fe1bf85655a3f7dbf6b747c3ddfb39b5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_subsystems.py": {
+    "mtime": 1795187844.0938995,
+    "hash": "ebb99d51caf437232adf58bbaf49233c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_sensors.py": {
+    "mtime": 1795160897.7275631,
+    "hash": "505876a36ec498d5e656185ad818a075"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_enabled.py": {
+    "mtime": 1795078478.1627288,
+    "hash": "94923fa8923131959a900def86ed4ee2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/conftest.py": {
+    "mtime": 1795041662.3403978,
+    "hash": "fa15e5bf8f37ef620b2e94fdbb01df8c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_expressions.py": {
+    "mtime": 1795039421.0181196,
+    "hash": "19b5e19d2e1561168aaeedadea8342e1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_algebraic_loops.py": {
+    "mtime": 1795180950.2208366,
+    "hash": "3ebe2c739c090a332e5bc8b725911015"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_coverage.py": {
+    "mtime": 1795074757.0728252,
+    "hash": "654b9f2ce08921595ea58a2b75aacd77"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_datatypes.py": {
+    "mtime": 1795161304.964952,
+    "hash": "192265b5711adf56b4277aef116f99fb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_sweep.py": {
+    "mtime": 1795096039.1317427,
+    "hash": "0bb63a86ede5a8ffbcb09c13e4f206fe"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_masks.py": {
+    "mtime": 1795074999.5328474,
+    "hash": "04402ea1f7dd3f07a22434b49f2fe79b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_obd_sim.py": {
+    "mtime": 1795114001.3767715,
+    "hash": "5e0f9ce7b63c478eabd644fee6b5a951"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_solvers.py": {
+    "mtime": 1795038553.2806752,
+    "hash": "3c477e3bfee8ea6c225f7baae6363f7d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_atomic.py": {
+    "mtime": 1795083076.3396409,
+    "hash": "aa36605fe0a6141823b46811b60b851d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_docs.py": {
+    "mtime": 1795184292.468002,
+    "hash": "89adc6ae7b36fd10b1ef7599cfa48a19"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_blocks.py": {
+    "mtime": 1795043567.0396054,
+    "hash": "bbbec5904acca8480359a0111940584a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_prelookup.py": {
+    "mtime": 1795095534.6797717,
+    "hash": "01aea732655b505de3f9a6326ee0520d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_canbus.py": {
+    "mtime": 1795163245.6204197,
+    "hash": "a47572ce11bf74153316f30d48751415"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_core.py": {
+    "mtime": 1795109834.2699993,
+    "hash": "75bf53ca00599510b5ec61ab08e04673"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_misra.py": {
+    "mtime": 1795203761.2403474,
+    "hash": "ef7134f25bedf2818e5d2c48c6981a1e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_tasks_codegen.py": {
+    "mtime": 1795202900.4238498,
+    "hash": "17407865b0b4b64539ef63cc11099bb7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_analysis.py": {
+    "mtime": 1795113331.4678667,
+    "hash": "3fe88cfea45178c8c3a6f2d4910fbc3e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_variants.py": {
+    "mtime": 1795079331.6173325,
+    "hash": "dc4be99b644d3bfd51dcf53fc73b7387"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_compiler.py": {
+    "mtime": 1795038553.2784245,
+    "hash": "e578e3cec358409631d85716d5a53a8c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_advisor.py": {
+    "mtime": 1795074887.363776,
+    "hash": "2dfbc3687d6a9ce0d72937a97905e374"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_can_fd.py": {
+    "mtime": 1795163692.3156586,
+    "hash": "9df2896e2944e0b59fd81779faea8f51"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_adaptive_map.py": {
+    "mtime": 1795161550.3553076,
+    "hash": "d88b8c031452d039d87ac7c2f5f7a17d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_fmi.py": {
+    "mtime": 1795202251.389495,
+    "hash": "79499a111a51a5e4f8510dfcd1a76d04"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_io.py": {
+    "mtime": 1795038961.696259,
+    "hash": "2497cba226880d0d1b928e7648a22514"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_integrator_ports.py": {
+    "mtime": 1795109715.8625035,
+    "hash": "7bf7a0e0d8de83abccf738441c43f8f7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_integrator_reset.py": {
+    "mtime": 1795093957.3031173,
+    "hash": "d1e5ecca2dd040862fb6bcc3b4486e71"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_workspace.py": {
+    "mtime": 1795042842.5499885,
+    "hash": "90af3002924c5c082cc434c44b59e8ac"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_requirements.py": {
+    "mtime": 1795181240.482873,
+    "hash": "774218478a5d6165598a4b8d90ab2f12"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_automotive_physics.py": {
+    "mtime": 1795117452.8643267,
+    "hash": "183e5a63f6136b81223a3c572c055ebd"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_tutorials.py": {
+    "mtime": 1795184138.7962596,
+    "hash": "49d86fdcbf70274b5d403365f5e8be50"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_obd.py": {
+    "mtime": 1795081291.6983402,
+    "hash": "dd38017d734b2f699ab1f6af8cb3ab49"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_mdf.py": {
+    "mtime": 1795164364.4572318,
+    "hash": "34a543cf75f4f1308c4d35ccced48ff9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_ecu_blocks.py": {
+    "mtime": 1795042586.1104503,
+    "hash": "74ca4f47f08af679490d3c6280710187"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_physical.py": {
+    "mtime": 1795115175.8382156,
+    "hash": "8f69ab5dfa3611681ed501e9ee0dbaf8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_chart_hierarchy.py": {
+    "mtime": 1795182251.1895883,
+    "hash": "5a800b7e7914eba6fa4c1d2231e3f9cb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_function_call.py": {
+    "mtime": 1795103542.6775098,
+    "hash": "2f51a826f585a6348f373a67b7c17b18"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_semiconductors.py": {
+    "mtime": 1795116070.3307605,
+    "hash": "a2a8690909f28889b5aa868bdcc36989"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_variable_events.py": {
+    "mtime": 1795204279.261916,
+    "hash": "49d4efe704841ede448e07f3ecf1c772"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_spice.py": {
+    "mtime": 1795116278.058387,
+    "hash": "b29d2a28ce321aee177a1bda87d817fe"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_can.py": {
+    "mtime": 1795074560.6184747,
+    "hash": "5ec0541d2ed0d150e57780103992fa48"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_xcp.py": {
+    "mtime": 1795164050.273253,
+    "hash": "ae684ce353675eb8131c779eb05af511"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_simulation.py": {
+    "mtime": 1795112250.9149644,
+    "hash": "0e7fb31ba246fccd26415f9420148478"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_typed_params.py": {
+    "mtime": 1795099791.958725,
+    "hash": "850c58967e5c2bf4f1730eedd221368c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_chart.py": {
+    "mtime": 1795103818.3186712,
+    "hash": "9ab2ae0b99a5a7d79e2660b6f82f7473"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_examples.py": {
+    "mtime": 1795202250.4414132,
+    "hash": "33af7c1dbb5fdd7918c8404564543bbc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_chart_model.py": {
+    "mtime": 1795206851.7629569,
+    "hash": "0cba1c279a7bd13e57b9c37150645d0a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_codegen.py": {
+    "mtime": 1795203748.942222,
+    "hash": "145e70eec27f5a09d6dfaa406732d5d9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_testing.py": {
+    "mtime": 1795092801.4613447,
+    "hash": "ead5de3fc75911ec2a1ca68e06b80d52"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/test_continuous_reset.py": {
+    "mtime": 1795103079.5590155,
+    "hash": "63852e29ce82267afe07c6dd424664bf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_requirements_panel.py": {
+    "mtime": 1795181446.2512898,
+    "hash": "6bb6f587f1736eaac3a23a02bbe53657"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/conftest.py": {
+    "mtime": 1795041662.2161918,
+    "hash": "94e4ddd5492df8dd52222106d8afc536"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_obd_dialog.py": {
+    "mtime": 1795114301.0523803,
+    "hash": "bc60da2c89449bb19de7958c1bf3bb18"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_physical_gui.py": {
+    "mtime": 1795116302.7269733,
+    "hash": "7f0a16f11e1a90260216fa45e6a64dbe"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_console.py": {
+    "mtime": 1795180970.5295653,
+    "hash": "217b15928c1e7176c267409a98efd98b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_editor.py": {
+    "mtime": 1795110811.68363,
+    "hash": "8ac1b71e7d91dfae0615fc4179185996"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_can_trace_dialog.py": {
+    "mtime": 1795163700.112997,
+    "hash": "28942bbed053abcef0119ff8eb9cfd94"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_workspace_gui.py": {
+    "mtime": 1795099885.9386938,
+    "hash": "b0973849192f5ba5d729dcb7d1381a87"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_sweep_dialog.py": {
+    "mtime": 1795112652.8571565,
+    "hash": "8193642257f046027304bc12d070a025"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/__init__.py": {
+    "mtime": 1795040279.9570854,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_usages.py": {
+    "mtime": 1795112432.3834758,
+    "hash": "7fcb5c5aa30e52ac5b26d9b4a483e076"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_dictionary_panel.py": {
+    "mtime": 1795165478.6797864,
+    "hash": "343d657e0488c24d0199f8b28f8963e3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_codegen_gui.py": {
+    "mtime": 1795099312.4535375,
+    "hash": "bb28e8483ac4b8b539b0c2873d09e32c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_routing.py": {
+    "mtime": 1795111885.3319643,
+    "hash": "240973bf95198f7402175eac160816cb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_window.py": {
+    "mtime": 1795112065.9627867,
+    "hash": "67e1aa1c3543f132203e83afa7c55d18"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_analysis_gui.py": {
+    "mtime": 1795113210.9069033,
+    "hash": "e7c425216aea6490a10aa25c46b9183b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_subsystem_gui.py": {
+    "mtime": 1795177677.279941,
+    "hash": "c68f7ce53a0bc6be5557b4ab83dcb7c1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_codegen_checks.py": {
+    "mtime": 1795203292.3887982,
+    "hash": "0ab18da3383c7dafc2809cda86804ab9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_chart_editor.py": {
+    "mtime": 1795204971.2216733,
+    "hash": "8c5a42b6504b0ce813c10441aa5b8e7f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_help.py": {
+    "mtime": 1795041466.9984663,
+    "hash": "b03ceb89a70b7b9adb83465afc38623e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_testing_gui.py": {
+    "mtime": 1795096062.9269567,
+    "hash": "9763e1dc04a7e6d329d798babe451368"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/tests/gui/test_inspector_mdf.py": {
+    "mtime": 1795164376.8320975,
+    "hash": "78f14dad48f01a7515463763d9b30731"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/circuits.py": {
+    "mtime": 1795117072.3513722,
+    "hash": "b42509096205716bf9df878c88900f17"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/throttle_pi.py": {
+    "mtime": 1795042148.8134553,
+    "hash": "6304954fd36566691f2e46acc41bf55b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/lambda_control.py": {
+    "mtime": 1795093357.4915833,
+    "hash": "ad839ee90b4ab8f31061ce0dc6f66def"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/ntc_sensor.py": {
+    "mtime": 1795187211.2949371,
+    "hash": "d482ee64dc5d6b446cae1dae10e86ea1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/fuel_film.py": {
+    "mtime": 1795161657.8752587,
+    "hash": "a671e0b1dff98c5fff3e3478f248a6b8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/gear_shift.py": {
+    "mtime": 1795160490.5164542,
+    "hash": "c3fe578b6bdae52a0b10c119769dfaea"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/rc_rlc.py": {
+    "mtime": 1795189469.3367667,
+    "hash": "cf35908d2ff99636a6f7360f465a4d71"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/obd_ecu.py": {
+    "mtime": 1795113875.5375705,
+    "hash": "6893e67a53fb51f0502d4a88b00e198c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/starter_motor.py": {
+    "mtime": 1795160328.2563398,
+    "hash": "d94c1bfe67b56cbec8e6a7d7af730ac0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/fmi_exchange.py": {
+    "mtime": 1795202179.1652539,
+    "hash": "6a932c2d3be36d1e66a8d3b5c3e9639b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/idle_requirements.py": {
+    "mtime": 1795188728.966345,
+    "hash": "d3917122e7165ef9b133b3c0b197b074"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/abs_braking.py": {
+    "mtime": 1795188296.1819086,
+    "hash": "9917965413c5353b43ea1e115b534dac"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/drive_cycle.py": {
+    "mtime": 1795162011.9832222,
+    "hash": "a54f82939da28c2e444a990083d8e959"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/engine_modes.py": {
+    "mtime": 1795204862.0451353,
+    "hash": "770e767c5577d052a990af18619bcc74"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/injector_driver.py": {
+    "mtime": 1795197788.3637302,
+    "hash": "a95e3e33ad42aec9b7c930c99aaa7abb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/ev_range.py": {
+    "mtime": 1795197100.123778,
+    "hash": "661306641c6c72cc97496b516992fe78"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/truck.py": {
+    "mtime": 1795162318.6389878,
+    "hash": "48b7aaa7b3ce3d97e87cb8d3df1f270a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/fixed_point_sensor.py": {
+    "mtime": 1795186081.4353826,
+    "hash": "8a62e7abaf9bffc6e63b42bed014150f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/charging_system.py": {
+    "mtime": 1795196726.7967334,
+    "hash": "cfea0078bfcd4d5345b1e23dd2ccf12e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/coupled_tanks.py": {
+    "mtime": 1795185043.4731736,
+    "hash": "b4359f46100e87d0f9079df645e9ca44"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/mass_spring_damper_pid.py": {
+    "mtime": 1795184370.8459868,
+    "hash": "9022402c6838b387a2a3e7ac1ede4135"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/coolant_fan.py": {
+    "mtime": 1795185641.1044152,
+    "hash": "10eee63b8b1a7bb4b105af88c1103393"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/xcp_tool.py": {
+    "mtime": 1795186250.0324938,
+    "hash": "e51339ea996d91c03522cbb03a5ba582"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/electronic_throttle.py": {
+    "mtime": 1795160328.2565649,
+    "hash": "236a420c6b5eb482b6f6b34c0177c3b0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/ignition_knock.py": {
+    "mtime": 1795161353.1249564,
+    "hash": "c21317690ab2ea806a3d99d0898174cb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/dc_motor_lab.py": {
+    "mtime": 1795184733.1019597,
+    "hash": "657f2f401600b3586bc99780ca726169"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/traction_control.py": {
+    "mtime": 1795160613.1680863,
+    "hash": "4b646c1ec0fb05fff187b5fc8c74a3e1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/inverted_pendulum.py": {
+    "mtime": 1795185164.2089365,
+    "hash": "28e2d610e82f2d81bffde7df6f9275de"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/can_network.py": {
+    "mtime": 1795163125.5326655,
+    "hash": "48aec2da0297d55af758fbd3b0a42203"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/xcp_calibration.py": {
+    "mtime": 1795186250.032352,
+    "hash": "01a13c3ecb197acbdbb0d4d31453aa05"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/idle_speed_control.py": {
+    "mtime": 1795072350.3565857,
+    "hash": "725d4255cd4d04b5f831a9694265e7fb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/cruise_control.py": {
+    "mtime": 1795184118.4573586,
+    "hash": "d517ab716521ef497aa265b2138fe060"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/engine_library.py": {
+    "mtime": 1795081188.6407297,
+    "hash": "95373ac8f357b2cacb34244b2af22ad4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/cruise_tolerance.py": {
+    "mtime": 1795189058.8964987,
+    "hash": "bd215afbe6abb67e723d8d1608a4bf83"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/throttle_ecu.py": {
+    "mtime": 1795072046.97896,
+    "hash": "8566a459b150e91b54296afef77168a2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/generated/ECU/ECU.c": {
+    "mtime": 1795203629.5614755,
+    "hash": "e562ce78f907749d3492e868b0f4d3a1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/generated/ECU/main_example.c": {
+    "mtime": 1795203629.561584,
+    "hash": "f1c204fb2b13b5b238cac7649a288051"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/generated/ECU/ECU.h": {
+    "mtime": 1795203629.56113,
+    "hash": "fe317b061a7e6b61bbd819e8d187cbaf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/scripts/gen_tutorials.py": {
+    "mtime": 1795184138.866713,
+    "hash": "5a646f77078bbd13b54841906a310792"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/scripts/screenshots.py": {
+    "mtime": 1795204920.8507817,
+    "hash": "04bde94f1315067c8636adf67974142c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/scripts/gen_block_reference.py": {
+    "mtime": 1795184099.9753203,
+    "hash": "8b3e402b57930c4cd05e31f355c634b2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/scripts/gen_figures.py": {
+    "mtime": 1795202232.3483613,
+    "hash": "02b6fb7d43e14a1c533b30e58f398797"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/bundle.a5f9d56c.min.js": {
+    "mtime": 1795205269.1966145,
+    "hash": "8cf966b8557173340d658a2d31df4164"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/tinyseg.js": {
+    "mtime": 1795205269.2075863,
+    "hash": "982caada2fd97756b05b2cd1b8bf5f8a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/wordcut.js": {
+    "mtime": 1795205269.2081738,
+    "hash": "bba0d876ec8dcca1f4effced534f58f7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.pt.min.js": {
+    "mtime": 1795205269.2041023,
+    "hash": "0f5a525b2bf38d1ec11cb67356773622"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.el.min.js": {
+    "mtime": 1795205269.1996288,
+    "hash": "e16237c91ffdd50e5caf2cda98ce763d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.fr.min.js": {
+    "mtime": 1795205269.2005548,
+    "hash": "fa552c71d8b6df7524f1faaa5ebc8501"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.he.min.js": {
+    "mtime": 1795205269.2008808,
+    "hash": "652294dbd7c18736f8bab6165da5c868"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.hi.min.js": {
+    "mtime": 1795205269.201187,
+    "hash": "987fe4e02a319b28840a259930c38e2d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.zh.min.js": {
+    "mtime": 1795205269.2072628,
+    "hash": "c389a3f75a63e2f82583e2299e71d24c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.ko.min.js": {
+    "mtime": 1795205269.2031682,
+    "hash": "785bb0c4e6c0fb12917b39c2b7f99a0a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.ja.min.js": {
+    "mtime": 1795205269.202447,
+    "hash": "5623d7b1d52549da7ef6fcdff14b31f4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.te.min.js": {
+    "mtime": 1795205269.2061138,
+    "hash": "5ea846981ba3c69844166791e58b3205"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.stemmer.support.min.js": {
+    "mtime": 1795205269.20513,
+    "hash": "f58cd5cb3aceec05fa133d8e47ac8b66"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.hy.min.js": {
+    "mtime": 1795205269.2018247,
+    "hash": "72621c38dc5df3cb135d3446772d22f6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.hu.min.js": {
+    "mtime": 1795205269.2015276,
+    "hash": "16ba822c6ba96ea3c46200b5a52e8e8f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.vi.min.js": {
+    "mtime": 1795205269.207066,
+    "hash": "6f44534ba60b0ee9efab689d05e9093d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.ta.min.js": {
+    "mtime": 1795205269.2055762,
+    "hash": "cdcbc4445530bf338f7410008621c5a3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.sv.min.js": {
+    "mtime": 1795205269.2053566,
+    "hash": "2c22035941f0d81181afb599dc66bf4d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.nl.min.js": {
+    "mtime": 1795205269.2035873,
+    "hash": "3461b858ef55ad5fa276854c535cbae3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.ar.min.js": {
+    "mtime": 1795205269.1983175,
+    "hash": "1a64840641c8d52b800388a538b4ca35"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.tr.min.js": {
+    "mtime": 1795205269.2068388,
+    "hash": "c64da4ee31851fbae9eecb6d3c328930"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.da.min.js": {
+    "mtime": 1795205269.1986406,
+    "hash": "cb5c7deacc09fdef5ba23a484697a7c4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.du.min.js": {
+    "mtime": 1795205269.1991847,
+    "hash": "c3dd5e22a4bbd93cea8db0a189c75507"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.fi.min.js": {
+    "mtime": 1795205269.2003326,
+    "hash": "7e38b7aea539e5d70556e17c5eeeb27b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.th.min.js": {
+    "mtime": 1795205269.2064593,
+    "hash": "74bd1a28d804d58de3ab6ffb536e7f0a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.kn.min.js": {
+    "mtime": 1795205269.2029593,
+    "hash": "52e5ec6c79e8607d8a4d287cffd5d0b3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.es.min.js": {
+    "mtime": 1795205269.199985,
+    "hash": "e5353de9835f5a2ae223b9ca84042458"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.ro.min.js": {
+    "mtime": 1795205269.2043939,
+    "hash": "5b1587eb20faac2c53dd11ff84425df5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.sa.min.js": {
+    "mtime": 1795205269.2048998,
+    "hash": "2a9731e42ec88940a7d57282ff20b304"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.de.min.js": {
+    "mtime": 1795205269.198963,
+    "hash": "d8ad86c7d3f64f0a2f933a6af0d9bb90"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.no.min.js": {
+    "mtime": 1795205269.2038565,
+    "hash": "5bbc2f5e8186556dbc1782063cfc8ee1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.multi.min.js": {
+    "mtime": 1795205269.2033727,
+    "hash": "f58ed4a6a8909ca5e997d9c14bd564f6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.jp.min.js": {
+    "mtime": 1795205269.2026916,
+    "hash": "92740e202ca53e306ab899d3c6477ce1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.it.min.js": {
+    "mtime": 1795205269.2021906,
+    "hash": "498452a1930fe4528d960aae4f716c7c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/lunr/min/lunr.ru.min.js": {
+    "mtime": 1795205269.2046452,
+    "hash": "b238b05d00dafa7ab40299c7b8f5f46b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/javascripts/workers/search.a7633da7.min.js": {
+    "mtime": 1795205269.2085671,
+    "hash": "7fe69d0ee2364040dceda44ca0216c97"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/obd_sim.py": {
+    "mtime": 1795113817.507671,
+    "hash": "f4adea4d4acf95ae0a34768779cf73a2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/tutorials.py": {
+    "mtime": 1795203347.016485,
+    "hash": "0074a9e13c15add27b348fe1449f5098"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/circuit.py": {
+    "mtime": 1795116085.2966976,
+    "hash": "6f93e54d3ac15bc33b73514493b2391a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/library.py": {
+    "mtime": 1795079711.397119,
+    "hash": "c5bf5b93af3d42a12201644325272ea2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/analysis.py": {
+    "mtime": 1795160328.2579246,
+    "hash": "7ac895bc97598df26c5ebaae156587ff"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/spice.py": {
+    "mtime": 1795116278.0581787,
+    "hash": "4396ce9a502b694ff8f54489f67b7c69"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/advisor.py": {
+    "mtime": 1795182207.188086,
+    "hash": "fa0a5df47c92c87ce1fc43feb4f6f911"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/__init__.py": {
+    "mtime": 1795041853.9132915,
+    "hash": "7fe1baff0a490156158d007f87dcac2f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/coverage.py": {
+    "mtime": 1795074801.2344728,
+    "hash": "1f55bc8ccbec3a40572553fde7d624df"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/cycles.py": {
+    "mtime": 1795165236.6247897,
+    "hash": "17c020baee6974b3eaeeb52b1f4b3ebe"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/can.py": {
+    "mtime": 1795163661.9211273,
+    "hash": "0bc17686fcd5a84ac950abef3a5a9162"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/xcp.py": {
+    "mtime": 1795186419.4552255,
+    "hash": "fbbe64e152555f31b89e412e22134dcf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/obd_can.py": {
+    "mtime": 1795113939.3047159,
+    "hash": "375ef73197d70f34e3504f96997d6f4d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/sweep.py": {
+    "mtime": 1795112574.6789234,
+    "hash": "d964cc76af9e258f355d8fa5270ecd80"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/obd.py": {
+    "mtime": 1795114106.9956791,
+    "hash": "661037ca1ce0fc3a76f52aded3ee40b1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/canbus.py": {
+    "mtime": 1795186365.5669541,
+    "hash": "a1c885e64f4f84e779cc643b8365ed64"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/testing.py": {
+    "mtime": 1795096062.9271445,
+    "hash": "08ec749b8f672cdee9671774e3830ba6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/help.py": {
+    "mtime": 1795204917.4289646,
+    "hash": "7cf0eb38edc022352df14a981bea843d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/mdf.py": {
+    "mtime": 1795164338.882402,
+    "hash": "2cd0896a337c480c6de5462a78ab9ae7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/electrical.py": {
+    "mtime": 1795187540.3364637,
+    "hash": "4ff6a74a788ee017ebee72122a81260c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/user.py": {
+    "mtime": 1795080656.3686435,
+    "hash": "7e123ee0828eb77e7009b8e4fe3ac329"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/sensors.py": {
+    "mtime": 1795161048.5615122,
+    "hash": "c41a282e990430c4c4606690ee9ab510"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/fmi.py": {
+    "mtime": 1795202186.3505964,
+    "hash": "d34702611d35c0ecd513d62b66f62fcf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/automotive_electrics.py": {
+    "mtime": 1795159880.6273055,
+    "hash": "53f2cf6d554aa6a2f4c3a82459b2461e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/registry.py": {
+    "mtime": 1795038377.9212232,
+    "hash": "aa235ebfb517958110fabdb38dfe799e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/diagnostics.py": {
+    "mtime": 1795113817.5080574,
+    "hash": "497cefc58de4eea597cea1d68ab37c52"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/control.py": {
+    "mtime": 1795102706.5024045,
+    "hash": "67810ca55ad1c600b56e6bdba1965777"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/ports.py": {
+    "mtime": 1795115174.6187053,
+    "hash": "56f2ffb55b4c127adb1b7911412ca058"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/lookup.py": {
+    "mtime": 1795161519.9067388,
+    "hash": "979e77a6e3dea04c268093c8de92e677"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/discrete.py": {
+    "mtime": 1795099162.387221,
+    "hash": "491e874c6ed197be73febc9408aa0042"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/__init__.py": {
+    "mtime": 1795202086.471228,
+    "hash": "81d297f429de8e68f0b666a04d640b3e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/chart.py": {
+    "mtime": 1795182096.6011572,
+    "hash": "7d36f0cc34586bc5615918538af81361"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/semiconductors.py": {
+    "mtime": 1795116469.486083,
+    "hash": "4e131560dbc1d14f926bd3e1b35946bf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/mechanical.py": {
+    "mtime": 1795114832.1024318,
+    "hash": "13b4fd7581e4c3cda40bd6f53ed702cc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/logic.py": {
+    "mtime": 1795074709.2931798,
+    "hash": "f07430744ffd948b43b3e4169493c0c0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/sources.py": {
+    "mtime": 1795161934.4547803,
+    "hash": "f9e144549eee71e8f63bd989b571b742"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/physical_ports.py": {
+    "mtime": 1795115174.3044481,
+    "hash": "4e869bc008ec29adacadb00b8395c789"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/routing.py": {
+    "mtime": 1795109568.8138924,
+    "hash": "4ed04cdf942d5ca2b954880060ade88b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/sinks.py": {
+    "mtime": 1795045295.4868703,
+    "hash": "8e5ce0ce168457381bff5c775b4ccfa2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/can_blocks.py": {
+    "mtime": 1795186250.031508,
+    "hash": "2a18df00f802848fe88cf796da4ac635"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/discontinuities.py": {
+    "mtime": 1795074801.2357285,
+    "hash": "04e0287c76e75bf3e21fd880b1fc7d58"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/chart_model.py": {
+    "mtime": 1795204752.4768322,
+    "hash": "56909c15590b6ec59f366252c266b05b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/math_ops.py": {
+    "mtime": 1795161304.9536095,
+    "hash": "25c4470da7a4c1a219d2ee4f410568fe"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/continuous.py": {
+    "mtime": 1795109720.8878722,
+    "hash": "72a19e4ab84c0d43b756d9819ba9375d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/blocks/hydraulic.py": {
+    "mtime": 1795117444.067357,
+    "hash": "682491bbe730b1511682690f50f0d9f6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/signals.py": {
+    "mtime": 1795044158.886282,
+    "hash": "41b9457dde8895bed67befa6c61ef0a5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/params.py": {
+    "mtime": 1795109699.4251912,
+    "hash": "7828dcf8c2440a0642ca2a845bb1e0a1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/diagram.py": {
+    "mtime": 1795181216.9859467,
+    "hash": "b12c26c52b30b3a154330d0e9d92901e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/testcase.py": {
+    "mtime": 1795181208.8049202,
+    "hash": "a44474000277207e0a2771a26ad2687c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/layout.py": {
+    "mtime": 1795111091.6392968,
+    "hash": "a33c379eea6303325b93a1cf0cffd052"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/expressions.py": {
+    "mtime": 1795109699.4257514,
+    "hash": "33ef449540cf1379a949a842600c4a20"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/sample_time.py": {
+    "mtime": 1795038171.1796782,
+    "hash": "69797bd696e56773804b3d15fdf758ba"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/__init__.py": {
+    "mtime": 1795114623.280498,
+    "hash": "9f6562f1559e214f59d9ae92eb2e7004"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/types.py": {
+    "mtime": 1795042514.9061787,
+    "hash": "10c5603ff4c54dc9e26b512d2e6df8e7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/datatypes.py": {
+    "mtime": 1795074100.898577,
+    "hash": "939b2824544d807a8d946c70059bdabb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/requirements.py": {
+    "mtime": 1795181217.0215275,
+    "hash": "9286ade8ff8b68a27f430c5176813010"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/settings.py": {
+    "mtime": 1795180875.9420912,
+    "hash": "0e7fb4819e7e599e39b8c0210f08f072"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/errors.py": {
+    "mtime": 1795038171.1739028,
+    "hash": "b25b955ffff482fc80909840f1884594"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/workspace.py": {
+    "mtime": 1795099604.1340094,
+    "hash": "e92fc4a90da0f349940ad04b709b8051"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/block.py": {
+    "mtime": 1795161304.9532218,
+    "hash": "f182cd795e765fd09a7ecbe5110eaeaa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/core/dictionary.py": {
+    "mtime": 1795165477.8471966,
+    "hash": "9de07ccbe63f912bda1394f4dfcd4bfa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/physical/network.py": {
+    "mtime": 1795117389.3469577,
+    "hash": "37cc5a6916097128b84b9bb53024ade6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/io/__init__.py": {
+    "mtime": 1795038961.590944,
+    "hash": "3a08e8d6d1956b5065aaeaaff0549f04"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/io/model_file.py": {
+    "mtime": 1795181208.8047268,
+    "hash": "55f8e23358ffed7e9c36a9f1435f03f2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/solvers/fixed.py": {
+    "mtime": 1795038919.4303064,
+    "hash": "cefcefcbb4426c8ebbdf15a66bd2cf70"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/solvers/__init__.py": {
+    "mtime": 1795038927.9052432,
+    "hash": "fe1190f30d5261029c4b1898eb62f6b2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/solvers/variable.py": {
+    "mtime": 1795203981.5018764,
+    "hash": "e313f1f4af6695ce71f7b15722c3b912"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/codegen/sil.py": {
+    "mtime": 1795099096.313181,
+    "hash": "a50fdad08f55001025ff7bd3b8093b7b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/codegen/fmu.py": {
+    "mtime": 1795202086.2891145,
+    "hash": "7e6540edfe8519d313c2e145c10eb82c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/codegen/__init__.py": {
+    "mtime": 1795043440.4432406,
+    "hash": "901b4d96e67fd6eae5ff1a8363458f27"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/codegen/templates.py": {
+    "mtime": 1795203018.8949542,
+    "hash": "fab37a7bb9edaeb8182a2bd36aeb966b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/codegen/generator.py": {
+    "mtime": 1795203736.2233462,
+    "hash": "f61df094ff3fc403bc3dba2b86747dc6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/codegen/a2l.py": {
+    "mtime": 1795165354.5934367,
+    "hash": "a4d0f713f6d4446d2dcd350430f460fd"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/codegen/misra.py": {
+    "mtime": 1795203129.410615,
+    "hash": "df65225b04734b29fb05839724050955"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/theme.py": {
+    "mtime": 1795043894.780639,
+    "hash": "1a2da8c83646faa10282b7326aaee7cc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/qtfix.py": {
+    "mtime": 1795040912.8241067,
+    "hash": "21abea78ca7d00efad625f26cb4a0e37"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/__init__.py": {
+    "mtime": 1795039240.1462424,
+    "hash": "89131d33c913461479b88aed249d2edb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/app.py": {
+    "mtime": 1795040912.9539511,
+    "hash": "e40370d829883f8dc06aaea2d5312c69"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/__main__.py": {
+    "mtime": 1795039692.7964687,
+    "hash": "bebddf4679db37f9b573157d7e9fc429"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/__init__.py": {
+    "mtime": 1795039609.4426565,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/__init__.py": {
+    "mtime": 1795041078.116968,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/__init__.py": {
+    "mtime": 1795039609.4427423,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/models/__init__.py": {
+    "mtime": 1795039240.148878,
+    "hash": "f0779e3f05f84dbdf0a05a1e8e4499fa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/models/simulation_model.py": {
+    "mtime": 1795112031.8550272,
+    "hash": "a2b09852f2c04182ec7c018a538fa943"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/models/diagram_model.py": {
+    "mtime": 1795181261.4874003,
+    "hash": "e40c1cdbc559ba17fc2b9a63295d760d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/controllers/codegen_controller.py": {
+    "mtime": 1795203292.3584979,
+    "hash": "0cbda15a4858ea1a96485f0bc1e7050b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/controllers/file_controller.py": {
+    "mtime": 1795042945.4780514,
+    "hash": "32e20c854c97f556b0ef2245f124879c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/controllers/simulation_controller.py": {
+    "mtime": 1795112031.8554766,
+    "hash": "bc6a26eb81fad888ec41bc5e4c2e0bac"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/controllers/__init__.py": {
+    "mtime": 1795043731.5394025,
+    "hash": "704725d3acf3366e5bc283e4ba334d45"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/controllers/commands.py": {
+    "mtime": 1795181261.4876845,
+    "hash": "894d6cfe8b3ee2ce54cfa2a129344d13"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/controllers/editor_controller.py": {
+    "mtime": 1795204614.5482712,
+    "hash": "ff768140151b9e94d66bad06c9b6573a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/controllers/test_controller.py": {
+    "mtime": 1795074801.160438,
+    "hash": "9d759d582f0a683a192bb1592a1227ab"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/chart_editor.py": {
+    "mtime": 1795204883.6882932,
+    "hash": "2795f704adf9938d6d05e067f4b96847"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/main_window.py": {
+    "mtime": 1795204614.4625385,
+    "hash": "6d42e1a4ae2b01849a7a7e86e4d2e052"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/workspace_panel.py": {
+    "mtime": 1795163650.7122931,
+    "hash": "97ec9e3f65d6e949efbb697bdf3b7a7d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/console_panel.py": {
+    "mtime": 1795164978.0550551,
+    "hash": "a1f269961e95cbf5eb4c15ad5e8f9e61"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/data_inspector.py": {
+    "mtime": 1795164403.054898,
+    "hash": "6185a738f3225717005fb4bda419b644"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/library.py": {
+    "mtime": 1795079787.8235638,
+    "hash": "ac6799b3873df8fe59888f38e779e72a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/variant_dialog.py": {
+    "mtime": 1795079331.43716,
+    "hash": "26544adcf4716517867fa18a1954a620"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/properties.py": {
+    "mtime": 1795112416.8971114,
+    "hash": "6530864cc18d62ab24a76a9ca744bfdc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/diagnostics.py": {
+    "mtime": 1795042945.4785643,
+    "hash": "aa040f36d5f42b89060cea99dd852bc3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/icons.py": {
+    "mtime": 1795039692.788262,
+    "hash": "a5f1758eeff539b5bcd06aca3b996023"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/scope_window.py": {
+    "mtime": 1795112031.856065,
+    "hash": "6df6c28e4fc8eb8ebe8fc8ac62751383"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/__init__.py": {
+    "mtime": 1795039692.7989078,
+    "hash": "7d05f2805641fbfd424526fdb91cf314"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/codegen_dialog.py": {
+    "mtime": 1795203292.3589382,
+    "hash": "0fca0ad989a1f958b4b9ee6ddd2e1f22"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/help_browser.py": {
+    "mtime": 1795184099.9749582,
+    "hash": "0c185a0c65515484cdb834953811573a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/completer.py": {
+    "mtime": 1795112439.444546,
+    "hash": "f61695309c9aa6c7fc928f3bf69e6d74"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/mask_dialog.py": {
+    "mtime": 1795075088.0953815,
+    "hash": "02794d88c781866d64f50f434b694b6c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/usages_dialog.py": {
+    "mtime": 1795112416.9037066,
+    "hash": "ec07887c6183d54687443297da2620b7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/can_trace_dialog.py": {
+    "mtime": 1795165054.1860728,
+    "hash": "37ace64029bd652f82c0d28595026d7b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/advisor_dialog.py": {
+    "mtime": 1795074887.3639436,
+    "hash": "4a7ca86ebf9ad59e129fefa4183d7daf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/routing.py": {
+    "mtime": 1795111477.286943,
+    "hash": "887eae2c6a4f8fe277057ce2a064b48f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/sweep_dialog.py": {
+    "mtime": 1795112748.8713033,
+    "hash": "d610e27a6d60d5792d3d2ec2fa477d0c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/dictionary_panel.py": {
+    "mtime": 1795165477.8474362,
+    "hash": "67f70c04a0db93f89be388f4c987423c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/glyphs.py": {
+    "mtime": 1795161949.3177063,
+    "hash": "e5bc2f30579581d5b163b2023dc21558"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/test_manager.py": {
+    "mtime": 1795181261.487169,
+    "hash": "d9e1d97527f99405e217283eb2ad5428"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/math_render.py": {
+    "mtime": 1795041510.9616578,
+    "hash": "9fcde191db9ca2046dcc4f3cf5ee5bc8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/settings_dialog.py": {
+    "mtime": 1795180961.635012,
+    "hash": "d90b2010990b460bdd179439802d9543"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/analysis_dialog.py": {
+    "mtime": 1795113291.6982415,
+    "hash": "9e6d3c5989e0ca9b569c131b431a3a97"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/requirements_panel.py": {
+    "mtime": 1795181312.2509127,
+    "hash": "00da976018fbf3b018b38668bd3f192c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/items.py": {
+    "mtime": 1795165502.0920808,
+    "hash": "25d7e768a52204c84ba6f5bfdde49e28"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/canvas.py": {
+    "mtime": 1795115325.977279,
+    "hash": "8cb27833a8743ef563d2b3299fb0653e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/views/obd_dialog.py": {
+    "mtime": 1795114331.5815866,
+    "hash": "894833c810799a1e24855731b47e13ff"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/sim/flatten.py": {
+    "mtime": 1795115174.761055,
+    "hash": "fc95bc1271019aeda017666128b1a1bb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/sim/compiler.py": {
+    "mtime": 1795180940.4869237,
+    "hash": "7459e8510f96994b0cf613171c18a1b0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/sim/__init__.py": {
+    "mtime": 1795038919.4305975,
+    "hash": "281b9f1b68ac3560255a26ff2353e011"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/sim/result.py": {
+    "mtime": 1795187804.1769571,
+    "hash": "991f28fdbb4586ae473db12f0e747609"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/sim/simulator.py": {
+    "mtime": 1795187804.1764667,
+    "hash": "3a467c54ae167d0dc7c280fad9c0b3d6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/mkdocs.yml": {
+    "mtime": 1795204972.5941389,
+    "hash": "48a99da1c1f96135a7b59c92325fb522"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/CHANGELOG.md": {
+    "mtime": 1795204917.431925,
+    "hash": "23a0439364c2d16f23f850e63f6027c8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/README.md": {
+    "mtime": 1795204972.594486,
+    "hash": "901760f2a86116012b35057647d0678b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/CONTRIBUTING.md": {
+    "mtime": 1795041465.9404855,
+    "hash": "e622b14e1811a972df238cd03ce9477b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/plan.md": {
+    "mtime": 1795204917.4312427,
+    "hash": "a00704cb64ef780ec84fb66f22637ff2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/coming-from-simulink.md": {
+    "mtime": 1795116329.5813308,
+    "hash": "6c1a403dd1132cd9e76263a330529837"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/can.md": {
+    "mtime": 1795165070.6424582,
+    "hash": "637015cfe876f0a1ebce0ca03ba83bb6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/datatypes.md": {
+    "mtime": 1795186042.4237294,
+    "hash": "0b3817d01e5cf6447ea927dd74d825a6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/concepts.md": {
+    "mtime": 1795180993.2447362,
+    "hash": "c8b0f3361c6b3a84c478fae077c3cb5d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/physical.md": {
+    "mtime": 1795159759.8763604,
+    "hash": "2cd71e9e90a7655a4ed57d4966ccdaf1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/workspace.md": {
+    "mtime": 1795177301.2363465,
+    "hash": "83b82d7bbf9813067324abd1a13746bc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/subsystems.md": {
+    "mtime": 1795103560.9877641,
+    "hash": "48e16f16e58485547a4c99cb7be1eee6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/editor.md": {
+    "mtime": 1795165070.6417487,
+    "hash": "1f0453b3b741ce04dbc8f47c702ff07f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/codegen.md": {
+    "mtime": 1795203761.241188,
+    "hash": "7c9fc5a660d80ec5132a7c81816eaf4b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/testing.md": {
+    "mtime": 1795164403.0125332,
+    "hash": "b1b0b2205642437a2cb61503ee7d3eea"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/obd.md": {
+    "mtime": 1795114355.4948769,
+    "hash": "3f48ffd4798fe9e3e3f982738dfe6de6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/getting-started.md": {
+    "mtime": 1795202232.3495934,
+    "hash": "899484a52261c99de27f66cb680cdb0d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/analysis.md": {
+    "mtime": 1795113321.498464,
+    "hash": "a32fe31372ab6c433df49d7e3455770e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/verification.md": {
+    "mtime": 1795181768.8726056,
+    "hash": "86e35695bde5df11d5cf3e5ca653a79d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/index.md": {
+    "mtime": 1795204917.4304245,
+    "hash": "319bf843fa99226bda126f34c5ce9067"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/model-files.md": {
+    "mtime": 1795044795.9647944,
+    "hash": "384c6bdc61c8e82f79f262f2070d99b1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/libraries.md": {
+    "mtime": 1795081167.98935,
+    "hash": "92c13a2a283d96823ca2a7788bb6dfdc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/statecharts.md": {
+    "mtime": 1795204917.4278848,
+    "hash": "3df33da02162bb35707908976fb98430"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/discontinuities.md": {
+    "mtime": 1795204972.5863683,
+    "hash": "7f0a9767802b7a74e705ce796cf28f3c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/sinks.md": {
+    "mtime": 1795204972.5876992,
+    "hash": "ab35a7197b1fbc43ebb42bed7053aa48"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/ports-subsystems.md": {
+    "mtime": 1795204972.5871525,
+    "hash": "a9ffbafdbf1d0b2c803f90ac071ac306"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/can.md": {
+    "mtime": 1795204972.5858266,
+    "hash": "48bf4d6692ef48c97ec6a8b7d22de025"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/sources.md": {
+    "mtime": 1795204972.5877953,
+    "hash": "c3f30ab436471a331d778708a006d8f2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/automotive-electrics.md": {
+    "mtime": 1795204972.5856423,
+    "hash": "2982d661af4a500f79e40027045d7b83"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/rotational.md": {
+    "mtime": 1795204972.5872304,
+    "hash": "5621b7c27b32eb4c85e82bd6b55e655d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/sensors-actuators.md": {
+    "mtime": 1795204972.5873847,
+    "hash": "54dd46704987da8c2bcdb5c29b3642b2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/continuous.md": {
+    "mtime": 1795204972.58593,
+    "hash": "d8be73a46d34f23c4c9c29bfb0543cdb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/hydraulic.md": {
+    "mtime": 1795204972.5867608,
+    "hash": "a92f3efba5e4088d932c964fd54b6a06"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/signal-attributes.md": {
+    "mtime": 1795204972.58746,
+    "hash": "b234b57143b69b52b1b8fc936faf5b86"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/state-machines.md": {
+    "mtime": 1795204972.5878792,
+    "hash": "f418d8b297c08cfcd1f5f90c0e9773a8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/index.md": {
+    "mtime": 1795204972.5881574,
+    "hash": "bed5c9349ea24daa5ddd2e0269c949a0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/signal-routing.md": {
+    "mtime": 1795204972.5876088,
+    "hash": "edef31969bae89d31418dd66b6a4c03b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/electrical.md": {
+    "mtime": 1795204972.5866542,
+    "hash": "6b2013ff67f568aa26a84832f35d3e0f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/math-operations.md": {
+    "mtime": 1795204972.5870662,
+    "hash": "82b521ab01428814372c7ec76242cc73"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/thermal.md": {
+    "mtime": 1795204972.5879562,
+    "hash": "71be17f049e8c9d58a0234319c07b2e8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/semiconductors.md": {
+    "mtime": 1795204972.587306,
+    "hash": "206a9780c08623d7628146d874b465fc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/logic-and-bit-operations.md": {
+    "mtime": 1795204972.586866,
+    "hash": "4d54ee29d5ac20ed7c001af09e50f604"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/user-defined.md": {
+    "mtime": 1795204972.588046,
+    "hash": "cd1b1582fd0837d1c44c66797524380b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/discrete.md": {
+    "mtime": 1795204972.5865145,
+    "hash": "1ec2e920f90ef78ed3bbd55a3fab9974"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/diagnostics.md": {
+    "mtime": 1795204972.5862029,
+    "hash": "8e3340dc71ad725674447e0424f0c467"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/lookup-tables.md": {
+    "mtime": 1795204972.5869792,
+    "hash": "d3fd49ed1c7e8da1eecd0c0d0c1e58e3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/blocks/control.md": {
+    "mtime": 1795204972.5860097,
+    "hash": "58ca0b15de00259773951261b9b7c13a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/developer/architecture.md": {
+    "mtime": 1795044003.3593292,
+    "hash": "a2d29238f6e66eb2007a2e900f0b3298"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/developer/custom-blocks.md": {
+    "mtime": 1795109748.8423185,
+    "hash": "b8db487e209d16b3cbedde4b9d01f1bd"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_engine_modes.md": {
+    "mtime": 1795204972.6002903,
+    "hash": "1e7c00526b6c524e0d21a757b46292bf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_fuel_film.md": {
+    "mtime": 1795204972.6004488,
+    "hash": "e0de63a165b88316066296d14d831cd0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_coupled_tanks.md": {
+    "mtime": 1795204972.6006167,
+    "hash": "67b7799b0f424302075c706c5eca22d3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_fixed_point.md": {
+    "mtime": 1795204972.6007662,
+    "hash": "d2350cc55d8ce2f797ce9508f60a6957"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_charging_system.md": {
+    "mtime": 1795204972.600921,
+    "hash": "bd97d40a030c2b485e926d247ceecb4b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/model_files.md": {
+    "mtime": 1795204972.6010764,
+    "hash": "1feed608e92a78a9299d285f90add857"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_abs.md": {
+    "mtime": 1795204972.601224,
+    "hash": "982207d8bc50edf67dad4c46cb158107"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_can_network.md": {
+    "mtime": 1795204972.6013715,
+    "hash": "143f588a8b547974560c62045207a6e8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_truck.md": {
+    "mtime": 1795204972.6015208,
+    "hash": "de7a912b6c0fef7f8cfbd64f2dac043f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/can.md": {
+    "mtime": 1795204972.6017094,
+    "hash": "192d9faf38ba50bffe8ac9af384ed109"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/datatypes.md": {
+    "mtime": 1795204972.6018646,
+    "hash": "0da543a41d858de44c78f06e0f9305cf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_physical.md": {
+    "mtime": 1795204972.602015,
+    "hash": "3479ede373b534ffcfc09f5f325a0765"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/concepts.md": {
+    "mtime": 1795204972.6021671,
+    "hash": "c8b0f3361c6b3a84c478fae077c3cb5d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_coolant_fan.md": {
+    "mtime": 1795204972.602307,
+    "hash": "4198318827a48fe36be93f395225f1ac"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/physical.md": {
+    "mtime": 1795204972.6024756,
+    "hash": "c2a620bc27311b7dc61bbbc34abdac49"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_first_model.md": {
+    "mtime": 1795204972.6026387,
+    "hash": "408da7747d36dfeba6c7041355768765"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_xcp_calibration.md": {
+    "mtime": 1795204972.602793,
+    "hash": "f35ed096f025b0316ce3bb852f649038"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_mass_spring_damper.md": {
+    "mtime": 1795204972.60294,
+    "hash": "416003c00875d09182f81fa08945c45f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_fmi.md": {
+    "mtime": 1795204972.6030996,
+    "hash": "dca5340adee4dedc291a4ed343ba2009"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/workspace.md": {
+    "mtime": 1795204972.603262,
+    "hash": "d615a15b81a35a6fe66e50019e7144d0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/subsystems.md": {
+    "mtime": 1795204972.603441,
+    "hash": "893a252c86704a8372457c551c88e1e8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/editor.md": {
+    "mtime": 1795204972.6036134,
+    "hash": "3f0c58b0697748f70b2d9e3c0af930e3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_model_to_code.md": {
+    "mtime": 1795204972.6037679,
+    "hash": "a017e3ec4922379927d3b1d3a928cf85"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_sensor_diagnostics.md": {
+    "mtime": 1795204972.6039116,
+    "hash": "2bc8bbaf18e68825e3d60fb9a5837a08"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/codegen.md": {
+    "mtime": 1795204972.6040752,
+    "hash": "cefa82c7395e7cf06215cf644bef58ac"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/testing.md": {
+    "mtime": 1795204972.6042573,
+    "hash": "17079b726605dcf1be1343e6fef00d33"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/obd.md": {
+    "mtime": 1795204972.6044536,
+    "hash": "445299f84ba857926fd530e8cf38442f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_idle.md": {
+    "mtime": 1795204972.6046047,
+    "hash": "68863275457f509831db05c22385ac49"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/analysis.md": {
+    "mtime": 1795204972.6047637,
+    "hash": "faeaded7673344c66dccdc429ba854e8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/getting_started.md": {
+    "mtime": 1795204972.6049256,
+    "hash": "686c061f2d781e8b71ae1f78ded1d07c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorials.md": {
+    "mtime": 1795204972.605093,
+    "hash": "c64cf10e23b6ff97de361ef6bac0deba"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/coming_from_simulink.md": {
+    "mtime": 1795204972.6052454,
+    "hash": "22b06bd5d309cb69bfb685c030013642"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/verification.md": {
+    "mtime": 1795204972.605401,
+    "hash": "6c33092b35420ed8c5731dbffa176287"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_rc_rlc.md": {
+    "mtime": 1795204972.605544,
+    "hash": "4391117d7f046fbee5dcf0c792b93f58"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/shortcuts.md": {
+    "mtime": 1795204972.6056948,
+    "hash": "87c54f1f1ee24d10b46ffd8f38a7c79a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_drive_cycle.md": {
+    "mtime": 1795204972.605846,
+    "hash": "b722a911f444783189c9ddc35468bd7b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_obd_diagnostics.md": {
+    "mtime": 1795204972.6059947,
+    "hash": "786f6ab96b812d3616ba95e0d2f44770"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_ntc_sensor.md": {
+    "mtime": 1795204972.606143,
+    "hash": "080b1eea2e4b419abcb69b51f2c5ed9e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_circuits.md": {
+    "mtime": 1795204972.606318,
+    "hash": "6d79179d02fba1cce598fac65a37edd8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_robustness_monte_carlo.md": {
+    "mtime": 1795204972.6064618,
+    "hash": "0dd563e72ea48302f00185458336f901"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/simulation.md": {
+    "mtime": 1795204972.6066184,
+    "hash": "c24771716bf447bc4b3d37e598becaa3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_gear_shift.md": {
+    "mtime": 1795204972.6067731,
+    "hash": "4aaeb43cd8acab2c57ac8ecc577e1f0b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_inverted_pendulum.md": {
+    "mtime": 1795204972.606931,
+    "hash": "2e2aab3f207e80427a19a459b6dd0e2b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_component_libraries.md": {
+    "mtime": 1795204972.6070814,
+    "hash": "b4a8e29497382eab10c845d9041f88a0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_ignition.md": {
+    "mtime": 1795204972.6072295,
+    "hash": "8e63e160a4bf9a1f1591057758b0c842"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_dc_motor.md": {
+    "mtime": 1795204972.607383,
+    "hash": "762a7a0131d2162171cf1203a9524288"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_ev_range.md": {
+    "mtime": 1795204972.607526,
+    "hash": "ef995522318bebec8631c3c3c91481ee"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/libraries.md": {
+    "mtime": 1795204972.607689,
+    "hash": "2967e038bd6ae2b35616ab578f8dedde"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_traction.md": {
+    "mtime": 1795204972.6078362,
+    "hash": "0058684205916421849532c49d165a37"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/statecharts.md": {
+    "mtime": 1795204972.608014,
+    "hash": "875841244d167f31c6e449d19f0a3574"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_requirements_testing.md": {
+    "mtime": 1795204972.6081693,
+    "hash": "79be22ab007272ca98278e47b3520319"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_injector_driver.md": {
+    "mtime": 1795204972.6085217,
+    "hash": "9ca31cc2476fb17e433ab54608cd8546"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/app-help/tutorial_lambda.md": {
+    "mtime": 1795204972.6087847,
+    "hash": "3418cfb1bec53e1365e73614f283116b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/obd-diagnostics.md": {
+    "mtime": 1795204972.5923364,
+    "hash": "bb5e67fbef7cf9d8aa1e1bcfdc32aeab"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/charging-system.md": {
+    "mtime": 1795204972.5918787,
+    "hash": "5593999cd5a4a0ff55fca84049d2f785"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/gear-shift.md": {
+    "mtime": 1795204972.5904891,
+    "hash": "52efe70c4ff7c04d70b5df488ee35517"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/model-to-code.md": {
+    "mtime": 1795204972.5926065,
+    "hash": "036f25dfd4f15ae9e567440b1017f942"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/mass-spring-damper.md": {
+    "mtime": 1795204972.5890024,
+    "hash": "42ea1e7807e45a08d309c6e128463c3b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/rc-rlc.md": {
+    "mtime": 1795204972.591392,
+    "hash": "70307f43137dbf14fdafd5e6df9070ac"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/component-libraries.md": {
+    "mtime": 1795204972.588852,
+    "hash": "29879b581d91cb0e4c13edc84d865c56"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/physical-models.md": {
+    "mtime": 1795204972.5916872,
+    "hash": "8d761c614a46e8eeda4ec782dcf0280d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/idle-speed-control.md": {
+    "mtime": 1795204972.5899272,
+    "hash": "cef44bb932041ae7ee65e36b48a8b092"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/dc-motor.md": {
+    "mtime": 1795204972.5891616,
+    "hash": "e21dc66eb27467737477be3e362112e3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/ev-range.md": {
+    "mtime": 1795204972.5910118,
+    "hash": "76b54db8bffa1015ecf32998aad2f72f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/engine-modes.md": {
+    "mtime": 1795204972.5896442,
+    "hash": "d58269dcd9a4af5713326ec4cca6b2d4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/drive-cycle.md": {
+    "mtime": 1795204972.5908668,
+    "hash": "81b7f8b7c27a6e92d3f493c52631e969"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/requirements-testing.md": {
+    "mtime": 1795204972.5933578,
+    "hash": "4dc9dba3db70474b7cdab3309c14457f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/traction-control.md": {
+    "mtime": 1795204972.5911367,
+    "hash": "d80e5ce07abbe010538e1204f61a846c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/can-network.md": {
+    "mtime": 1795204972.5930247,
+    "hash": "1e81ade9510c55eeffb1abb5a17969bf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/ignition-knock.md": {
+    "mtime": 1795204972.5901978,
+    "hash": "3a6f0678d3cff278f8193a7159fc7ea4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/first-model.md": {
+    "mtime": 1795204972.5886676,
+    "hash": "f132dfbfdb39766d9cb71802e6474511"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/inverted-pendulum.md": {
+    "mtime": 1795204972.5895002,
+    "hash": "3e0f04c433c06c345c088f251e404a2f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/fmi.md": {
+    "mtime": 1795204972.592884,
+    "hash": "7efab28a56fe74e8c38cda7f91fbebb4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/coupled-tanks.md": {
+    "mtime": 1795204972.5893462,
+    "hash": "37b4975073e2f2b14825a717e9e8e90e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/index.md": {
+    "mtime": 1795204972.5937316,
+    "hash": "e0c304b04583a8da8a7c39085557b63b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/circuits.md": {
+    "mtime": 1795204972.5915368,
+    "hash": "39825188aece0b73fce035d9c1c9e9f1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/coolant-fan.md": {
+    "mtime": 1795204972.5897856,
+    "hash": "251578c96688a6ff97e885a62fbbff5d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/ntc-sensor.md": {
+    "mtime": 1795204972.5920532,
+    "hash": "fda925af7c58a8ab1987bd149456dadc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/lambda-control.md": {
+    "mtime": 1795204972.5900643,
+    "hash": "9838c839a27f40d932d60537aa8a6b91"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/abs.md": {
+    "mtime": 1795204972.5912642,
+    "hash": "ed4c7ca0961d9d58234dbb9d4948aba3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/sensor-diagnostics.md": {
+    "mtime": 1795204972.592468,
+    "hash": "7cedf53cf352828873c0e6953cb7942d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/fixed-point.md": {
+    "mtime": 1795204972.5927482,
+    "hash": "e520d0514d3d34e20c5b7bf03292ddd4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/truck.md": {
+    "mtime": 1795204972.590673,
+    "hash": "a2ba80cf68687898def7c0af1170fea1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/injector-driver.md": {
+    "mtime": 1795204972.5922008,
+    "hash": "5ab973bf9d4e23619690b1eb68a124dc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/fuel-film.md": {
+    "mtime": 1795204972.5903282,
+    "hash": "c5216f1348c112d786213b4759069ba2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/xcp-calibration.md": {
+    "mtime": 1795204972.593207,
+    "hash": "aef0c9a20f0f3c6a4ead4e3ac23cacfc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/tutorials/robustness-monte-carlo.md": {
+    "mtime": 1795204972.5934937,
+    "hash": "8da7d89903335585b661d6bf7c1ad021"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/generated/idle_traceability.html": {
+    "mtime": 1795188704.3575346,
+    "hash": "ccce94fe773c5f4c162a9d1825774247"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/examples/generated/idle_coverage.html": {
+    "mtime": 1795188704.357682,
+    "hash": "d8de46e5fbdfd8efb14085626c67919b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/index.html": {
+    "mtime": 1795205269.3082943,
+    "hash": "839e5f13101dc16b40c37518b738f375"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/404.html": {
+    "mtime": 1795205269.2848237,
+    "hash": "53c666885514dfb641b655179ad50f27"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/index.html": {
+    "mtime": 1795205269.6579845,
+    "hash": "a6f8878372ef83dec374df3a56936c9a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/electrical/index.html": {
+    "mtime": 1795205269.7011094,
+    "hash": "3cb635b3a9bc16129e21fd1614a758d6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/user-defined/index.html": {
+    "mtime": 1795205269.7627358,
+    "hash": "4d97070b331cb977a42dd24c829dec0d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/state-machines/index.html": {
+    "mtime": 1795205269.7558875,
+    "hash": "5f529e6019147c03561232a7cfee2db8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/ports-subsystems/index.html": {
+    "mtime": 1795205269.723496,
+    "hash": "05683abca85900ae685bcfacd363c1cc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/can/index.html": {
+    "mtime": 1795205269.6709259,
+    "hash": "192f20d0c9b717eea4302a5b107d2678"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/signal-attributes/index.html": {
+    "mtime": 1795205269.7401855,
+    "hash": "0ad378b7bfc69dc62d260cf6e9e58ebd"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/sensors-actuators/index.html": {
+    "mtime": 1795205269.736376,
+    "hash": "6e508a977e58ee3323d7d3af6c4800ce"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/sinks/index.html": {
+    "mtime": 1795205269.7470584,
+    "hash": "eea1068f30dc676391abbf92f46711fc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/signal-routing/index.html": {
+    "mtime": 1795205269.7436507,
+    "hash": "f9695a88b550d07a031e59165b29f52b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/discontinuities/index.html": {
+    "mtime": 1795205269.6880581,
+    "hash": "20357a87540f21fca79d87d4f7b7e738"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/automotive-electrics/index.html": {
+    "mtime": 1795205269.663188,
+    "hash": "15387491da0bd65369edd31326184b9e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/discrete/index.html": {
+    "mtime": 1795205269.6945,
+    "hash": "24340ba372a11995b3bf14344ca6bb8d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/rotational/index.html": {
+    "mtime": 1795205269.7279844,
+    "hash": "97feb74c44a93dab3fc7eef052c6df7e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/thermal/index.html": {
+    "mtime": 1795205269.759586,
+    "hash": "fd3c9a8fd80951ae976e25312f9a2f25"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/lookup-tables/index.html": {
+    "mtime": 1795205269.7141569,
+    "hash": "f465400b786eecabc7d794fdcea3b3d6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/math-operations/index.html": {
+    "mtime": 1795205269.7188048,
+    "hash": "8f0c78a7e631f55954b7ffd21c757d4a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/diagnostics/index.html": {
+    "mtime": 1795205269.6836388,
+    "hash": "e5404db15b4385d4d386a0db8741d220"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/sources/index.html": {
+    "mtime": 1795205269.7528827,
+    "hash": "3a0c55bdcb5a50614558a77d08c92677"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/hydraulic/index.html": {
+    "mtime": 1795205269.705335,
+    "hash": "8ff69ee20067c82a8b3c616e03fab5bf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/logic-and-bit-operations/index.html": {
+    "mtime": 1795205269.709056,
+    "hash": "2322c27e6817f1a56f31caf636adc85c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/continuous/index.html": {
+    "mtime": 1795205269.6755037,
+    "hash": "b6b36f59cadd1441b3e26bece0b95e77"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/control/index.html": {
+    "mtime": 1795205269.6795857,
+    "hash": "ea40d5ebdf2be2fd22ee449f262a9e21"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/blocks/semiconductors/index.html": {
+    "mtime": 1795205269.7323108,
+    "hash": "89449094cbe4e77c8afa7ccec7566e3a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/developer/custom-blocks/index.html": {
+    "mtime": 1795205269.771327,
+    "hash": "0532dc08884249fb2ac616c78c4e2861"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/developer/architecture/index.html": {
+    "mtime": 1795205269.766484,
+    "hash": "81e1022af8b7862f7537844d386129de"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/obd/index.html": {
+    "mtime": 1795205269.3749342,
+    "hash": "ad0c9d98a3f895da09b34f79bae39375"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/can/index.html": {
+    "mtime": 1795205269.3208635,
+    "hash": "c0aebe085ed529e6c563e5e1ef1b3390"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/analysis/index.html": {
+    "mtime": 1795205269.3142831,
+    "hash": "1c586a6870350da91a97d68607c4277f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_obd_diagnostics/index.html": {
+    "mtime": 1795205269.6039212,
+    "hash": "39916d245caa2e7036a10c9294de7723"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_idle/index.html": {
+    "mtime": 1795205269.5711699,
+    "hash": "36b0df398a073978216c0560efe67c7d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_gear_shift/index.html": {
+    "mtime": 1795205269.5671346,
+    "hash": "4b737f505447bd02807d0d076a3500f1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/obd/index.html": {
+    "mtime": 1795205269.4666126,
+    "hash": "0a08609d97aaee8ed624624986815184"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_mass_spring_damper/index.html": {
+    "mtime": 1795205269.590613,
+    "hash": "269567fb4bca9268191332ee76b48952"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/can/index.html": {
+    "mtime": 1795205269.4224858,
+    "hash": "d7baf99ec559a8540ae45d194e9d3331"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_can_network/index.html": {
+    "mtime": 1795205269.5106237,
+    "hash": "7ae10d237492161e08ff5fe92f8db1e4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_sensor_diagnostics/index.html": {
+    "mtime": 1795205269.623162,
+    "hash": "51a1e6765a10df21451244ada46c604c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_coolant_fan/index.html": {
+    "mtime": 1795205269.525779,
+    "hash": "d29767af1fa5842ca2b92322a0a9a7bb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/analysis/index.html": {
+    "mtime": 1795205269.416545,
+    "hash": "652d8674fea76129782a6fd83a4218d2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_injector_driver/index.html": {
+    "mtime": 1795205269.5786352,
+    "hash": "7866dd8255f5b41321e47ebb90dc0bd5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_coupled_tanks/index.html": {
+    "mtime": 1795205269.52941,
+    "hash": "ebf94c91c9f5a72a4b53285807f4e1d0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_lambda/index.html": {
+    "mtime": 1795205269.5866225,
+    "hash": "165974d6a9e13d176e3d25f311b726a0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_model_to_code/index.html": {
+    "mtime": 1795205269.5960915,
+    "hash": "6915a7936c41ce83027689ab458ece65"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/physical/index.html": {
+    "mtime": 1795205269.4779615,
+    "hash": "f5a69dbb1ab0d9047cc9087f53bfedf3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_traction/index.html": {
+    "mtime": 1795205269.6266453,
+    "hash": "9a4443c051d0e43cd66f434b46235354"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/datatypes/index.html": {
+    "mtime": 1795205269.4398344,
+    "hash": "4ba0420b2a88f11ec4b8ad95df0d8d0e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/workspace/index.html": {
+    "mtime": 1795205269.6517186,
+    "hash": "1e0b019c473987ed608d27c65d510c94"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/coming_from_simulink/index.html": {
+    "mtime": 1795205269.4319992,
+    "hash": "1839a20e92053363d84d0606e4d95717"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/statecharts/index.html": {
+    "mtime": 1795205269.4907286,
+    "hash": "8a314d3f32b7487c98981eefcd1c3242"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_abs/index.html": {
+    "mtime": 1795205269.5061824,
+    "hash": "ac9ea11bfe37fdc0321a75c41fef0e57"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/simulation/index.html": {
+    "mtime": 1795205269.4855838,
+    "hash": "30426c988d3af3e93d2a9f93369805c3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_ntc_sensor/index.html": {
+    "mtime": 1795205269.5999315,
+    "hash": "e613d6f3ec0eafb2f0c35502a50cb1fa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/libraries/index.html": {
+    "mtime": 1795205269.4537907,
+    "hash": "4ad75bd935ffdaf0e9200044dede575a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_ignition/index.html": {
+    "mtime": 1795205269.5746636,
+    "hash": "76469e56540d17c9f81f5c3316ad7916"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_charging_system/index.html": {
+    "mtime": 1795205269.5146537,
+    "hash": "b7624372c1da6990b01bbeb26422432a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/codegen/index.html": {
+    "mtime": 1795205269.4270823,
+    "hash": "abd5b5ef86e6574d5f0566e42d2713ec"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_engine_modes/index.html": {
+    "mtime": 1795205269.5412633,
+    "hash": "f894cef2f7451eeeb75718747b46cf65"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_rc_rlc/index.html": {
+    "mtime": 1795205269.6110957,
+    "hash": "6d4b37649c13511625c866140330a837"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/testing/index.html": {
+    "mtime": 1795205269.5018244,
+    "hash": "152b6bd3fd87e2def929b751c399730a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_dc_motor/index.html": {
+    "mtime": 1795205269.5331435,
+    "hash": "7a40a7b93b6d748034015b1d565aeb8a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/verification/index.html": {
+    "mtime": 1795205269.6449494,
+    "hash": "2d3b704bb84ab4d4c57ff60b589aa3d7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/model_files/index.html": {
+    "mtime": 1795205269.4589474,
+    "hash": "da1e96ac1bf1bca32fe4deed5a96f0ff"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_circuits/index.html": {
+    "mtime": 1795205269.5185008,
+    "hash": "055f433456aa1f6903244e8f55f64be1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_fmi/index.html": {
+    "mtime": 1795205269.5588093,
+    "hash": "ede80787d15d3e924456cd9324de4e40"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_truck/index.html": {
+    "mtime": 1795205269.629964,
+    "hash": "e4a1c1396b44e5bc171de6963eb49315"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_physical/index.html": {
+    "mtime": 1795205269.6074984,
+    "hash": "9e979e3bac4eedbd982c9bdc74cd9790"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/concepts/index.html": {
+    "mtime": 1795205269.4361298,
+    "hash": "74cdc689c611f9f8e796239d7736c78f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/subsystems/index.html": {
+    "mtime": 1795205269.4957187,
+    "hash": "dad465be93f2801d2fc5444c16a2795d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/shortcuts/index.html": {
+    "mtime": 1795205269.4817605,
+    "hash": "09c115cb67c27473be2dc0d7fa0a58c6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_ev_range/index.html": {
+    "mtime": 1795205269.545035,
+    "hash": "dc82c05ac62fbf74bb56bf7ec834c0d4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorials/index.html": {
+    "mtime": 1795205269.6397283,
+    "hash": "7bbea870c051758d9157b533d75600b6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_drive_cycle/index.html": {
+    "mtime": 1795205269.5372882,
+    "hash": "176caba08fe5cb4927919e81acb3cda4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_fuel_film/index.html": {
+    "mtime": 1795205269.5623813,
+    "hash": "898fad39f7a746694c6e76550d0971a8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_xcp_calibration/index.html": {
+    "mtime": 1795205269.6339667,
+    "hash": "4e9231f3c4999d995175e88a5af3e8c7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_inverted_pendulum/index.html": {
+    "mtime": 1795205269.5825863,
+    "hash": "e2e1231f211faabf2b894ace146ca1ec"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/editor/index.html": {
+    "mtime": 1795205269.4448404,
+    "hash": "a85df6a0e9d7b140a9fbe57c3d04c459"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_fixed_point/index.html": {
+    "mtime": 1795205269.554605,
+    "hash": "51b8d8b98bd3a888276affdaeda80c5c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_requirements_testing/index.html": {
+    "mtime": 1795205269.6151319,
+    "hash": "54ef46fb7d50b29c3179b6c9764b785a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_first_model/index.html": {
+    "mtime": 1795205269.5508037,
+    "hash": "0522b5d349170c44cd5f9b7fc502ab97"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/getting_started/index.html": {
+    "mtime": 1795205269.449636,
+    "hash": "ef7ee543d4c9e6254a0cdf9e00c92ff9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_component_libraries/index.html": {
+    "mtime": 1795205269.5223844,
+    "hash": "75795eabce8f5a54f3b17a40150fa9b8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/app-help/tutorial_robustness_monte_carlo/index.html": {
+    "mtime": 1795205269.6195915,
+    "hash": "6f17f1bd06f513931496490bf8aca65e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/physical/index.html": {
+    "mtime": 1795205269.382576,
+    "hash": "bd517aab12cf44d072276ccef827931d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/datatypes/index.html": {
+    "mtime": 1795205269.34689,
+    "hash": "e09530b4033ad12771616d3d18ff5eee"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/workspace/index.html": {
+    "mtime": 1795205269.4134686,
+    "hash": "533d26358df13b43576f2389e283593d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/statecharts/index.html": {
+    "mtime": 1795205269.3873918,
+    "hash": "57de74a27a2f035c7a3a038c03d97c5c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/libraries/index.html": {
+    "mtime": 1795205269.3637364,
+    "hash": "9940e6baff5983da50f5c038b92e3329"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/codegen/index.html": {
+    "mtime": 1795205269.333298,
+    "hash": "b7194236719fa4a6af31abbe884de467"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/testing/index.html": {
+    "mtime": 1795205269.4007087,
+    "hash": "4b0578cffd8ef023b3f5e0a79d0133d3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/verification/index.html": {
+    "mtime": 1795205269.4058647,
+    "hash": "acfa3f784e9a164e6b2b42ef3d112872"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/getting-started/index.html": {
+    "mtime": 1795205269.3598583,
+    "hash": "46de16b4b8d621961aa48113b7796da5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/concepts/index.html": {
+    "mtime": 1795205269.342911,
+    "hash": "96a67e140fb7fbc2e004a4ec43ba24f2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/subsystems/index.html": {
+    "mtime": 1795205269.393791,
+    "hash": "7019d3d082d78af58096ea3d2b299a2c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/index.html": {
+    "mtime": 1795205269.7771688,
+    "hash": "234826a911b800a95e2875b9575f9c56"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/charging-system/index.html": {
+    "mtime": 1795205269.788549,
+    "hash": "2add4c853d9fb62a571d24551f62b42b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/ev-range/index.html": {
+    "mtime": 1795205269.820353,
+    "hash": "441d663a20bc4033f50b821eb7ba8fee"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/gear-shift/index.html": {
+    "mtime": 1795205269.8423753,
+    "hash": "fa8d5f483ff84322641ccd676ae0fcd8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/ignition-knock/index.html": {
+    "mtime": 1795205269.8503113,
+    "hash": "0cc341f0cdc336c7bbf6872939a6f7ba"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/obd-diagnostics/index.html": {
+    "mtime": 1795205269.8790612,
+    "hash": "e63bd222fd3f0189f71792a3e4f516d5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/idle-speed-control/index.html": {
+    "mtime": 1795205269.8466837,
+    "hash": "68c7eb6b781112c1d6f81689156938d9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/coolant-fan/index.html": {
+    "mtime": 1795205269.799934,
+    "hash": "2c71747d79f1acaa5082830a6416e5c6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/dc-motor/index.html": {
+    "mtime": 1795205269.8073661,
+    "hash": "283d6cbe137809a6e5e56aac4d419eab"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/requirements-testing/index.html": {
+    "mtime": 1795205269.8904285,
+    "hash": "571d211b9d79d33a4cdd8ba41fe78ae9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/engine-modes/index.html": {
+    "mtime": 1795205269.8162704,
+    "hash": "c689864802f38f1e57a59a2f3808283f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/circuits/index.html": {
+    "mtime": 1795205269.7924643,
+    "hash": "013fe4792d4a44f91e69a6594240f8c9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/injector-driver/index.html": {
+    "mtime": 1795205269.8543136,
+    "hash": "f34e35d987dbeed82b5167a78b018b30"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/coupled-tanks/index.html": {
+    "mtime": 1795205269.8036506,
+    "hash": "fe9bc0e4df541a31ef8d6b9a445657cd"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/fmi/index.html": {
+    "mtime": 1795205269.8342507,
+    "hash": "32bd5df486ce93e1d8946dd150ca7900"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/model-to-code/index.html": {
+    "mtime": 1795205269.8713806,
+    "hash": "e9f3c22fcedf178bbbe0d89058d8911c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/rc-rlc/index.html": {
+    "mtime": 1795205269.8863494,
+    "hash": "e5923aeed66d419d9e52001c703fced9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/robustness-monte-carlo/index.html": {
+    "mtime": 1795205269.894868,
+    "hash": "3dc845676345214ab8401affed408d8d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/can-network/index.html": {
+    "mtime": 1795205269.7845051,
+    "hash": "c692be3221b2a87e3330b5cda48a670e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/ntc-sensor/index.html": {
+    "mtime": 1795205269.8752098,
+    "hash": "7f1ea21407a5d6a128562202d5d1e82a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/truck/index.html": {
+    "mtime": 1795205269.9054306,
+    "hash": "8633ec53cbe72462c2a9c9cd6d2e0b19"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/drive-cycle/index.html": {
+    "mtime": 1795205269.811895,
+    "hash": "8d5851b824ae809ca81847cd0b19ce77"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/abs/index.html": {
+    "mtime": 1795205269.7808836,
+    "hash": "47220f71a96208d686f59c1dc8a74e20"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/traction-control/index.html": {
+    "mtime": 1795205269.9019964,
+    "hash": "4f4e1c68610a9393eed65e7ac0d9c7a4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/first-model/index.html": {
+    "mtime": 1795205269.8262937,
+    "hash": "ce4dad34f540b2908ccc697a6c57d9a4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/fixed-point/index.html": {
+    "mtime": 1795205269.8301666,
+    "hash": "71c53b7b189d0a099ac58126ca5a5a37"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/inverted-pendulum/index.html": {
+    "mtime": 1795205269.8581643,
+    "hash": "1e11c311f38971c71257d84e1dfdd8af"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/mass-spring-damper/index.html": {
+    "mtime": 1795205269.866093,
+    "hash": "f72ca72e3b8a9847d78a5309a53c8358"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/fuel-film/index.html": {
+    "mtime": 1795205269.837647,
+    "hash": "d06aa332d3fcdc5462a6332c31dc114d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/physical-models/index.html": {
+    "mtime": 1795205269.8826573,
+    "hash": "2efdb9481bc54cadcd80d02380395cd1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/component-libraries/index.html": {
+    "mtime": 1795205269.7963483,
+    "hash": "f7d56d8499f9462610933eed29411226"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/sensor-diagnostics/index.html": {
+    "mtime": 1795205269.898436,
+    "hash": "d254f0afe22a1c6fd936148915fcf5ba"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/xcp-calibration/index.html": {
+    "mtime": 1795205269.9095085,
+    "hash": "89eeaa4c8c893d4a2dbc30cf8e6b606d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/tutorials/lambda-control/index.html": {
+    "mtime": 1795205269.8621547,
+    "hash": "d13ccaa4e1a0dec8928c206e5a9c6d3a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/model-files/index.html": {
+    "mtime": 1795205269.3681066,
+    "hash": "7f661ae796aea66745d328370ab215eb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/coming-from-simulink/index.html": {
+    "mtime": 1795205269.338419,
+    "hash": "ddf7505b7cee1172dff16dd9ca0b863b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/editor/index.html": {
+    "mtime": 1795205269.3526108,
+    "hash": "77fc87960996e3c3b67d99525ab1228d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_engine_modes.md": {
+    "mtime": 1795204972.5967343,
+    "hash": "1e7c00526b6c524e0d21a757b46292bf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_fuel_film.md": {
+    "mtime": 1795204972.5973628,
+    "hash": "e0de63a165b88316066296d14d831cd0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_coupled_tanks.md": {
+    "mtime": 1795204972.5964723,
+    "hash": "67b7799b0f424302075c706c5eca22d3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_fixed_point.md": {
+    "mtime": 1795204972.5993924,
+    "hash": "d2350cc55d8ce2f797ce9508f60a6957"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_charging_system.md": {
+    "mtime": 1795204972.5986466,
+    "hash": "bd97d40a030c2b485e926d247ceecb4b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/model_files.md": {
+    "mtime": 1795204972.5952067,
+    "hash": "1feed608e92a78a9299d285f90add857"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_abs.md": {
+    "mtime": 1795204972.5981297,
+    "hash": "982207d8bc50edf67dad4c46cb158107"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_can_network.md": {
+    "mtime": 1795204972.5996513,
+    "hash": "143f588a8b547974560c62045207a6e8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_truck.md": {
+    "mtime": 1795204972.5976417,
+    "hash": "de7a912b6c0fef7f8cfbd64f2dac043f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/can.md": {
+    "mtime": 1795164122.9477606,
+    "hash": "192d9faf38ba50bffe8ac9af384ed109"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/datatypes.md": {
+    "mtime": 1795186042.4240842,
+    "hash": "0da543a41d858de44c78f06e0f9305cf"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_physical.md": {
+    "mtime": 1795204972.5985096,
+    "hash": "3479ede373b534ffcfc09f5f325a0765"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/concepts.md": {
+    "mtime": 1795204972.5948827,
+    "hash": "c8b0f3361c6b3a84c478fae077c3cb5d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_coolant_fan.md": {
+    "mtime": 1795204972.596851,
+    "hash": "4198318827a48fe36be93f395225f1ac"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/physical.md": {
+    "mtime": 1795204972.5953634,
+    "hash": "c2a620bc27311b7dc61bbbc34abdac49"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_first_model.md": {
+    "mtime": 1795204972.5959277,
+    "hash": "408da7747d36dfeba6c7041355768765"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_xcp_calibration.md": {
+    "mtime": 1795204972.599778,
+    "hash": "f35ed096f025b0316ce3bb852f649038"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_mass_spring_damper.md": {
+    "mtime": 1795204972.5962155,
+    "hash": "416003c00875d09182f81fa08945c45f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_fmi.md": {
+    "mtime": 1795204972.5995293,
+    "hash": "dca5340adee4dedc291a4ed343ba2009"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/workspace.md": {
+    "mtime": 1795177301.2367918,
+    "hash": "d615a15b81a35a6fe66e50019e7144d0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/subsystems.md": {
+    "mtime": 1795103560.9880219,
+    "hash": "893a252c86704a8372457c551c88e1e8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/editor.md": {
+    "mtime": 1795165070.6420617,
+    "hash": "3f0c58b0697748f70b2d9e3c0af930e3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_model_to_code.md": {
+    "mtime": 1795204972.5992703,
+    "hash": "a017e3ec4922379927d3b1d3a928cf85"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_sensor_diagnostics.md": {
+    "mtime": 1795204972.5991402,
+    "hash": "2bc8bbaf18e68825e3d60fb9a5837a08"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/codegen.md": {
+    "mtime": 1795203347.924053,
+    "hash": "cefa82c7395e7cf06215cf644bef58ac"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/testing.md": {
+    "mtime": 1795164403.0125315,
+    "hash": "17079b726605dcf1be1343e6fef00d33"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/obd.md": {
+    "mtime": 1795114355.495267,
+    "hash": "445299f84ba857926fd530e8cf38442f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_idle.md": {
+    "mtime": 1795204972.5969741,
+    "hash": "68863275457f509831db05c22385ac49"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/analysis.md": {
+    "mtime": 1795113321.498696,
+    "hash": "faeaded7673344c66dccdc429ba854e8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/getting_started.md": {
+    "mtime": 1795202232.3493345,
+    "hash": "686c061f2d781e8b71ae1f78ded1d07c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorials.md": {
+    "mtime": 1795204972.595727,
+    "hash": "c64cf10e23b6ff97de361ef6bac0deba"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/coming_from_simulink.md": {
+    "mtime": 1795204972.5950704,
+    "hash": "22b06bd5d309cb69bfb685c030013642"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/verification.md": {
+    "mtime": 1795181768.8728056,
+    "hash": "6c33092b35420ed8c5731dbffa176287"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_rc_rlc.md": {
+    "mtime": 1795204972.5982463,
+    "hash": "4391117d7f046fbee5dcf0c792b93f58"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/shortcuts.md": {
+    "mtime": 1795112834.5389822,
+    "hash": "87c54f1f1ee24d10b46ffd8f38a7c79a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_drive_cycle.md": {
+    "mtime": 1795204972.5977774,
+    "hash": "b722a911f444783189c9ddc35468bd7b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_obd_diagnostics.md": {
+    "mtime": 1795204972.5990145,
+    "hash": "786f6ab96b812d3616ba95e0d2f44770"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_ntc_sensor.md": {
+    "mtime": 1795204972.5987675,
+    "hash": "080b1eea2e4b419abcb69b51f2c5ed9e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_circuits.md": {
+    "mtime": 1795204972.598371,
+    "hash": "6d79179d02fba1cce598fac65a37edd8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_robustness_monte_carlo.md": {
+    "mtime": 1795204972.6000428,
+    "hash": "0dd563e72ea48302f00185458336f901"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/simulation.md": {
+    "mtime": 1795180993.2451372,
+    "hash": "c24771716bf447bc4b3d37e598becaa3"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_gear_shift.md": {
+    "mtime": 1795204972.5975232,
+    "hash": "4aaeb43cd8acab2c57ac8ecc577e1f0b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_inverted_pendulum.md": {
+    "mtime": 1795204972.596595,
+    "hash": "2e2aab3f207e80427a19a459b6dd0e2b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_component_libraries.md": {
+    "mtime": 1795204972.596083,
+    "hash": "b4a8e29497382eab10c845d9041f88a0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_ignition.md": {
+    "mtime": 1795204972.597237,
+    "hash": "8e63e160a4bf9a1f1591057758b0c842"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_dc_motor.md": {
+    "mtime": 1795204972.5963435,
+    "hash": "762a7a0131d2162171cf1203a9524288"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_ev_range.md": {
+    "mtime": 1795204972.5978992,
+    "hash": "ef995522318bebec8631c3c3c91481ee"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/libraries.md": {
+    "mtime": 1795081167.9898891,
+    "hash": "2967e038bd6ae2b35616ab578f8dedde"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_traction.md": {
+    "mtime": 1795204972.5980127,
+    "hash": "0058684205916421849532c49d165a37"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/statecharts.md": {
+    "mtime": 1795204972.5955498,
+    "hash": "875841244d167f31c6e449d19f0a3574"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_requirements_testing.md": {
+    "mtime": 1795204972.5999203,
+    "hash": "79be22ab007272ca98278e47b3520319"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_injector_driver.md": {
+    "mtime": 1795204972.5988884,
+    "hash": "9ca31cc2476fb17e433ab54608cd8546"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/help/tutorial_lambda.md": {
+    "mtime": 1795204972.5971136,
+    "hash": "3418cfb1bec53e1365e73614f283116b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/test-manager.png": {
+    "mtime": 1795112205.9462705,
+    "hash": "10b9f89e9025370b3fd6f0477f99856e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/editor-dark.png": {
+    "mtime": 1795112207.6643515,
+    "hash": "f0da85c9164182dc38d8c852560255cc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/gear-shift-car.png": {
+    "mtime": 1795112206.4878101,
+    "hash": "0fa4df1b935b9bd6ec31f94bc121a4c6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/gear-shift-tcu.png": {
+    "mtime": 1795112206.458674,
+    "hash": "8daf4f7b8ea415523b24d6a50ec86338"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/analysis-root-locus.png": {
+    "mtime": 1795113293.7524843,
+    "hash": "7772c07608ab994786fd73bad97f460d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/chart-editor-transition.png": {
+    "mtime": 1795204922.5767262,
+    "hash": "514edffb5e5f452531ec153c53ded551"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/settings.png": {
+    "mtime": 1795112207.4784503,
+    "hash": "db77d5afcbc8dcabf1e56a20b3f272b0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/data-inspector.png": {
+    "mtime": 1795112206.0003874,
+    "hash": "a2f674146f05b1c9707ebdad55bfac46"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/library-linked.png": {
+    "mtime": 1795112206.3302066,
+    "hash": "379e4da59713d712d85889783e0913f2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/obd-record.png": {
+    "mtime": 1795114355.3737478,
+    "hash": "fba62d1a0be33a0e71519907060de0ae"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/codegen.png": {
+    "mtime": 1795112145.8498824,
+    "hash": "ae2b659cd388609ea54a7b1d51e02eac"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/mask-properties.png": {
+    "mtime": 1795112206.0511158,
+    "hash": "4efc2352c60c2616b155b9ad7f6d10a9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/scope-dark.png": {
+    "mtime": 1795112237.7945774,
+    "hash": "0608089c0aca0db49730fcc815040654"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/engine-component.png": {
+    "mtime": 1795112206.6453855,
+    "hash": "f207fb084efddfdf216edd6abfd5502f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/scope.png": {
+    "mtime": 1795112145.001929,
+    "hash": "b463111de5d55bbbf02b99114b4f200d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/variants-properties.png": {
+    "mtime": 1795112206.257826,
+    "hash": "ced6da5244a4e97781e6287a352a7400"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/engine-comparison.png": {
+    "mtime": 1795112206.6171956,
+    "hash": "7a1a6e5611a321bcff140b79dae99d12"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/circuit.png": {
+    "mtime": 1795115380.1347277,
+    "hash": "f66532bbdb6f9e289060605e9c1accfb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/electronic-throttle.png": {
+    "mtime": 1795160244.9008381,
+    "hash": "b2eb79735170fd7a2838c59b00e63377"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/lambda-ecu.png": {
+    "mtime": 1795112206.581679,
+    "hash": "a8e1d5eac1b65584673191da9044cb7e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/sweep-metric.png": {
+    "mtime": 1795112817.8346167,
+    "hash": "5894a445a8044add66c0aa0f0ff3e9bc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/first-model-1-blocks.png": {
+    "mtime": 1795180160.7354312,
+    "hash": "17677fc32197047dbe64f8a60f6bb207"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/chart-editor.png": {
+    "mtime": 1795204922.5454037,
+    "hash": "bf7e650eb8800e415123059dee42295c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/mask-dialog.png": {
+    "mtime": 1795112206.0681784,
+    "hash": "c85648e4596ea57dc6a927c969a26537"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/editor.png": {
+    "mtime": 1795112114.7992234,
+    "hash": "293e881de6f97abbe43042ab23963cb8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/requirements.png": {
+    "mtime": 1795181595.8168373,
+    "hash": "7e18779120dd295b183cd143a3ef9bf7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/first-model-4-scope.png": {
+    "mtime": 1795180190.9529064,
+    "hash": "b5758cfc084976d131b186dd780c7e50"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/first-model-3-parameters.png": {
+    "mtime": 1795180160.8416224,
+    "hash": "2c245a9cde18c7efd63e0cd94c429586"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/analysis-pid-tuning.png": {
+    "mtime": 1795113293.7546253,
+    "hash": "5a0a907af906a1ba0860355300836fa2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/sample-time-colours.png": {
+    "mtime": 1795112206.155744,
+    "hash": "804fb1813841bd972cf5173d596bf374"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/first-model-5-inspector.png": {
+    "mtime": 1795180251.100402,
+    "hash": "58140489b36059afcdd147d6135d79aa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/subsystem-inner.png": {
+    "mtime": 1795112145.0995665,
+    "hash": "a191539c6c3cb60448251d9b4c3c5d52"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/data-dictionary.png": {
+    "mtime": 1795165503.8729017,
+    "hash": "1981876cc60ac48ea0812f5d9f4d52d0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/help.png": {
+    "mtime": 1795112207.4236724,
+    "hash": "1eb70316878bc12457d61b65ab846094"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/console.png": {
+    "mtime": 1795165046.416377,
+    "hash": "12b533b0a98b7dffc1bdafc9d33d8d0e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/help-gain.png": {
+    "mtime": 1795112207.4676037,
+    "hash": "c8461872e54fa694fae9cd2c1263e554"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/workspace.png": {
+    "mtime": 1795112114.849899,
+    "hash": "4ce16d4cf8ec7bd5cf6cc79f1a1a0ee8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/datatypes.png": {
+    "mtime": 1795112206.678637,
+    "hash": "7698a9db895e72ba43c1c8c8b6485366"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/drive-cycle-vehicle.png": {
+    "mtime": 1795112206.400291,
+    "hash": "4e66f2838ea59b9d6ea71aeed1ab9859"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/drive-cycle-model.png": {
+    "mtime": 1795112206.3642871,
+    "hash": "c82656269544c28b1e16aa0a1af61d38"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/gear-shift-model.png": {
+    "mtime": 1795112206.4357834,
+    "hash": "3c6222aa71ba53158c75b4859a74c43a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/analysis.png": {
+    "mtime": 1795112206.758859,
+    "hash": "a2cd8e42d2d7f87889240e0dccc55aa0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/gear-shift-engine.png": {
+    "mtime": 1795112206.511764,
+    "hash": "1edd67c39ca21cce2a31952417b88835"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/subsystem-outer.png": {
+    "mtime": 1795112145.0595055,
+    "hash": "0fc8b2dbd663d4703f2d13bcf02dca68"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/context-menu.png": {
+    "mtime": 1795112206.0849655,
+    "hash": "fc65a5d3163ff1dd2a219dc697de4308"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/analysis-nyquist.png": {
+    "mtime": 1795113293.7502255,
+    "hash": "00e08e7ecd70af5e1e73d8f090db7116"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/can-trace.png": {
+    "mtime": 1795165016.1906989,
+    "hash": "e112a3b45ae6bc80255addb7ca206861"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/first-model-2-wired.png": {
+    "mtime": 1795180160.776937,
+    "hash": "221c22ae22a802d541fe7d94974e6f15"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/rotated-blocks.png": {
+    "mtime": 1795112206.1785088,
+    "hash": "2c5561f329c28c7fda35516fbecf607c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/workspace-panel.png": {
+    "mtime": 1795112114.8594184,
+    "hash": "c5cdc121a057352ce868fe82a5f315b5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/sweep-signals.png": {
+    "mtime": 1795112817.8317657,
+    "hash": "d6035ceb9fa7799d1020c1a33c583053"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/subsystem-tasks.png": {
+    "mtime": 1795112206.1170506,
+    "hash": "b472c1ab81fd116ea77997eea0b3ceb2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/subsystem-gated.png": {
+    "mtime": 1795112206.2110794,
+    "hash": "cb5931e3b80724b73793d0dfcbd753ee"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/lambda-model.png": {
+    "mtime": 1795112206.5548103,
+    "hash": "7ed65ff66e2c480b698bfeacab5bb685"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/variants-dialog.png": {
+    "mtime": 1795112206.2742774,
+    "hash": "88bf93348244f5e7a1b631b056a01652"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/starter-motor.png": {
+    "mtime": 1795160264.7419918,
+    "hash": "df29242d6ed028d566f30f2c97e60453"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/diagnostic_monitor.png": {
+    "mtime": 1795113595.2391331,
+    "hash": "ef32c50594093da03ff2137844da1381"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/charging_system.png": {
+    "mtime": 1795196780.4083164,
+    "hash": "d373b61584bc656dec323b9ab16eb6c0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/sine.png": {
+    "mtime": 1795103868.6041925,
+    "hash": "36b4cdf7f332f889ca524b7c7fdeaff5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/datatype_conversion.png": {
+    "mtime": 1795103873.9258738,
+    "hash": "2d921b6cea8731a2dda4adf4fd868915"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/gear_shift.png": {
+    "mtime": 1795160728.4134922,
+    "hash": "d1dd4abeed85a2fcc0617ac660e43c97"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/discrete_integrator.png": {
+    "mtime": 1795103869.717337,
+    "hash": "14a62c8812cb87716a7cc92743187174"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/lambda_trims.png": {
+    "mtime": 1795103876.2161024,
+    "hash": "7f71458943bffccf8e83154ba44e3bca"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/relay.png": {
+    "mtime": 1795103870.840773,
+    "hash": "6ed2ba27be2652638c62c21062cf7df1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/sum_signs.png": {
+    "mtime": 1795103868.3569336,
+    "hash": "f0f59b49dd623b5448afecfa3ba2b501"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/mux_demux.png": {
+    "mtime": 1795103869.94211,
+    "hash": "708077b95477aaee84b0bc8669e9be7e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/rate_limiter.png": {
+    "mtime": 1795103870.8951747,
+    "hash": "882b6e1f3173d5f7215afec2fa15e551"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/idle_speed_control.png": {
+    "mtime": 1795103873.8260808,
+    "hash": "8ecb2ec35e5cc4457b5f77710f374e98"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/lab_mass_spring_damper.png": {
+    "mtime": 1795184607.9570463,
+    "hash": "75279e2333339ffb95351fb0fff2f795"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/discrete_filter.png": {
+    "mtime": 1795103871.122011,
+    "hash": "1824d99e9e97b2601eda18ff53882faa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/debounce.png": {
+    "mtime": 1795103871.0124362,
+    "hash": "19d338246d762848174b1cdf72f22235"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/drive_cycle.png": {
+    "mtime": 1795103876.931724,
+    "hash": "98bfe67cccc1442ff42c3db99c6bbcfa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/lookup_2d.png": {
+    "mtime": 1795103870.6817262,
+    "hash": "376f52322e2ddaf1b310669ffe7d920f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/step.png": {
+    "mtime": 1795103868.4954715,
+    "hash": "dc20d5e92507f80cb0c3cd96df05d69a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/from_workspace.png": {
+    "mtime": 1795103869.8892128,
+    "hash": "277e0f2f6d6a043731b251fef57330a8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/xcp_calibration.png": {
+    "mtime": 1795186353.8959954,
+    "hash": "be4d0d8afdb6a2796910eff75b8e2dd8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/counter.png": {
+    "mtime": 1795103871.0660279,
+    "hash": "96fc28a47ba3d68e750e8dce46be76c6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/ignition_knock.png": {
+    "mtime": 1795161355.3750439,
+    "hash": "0011c7f50b77044c8c2bb6a11ce49e1f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/pid_anti_windup.png": {
+    "mtime": 1795103869.667371,
+    "hash": "daa0fa063740108b6cb1a2a8feed9f13"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/rate_transition.png": {
+    "mtime": 1795103869.0263324,
+    "hash": "7e2dbc2069692c908e3b174fb3c92345"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/unit_delay.png": {
+    "mtime": 1795103868.7711866,
+    "hash": "96a885d70c5ca7b5ef5facfa54aa8808"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/dead_zone.png": {
+    "mtime": 1795103870.7231677,
+    "hash": "d086c3460bd9ce52d00104254caecafc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/pulse.png": {
+    "mtime": 1795103868.6553037,
+    "hash": "ac4e775d8e4880d39768e11f5a09781e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/xcp_live.png": {
+    "mtime": 1795164122.037023,
+    "hash": "c9ad96ecd0e1efe765cd0158aed42fad"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/pid_structure.png": {
+    "mtime": 1795103868.9002702,
+    "hash": "076a95993bf32054f127bcbd8f128cec"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/chart_engine_modes.png": {
+    "mtime": 1795103871.1789029,
+    "hash": "c4a11e51416dda57e3c0b90081dae89f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/obd_ecu.png": {
+    "mtime": 1795186797.8325007,
+    "hash": "5c1e76c091016753df1489b8fed2f93c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/injector_driver.png": {
+    "mtime": 1795197796.8862672,
+    "hash": "8a540c82d62a16dc7589dc81d0163e67"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/coolant_fan.png": {
+    "mtime": 1795185670.9887404,
+    "hash": "5c7da77c3f63473a6ca5970f6357310f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/fmi_exchange.png": {
+    "mtime": 1795202234.430135,
+    "hash": "e18af853c202ecede2a8394b3115566a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/ntc_fault.png": {
+    "mtime": 1795187239.6331482,
+    "hash": "5a4c0569ccf68ef42967fd4e7be827f7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/lab_inverted_pendulum.png": {
+    "mtime": 1795185281.7652886,
+    "hash": "d31d159701958ebb46a09e910509c749"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/ntc_divider.png": {
+    "mtime": 1795187234.5126255,
+    "hash": "310d2575992ff4b25e10ef36fd66cd38"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/lab_coupled_tanks.png": {
+    "mtime": 1795185086.8319204,
+    "hash": "17bbf6f4216bf9910610d6b25f01dba1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/chart_hierarchy.png": {
+    "mtime": 1795182237.2217681,
+    "hash": "ccc141970ea45c8e7dd3cd555f63e655"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/ramp.png": {
+    "mtime": 1795103868.5428662,
+    "hash": "dc9a438c5d5f549ac876c291359fd541"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/switch.png": {
+    "mtime": 1795103869.9161453,
+    "hash": "a2ea91102870f066614778e742f6c2a4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/integrator_limits.png": {
+    "mtime": 1795103868.8555996,
+    "hash": "7bd549415811d55fea49dead50dafaf7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/abs_braking.png": {
+    "mtime": 1795188374.5123546,
+    "hash": "ec9df5ccbd4e593417b24cee60a7fc6b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/can_frame.png": {
+    "mtime": 1795103874.1003957,
+    "hash": "1152f5f3391801de8e6d6333da8f1a5d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/prelookup.png": {
+    "mtime": 1795103868.9414651,
+    "hash": "198901d86de0ea2b1717780bd1da7c92"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/zero_order_hold.png": {
+    "mtime": 1795103868.7127905,
+    "hash": "1a430b3ec966316302982d154e4b379f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/can_network.png": {
+    "mtime": 1795163175.8923256,
+    "hash": "dc200cc20434f4b6a5a73791cf1fddd8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/ev_range.png": {
+    "mtime": 1795197263.703225,
+    "hash": "9df269a06b9ee7e7a3a5da4b8295ad53"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/lab_dc_motor.png": {
+    "mtime": 1795184797.561213,
+    "hash": "61a347aac7b35edb630640aca1d58034"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/traction_control.png": {
+    "mtime": 1795160661.6609597,
+    "hash": "c5167fa02fe3158d9de3113d0a525f8b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/sensor_model.png": {
+    "mtime": 1795160911.4379308,
+    "hash": "1d9723464bebc5ebdf83d2a4838129a1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/lookup_1d.png": {
+    "mtime": 1795103870.0322204,
+    "hash": "736fecbfafa1850dbb5be5a9ac4d1d30"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/edge_detect.png": {
+    "mtime": 1795103870.9610548,
+    "hash": "b3aecac71ff5cba3a95fe74266f866ee"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/circuits.png": {
+    "mtime": 1795117141.5421422,
+    "hash": "40154a392782790c08006703e66d38b9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/rc_rlc.png": {
+    "mtime": 1795189473.6565566,
+    "hash": "dae925c4770c292b400121612354f8be"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/physical_models.png": {
+    "mtime": 1795160263.3255985,
+    "hash": "6593296cfd0c0521b22ebfe731805d16"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/engine_comparison.png": {
+    "mtime": 1795103874.7182693,
+    "hash": "c794d8a24be0e1a1456ebbe230f2e93b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/engine_modes.png": {
+    "mtime": 1795185652.410916,
+    "hash": "ab28ba89fad2ebb7a9bdedc7334868cd"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/truck.png": {
+    "mtime": 1795162334.205734,
+    "hash": "4e1bc79b0aaa037d2d30300aa8d3c271"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/saturation.png": {
+    "mtime": 1795103868.4445102,
+    "hash": "8faa3a7152f0b817e9d621b219621a5d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/gain_modes.png": {
+    "mtime": 1795103868.2985919,
+    "hash": "753c672d551b953985f4313d64c00c61"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/transfer_function.png": {
+    "mtime": 1795103869.8047829,
+    "hash": "8fd6cc194de58274da759de4997d4424"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/can_arbitration.png": {
+    "mtime": 1795163164.651931,
+    "hash": "96d86cf7957d74300d5601c986d1b075"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/fixed_point_sensor.png": {
+    "mtime": 1795186068.504291,
+    "hash": "7380606c2a5613706c3a8cc72f850682"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/fuel_film.png": {
+    "mtime": 1795161710.28973,
+    "hash": "f99438c3870345bd152a9f78f1c87722"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/drive_cycle_block.png": {
+    "mtime": 1795161951.4692738,
+    "hash": "041eea19047b99315f4251dd63ddb293"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/docs/images/blocks/cruise_tolerance.png": {
+    "mtime": 1795189122.914555,
+    "hash": "bf91db552651f13bae28d8d7452a894a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/test-manager.png": {
+    "mtime": 1795205269.160232,
+    "hash": "10b9f89e9025370b3fd6f0477f99856e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/editor-dark.png": {
+    "mtime": 1795205269.1425812,
+    "hash": "f0da85c9164182dc38d8c852560255cc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/gear-shift-car.png": {
+    "mtime": 1795205269.1469274,
+    "hash": "0fa4df1b935b9bd6ec31f94bc121a4c6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/gear-shift-tcu.png": {
+    "mtime": 1795205269.1478848,
+    "hash": "8daf4f7b8ea415523b24d6a50ec86338"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/analysis-root-locus.png": {
+    "mtime": 1795205269.1353786,
+    "hash": "7772c07608ab994786fd73bad97f460d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/chart-editor-transition.png": {
+    "mtime": 1795205269.1370547,
+    "hash": "514edffb5e5f452531ec153c53ded551"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/settings.png": {
+    "mtime": 1795205269.1536193,
+    "hash": "db77d5afcbc8dcabf1e56a20b3f272b0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/data-inspector.png": {
+    "mtime": 1795205269.1402843,
+    "hash": "a2f674146f05b1c9707ebdad55bfac46"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/library-linked.png": {
+    "mtime": 1795205269.1498885,
+    "hash": "379e4da59713d712d85889783e0913f2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/obd-record.png": {
+    "mtime": 1795205269.151061,
+    "hash": "fba62d1a0be33a0e71519907060de0ae"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/codegen.png": {
+    "mtime": 1795205269.1385288,
+    "hash": "ae2b659cd388609ea54a7b1d51e02eac"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/mask-properties.png": {
+    "mtime": 1795205269.1507423,
+    "hash": "4efc2352c60c2616b155b9ad7f6d10a9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/scope-dark.png": {
+    "mtime": 1795205269.1528263,
+    "hash": "0608089c0aca0db49730fcc815040654"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/engine-component.png": {
+    "mtime": 1795205269.1442218,
+    "hash": "f207fb084efddfdf216edd6abfd5502f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/scope.png": {
+    "mtime": 1795205269.153221,
+    "hash": "b463111de5d55bbbf02b99114b4f200d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/variants-properties.png": {
+    "mtime": 1795205269.161186,
+    "hash": "ced6da5244a4e97781e6287a352a7400"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/engine-comparison.png": {
+    "mtime": 1795205269.1438797,
+    "hash": "7a1a6e5611a321bcff140b79dae99d12"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/circuit.png": {
+    "mtime": 1795205269.138004,
+    "hash": "f66532bbdb6f9e289060605e9c1accfb"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/electronic-throttle.png": {
+    "mtime": 1795205269.1434593,
+    "hash": "b2eb79735170fd7a2838c59b00e63377"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/lambda-ecu.png": {
+    "mtime": 1795205269.148988,
+    "hash": "a8e1d5eac1b65584673191da9044cb7e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/sweep-metric.png": {
+    "mtime": 1795205269.1590707,
+    "hash": "5894a445a8044add66c0aa0f0ff3e9bc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/first-model-1-blocks.png": {
+    "mtime": 1795205269.144793,
+    "hash": "17677fc32197047dbe64f8a60f6bb207"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/chart-editor.png": {
+    "mtime": 1795205269.137458,
+    "hash": "bf7e650eb8800e415123059dee42295c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/mask-dialog.png": {
+    "mtime": 1795205269.1502995,
+    "hash": "c85648e4596ea57dc6a927c969a26537"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/editor.png": {
+    "mtime": 1795205269.1430914,
+    "hash": "293e881de6f97abbe43042ab23963cb8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/requirements.png": {
+    "mtime": 1795205269.1514587,
+    "hash": "7e18779120dd295b183cd143a3ef9bf7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/first-model-4-scope.png": {
+    "mtime": 1795205269.146053,
+    "hash": "b5758cfc084976d131b186dd780c7e50"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/first-model-3-parameters.png": {
+    "mtime": 1795205269.1457288,
+    "hash": "2c245a9cde18c7efd63e0cd94c429586"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/analysis-pid-tuning.png": {
+    "mtime": 1795205269.13473,
+    "hash": "5a0a907af906a1ba0860355300836fa2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/sample-time-colours.png": {
+    "mtime": 1795205269.1523874,
+    "hash": "804fb1813841bd972cf5173d596bf374"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/first-model-5-inspector.png": {
+    "mtime": 1795205269.1463864,
+    "hash": "58140489b36059afcdd147d6135d79aa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/subsystem-inner.png": {
+    "mtime": 1795205269.154696,
+    "hash": "a191539c6c3cb60448251d9b4c3c5d52"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/data-dictionary.png": {
+    "mtime": 1795205269.1397932,
+    "hash": "1981876cc60ac48ea0812f5d9f4d52d0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/help.png": {
+    "mtime": 1795205269.1485748,
+    "hash": "1eb70316878bc12457d61b65ab846094"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/console.png": {
+    "mtime": 1795205269.138938,
+    "hash": "12b533b0a98b7dffc1bdafc9d33d8d0e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/help-gain.png": {
+    "mtime": 1795205269.1482172,
+    "hash": "c8461872e54fa694fae9cd2c1263e554"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/workspace.png": {
+    "mtime": 1795205269.1622317,
+    "hash": "4ce16d4cf8ec7bd5cf6cc79f1a1a0ee8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/datatypes.png": {
+    "mtime": 1795205269.1406426,
+    "hash": "7698a9db895e72ba43c1c8c8b6485366"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/drive-cycle-vehicle.png": {
+    "mtime": 1795205269.1415157,
+    "hash": "4e66f2838ea59b9d6ea71aeed1ab9859"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/drive-cycle-model.png": {
+    "mtime": 1795205269.1410618,
+    "hash": "c82656269544c28b1e16aa0a1af61d38"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/gear-shift-model.png": {
+    "mtime": 1795205269.1475554,
+    "hash": "3c6222aa71ba53158c75b4859a74c43a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/analysis.png": {
+    "mtime": 1795205269.1360033,
+    "hash": "a2cd8e42d2d7f87889240e0dccc55aa0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/gear-shift-engine.png": {
+    "mtime": 1795205269.1472347,
+    "hash": "1edd67c39ca21cce2a31952417b88835"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/subsystem-outer.png": {
+    "mtime": 1795205269.1564722,
+    "hash": "0fc8b2dbd663d4703f2d13bcf02dca68"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/context-menu.png": {
+    "mtime": 1795205269.139415,
+    "hash": "fc65a5d3163ff1dd2a219dc697de4308"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/analysis-nyquist.png": {
+    "mtime": 1795205269.1341972,
+    "hash": "00e08e7ecd70af5e1e73d8f090db7116"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/can-trace.png": {
+    "mtime": 1795205269.136458,
+    "hash": "e112a3b45ae6bc80255addb7ca206861"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/first-model-2-wired.png": {
+    "mtime": 1795205269.1451464,
+    "hash": "221c22ae22a802d541fe7d94974e6f15"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/rotated-blocks.png": {
+    "mtime": 1795205269.1519442,
+    "hash": "2c5561f329c28c7fda35516fbecf607c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/workspace-panel.png": {
+    "mtime": 1795205269.1618145,
+    "hash": "c5cdc121a057352ce868fe82a5f315b5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/sweep-signals.png": {
+    "mtime": 1795205269.1597703,
+    "hash": "d6035ceb9fa7799d1020c1a33c583053"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/subsystem-tasks.png": {
+    "mtime": 1795205269.1584995,
+    "hash": "b472c1ab81fd116ea77997eea0b3ceb2"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/subsystem-gated.png": {
+    "mtime": 1795205269.154361,
+    "hash": "cb5931e3b80724b73793d0dfcbd753ee"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/lambda-model.png": {
+    "mtime": 1795205269.1495094,
+    "hash": "7ed65ff66e2c480b698bfeacab5bb685"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/variants-dialog.png": {
+    "mtime": 1795205269.1607614,
+    "hash": "88bf93348244f5e7a1b631b056a01652"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/starter-motor.png": {
+    "mtime": 1795205269.1539543,
+    "hash": "df29242d6ed028d566f30f2c97e60453"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/diagnostic_monitor.png": {
+    "mtime": 1795205269.1701674,
+    "hash": "ef32c50594093da03ff2137844da1381"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/charging_system.png": {
+    "mtime": 1795205269.1645577,
+    "hash": "d373b61584bc656dec323b9ab16eb6c0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/sine.png": {
+    "mtime": 1795205269.1922176,
+    "hash": "36b4cdf7f332f889ca524b7c7fdeaff5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/datatype_conversion.png": {
+    "mtime": 1795205269.1688287,
+    "hash": "2d921b6cea8731a2dda4adf4fd868915"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/gear_shift.png": {
+    "mtime": 1795205269.1765203,
+    "hash": "d1dd4abeed85a2fcc0617ac660e43c97"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/discrete_integrator.png": {
+    "mtime": 1795205269.170983,
+    "hash": "14a62c8812cb87716a7cc92743187174"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/lambda_trims.png": {
+    "mtime": 1795205269.1845274,
+    "hash": "7f71458943bffccf8e83154ba44e3bca"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/relay.png": {
+    "mtime": 1795205269.1912065,
+    "hash": "6ed2ba27be2652638c62c21062cf7df1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/sum_signs.png": {
+    "mtime": 1795205269.1928809,
+    "hash": "f0f59b49dd623b5448afecfa3ba2b501"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/mux_demux.png": {
+    "mtime": 1795205269.1859531,
+    "hash": "708077b95477aaee84b0bc8669e9be7e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/rate_limiter.png": {
+    "mtime": 1795205269.1898448,
+    "hash": "882b6e1f3173d5f7215afec2fa15e551"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/idle_speed_control.png": {
+    "mtime": 1795205269.1770656,
+    "hash": "8ecb2ec35e5cc4457b5f77710f374e98"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/lab_mass_spring_damper.png": {
+    "mtime": 1795205269.1805024,
+    "hash": "75279e2333339ffb95351fb0fff2f795"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/discrete_filter.png": {
+    "mtime": 1795205269.1705284,
+    "hash": "1824d99e9e97b2601eda18ff53882faa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/debounce.png": {
+    "mtime": 1795205269.1697903,
+    "hash": "19d338246d762848174b1cdf72f22235"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/drive_cycle.png": {
+    "mtime": 1795205269.1716325,
+    "hash": "98bfe67cccc1442ff42c3db99c6bbcfa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/lookup_2d.png": {
+    "mtime": 1795205269.1854434,
+    "hash": "376f52322e2ddaf1b310669ffe7d920f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/step.png": {
+    "mtime": 1795205269.192553,
+    "hash": "dc20d5e92507f80cb0c3cd96df05d69a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/from_workspace.png": {
+    "mtime": 1795205269.1749568,
+    "hash": "277e0f2f6d6a043731b251fef57330a8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/xcp_calibration.png": {
+    "mtime": 1795205269.1950796,
+    "hash": "be4d0d8afdb6a2796910eff75b8e2dd8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/counter.png": {
+    "mtime": 1795205269.1675599,
+    "hash": "96fc28a47ba3d68e750e8dce46be76c6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/ignition_knock.png": {
+    "mtime": 1795205269.1776612,
+    "hash": "0011c7f50b77044c8c2bb6a11ce49e1f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/pid_anti_windup.png": {
+    "mtime": 1795205269.1877475,
+    "hash": "daa0fa063740108b6cb1a2a8feed9f13"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/rate_transition.png": {
+    "mtime": 1795205269.1902895,
+    "hash": "7e2dbc2069692c908e3b174fb3c92345"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/unit_delay.png": {
+    "mtime": 1795205269.194755,
+    "hash": "96a885d70c5ca7b5ef5facfa54aa8808"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/dead_zone.png": {
+    "mtime": 1795205269.169413,
+    "hash": "d086c3460bd9ce52d00104254caecafc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/pulse.png": {
+    "mtime": 1795205269.1890533,
+    "hash": "ac4e775d8e4880d39768e11f5a09781e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/xcp_live.png": {
+    "mtime": 1795205269.1954026,
+    "hash": "c9ad96ecd0e1efe765cd0158aed42fad"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/pid_structure.png": {
+    "mtime": 1795205269.1881983,
+    "hash": "076a95993bf32054f127bcbd8f128cec"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/chart_engine_modes.png": {
+    "mtime": 1795205269.1651108,
+    "hash": "c4a11e51416dda57e3c0b90081dae89f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/obd_ecu.png": {
+    "mtime": 1795205269.187039,
+    "hash": "5c1e76c091016753df1489b8fed2f93c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/injector_driver.png": {
+    "mtime": 1795205269.1781476,
+    "hash": "8a540c82d62a16dc7589dc81d0163e67"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/coolant_fan.png": {
+    "mtime": 1795205269.1669445,
+    "hash": "5c7da77c3f63473a6ca5970f6357310f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/fmi_exchange.png": {
+    "mtime": 1795205269.174458,
+    "hash": "e18af853c202ecede2a8394b3115566a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/ntc_fault.png": {
+    "mtime": 1795205269.1866815,
+    "hash": "5a4c0569ccf68ef42967fd4e7be827f7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/lab_inverted_pendulum.png": {
+    "mtime": 1795205269.1800723,
+    "hash": "d31d159701958ebb46a09e910509c749"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/ntc_divider.png": {
+    "mtime": 1795205269.1863298,
+    "hash": "310d2575992ff4b25e10ef36fd66cd38"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/lab_coupled_tanks.png": {
+    "mtime": 1795205269.179178,
+    "hash": "17bbf6f4216bf9910610d6b25f01dba1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/chart_hierarchy.png": {
+    "mtime": 1795205269.1656616,
+    "hash": "ccc141970ea45c8e7dd3cd555f63e655"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/ramp.png": {
+    "mtime": 1795205269.1894956,
+    "hash": "dc9a438c5d5f549ac876c291359fd541"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/switch.png": {
+    "mtime": 1795205269.1931891,
+    "hash": "a2ea91102870f066614778e742f6c2a4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/integrator_limits.png": {
+    "mtime": 1795205269.178587,
+    "hash": "7bd549415811d55fea49dead50dafaf7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/abs_braking.png": {
+    "mtime": 1795205269.1626852,
+    "hash": "ec9df5ccbd4e593417b24cee60a7fc6b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/can_frame.png": {
+    "mtime": 1795205269.1635797,
+    "hash": "1152f5f3391801de8e6d6333da8f1a5d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/prelookup.png": {
+    "mtime": 1795205269.1887355,
+    "hash": "198901d86de0ea2b1717780bd1da7c92"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/zero_order_hold.png": {
+    "mtime": 1795205269.1957266,
+    "hash": "1a430b3ec966316302982d154e4b379f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/can_network.png": {
+    "mtime": 1795205269.1641407,
+    "hash": "dc200cc20434f4b6a5a73791cf1fddd8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/ev_range.png": {
+    "mtime": 1795205269.1735365,
+    "hash": "9df269a06b9ee7e7a3a5da4b8295ad53"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/lab_dc_motor.png": {
+    "mtime": 1795205269.1797085,
+    "hash": "61a347aac7b35edb630640aca1d58034"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/traction_control.png": {
+    "mtime": 1795205269.1935267,
+    "hash": "c5167fa02fe3158d9de3113d0a525f8b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/sensor_model.png": {
+    "mtime": 1795205269.1918879,
+    "hash": "1d9723464bebc5ebdf83d2a4838129a1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/lookup_1d.png": {
+    "mtime": 1795205269.1850982,
+    "hash": "736fecbfafa1850dbb5be5a9ac4d1d30"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/edge_detect.png": {
+    "mtime": 1795205269.172409,
+    "hash": "b3aecac71ff5cba3a95fe74266f866ee"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/circuits.png": {
+    "mtime": 1795205269.1662822,
+    "hash": "40154a392782790c08006703e66d38b9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/rc_rlc.png": {
+    "mtime": 1795205269.1908205,
+    "hash": "dae925c4770c292b400121612354f8be"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/physical_models.png": {
+    "mtime": 1795205269.1874123,
+    "hash": "6593296cfd0c0521b22ebfe731805d16"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/engine_comparison.png": {
+    "mtime": 1795205269.172787,
+    "hash": "c794d8a24be0e1a1456ebbe230f2e93b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/engine_modes.png": {
+    "mtime": 1795205269.173169,
+    "hash": "ab28ba89fad2ebb7a9bdedc7334868cd"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/truck.png": {
+    "mtime": 1795205269.1944406,
+    "hash": "4e1bc79b0aaa037d2d30300aa8d3c271"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/saturation.png": {
+    "mtime": 1795205269.191542,
+    "hash": "8faa3a7152f0b817e9d621b219621a5d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/gain_modes.png": {
+    "mtime": 1795205269.1758823,
+    "hash": "753c672d551b953985f4313d64c00c61"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/transfer_function.png": {
+    "mtime": 1795205269.1939433,
+    "hash": "8fd6cc194de58274da759de4997d4424"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/can_arbitration.png": {
+    "mtime": 1795205269.1630616,
+    "hash": "96d86cf7957d74300d5601c986d1b075"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/fixed_point_sensor.png": {
+    "mtime": 1795205269.174078,
+    "hash": "7380606c2a5613706c3a8cc72f850682"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/fuel_film.png": {
+    "mtime": 1795205269.1753347,
+    "hash": "f99438c3870345bd152a9f78f1c87722"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/drive_cycle_block.png": {
+    "mtime": 1795205269.1720479,
+    "hash": "041eea19047b99315f4251dd63ddb293"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/images/blocks/cruise_tolerance.png": {
+    "mtime": 1795205269.1681404,
+    "hash": "bf91db552651f13bae28d8d7452a894a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/site/assets/images/favicon.png": {
+    "mtime": 1795205269.1961882,
+    "hash": "370ef648333a78cf59e253f1322c6fdc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/diagnostic_monitor.png": {
+    "mtime": 1795113595.238422,
+    "hash": "ef32c50594093da03ff2137844da1381"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/charging_system.png": {
+    "mtime": 1795196780.4076705,
+    "hash": "d373b61584bc656dec323b9ab16eb6c0"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/sine.png": {
+    "mtime": 1795103868.6036499,
+    "hash": "36b4cdf7f332f889ca524b7c7fdeaff5"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/chart-editor-transition.png": {
+    "mtime": 1795204922.5773842,
+    "hash": "514edffb5e5f452531ec153c53ded551"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/datatype_conversion.png": {
+    "mtime": 1795103873.9251795,
+    "hash": "2d921b6cea8731a2dda4adf4fd868915"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/gear_shift.png": {
+    "mtime": 1795160728.4124413,
+    "hash": "d1dd4abeed85a2fcc0617ac660e43c97"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/discrete_integrator.png": {
+    "mtime": 1795103869.716707,
+    "hash": "14a62c8812cb87716a7cc92743187174"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/lambda_trims.png": {
+    "mtime": 1795103876.2155442,
+    "hash": "7f71458943bffccf8e83154ba44e3bca"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/relay.png": {
+    "mtime": 1795103870.840194,
+    "hash": "6ed2ba27be2652638c62c21062cf7df1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/sum_signs.png": {
+    "mtime": 1795103868.356405,
+    "hash": "f0f59b49dd623b5448afecfa3ba2b501"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/mux_demux.png": {
+    "mtime": 1795103869.9416785,
+    "hash": "708077b95477aaee84b0bc8669e9be7e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/rate_limiter.png": {
+    "mtime": 1795103870.8946319,
+    "hash": "882b6e1f3173d5f7215afec2fa15e551"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/idle_speed_control.png": {
+    "mtime": 1795103873.825482,
+    "hash": "8ecb2ec35e5cc4457b5f77710f374e98"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/lab_mass_spring_damper.png": {
+    "mtime": 1795184607.956288,
+    "hash": "75279e2333339ffb95351fb0fff2f795"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/discrete_filter.png": {
+    "mtime": 1795103871.1214035,
+    "hash": "1824d99e9e97b2601eda18ff53882faa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/debounce.png": {
+    "mtime": 1795103871.0119102,
+    "hash": "19d338246d762848174b1cdf72f22235"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/drive_cycle.png": {
+    "mtime": 1795103876.9311903,
+    "hash": "98bfe67cccc1442ff42c3db99c6bbcfa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/lookup_2d.png": {
+    "mtime": 1795103870.681147,
+    "hash": "376f52322e2ddaf1b310669ffe7d920f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/step.png": {
+    "mtime": 1795103868.494988,
+    "hash": "dc20d5e92507f80cb0c3cd96df05d69a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/from_workspace.png": {
+    "mtime": 1795103869.8830433,
+    "hash": "277e0f2f6d6a043731b251fef57330a8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/xcp_calibration.png": {
+    "mtime": 1795186353.8954542,
+    "hash": "be4d0d8afdb6a2796910eff75b8e2dd8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/counter.png": {
+    "mtime": 1795103871.0655556,
+    "hash": "96fc28a47ba3d68e750e8dce46be76c6"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/ignition_knock.png": {
+    "mtime": 1795161355.3744779,
+    "hash": "0011c7f50b77044c8c2bb6a11ce49e1f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/pid_anti_windup.png": {
+    "mtime": 1795103869.6662915,
+    "hash": "daa0fa063740108b6cb1a2a8feed9f13"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/rate_transition.png": {
+    "mtime": 1795103869.0256622,
+    "hash": "7e2dbc2069692c908e3b174fb3c92345"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/first-model-1-blocks.png": {
+    "mtime": 1795180622.5770981,
+    "hash": "17677fc32197047dbe64f8a60f6bb207"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/chart-editor.png": {
+    "mtime": 1795204922.5771685,
+    "hash": "bf7e650eb8800e415123059dee42295c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/first-model-4-scope.png": {
+    "mtime": 1795180622.5796573,
+    "hash": "b5758cfc084976d131b186dd780c7e50"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/first-model-3-parameters.png": {
+    "mtime": 1795180622.5793123,
+    "hash": "2c245a9cde18c7efd63e0cd94c429586"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/unit_delay.png": {
+    "mtime": 1795103868.7707233,
+    "hash": "96a885d70c5ca7b5ef5facfa54aa8808"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/dead_zone.png": {
+    "mtime": 1795103870.7227607,
+    "hash": "d086c3460bd9ce52d00104254caecafc"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/pulse.png": {
+    "mtime": 1795103868.6547441,
+    "hash": "ac4e775d8e4880d39768e11f5a09781e"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/xcp_live.png": {
+    "mtime": 1795164122.036419,
+    "hash": "c9ad96ecd0e1efe765cd0158aed42fad"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/pid_structure.png": {
+    "mtime": 1795103868.8998191,
+    "hash": "076a95993bf32054f127bcbd8f128cec"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/chart_engine_modes.png": {
+    "mtime": 1795103871.1783707,
+    "hash": "c4a11e51416dda57e3c0b90081dae89f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/obd_ecu.png": {
+    "mtime": 1795186797.8319788,
+    "hash": "5c1e76c091016753df1489b8fed2f93c"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/injector_driver.png": {
+    "mtime": 1795197796.8855956,
+    "hash": "8a540c82d62a16dc7589dc81d0163e67"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/first-model-5-inspector.png": {
+    "mtime": 1795180622.5800402,
+    "hash": "58140489b36059afcdd147d6135d79aa"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/coolant_fan.png": {
+    "mtime": 1795185670.9880807,
+    "hash": "5c7da77c3f63473a6ca5970f6357310f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/fmi_exchange.png": {
+    "mtime": 1795202234.4296243,
+    "hash": "e18af853c202ecede2a8394b3115566a"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/ntc_fault.png": {
+    "mtime": 1795187239.6323407,
+    "hash": "5a4c0569ccf68ef42967fd4e7be827f7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/lab_inverted_pendulum.png": {
+    "mtime": 1795185281.7647166,
+    "hash": "d31d159701958ebb46a09e910509c749"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/ntc_divider.png": {
+    "mtime": 1795187234.5119603,
+    "hash": "310d2575992ff4b25e10ef36fd66cd38"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/lab_coupled_tanks.png": {
+    "mtime": 1795185086.8313963,
+    "hash": "17bbf6f4216bf9910610d6b25f01dba1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/chart_hierarchy.png": {
+    "mtime": 1795182237.2212567,
+    "hash": "ccc141970ea45c8e7dd3cd555f63e655"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/ramp.png": {
+    "mtime": 1795103868.5422146,
+    "hash": "dc9a438c5d5f549ac876c291359fd541"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/switch.png": {
+    "mtime": 1795103869.9147177,
+    "hash": "a2ea91102870f066614778e742f6c2a4"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/integrator_limits.png": {
+    "mtime": 1795103868.8550327,
+    "hash": "7bd549415811d55fea49dead50dafaf7"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/abs_braking.png": {
+    "mtime": 1795188374.511591,
+    "hash": "ec9df5ccbd4e593417b24cee60a7fc6b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/can_frame.png": {
+    "mtime": 1795103874.0989997,
+    "hash": "1152f5f3391801de8e6d6333da8f1a5d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/prelookup.png": {
+    "mtime": 1795103868.9410453,
+    "hash": "198901d86de0ea2b1717780bd1da7c92"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/zero_order_hold.png": {
+    "mtime": 1795103868.712129,
+    "hash": "1a430b3ec966316302982d154e4b379f"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/can_network.png": {
+    "mtime": 1795163175.891693,
+    "hash": "dc200cc20434f4b6a5a73791cf1fddd8"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/ev_range.png": {
+    "mtime": 1795197263.7026412,
+    "hash": "9df269a06b9ee7e7a3a5da4b8295ad53"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/lab_dc_motor.png": {
+    "mtime": 1795184797.560577,
+    "hash": "61a347aac7b35edb630640aca1d58034"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/traction_control.png": {
+    "mtime": 1795160661.6602283,
+    "hash": "c5167fa02fe3158d9de3113d0a525f8b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/sensor_model.png": {
+    "mtime": 1795160911.4372706,
+    "hash": "1d9723464bebc5ebdf83d2a4838129a1"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/lookup_1d.png": {
+    "mtime": 1795103870.0316405,
+    "hash": "736fecbfafa1850dbb5be5a9ac4d1d30"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/edge_detect.png": {
+    "mtime": 1795103870.9604845,
+    "hash": "b3aecac71ff5cba3a95fe74266f866ee"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/circuits.png": {
+    "mtime": 1795117141.5412498,
+    "hash": "40154a392782790c08006703e66d38b9"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/rc_rlc.png": {
+    "mtime": 1795189473.6557255,
+    "hash": "dae925c4770c292b400121612354f8be"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/physical_models.png": {
+    "mtime": 1795160263.3246076,
+    "hash": "6593296cfd0c0521b22ebfe731805d16"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/engine_comparison.png": {
+    "mtime": 1795103874.7176955,
+    "hash": "c794d8a24be0e1a1456ebbe230f2e93b"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/engine_modes.png": {
+    "mtime": 1795185652.410395,
+    "hash": "ab28ba89fad2ebb7a9bdedc7334868cd"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/truck.png": {
+    "mtime": 1795162334.2047977,
+    "hash": "4e1bc79b0aaa037d2d30300aa8d3c271"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/saturation.png": {
+    "mtime": 1795103868.4437788,
+    "hash": "8faa3a7152f0b817e9d621b219621a5d"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/first-model-2-wired.png": {
+    "mtime": 1795180622.5778806,
+    "hash": "221c22ae22a802d541fe7d94974e6f15"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/gain_modes.png": {
+    "mtime": 1795103868.2980251,
+    "hash": "753c672d551b953985f4313d64c00c61"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/transfer_function.png": {
+    "mtime": 1795103869.8041768,
+    "hash": "8fd6cc194de58274da759de4997d4424"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/can_arbitration.png": {
+    "mtime": 1795163164.6509972,
+    "hash": "96d86cf7957d74300d5601c986d1b075"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/fixed_point_sensor.png": {
+    "mtime": 1795186068.5037396,
+    "hash": "7380606c2a5613706c3a8cc72f850682"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/fuel_film.png": {
+    "mtime": 1795161710.2889595,
+    "hash": "f99438c3870345bd152a9f78f1c87722"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/drive_cycle_block.png": {
+    "mtime": 1795161951.4686646,
+    "hash": "041eea19047b99315f4251dd63ddb293"
+  },
+  "/Users/johanbjoerk/Documents/programmering/repos/nervus/src/nervus/gui/resources/figures/cruise_tolerance.png": {
+    "mtime": 1795189122.9137406,
+    "hash": "bf91db552651f13bae28d8d7452a894a"
+  }
+}

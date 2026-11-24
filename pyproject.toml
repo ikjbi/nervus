@@ -30,7 +30,7 @@ mdf = ["asammdf>=8"]
 fmi = ["fmpy>=0.3"]
 
 [project.scripts]
-nervus = "nervus.gui.app:main"
+nervus = "nervus.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/ikjbi/nervus"

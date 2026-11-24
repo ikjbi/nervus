@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- `nervus` without the editor's packages explains how to install them (`uv sync --extra gui`) instead of a
+  traceback; troubleshooting section in Getting started.
 - Variable-step solvers: a zero crossing whose bracket is lost to rounding (platform dependent) is located at
   the step's end instead of stopping the simulation with "f(a) and f(b) must have different signs".
 - Generated code: blocks with a sample-time offset output their initial values from the first step, as in
