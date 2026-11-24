@@ -55,6 +55,7 @@ def build_shared_library(code: GeneratedCode, folder: str | Path | None = None) 
         str(lib),
         str(out / f"{code.name}.c"),
         str(out / f"{code.name}_sil.c"),
+        *[str(out / f) for f in code.extra_sources if f.endswith(".c")],  # reusable subsystem functions
         "-lm",
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True)

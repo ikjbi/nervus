@@ -211,6 +211,15 @@ class Subsystem(Block):
             "Add a trigger input: the subsystem only runs when it has this kind of edge",
             choices=TRIGGER_EDGES,
         ),
+        Param(
+            "function_name",
+            "",
+            ParamKind.STR,
+            "C code: generate this subsystem as a reusable function with this name (empty = inline)",
+            hint="Subsystems with the same function name share one C function, called once per subsystem with its "
+            "own states and parameters (e.g. one cylinder controller for four cylinders). They must have the "
+            "same contents and run at one rate. Empty: the blocks are written into the model's code (inline).",
+        ),
     )
 
     def __init__(self, name: str = "", system: Diagram | None = None, **params: Any) -> None:

@@ -127,6 +127,7 @@ structure a model the way functions structure code: one subsystem per ECU functi
 | `enable_port` | `False` |  | Add an enable input: the subsystem only runs while it is > 0 |
 | `when_enabled` | `'held'` |  | Discrete states when the subsystem is enabled again — one of `held`, `reset` |
 | `trigger` | `'none'` |  | Add a trigger input: the subsystem only runs when it has this kind of edge — one of `none`, `rising`, `falling`, `either`, `function_call` |
+| `function_name` | `''` |  | C code: generate this subsystem as a reusable function with this name (empty = inline) |
 
 *Direct feedthrough:* yes
 

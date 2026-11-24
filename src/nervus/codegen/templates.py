@@ -26,7 +26,7 @@ def _inport(e: Emitter) -> BlockCode:
     field = c_identifier(e.path)
     dtype = e.gen.model.out_types[e.i][0]
     scale = f" * {c_float(dtype.slope)} + {c_float(dtype.bias)}" if dtype.is_fixed and not dtype.is_integer else ""
-    return BlockCode(e.each(e.w(), lambda ix: [f"{e.y(0, ix)} = (real_T){e.gen.prefix}_U.{field}[{ix}]{scale};"]))
+    return BlockCode(e.each(e.w(), lambda ix: [f"{e.y(0, ix)} = (real_T){e.gen.ref('U')}.{field}[{ix}]{scale};"]))
 
 
 @template("ports.outport")
@@ -37,7 +37,7 @@ def _outport(e: Emitter) -> BlockCode:
     s, p = e.gen.model.inputs[e.i][0]
     dtype = e.gen.model.out_types[s][p]
     if dtype.is_double:
-        return BlockCode(e.each(e.in_widths[0], lambda ix: [f"{e.gen.prefix}_Y.{field}[{ix}] = {e.u(0, ix)};"]))
+        return BlockCode(e.each(e.in_widths[0], lambda ix: [f"{e.gen.ref('Y')}.{field}[{ix}] = {e.u(0, ix)};"]))
     if dtype.is_fixed and not dtype.is_integer:
 
         def conv(ix: str) -> str:
@@ -47,7 +47,7 @@ def _outport(e: Emitter) -> BlockCode:
         def conv(ix: str) -> str:
             return f"({dtype.c_type}){e.u(0, ix)}"
 
-    return BlockCode(e.each(e.in_widths[0], lambda ix: [f"{e.gen.prefix}_Y.{field}[{ix}] = {conv(ix)};"]))
+    return BlockCode(e.each(e.in_widths[0], lambda ix: [f"{e.gen.ref('Y')}.{field}[{ix}] = {conv(ix)};"]))
 
 
 @template("routing.datatype_conversion")
@@ -1227,3 +1227,36 @@ def _e2e_check(e: Emitter) -> BlockCode:
     ]
     upd = [f"if ({x}[1] >= 0.0) {{ {x}[0] = {x}[1]; }}"]
     return BlockCode(status_lines, upd)
+
+
+@template("codegen.function_call")
+def _function_call(e: Emitter) -> BlockCode:
+    """A reusable subsystem function (see :mod:`nervus.codegen.functions`): this instance's data, and the calls."""
+    from nervus.codegen.functions import FunctionCall, instance_name
+
+    b = e.block
+    assert isinstance(b, FunctionCall)
+    f, inst = b.function, instance_name(e.gen, b.instance)
+    gen = e.gen
+    if f"{f}.h" not in gen.extra_includes:
+        gen.extra_includes.append(f"{f}.h")
+        gen.extra_files.update(b.files)
+    gen.extra_globals += [
+        f"/* {e.path}: an instance of {f}() */",
+        f"static {f}_B_t {inst}_B;",
+        f"static {f}_DW_t {inst}_DW;",
+        f"{f}_P_t {inst}_P = {{",
+        b.initializer,
+        "};",
+        "",
+    ]
+    gen.extra_header.append(f"extern {f}_P_t {inst}_P; /* {e.path}: calibration of this instance of {f}() */")
+    gen.extra_init.append(f"{f}_initialize(&{inst}_B, &{inst}_DW);")
+    out = ["{", f"    {f}_U_t in;", f"    {f}_Y_t out;"]
+    for port, (field_name, width) in enumerate(b.code.inputs):
+        out += [f"    in.{field_name}[{k}] = {e.u(port, str(k))};" for k in range(width)]
+    out.append(f"    {f}_output(&in, &out, &{inst}_B, &{inst}_DW, &{inst}_P);")
+    for port, (field_name, width) in enumerate(b.code.outputs):
+        out += [f"    {e.y(port, str(k))} = (real_T)out.{field_name}[{k}];" for k in range(width)]
+    out.append("}")
+    return BlockCode(out, [f"{f}_update(&{inst}_B, &{inst}_DW, &{inst}_P);"])

@@ -14,6 +14,7 @@ field named after the variable, which a calibration tool can change at run time.
 
 from __future__ import annotations
 
+import copy
 import math
 import re
 from collections.abc import Callable, Iterable
@@ -149,7 +150,7 @@ class Emitter:
         if fname in self.gen.global_names():
             fname += "_prm"  # e.g. parameter P of a block named like the model: not the same name as <model>_P
         self.gen.add_param(fname, arr, comment, dtype, const)
-        return f"{self.gen.prefix}_{'C' if const else 'P'}.{fname}"
+        return f"{self.gen.ref('C' if const else 'P')}.{fname}"
 
     def named_param(self, name: str, value: float) -> str:
         """A workspace (or mask) variable used by name inside a block (e.g. a chart ``param``): a shared
@@ -162,7 +163,7 @@ class Emitter:
             fname, comment = c_identifier(name), f"workspace variable {name}"
             dtype, const = parse_datatype(var.data_type) or DOUBLE, not var.calibratable
         self.gen.add_param(fname, np.array([float(value)]), comment, dtype, const)
-        return self.at(f"{self.gen.prefix}_{'C' if const else 'P'}.{fname}", "0")
+        return self.at(f"{self.gen.ref('C' if const else 'P')}.{fname}", "0")
 
     def at(self, field_expr: str, ix: str) -> str:
         """Element ``ix`` of a parameter array as a physical real_T value (scaled for fixed-point storage)."""
@@ -195,7 +196,7 @@ class Emitter:
         values = [float(v) for v in np.atleast_1d(np.asarray(list(init), dtype=float))]
         fname = f"{self.cname}_{sname}"
         self.gen.states[fname] = _Field(fname, max(1, len(values)), values or [0.0], comment or self.path)
-        return f"{self.gen.prefix}_DW.{fname}"
+        return f"{self.gen.ref('DW')}.{fname}"
 
     @property
     def period(self) -> float:
@@ -237,6 +238,20 @@ def _drop_unused_types(header: str, others: list[str]) -> str:
     return "\n".join(keep)
 
 
+def _guard_types(header: str) -> str:
+    """Guard each basic type alias, so several generated headers (a model's and its reusable functions') can define
+    the same one in one program."""
+    out = []
+    for line in header.split("\n"):
+        m = re.match(r"typedef \w+ (\w+);$", line)
+        if m is None:
+            out.append(line)
+        else:
+            guard = f"NERVUS_TYPE_{m.group(1).upper()}"
+            out += [f"#ifndef {guard}", f"#define {guard}", line, "#endif"]
+    return "\n".join(out)
+
+
 def c_index(*terms: int | str) -> str:
     """A C array index as the sum of ``terms``, with the constant terms folded into one unsigned literal: no
     ``+ 0`` (MISRA C:2012 rule 2.2) and no signed constants next to unsigned loop counters (rule 10.4)."""
@@ -266,11 +281,14 @@ class GeneratedCode:
     """Names of the task functions (one per rate) when generated with ``tasks=True``."""
     tunables: list[tuple[str, int, list[float], str, str]] = field(default_factory=list)
     """Calibratable parameters in the ``<name>_P`` struct: (field, size, initial values, C type, comment)."""
+    extra_sources: list[str] = field(default_factory=list)
+    """Further C files of the ECU code: the reusable functions of subsystems (``<function>.c`` and ``.h``)."""
 
     @property
     def c_files(self) -> dict[str, str]:
         """The files that belong in the ECU project (no SIL accessors, examples or report)."""
-        return {k: v for k, v in self.files.items() if k in (f"{self.name}.h", f"{self.name}.c")}
+        keep = {f"{self.name}.h", f"{self.name}.c", *self.extra_sources}
+        return {k: v for k, v in self.files.items() if k in keep}
 
     def write(self, folder: str | Path) -> list[Path]:
         out = Path(folder)
@@ -284,11 +302,19 @@ class GeneratedCode:
 
 
 class CGenerator:
-    def __init__(self, model: CompiledModel, name: str, tasks: bool = False) -> None:
+    def __init__(self, model: CompiledModel, name: str, tasks: bool = False, reusable: bool = False) -> None:
         self.model = model
         self.prefix = c_identifier(name)
         self.tasks = tasks
         """One C function per rate (for an RTOS) instead of one step function with a built-in scheduler."""
+        self.reusable = reusable
+        """Generate a reusable function: its data comes in through pointers (one set per instance), see :meth:`ref`."""
+        self.extra_includes: list[str] = []
+        self.extra_globals: list[str] = []
+        self.extra_header: list[str] = []
+        self.extra_init: list[str] = []
+        self.extra_files: dict[str, str] = {}
+        """Code that templates add to the model's files (reusable subsystem functions and their instances)."""
         self.namespace = model.diagram.root.workspace.namespace()  # shared calibration parameters
         self.cnames = self._unique_cnames(model.names)
         self.params: dict[str, _Field] = {}
@@ -317,7 +343,7 @@ class CGenerator:
         c = self.cnames[i]
         flag = f"{c}_enabled"
         self.states[flag] = _Field(flag, 1, [1.0], f"{m.names[i]}: ran at its last execution")
-        dw = f"{self.prefix}_DW"
+        dw = self.ref("DW")
         cond = " && ".join(f"({self.signal_var(s, p)}[0] > 0.0)" for s, p in m.enable[i]) or "1"
         head = ["{", f"    real_T en = ({cond}) ? 1.0 : 0.0;"]
         if m.reset_on_enable[i] and block_states:
@@ -389,7 +415,7 @@ class CGenerator:
         return name
 
     def signal_var(self, block: int, port: int) -> str:
-        return f"{self.prefix}_B.{self.cnames[block]}" + (f"_o{port}" if len(self.model.out_widths[block]) > 1 else "")
+        return f"{self.ref('B')}.{self.cnames[block]}" + (f"_o{port}" if len(self.model.out_widths[block]) > 1 else "")
 
     def add_param(
         self, fname: str, values: np.ndarray, comment: str, dtype: DataType = DOUBLE, const: bool = False
@@ -399,6 +425,11 @@ class CGenerator:
         if existing is not None and existing.init != vals:
             raise CodegenError(f"parameter {fname} has conflicting values ({existing.init} vs {vals})")
         self.params[fname] = _Field(fname, len(vals), vals, comment, dtype, const)
+
+    def ref(self, kind: str) -> str:
+        """The C expression of a data struct: U, Y, P, C, B or DW. ``<model>_DW`` normally; ``(*DW)`` in a reusable
+        function, which receives its instance's data through pointers (the constants C stay shared)."""
+        return f"(*{kind})" if self.reusable and kind != "C" else f"{self.prefix}_{kind}"
 
     def global_names(self) -> set[str]:
         """The names with external linkage in the generated code (MISRA C:2012 rule 5.8: no other identifier may
@@ -484,8 +515,16 @@ class CGenerator:
         self.task_plan = self._task_plan(steps) if self.tasks else None
         header = self._header(in_fields, out_fields, base_period, steps)
         source = self._source(codes, steps, base_period)
+        if self.reusable:
+            return self._function_code(header, source, steps, base_period, in_fields, out_fields)
         header = _drop_unused_types(header, [source, self._sil(in_fields, out_fields),
                                              self._main_example(in_fields, out_fields, base_period)])  # fmt: skip
+        if self.extra_includes:  # reusable subsystem functions: their types come from their headers
+            header = _guard_types(header).replace(
+                "#include <stdint.h>\n",
+                "#include <stdint.h>\n" + "".join(f'#include "{h}"\n' for h in self.extra_includes),
+                1,
+            )
         files = {
             f"{self.prefix}.h": header,
             f"{self.prefix}.c": source,
@@ -493,6 +532,7 @@ class CGenerator:
             "main_example.c": self._main_example(in_fields, out_fields, base_period),
             f"{self.prefix}_report.html": self._report(source, in_fields, out_fields, base_period, steps),
             f"{self.prefix}.a2l": generate_a2l(self),
+            **self.extra_files,
         }
         return GeneratedCode(
             name=self.prefix,
@@ -504,6 +544,63 @@ class CGenerator:
             params={k: v.init for k, v in self.params.items()},
             model=m,
             tasks=[self.task_name(k) for k in self.task_plan["order"]] if self.task_plan is not None else [],
+            tunables=[(f.name, f.size, list(f.init), f.dtype.c_type, f.comment) for f in self.param_fields()],
+            extra_sources=sorted(f for f in self.extra_files if f.endswith((".c", ".h"))),
+        )
+
+    def param_initializer(self) -> str:
+        """The initial values of the parameter struct (``{...}`` for each field, in struct order)."""
+        return ",\n".join(f"    {{{', '.join(f.stored())}}} /* {f.name} */" for f in self.param_fields()) or "    {0.0}"
+
+    def _function_code(self, header: str, source: str, steps: list[tuple[int, int]], base_period: float,
+                       ins: list[tuple[str, int]], outs: list[tuple[str, int]]) -> GeneratedCode:  # fmt: skip
+        """A reusable function: the model's code with its data passed in through pointers, split into an output
+        and an update function (the model calls them at its output and update phases)."""
+        p = self.prefix
+        if steps != [(1, 0)]:
+            raise CodegenError(f"{p}: a reusable function needs all its blocks at one rate, without an offset")
+        if self.param_fields(const=True):
+            raise CodegenError(f"{p}: a reusable function cannot have constant (ROM) parameters yet")
+        args_out = f"const {p}_U_t *U, {p}_Y_t *Y, {p}_B_t *B, {p}_DW_t *DW, const {p}_P_t *P"
+        args_upd = f"{p}_B_t *B, {p}_DW_t *DW, const {p}_P_t *P"
+        args_init = f"{p}_B_t *B, {p}_DW_t *DW"
+        dropped = {f"extern {p}_{k}_t {p}_{k};" for k in ("U", "Y", "P", "B", "DW")}
+        dropped |= {f"void {p}_initialize(void);", f"void {p}_step(void);"}
+        hlines = [x for x in header.split("\n") if x not in dropped and not x.startswith(f"#define {p.upper()}_BASE")]
+        end = max(k for k, x in enumerate(hlines) if x.startswith("#endif"))
+        hlines[end:end] = [
+            f"/* One instance: call {p}_initialize once, then {p}_output and {p}_update every {base_period:g} s. */",
+            f"void {p}_initialize({args_init});",
+            f"void {p}_output({args_out});",
+            f"void {p}_update({args_upd});",
+            "",
+        ]
+        lines = source.split("\n")
+        start = lines.index(f"{p}_U_t {p}_U;")
+        stop = lines.index(f"{p}_DW_t {p}_DW;")
+        del lines[start : stop + 1]  # the data lives in the instances
+        k_init = lines.index(f"void {p}_initialize(void)")
+        lines[k_init] = f"void {p}_initialize({args_init})"
+        lines.insert(k_init + 4, "    (void)B;")  # after the declarations
+        k_step = lines.index(f"void {p}_step(void)")
+        k_upd = lines.index("    /* state updates */", k_step)
+        lines[k_step] = f"void {p}_output({args_out})"
+        lines[k_step + 4 : k_step + 4] = ["    (void)U;", "    (void)Y;", "    (void)DW;", "    (void)P;"]
+        k_upd += 4
+        update = [f"void {p}_update({args_upd})", "{", "    uint32_T i;", "    (void)i;", "    (void)B;",
+                  "    (void)DW;", "    (void)P;", *lines[k_upd:]]  # fmt: skip
+        lines[k_upd:] = ["}", "", *update]
+        src = "\n".join(lines)
+        fheader = _guard_types(_drop_unused_types("\n".join(hlines), [src]))
+        return GeneratedCode(
+            name=p,
+            files={f"{p}.h": fheader, f"{p}.c": src},
+            base_period=base_period,
+            rates=[r.period for r in self.model.rates],
+            inputs=ins,
+            outputs=outs,
+            params={k: v.init for k, v in self.params.items()},
+            model=self.model,
             tunables=[(f.name, f.size, list(f.init), f.dtype.c_type, f.comment) for f in self.param_fields()],
         )
 
@@ -603,6 +700,7 @@ class CGenerator:
             f"extern {pfx}_B_t {pfx}_B;",
             f"extern {pfx}_DW_t {pfx}_DW;",
             "",
+            *self.extra_header,
             f"void {pfx}_initialize(void);",
             f"void {pfx}_step(void);",
             *self._task_declarations(),
@@ -665,6 +763,7 @@ class CGenerator:
             f"{pfx}_B_t {pfx}_B;",
             f"{pfx}_DW_t {pfx}_DW;",
             "",
+            *self.extra_globals,
             *[f"{q}\n" for q in self.quantizers.values()],
         ]
         if multirate:
@@ -681,10 +780,10 @@ class CGenerator:
         lines += [f"void {pfx}_initialize(void)", "{", "    uint32_T i;", "    (void)i;"]
         for f in self.states.values():
             if all(v == 0 for v in f.init):
-                lines.append(f"    for (i = 0u; i < {f.size}u; i++) {{ {pfx}_DW.{f.name}[i] = 0.0; }}")
+                lines.append(f"    for (i = 0u; i < {f.size}u; i++) {{ {self.ref('DW')}.{f.name}[i] = 0.0; }}")
             else:
                 for k, v in enumerate(f.init):
-                    lines.append(f"    {pfx}_DW.{f.name}[{k}] = {c_float(v)};")
+                    lines.append(f"    {self.ref('DW')}.{f.name}[{k}] = {c_float(v)};")
         if multirate:
             for k, (n, off) in enumerate(steps):
                 lines.append(
@@ -692,6 +791,7 @@ class CGenerator:
                 )
             if offset_rates:
                 lines.append("    rt_first = 1u;")
+        lines += [f"    {x}" for x in self.extra_init]
         lines += [f"    {x}" for x in init_out]
         if self.task_plan is not None:
             lines += ["}", "", *self._task_functions(codes, steps)]
@@ -1070,6 +1170,23 @@ def generate_c(target: Diagram | Block, name: str | None = None, tasks: bool = F
     diagram = system if isinstance(system, Diagram) else target
     if not isinstance(diagram, Diagram):
         raise TypeError("generate_c needs a Diagram or a Subsystem block")
+    from nervus.codegen.functions import has_functions, replace_with_calls
+
+    if has_functions(diagram):  # subsystems that become reusable functions: generate from a copy with calls
+        label = name or (target.name if isinstance(target, Block) else diagram.name) or "model"
+        work = replace_with_calls(diagram)
+        if isinstance(target, Block) and diagram is system:
+            work_target: Diagram | Block = copy.copy(target)
+            setattr(work_target, "system", work)  # noqa: B010  (a Subsystem's system)
+        else:
+            work_target = work
+        code = generate_c(work_target, label, tasks)
+        rate = None
+        if isinstance(target, Block) and diagram is system and "sample_time" in target.params:
+            st = target.sample_time()
+            rate = None if st.is_inherited else st
+        code.model = compile_diagram(diagram, default_rate=rate)  # the model itself: the reference for SIL tests
+        return code
     rate = None
     if isinstance(target, Block) and diagram is system and "sample_time" in target.params:
         if target.diagram is not None:

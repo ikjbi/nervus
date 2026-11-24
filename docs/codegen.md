@@ -222,6 +222,34 @@ result = back_to_back(model.block("ECU"), {"target_deg": 60.0, "tps_deg": 5.0}, 
 print(result.summary())
 ```
 
+## Reusable functions for subsystems
+
+Normally every block of a subsystem is written into the model's code (inline). When the same subsystem appears
+several times, for example one injector or cylinder controller per cylinder, give the subsystems a **function
+name** (the *function_name* parameter in the Properties panel). Subsystems with the same function name then share
+**one C function**, called once per subsystem:
+
+```c
+/* cyl_trim.h: generated once */
+void cyl_trim_initialize(cyl_trim_B_t *B, cyl_trim_DW_t *DW);
+void cyl_trim_output(const cyl_trim_U_t *U, cyl_trim_Y_t *Y, cyl_trim_B_t *B, cyl_trim_DW_t *DW,
+                     const cyl_trim_P_t *P);
+void cyl_trim_update(cyl_trim_B_t *B, cyl_trim_DW_t *DW, const cyl_trim_P_t *P);
+
+/* engine.c: each cylinder has its own signals, states and calibration */
+cyl_trim_output(&in, &out, &engine_cyl0_B, &engine_cyl0_DW, &engine_cyl0_P);
+```
+
+Each subsystem keeps its own data: signals (`_B`), states (`_DW`) and calibration parameters (`<model>_<subsystem>_P`,
+for example different trims per cylinder from a mask). The model calls `_output` where the subsystem's blocks would
+compute their outputs and `_update` where they would update their states, so the code does exactly what the inline
+code does; the back-to-back test compares it with the simulation.
+
+The subsystems must have the same contents (blocks and wiring; their parameter *values* may differ), run at one rate
+(their own *sample_time*) and have no enable or trigger port. The functions are in their own files
+(`cyl_trim.c`, `cyl_trim.h`), which the ECU project builds with the model's code. The instances' own calibration
+parameters are not in the A2L file yet.
+
 ## MISRA C
 
 **MISRA C:2012** is the coding standard for safety-related C in the automotive industry: ISO 26262 asks for a coding
