@@ -1,5 +1,30 @@
 # Sources
 
+## Signal Builder
+
+`sources.signal_builder` · Sources
+
+Test signals drawn as lines: one output per signal, several **groups** (scenarios) to choose from.
+
+Double-click the block to draw the signals in the **signal editor**: drag a point, double-click to add one,
+select it and press Delete to remove it. The *group* chooses the scenario the simulation uses, e.g. a tip-in
+or a panic stop.
+
+The signals are stored as text in *definition*, one line per signal: ``pedal: 0 0, 1 0, 1 80, 10 80`` (pairs of
+time and value). Two points at the same time make a jump; after the last point the value is held. Variable-step
+solvers stop exactly at every point, so jumps are sharp.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `definition` | *(code)* |  | The signals: groups of 'name: t v, t v, ...' lines |
+| `group` | `''` |  | The group (scenario) to play; empty = the first |
+
+*Direct feedthrough:* yes · no inputs
+
+---
+
 ## Constant
 
 `sources.constant` · Sources

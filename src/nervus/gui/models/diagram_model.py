@@ -219,14 +219,7 @@ class DiagramModel(QObject):
     def set_params(self, block: Block, params: dict[str, Any]) -> None:
         """Set several parameters at once; all-or-nothing."""
         self._focus(block.diagram)
-        old = dict(block.params)
-        try:
-            for k, v in params.items():
-                block.set_param(k, v)
-        except Exception:
-            block.params.clear()
-            block.params.update(old)
-            raise
+        block.set_params(params)
         self.paramsChanged.emit(block)
 
     def add_connection(self, src: Block, src_port: int, dst: Block, dst_port: int) -> Connection:

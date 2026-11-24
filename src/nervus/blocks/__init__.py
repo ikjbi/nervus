@@ -94,6 +94,7 @@ from nervus.blocks.registry import block_types, categories, create_block, get_bl
 from nervus.blocks.routing import DataTypeConversion, Demux, InitialCondition, Mux, Switch
 from nervus.blocks.semiconductors import BJT, MOSFET, OpAmp, SemiconductorDiode
 from nervus.blocks.sensors import ActuatorModel, SensorModel
+from nervus.blocks.signal_builder import SignalBuilder
 from nervus.blocks.sinks import Assertion, Scope, StopSimulation, Terminator, ToWorkspace
 from nervus.blocks.sources import Clock, Constant, DriveCycle, FromWorkspace, Ground, Pulse, Ramp, Sine, Step
 from nervus.blocks.user import PythonFunction
@@ -199,6 +200,7 @@ __all__ = [
     "Scope",
     "SemiconductorDiode",
     "SensorModel",
+    "SignalBuilder",
     "Sine",
     "Solenoid",
     "SpeedSensor",

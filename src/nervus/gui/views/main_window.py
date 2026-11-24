@@ -55,6 +55,7 @@ from nervus.gui.views.properties import PropertyPanel
 from nervus.gui.views.requirements_panel import LinkRequirementsDialog, RequirementsPanel
 from nervus.gui.views.scope_window import ScopeWindow
 from nervus.gui.views.settings_dialog import SettingsDialog
+from nervus.gui.views.signal_editor import SignalEditor
 from nervus.gui.views.sweep_dialog import SweepDialog
 from nervus.gui.views.test_manager import TestManagerPanel
 from nervus.gui.views.usages_dialog import UsagesDialog
@@ -1085,9 +1086,16 @@ class MainWindow(QMainWindow):
             self.open_scope(block)
         elif block.type_id == "charts.state_chart":
             self.open_chart_editor(block)
+        elif block.type_id == "sources.signal_builder":
+            self.open_signal_editor(block)
         else:
             self.properties_dock.show()
             self.properties_dock.raise_()
+
+    def open_signal_editor(self, block: Block) -> SignalEditor:
+        editor = SignalEditor(block, self.editor, self)
+        editor.show()
+        return editor
 
     def open_chart_editor(self, block: Block) -> ChartEditor:
         editor = ChartEditor(block, self.editor, self)

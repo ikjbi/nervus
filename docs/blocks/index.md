@@ -171,6 +171,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 
 ## [Sources](sources.md)
 
+- **Signal Builder**: Test signals drawn as lines: one output per signal, several **groups** (scenarios) to choose from.
 - **Constant**: Outputs a constant value (scalar or vector).
 - **Step**: Steps from *initial* to *final* at *time*.
 - **Ramp**: A ramp starting at *start_time*:

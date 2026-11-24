@@ -31,6 +31,28 @@ Each top-level In block gets a row. Enter `time: value` pairs, e.g. `0: 5, 0.2: 
 
 Write arguments as `name=value, name=value`. Signals use result names such as `ECU/throttle_pi`.
 
+## Drawing test signals: the Signal Builder
+
+For signals that are easier to draw than to type, put a **Signal Builder** block (Library → Sources) in the model
+and double-click it:
+
+![](figures/signal-editor.png)
+
+- Each **signal** is a plot and one output of the block (*Add signal*, *Rename*, *Remove*). Drag a point to move it,
+  double-click in a plot to add one, select a point and press **Delete** to remove it. The table on the right shows
+  the selected signal's points exactly; type in it for precise values.
+- Between two points the signal is a straight line. **Two points at the same time make a jump** (the pedal pressed
+  in one instant); after the last point the value is held. The solver stops exactly at every point, so jumps are
+  sharp.
+- **Groups** are scenarios with the same signals: a tip-in, a panic stop, a cold start. **Add** copies the current
+  group as a starting point. **Play this group** chooses the one the simulation uses (the block's *group*
+  parameter, also in the Properties panel).
+- The **Text** tab shows the same signals as text, e.g. `pedal: 0 0, 1 0, 1 80, 6 80` (pairs of time and value);
+  **Apply** writes them to the block, as one step you can undo.
+
+Test cases set the model's In blocks; a Signal Builder lives *inside* the model, so it suits scenarios you switch
+by hand while you develop, and models without top-level inputs.
+
 ## Test suites as files
 
 **Export…** in the Test Manager saves the selected test cases (or all of them) to a `.nervtest` file, and

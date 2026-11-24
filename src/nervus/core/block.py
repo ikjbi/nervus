@@ -203,6 +203,21 @@ class Block:
                 self.expressions[name] = old_expr
             raise
 
+    def set_params(self, values: dict[str, Any]) -> None:
+        """Set several parameters together and validate once, so a combination that is only valid as a whole (a new
+        list of groups and the group to play, say) can be set. All are kept as they were if validation fails."""
+        old_params, old_exprs = dict(self.params), dict(self.expressions)
+        try:
+            for name, value in values.items():
+                self._assign(self.param_spec(name), value)
+            self.validate_params()
+        except Exception:
+            self.params.clear()
+            self.params.update(old_params)
+            self.expressions.clear()
+            self.expressions.update(old_exprs)
+            raise
+
     def param_source(self, name: str) -> Any:
         """What the user wrote: the expression string if there is one, otherwise the value."""
         return self.expressions.get(name, self.params[name])
@@ -234,6 +249,10 @@ class Block:
 
     def input_names(self) -> list[str]:
         """Names of the inputs, shown as port tooltips in the editor ("" = no name)."""
+        return []
+
+    def output_names(self) -> list[str]:
+        """Names of the outputs, shown as port tooltips in the editor ("" = no name)."""
         return []
 
     def num_outputs(self) -> int:

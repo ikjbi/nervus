@@ -351,6 +351,26 @@ def chart_shots(win) -> None:  # type: ignore[no-untyped-def]
         shutil.copy(OUT / shot, ROOT / "src" / "nervus" / "gui" / "resources" / "figures" / shot)
 
 
+def signal_shots(win) -> None:  # type: ignore[no-untyped-def]
+    """The Signal Builder's editor: a pedal and a brake signal, two scenarios."""
+    from PySide6.QtCore import QPointF
+
+    win.diagram_model.set_diagram(__import__("nervus").Diagram("signals"))
+    block = win.editor.add_block("sources.signal_builder", QPointF(0, 0))
+    win.editor.set_params(block, {"definition": (
+        "group tip_in\n  pedal: 0 0, 1 0, 1 80, 6 80, 6 0, 10 0\n  brake: 0 0, 7 0, 7.5 40, 10 40\n"
+        "group panic_stop\n  pedal: 0 30, 2 30, 2 0, 10 0\n  brake: 0 0, 2 0, 2.2 100, 10 100\n")})  # fmt: skip
+    ed = win.open_signal_editor(block)
+    ed.resize(1200, 640)
+    ed.select(0, 2)
+    QApplication.processEvents()
+    grab(ed, "signal-editor.png")
+    shutil.copy(
+        OUT / "signal-editor.png", ROOT / "src" / "nervus" / "gui" / "resources" / "figures" / "signal-editor.png"
+    )
+    ed.close()
+
+
 def grab(widget: QWidget, name: str) -> None:
     QApplication.processEvents()
     widget.grab().save(str(OUT / name))
@@ -365,7 +385,14 @@ def main() -> None:
     app.setStyle("Fusion")
     from nervus.gui.theme import ThemeManager, ThemeMode
 
-    if sys.argv[1:] in (["console"], ["dictionary"], ["first"], ["requirements"], ["chart"]):  # only the newest shots
+    if sys.argv[1:] in (
+        ["console"],
+        ["dictionary"],
+        ["first"],
+        ["requirements"],
+        ["chart"],
+        ["signals"],
+    ):  # only the newest shots
         from nervus.gui.views.main_window import MainWindow
 
         ThemeManager.instance().set_mode(ThemeMode.LIGHT)
@@ -373,7 +400,8 @@ def main() -> None:
         win.resize(1400, 860)
         win.show()
         shots = {"console": console_and_can_shots, "dictionary": dictionary_shots, "first": first_model_shots,
-                 "requirements": requirements_shots, "chart": chart_shots}  # fmt: skip
+                 "requirements": requirements_shots, "chart": chart_shots,
+                 "signals": signal_shots}  # fmt: skip
         shots[sys.argv[1]](win)
         win.editor.undo_stack.setClean()
         win.close()

@@ -168,6 +168,10 @@ class BlockItem(QGraphicsItem):
             label = names[i] if i < len(names) and names[i] else ""
             p.setToolTip(f"input {i + 1}" + (f": {label}" if label else ""))
         self.out_ports = [PortItem(self, False, i) for i in range(self.block.num_outputs())]
+        out_names = self.block.output_names()
+        for i, p in enumerate(self.out_ports):
+            label = out_names[i] if i < len(out_names) and out_names[i] else ""
+            p.setToolTip(f"output {i + 1}" + (f": {label}" if label else ""))
         if phys and getattr(self.block, "system", None) is not None:
             self._w = max(self._w, snap(len(phys) * 30 + 20))
         self._layout_physical(phys)

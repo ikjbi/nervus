@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- Setting several block parameters at once (and undoing it) validates them together, so combinations that are
+  only valid as a whole work; a failed change also restores the expressions.
 - Wires between blocks can be drawn straight: every port sits on the grid (ports 20 px apart, centred), so a
   two-input Sum's output is level with the next block's input.
 - Editor crash when a parameter was entered with Enter in the Properties panel (e.g. the PID's `I` in Tutorial
@@ -39,6 +41,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Signal Builder block and signal editor: piecewise-linear test signals in groups (scenarios), drawn by dragging
+  points (double-click the block), with a table and a text view.
 - Properties panel: clicking in (or hovering over) a field shows what can be written there, with examples (e.g.
   Sum *signs*: `+-` subtracts the second input), the unit, the range and the default.
 - Graphical chart editor: double-click a State Chart block to edit states, transitions, priorities and the
