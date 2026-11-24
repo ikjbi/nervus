@@ -1,8 +1,7 @@
 [project]
 name = "nervus"
-version = "0.1.0.dev0"
+dynamic = ["version", "readme"]  # the version from src/nervus/__init__.py, the readme below
 description = "Open-source block-diagram modeling and simulation in Python — a Simulink alternative aimed at ECU control software."
-readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Johan Bjoerk", email = "johan.bjoerk1@gmail.com" }]
@@ -54,12 +53,39 @@ docs = [
 ]
 
 [build-system]
-requires = ["hatchling>=1.26"]
+requires = ["hatchling>=1.26", "hatch-fancy-pypi-readme>=24"]
 build-backend = "hatchling.build"
+
+# The README on PyPI: relative links and images point to GitHub (pypi.org cannot follow them).
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '!\[([^\]]*)\]\((?!https?:)([^)]+)\)'
+replacement = '![\1](https://raw.githubusercontent.com/ikjbi/nervus/main/\2)'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\]\((?!https?:|#|mailto:)([^)]+)\)'
+replacement = '](https://github.com/ikjbi/nervus/blob/main/\1)'
+
+[tool.hatch.version]
+path = "src/nervus/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nervus"]
 artifacts = ["src/nervus/gui/resources/help/*.md", "src/nervus/gui/resources/figures/*.png"]
+exclude = ["__pycache__", "*.pyc"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"examples" = "nervus/examples"  # the example models and scripts, for nervus --copy-examples and File > Open Example
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "examples", "docs", "scripts", "README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md",
+           "pyproject.toml", "mkdocs.yml"]
+exclude = ["__pycache__", "*.pyc", "*.fmu"]
 
 [tool.ruff]
 line-length = 120

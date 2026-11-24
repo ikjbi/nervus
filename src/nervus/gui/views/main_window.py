@@ -306,6 +306,8 @@ class MainWindow(QMainWindow):
         mb = self.menuBar()
         m = mb.addMenu("&File")
         m.addActions([self.act_new, self.act_open])
+        self.examples_menu = m.addMenu("Open &Example")
+        self._build_examples_menu()
         self.recent_menu = m.addMenu("Open &Recent")
         m.addSeparator()
         m.addActions([self.act_save, self.act_save_as])
@@ -724,6 +726,43 @@ class MainWindow(QMainWindow):
     def new_file(self) -> None:
         if self._confirm_discard():
             self.files.new()
+
+    def _build_examples_menu(self) -> None:
+        """The example models, grouped like the tutorials (each tutorial's models under its topic)."""
+        from nervus.examples import examples_dir
+        from nervus.tutorials import CATEGORIES, ordered
+
+        folder = examples_dir()
+        tutorials = ordered()
+        for category, _desc, _subs in CATEGORIES:
+            items = [(t, m) for t in tutorials if t.category == category for m in t.models if (folder / m).exists()]
+            if not items:
+                continue
+            sub = self.examples_menu.addMenu(category)
+            for t, model in items:
+                act = sub.addAction(f"{t.title} ({model})")
+                act.setToolTip(f"Open examples/{model}, the model of the tutorial {t.title!r}")
+                act.triggered.connect(lambda _=False, p=folder / model: self.open_example(p))
+        self.examples_menu.addSeparator()
+        self.examples_menu.addAction("All examples…", self._open_example_dialog)
+
+    def open_example(self, path: Path) -> None:
+        if not self._confirm_discard():
+            return
+        self.files.open(path)
+        if "site-packages" in path.parts or "dist-packages" in path.parts:
+            self.status_label.setText(
+                "An example from the installed Nervus: use File ▸ Save As to keep your changes in a folder of your own"
+            )
+
+    def _open_example_dialog(self) -> None:
+        from nervus.examples import examples_dir
+
+        if not self._confirm_discard():
+            return
+        path, _ = QFileDialog.getOpenFileName(self, "Open example", str(examples_dir()), OPEN_FILTER)
+        if path:
+            self.files.open(path)
 
     def open_file(self) -> None:
         if not self._confirm_discard():

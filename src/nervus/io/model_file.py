@@ -250,7 +250,16 @@ def _fill_system(d: Diagram, data: dict[str, Any], prefix: str) -> None:
             conn = d.connect((src, int(c["src_port"])), (dst, int(c["dst_port"])))
             conn.meta.update(c.get("meta", {}))
         except (KeyError, IndexError) as exc:
-            raise ModelError(f"invalid connection {prefix}{c}: {exc}") from exc
+            why = ""
+            for name in (c.get("src"), c.get("dst")):  # a block with fewer ports than saved: say why, if it knows
+                try:
+                    d.block(name).validate_params()
+                except KeyError:
+                    pass
+                except Exception as reason:  # e.g. its DBC file cannot be read without cantools
+                    why = f" ({name}: {reason})"
+                    break
+            raise ModelError(f"invalid connection {prefix}{c}: {exc}{why}") from exc
     for k in data.get("links", []):
         try:
             link = d.link((d.block(k["a"]), str(k["a_port"])), (d.block(k["b"]), str(k["b_port"])))

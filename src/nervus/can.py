@@ -23,7 +23,7 @@ from typing import Any
 
 import numpy as np
 
-from nervus.core.errors import ParameterError
+from nervus.core.errors import MissingDependencyError, ParameterError, install_hint
 from nervus.core.types import Array
 
 FD_LENGTHS = (0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64)
@@ -110,7 +110,7 @@ def load_dbc(path: str | Path) -> dict[str, CanMessage]:
     try:
         import cantools
     except ImportError as exc:
-        raise ParameterError("reading DBC files needs cantools: uv sync --extra can") from exc
+        raise MissingDependencyError(f"reading DBC files needs cantools: {install_hint('can')}") from exc
     try:
         db = cantools.database.load_file(str(path), strict=False)
     except Exception as exc:  # cantools raises various parse errors

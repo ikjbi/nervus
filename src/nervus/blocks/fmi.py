@@ -11,7 +11,7 @@ import numpy as np
 
 from nervus.blocks.registry import register
 from nervus.core.block import Block, Width
-from nervus.core.errors import ParameterError
+from nervus.core.errors import ParameterError, install_hint
 from nervus.core.params import Param, ParamKind
 from nervus.core.sample_time import SampleTime
 from nervus.core.types import Array
@@ -69,7 +69,7 @@ class FMU(Block):
         try:
             from fmpy import read_model_description
         except ImportError as exc:
-            raise ParameterError("FMUs need fmpy: uv sync --extra fmi") from exc
+            raise ParameterError(f"FMUs need fmpy: {install_hint('fmi')}") from exc
         path = self._path()
         if not str(self.params["fmu_file"]):
             raise ParameterError("choose an FMU file")

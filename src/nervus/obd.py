@@ -28,6 +28,7 @@ from typing import Any, Protocol
 
 import numpy as np
 
+from nervus.core.errors import install_hint
 from nervus.sim.result import SimResult, SimStats
 
 
@@ -244,7 +245,7 @@ class SerialTransport:
         try:
             import serial
         except ImportError as exc:
-            raise ObdError("talking to an ELM327 needs pyserial: uv sync --extra obd") from exc
+            raise ObdError(f"talking to an ELM327 needs pyserial: {install_hint('obd')}") from exc
         self.port = serial.Serial(port, baudrate=baudrate, timeout=timeout)
 
     def write(self, data: bytes) -> object:

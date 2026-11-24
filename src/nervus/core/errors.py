@@ -32,3 +32,12 @@ class SimulationError(NervusError):
     def __init__(self, message: str, blocks: tuple[str, ...] = ()) -> None:
         super().__init__(message)
         self.blocks = blocks
+
+
+class MissingDependencyError(ParameterError):
+    """An optional package that a block needs is not installed (see :func:`install_hint`)."""
+
+
+def install_hint(extra: str) -> str:
+    """How to install an optional part of Nervus, for both a pip installation and a source checkout."""
+    return f'pip install "nervus[{extra}]" (in a source checkout: uv sync --extra {extra})'

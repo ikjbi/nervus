@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- A model that needs an optional package says which and how to install it (e.g. `pip install "nervus[can]"`),
+  instead of an error about missing ports.
 - Setting several block parameters at once (and undoing it) validates them together, so combinations that are
   only valid as a whole work; a failed change also restores the expressions.
 - Wires between blocks can be drawn straight: every port sits on the grid (ports 20 px apart, centred), so a
@@ -41,6 +43,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Packaging for PyPI: `pip install "nervus[gui]"`; the examples are in the package (File ▸ Open Example,
+  `nervus --copy-examples DIR`); `nervus --version`; a release workflow (tag `vX.Y.Z`) with trusted publishing.
 - Code generation: subsystems with a *function_name* become one reusable C function, called once per subsystem
   with its own signals, states and calibration (in the A2L file; back-to-back tested, MISRA checked).
 - Signal Builder block and signal editor: piecewise-linear test signals in groups (scenarios), drawn by dragging

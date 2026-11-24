@@ -2,7 +2,19 @@
 
 ## Install
 
-Nervus needs Python 3.11 or newer. The project uses [uv](https://docs.astral.sh/uv/):
+Nervus needs Python 3.11 or newer. With pip:
+
+```bash
+pip install "nervus[gui]"                    # the engine and the desktop editor
+nervus                                       # start the editor
+nervus --copy-examples ~/nervus-examples     # the example models and scripts, to run and change
+```
+
+In the editor, **File ▸ Open Example** has the model of every tutorial. The example *scripts* (`.py`) write files
+next to themselves, so run them from the copy: `cd ~/nervus-examples` and `python cruise_control.py`. The tutorials
+write paths like `examples/cruise_control.nervus`: in the copy that is `~/nervus-examples/cruise_control.nervus`.
+
+From the source, with [uv](https://docs.astral.sh/uv/):
 
 ```bash
 git clone git@github.com:ikjbi/nervus.git

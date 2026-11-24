@@ -36,3 +36,26 @@ uv run pre-commit install
 ## Writing a block
 
 See [docs/developer/custom-blocks.md](docs/developer/custom-blocks.md).
+
+## Releasing
+
+Releases go to PyPI from GitHub Actions (`.github/workflows/release.yml`), with
+[trusted publishing](https://docs.pypi.org/trusted-publishers/): no password or token is stored.
+
+One-time setup:
+
+1. On pypi.org, log in and open *Your account → Publishing → Add a new pending publisher*: PyPI project name
+   `nervus`, owner `ikjbi`, repository `nervus`, workflow `release.yml`, environment `pypi`.
+2. On GitHub, *Settings → Environments → New environment* `pypi` (optionally with a required reviewer, so every
+   release waits for a click).
+
+Each release:
+
+1. Set `__version__` in `src/nervus/__init__.py` (e.g. `0.1.0`), and in `CHANGELOG.md` rename *Unreleased* to the
+   version with the date.
+2. Commit, then tag and push: `git tag v0.1.0 && git push origin v0.1.0`.
+3. The workflow checks that the tag matches the version, runs the tests, builds the wheel and the source package,
+   checks them with `twine check`, and publishes them.
+
+Try a package before releasing: `uv build`, then `pip install "dist/nervus-<version>-py3-none-any.whl[gui]"` in a
+fresh environment, and `nervus --copy-examples /tmp/ex`.

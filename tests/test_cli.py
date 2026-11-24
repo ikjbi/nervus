@@ -21,3 +21,17 @@ def test_missing_pyside6_gives_instructions(
     monkeypatch.setattr(builtins, "__import__", fake_import)
     assert cli.main([]) == 1
     assert "uv sync --extra gui" in capsys.readouterr().err
+
+
+def test_copy_examples(tmp_path, capsys: pytest.CaptureFixture[str]) -> None:  # type: ignore[no-untyped-def]
+    out = tmp_path / "ex"
+    assert cli.main(["nervus", "--copy-examples", str(out)]) == 0
+    assert (out / "cruise_control.nervus").exists() and (out / "cruise_control.py").exists()
+    assert not list(out.rglob("__pycache__"))
+    assert cli.main(["nervus", "--copy-examples", str(out)]) == 1  # not into a folder with files
+    assert "not empty" in capsys.readouterr().err
+
+
+def test_version_and_help(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(["nervus", "--version"]) == 0 and capsys.readouterr().out.startswith("nervus ")
+    assert cli.main(["nervus", "--help"]) == 0 and "--copy-examples" in capsys.readouterr().out

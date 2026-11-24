@@ -23,6 +23,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from nervus.core.errors import install_hint
+
 _REGISTRY: dict[str, CanBus] = {}
 
 
@@ -244,7 +246,7 @@ class CanBus:
         try:
             import can
         except ImportError as exc:
-            raise RuntimeError("real CAN hardware needs python-can: uv sync --extra can") from exc
+            raise RuntimeError(f"real CAN hardware needs python-can: {install_hint('can')}") from exc
         self.disconnect_hardware()
         kwargs: dict[str, Any] = {"interface": interface, "channel": channel}
         if interface == "udp_multicast":  # several programs on one computer (needs msgpack)

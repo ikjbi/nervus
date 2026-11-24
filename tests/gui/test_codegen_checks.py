@@ -32,3 +32,13 @@ def test_misra_check_from_the_dialog(window) -> None:  # type: ignore[no-untyped
     dlg.run_misra()
     assert dlg.sil_label.text().startswith("✓ MISRA C:2012: no findings")
     dlg.close()
+
+
+def test_open_example_menu(window) -> None:  # type: ignore[no-untyped-def]
+    """File > Open Example lists the tutorials' models by topic and opens them."""
+    menus = [a.menu() for a in window.examples_menu.actions() if a.menu() is not None]
+    assert len(menus) >= 6  # the tutorial topics
+    actions = [a for m in menus for a in m.actions()]
+    first = next(a for a in actions if "cruise_control.nervus" in a.text())
+    first.trigger()
+    assert window.diagram_model.root.name == "cruise_control"

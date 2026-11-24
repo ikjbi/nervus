@@ -19,7 +19,7 @@ from typing import Any
 
 import numpy as np
 
-from nervus.core.errors import NervusError
+from nervus.core.errors import NervusError, install_hint
 from nervus.sim.result import SimResult
 
 
@@ -27,7 +27,7 @@ def _asammdf() -> Any:
     try:
         import asammdf
     except ImportError as exc:
-        raise NervusError("MDF4 files need asammdf: uv sync --extra mdf") from exc
+        raise NervusError(f"MDF4 files need asammdf: {install_hint('mdf')}") from exc
     return asammdf
 
 

@@ -283,7 +283,10 @@ tests/
 - [ ] Condition/MC-DC coverage for logic, coverage of generated C (gcov)
 - [x] Requirements traceability (link requirements to blocks and tests)
 - [x] Model Advisor: 10 rules (float equality, division, anti-windup, implicit sampling, chart reachability, ...)
-- [ ] Packaging: PyPI release, standalone installers (PyInstaller / Briefcase) for macOS, Windows and Linux
+- [x] Packaging for PyPI: wheel with the examples (`nervus --copy-examples`, File ▸ Open Example), clean source
+      package, README links for PyPI, a release workflow with trusted publishing (the first release needs the
+      one-time PyPI setup in CONTRIBUTING.md)
+- [ ] Standalone installers (PyInstaller / Briefcase) for macOS, Windows and Linux
 - [ ] Versioned docs, release notes; publish docs to GitHub Pages
 
 ## Phase 20 – Electrical and physical modelling

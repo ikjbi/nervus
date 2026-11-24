@@ -38,11 +38,22 @@ tool for designing, simulating and eventually generating C code for that kind of
 | OBD-II | live data and trouble codes from a real car (ELM327 or CAN), and a simulated ECU to practise with | [OBD-II](docs/obd.md) |
 | Testing | test cases stored with the model, **Signal Builder** (test signals drawn in an editor), Test Manager, Data Inspector, parameter sweeps and Monte Carlo runs, model coverage, **requirements traceability**, Model Advisor | [Testing](docs/testing.md), [Verification](docs/verification.md) |
 | Analysis | linearisation, trim, Bode, Nyquist, root locus, stability margins, step response, PID tuning | [Analysis](docs/analysis.md) |
-| Learning | 12 tutorials from your first model to CAN networks, each with a finished example model | [Tutorials](docs/tutorials/index.md) |
+| Learning | 33 tutorials in 7 topics, from your first model to ECU code, CAN and diagnostics, each with a finished example model | [Tutorials](docs/tutorials/index.md) |
 
-## Installation (development)
+## Installation
 
-Nervus uses [uv](https://docs.astral.sh/uv/) to manage the environment.
+With pip (Python 3.11 or newer):
+
+```bash
+pip install "nervus[gui]"                    # the engine and the desktop editor
+nervus                                       # start the editor; File ▸ Open Example has every tutorial's model
+nervus --copy-examples ~/nervus-examples     # the example models and scripts, to run and change
+```
+
+Optional parts: `can` (CAN, DBC files, XCP), `obd` (OBD-II adapters), `mdf` (MDF4 files), `fmi` (FMUs), e.g.
+`pip install "nervus[gui,can]"`.
+
+For development, from the source, with [uv](https://docs.astral.sh/uv/):
 
 ```bash
 git clone git@github.com:ikjbi/nervus.git

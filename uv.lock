@@ -2016,7 +2016,6 @@ wheels = [
 
 [[package]]
 name = "nervus"
-version = "0.1.0.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -2079,7 +2078,7 @@ requires-dist = [
     { name = "pyside6", marker = "extra == 'gui'", specifier = ">=6.7" },
     { name = "scipy", specifier = ">=1.11" },
 ]
-provides-extras = ["gui", "plot", "can", "obd", "mdf", "fmi"]
+provides-extras = ["can", "fmi", "gui", "mdf", "obd", "plot"]
 
 [package.metadata.requires-dev]
 dev = [

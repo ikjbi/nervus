@@ -22,6 +22,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+from nervus.core.errors import install_hint
 from nervus.obd import ObdError, Pid, decode_dtc, supported_from_bitmask
 from nervus.obd_sim import SimulatedEcu
 
@@ -35,7 +36,7 @@ def _bus(interface: str, channel: str | None, bitrate: int) -> Any:
     try:
         import can
     except ImportError as exc:
-        raise ObdError("OBD over CAN needs python-can: uv sync --extra can") from exc
+        raise ObdError(f"OBD over CAN needs python-can: {install_hint('can')}") from exc
     kwargs: dict[str, Any] = {"interface": interface}
     if channel is not None:
         kwargs["channel"] = channel

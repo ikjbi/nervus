@@ -12,7 +12,7 @@ import numpy as np
 from nervus.blocks.registry import register
 from nervus.can import CanMessage, load_dbc, pack, present, unpack, unpack_raw
 from nervus.core.block import Block, Width
-from nervus.core.errors import ParameterError
+from nervus.core.errors import MissingDependencyError, ParameterError
 from nervus.core.params import Param, ParamKind
 from nervus.core.sample_time import SampleTime
 from nervus.core.types import Array
@@ -91,6 +91,12 @@ class _CanBlock(Block):
 
     def validate_params(self) -> None:
         if self.params["dbc_file"] and self.params["message"] and self.diagram is not None:
+            try:
+                self.message()
+            except MissingDependencyError:
+                raise  # cantools is missing: say so (a file that is not found yet may appear when the model is saved)
+            except ParameterError:
+                pass
             self.selected()
 
     def configure(self, in_widths: list[int], out_widths: list[int]) -> None:
