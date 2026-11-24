@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from shiboken6 import isValid
 
 from nervus.core import Block, Param, ParamKind
 from nervus.core.block import EXPRESSION_KINDS
@@ -348,16 +349,20 @@ class PropertyPanel(QWidget):
             self._apply(name, path)
 
     def _show_error(self, edit: QLineEdit, message: str) -> None:
+        self.error.setText(message)
+        if not isValid(edit):  # applying the value rebuilt the panel: this field is gone
+            return
         edit.setProperty("invalid", True)
         edit.style().unpolish(edit)
         edit.style().polish(edit)
-        self.error.setText(message)
 
     def _clear_error(self, edit: QLineEdit) -> None:
+        self.error.clear()
+        if not isValid(edit):  # applying the value rebuilt the panel: this field is gone
+            return
         edit.setProperty("invalid", False)
         edit.style().unpolish(edit)
         edit.style().polish(edit)
-        self.error.clear()
 
     def show_controller_error(self, message: str) -> None:
         if self.block is not None and message.startswith(self.block.name):

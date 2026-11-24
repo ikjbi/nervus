@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- Editor crash when a parameter was entered with Enter in the Properties panel (e.g. the PID's `I` in Tutorial
+  1): the panel touched the field it had just rebuilt.
 - `nervus` without the editor's packages explains how to install them (`uv sync --extra gui`) instead of a
   traceback; troubleshooting section in Getting started.
 - Variable-step solvers: a zero crossing whose bracket is lost to rounding (platform dependent) is located at
