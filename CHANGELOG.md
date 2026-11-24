@@ -42,7 +42,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 - Code generation: subsystems with a *function_name* become one reusable C function, called once per subsystem
-  with its own signals, states and calibration (back-to-back tested, MISRA checked).
+  with its own signals, states and calibration (in the A2L file; back-to-back tested, MISRA checked).
 - Signal Builder block and signal editor: piecewise-linear test signals in groups (scenarios), drawn by dragging
   points (double-click the block), with a table and a text view.
 - Properties panel: clicking in (or hovering over) a field shows what can be written there, with examples (e.g.

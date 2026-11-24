@@ -15,7 +15,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from nervus import __version__
 
@@ -60,49 +60,10 @@ def generate_a2l(gen: CGenerator) -> str:
     ]
     units: set[str] = set()
     layouts = {"FLOAT64_IEEE"}
-    offset = 0
-    for f in gen.param_fields():  # constants in ROM are not calibratable, so they are not in the A2L file
-        var = ws.variable(f.name) if f.name in ws else None
-        unit = var.unit if var is not None else ""
-        desc = (var.description if var is not None and var.description else f.comment).replace('"', "'")
-        lo = _limit(var.min if var is not None else None, -1e12)
-        hi = _limit(var.max if var is not None else None, 1e12)
-        d = f.dtype
-        asam = _ASAM_TYPES.get(d.c_type, "FLOAT64_IEEE")
-        if asam not in layouts:
-            layouts.add(asam)
-            lines += [
-                f"    /begin RECORD_LAYOUT RL_{asam} FNC_VALUES 1 {asam} ROW_DIR DIRECT",
-                "    /end RECORD_LAYOUT",
-            ]
-        scaled = d.kind == "fixed" and not d.is_integer
-        method = "CM_IDENTICAL"
-        if scaled:  # the tool shows physical values: phys = slope * stored + bias
-            method = f"CM_{_ident(f.name)}"
-            lines += [
-                f'    /begin COMPU_METHOD {method} "{d.name}" LINEAR "%12.6" "{unit}"',
-                f"      COEFFS_LINEAR {d.slope!r} {d.bias!r}",
-                "    /end COMPU_METHOD",
-            ]
-            lo, hi = _limit(max(d.min, float(lo)), d.min), _limit(min(d.max, float(hi)), d.max)
-        elif unit:
-            method = f"CM_{_ident(unit) or 'unit'}"
-            if method not in units:
-                units.add(method)
-                lines += [
-                    f'    /begin COMPU_METHOD {method} "unit {unit}" IDENTICAL "%12.6" "{unit}"',
-                    "    /end COMPU_METHOD",
-                ]
-        kind = "VALUE" if f.size == 1 else "VAL_BLK"
-        lines += [
-            f'    /begin CHARACTERISTIC {pfx}_P.{f.name} "{desc}"',
-            f"      {kind} 0x0 /* @{pfx}_P+{offset} */ RL_{asam if asam != 'FLOAT64_IEEE' else 'FLOAT64'} 0 {method} {lo} {hi}",
-        ]
-        if f.size > 1:
-            lines.append(f"      NUMBER {f.size}")
-        lines.append(f'      SYMBOL_LINK "{pfx}_P.{f.name}" 0')
-        lines.append("    /end CHARACTERISTIC")
-        offset += f.size * f.nbytes
+    # The model's parameters, then those of each instance of a reusable subsystem function (its own struct).
+    structs = [(f"{pfx}_P", gen.param_fields()), *gen.extra_characteristics]
+    for struct, fields in structs:
+        lines += _characteristics(struct, fields, ws, units, layouts)
     offset = 0
     m = gen.model
     from nervus.core.dictionary import named_signals
@@ -168,3 +129,52 @@ def fill_addresses(a2l: str, symbols: dict[str, int]) -> str:
         return f"0x{base + int(m.group(2)):X}"
 
     return _ADDR.sub(sub, a2l)
+
+
+def _characteristics(struct: str, fields: list[Any], ws: Any, units: set[str], layouts: set[str]) -> list[str]:
+    """The CHARACTERISTICs of one parameter struct (``<model>_P``, or an instance of a reusable function)."""
+    lines: list[str] = []
+    offset = 0
+    for f in fields:  # constants in ROM are not calibratable, so they are not in the A2L file
+        var = ws.variable(f.name) if f.name in ws else None
+        unit = var.unit if var is not None else ""
+        desc = (var.description if var is not None and var.description else f.comment).replace('"', "'")
+        lo = _limit(var.min if var is not None else None, -1e12)
+        hi = _limit(var.max if var is not None else None, 1e12)
+        d = f.dtype
+        asam = _ASAM_TYPES.get(d.c_type, "FLOAT64_IEEE")
+        if asam not in layouts:
+            layouts.add(asam)
+            lines += [
+                f"    /begin RECORD_LAYOUT RL_{asam} FNC_VALUES 1 {asam} ROW_DIR DIRECT",
+                "    /end RECORD_LAYOUT",
+            ]
+        scaled = d.kind == "fixed" and not d.is_integer
+        method = "CM_IDENTICAL"
+        if scaled:  # the tool shows physical values: phys = slope * stored + bias
+            method = f"CM_{_ident(f.name)}"
+            lines += [
+                f'    /begin COMPU_METHOD {method} "{d.name}" LINEAR "%12.6" "{unit}"',
+                f"      COEFFS_LINEAR {d.slope!r} {d.bias!r}",
+                "    /end COMPU_METHOD",
+            ]
+            lo, hi = _limit(max(d.min, float(lo)), d.min), _limit(min(d.max, float(hi)), d.max)
+        elif unit:
+            method = f"CM_{_ident(unit) or 'unit'}"
+            if method not in units:
+                units.add(method)
+                lines += [
+                    f'    /begin COMPU_METHOD {method} "unit {unit}" IDENTICAL "%12.6" "{unit}"',
+                    "    /end COMPU_METHOD",
+                ]
+        kind = "VALUE" if f.size == 1 else "VAL_BLK"
+        lines += [
+            f'    /begin CHARACTERISTIC {struct}.{f.name} "{desc}"',
+            f"      {kind} 0x0 /* @{struct}+{offset} */ RL_{asam if asam != 'FLOAT64_IEEE' else 'FLOAT64'} 0 {method} {lo} {hi}",
+        ]
+        if f.size > 1:
+            lines.append(f"      NUMBER {f.size}")
+        lines.append(f'      SYMBOL_LINK "{struct}.{f.name}" 0')
+        lines.append("    /end CHARACTERISTIC")
+        offset += f.size * f.nbytes
+    return lines

@@ -39,9 +39,9 @@ class FunctionCall(Block):
     PARAMS = ()
 
     def __init__(self, function: str, instance: str, code: GeneratedCode, initializer: str,
-                 feedthrough: list[int], period: float, files: dict[str, str]) -> None:  # fmt: skip
+                 feedthrough: list[int], period: float, files: dict[str, str], fields: list[Any]) -> None:  # fmt: skip
         super().__init__()
-        self.function, self.instance, self.code = function, instance, code
+        self.function, self.instance, self.code, self.fields = function, instance, code, fields
         self.initializer, self._feedthrough, self._period, self.files = initializer, feedthrough, period, files
 
     def num_inputs(self) -> int:
@@ -135,7 +135,9 @@ def replace_with_calls(diagram: Diagram) -> Diagram:
         for s, code, gen, period in generated:
             parent = s.diagram
             assert parent is not None
-            call = FunctionCall(function, s.name, code, gen.param_initializer(), feed, period, files)
+            call = FunctionCall(
+                function, s.name, code, gen.param_initializer(), feed, period, files, gen.param_fields()
+            )
             conns = [c for c in parent.connections if c.src is s or c.dst is s]
             position = s.meta.get("position")
             name = s.name

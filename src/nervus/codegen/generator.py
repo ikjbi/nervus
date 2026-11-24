@@ -312,6 +312,8 @@ class CGenerator:
         self.extra_includes: list[str] = []
         self.extra_globals: list[str] = []
         self.extra_header: list[str] = []
+        self.extra_characteristics: list[tuple[str, list[_Field]]] = []
+        """Further calibratable parameter structs for the A2L file: (C name, fields), one per function instance."""
         self.extra_init: list[str] = []
         self.extra_files: dict[str, str] = {}
         """Code that templates add to the model's files (reusable subsystem functions and their instances)."""

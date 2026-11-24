@@ -48,6 +48,8 @@ def test_one_function_three_calls_same_results(tmp_path) -> None:  # type: ignor
     c = code.files["engine.c"]
     assert c.count("cyl_trim_output(&") == 3 and c.count("cyl_trim_update(&") == 3
     assert "engine_cyl1_P" in code.files["engine.h"]  # each instance has its own calibration
+    a2l = code.files["engine.a2l"]  # and the calibration tool sees it
+    assert all(f"CHARACTERISTIC engine_cyl{c}_P.k_gain" in a2l for c in range(3))
     fn = code.files["cyl_trim.c"]
     assert "void cyl_trim_output(" in fn and "(*P).k_gain" in fn and fn.count("void cyl_trim_update(") == 1
     rng = np.random.default_rng(3)

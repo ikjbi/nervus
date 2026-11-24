@@ -104,8 +104,8 @@ code does; the back-to-back test compares it with the simulation.
 
 The subsystems must have the same contents (blocks and wiring; their parameter *values* may differ), run at one rate
 (their own *sample_time*) and have no enable or trigger port. The functions are in their own files
-(`cyl_trim.c`, `cyl_trim.h`), which the ECU project builds with the model's code. The instances' own calibration
-parameters are not in the A2L file yet.
+(`cyl_trim.c`, `cyl_trim.h`), which the ECU project builds with the model's code. Each instance's calibration
+parameters are in the A2L file as `<model>_<subsystem>_P.<name>`.
 
 ## MISRA C
 

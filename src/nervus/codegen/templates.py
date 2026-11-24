@@ -1252,6 +1252,7 @@ def _function_call(e: Emitter) -> BlockCode:
     ]
     gen.extra_header.append(f"extern {f}_P_t {inst}_P; /* {e.path}: calibration of this instance of {f}() */")
     gen.extra_init.append(f"{f}_initialize(&{inst}_B, &{inst}_DW);")
+    gen.extra_characteristics.append((f"{inst}_P", b.fields))  # this instance's calibration, in the A2L file
     out = ["{", f"    {f}_U_t in;", f"    {f}_Y_t out;"]
     for port, (field_name, width) in enumerate(b.code.inputs):
         out += [f"    in.{field_name}[{k}] = {e.u(port, str(k))};" for k in range(width)]
