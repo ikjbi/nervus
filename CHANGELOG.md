@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Coverage of the generated C code by the model's test cases (gcov lines and branches, HTML report):
+  `nervus.codegen.c_coverage.coverage_of_tests`.
 - The documentation is online: https://ikjbi.github.io/nervus/. Releases get a GitHub Release with their notes.
 
 ## [0.1.0] - 2026-11-24
