@@ -298,7 +298,7 @@ tests/
       one-time PyPI setup in CONTRIBUTING.md)
 - [ ] Standalone installers (PyInstaller / Briefcase) for macOS, Windows and Linux
 - [x] Release notes: each release gets a GitHub Release with its CHANGELOG section; docs on GitHub Pages
-- [ ] Versioned docs (one site per release, e.g. with mike)
+- [x] Versioned docs with mike: `dev` from main, one site per minor release (the newest is `latest`)
 
 ## Phase 20 – Electrical and physical modelling
 *Acausal (equation-based) components connected by physical wires, like Simscape Electrical.*
