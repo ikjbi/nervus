@@ -276,7 +276,9 @@ tests/
 
 ## Phase 18 – Interoperability
 - [x] FMI 2.0/3.0: import FMUs as blocks (`fmpy`), export models as FMUs (FMI 2.0 co-simulation)
-- [ ] Import a subset of Simulink `.slx`/`.mdl` (useful for comparing against work models)
+- [x] Import a subset of Simulink `.slx` (about 45 block types, masks, subsystems; the rest as empty subsystems in
+      a report)
+- [ ] `.mdl` (text format) and Stateflow charts
 - [x] Export results to MAT files (`scipy.io`) for MATLAB users (`SimResult.to_mat`)
 
 ## Phase 19 – Quality, testing and release

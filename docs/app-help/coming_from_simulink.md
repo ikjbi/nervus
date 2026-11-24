@@ -73,6 +73,27 @@ maps Simulink names to Nervus names.
 | Discrete Filter (first order), Moving Average, debouncing | Discrete Filter (PT1), Moving Average, Debounce | |
 | MinMax, Bias, Ground, Data Type Conversion, IC | same names (IC: Initial Condition) | |
 
+## Importing a Simulink model
+
+**File ▸ Import Simulink Model…** opens an `.slx` file as a new Nervus model (save it as `.nervus`). From Python:
+`model = nervus.simulink.read_slx("controller.slx")`.
+
+- The common blocks are translated with their parameters and positions: sources (Constant, Step, Sine Wave, Ramp,
+  Clock), math (Gain, Sum, Product, Bias, Abs, MinMax), continuous and discrete blocks (Integrator, Transfer Fcn,
+  State-Space, Unit Delay, Memory, Zero-Order Hold, Discrete-Time Integrator, Discrete Transfer Fcn), discontinuities
+  (Saturation, Dead Zone, Rate Limiter, Relay, Quantizer), logic (Relational Operator, Logical Operator, Compare To
+  Constant), routing (Switch, Mux, Demux, Data Type Conversion), lookup tables (1-D, 2-D), PID controllers, sinks,
+  ports and subsystems with their masks.
+- Parameters stay expressions with their workspace variables (`Kp`, `2*pi`, `[1 2 3]`); MATLAB's `^` becomes `**` and
+  `0:0.5:2` becomes a list. The variables the model uses are added to the Model Workspace with the value 1: give them
+  their values (they live in a MATLAB script or data dictionary that the `.slx` does not contain).
+- A block that is not translated (an S-Function, a Stateflow chart, a block from another toolbox) becomes an empty
+  subsystem with the same ports, named like the Simulink block, so the wiring stays and you can rebuild it there.
+- The import report lists the blocks that were not translated and the workspace variables.
+
+Compare the results: run the same scenario in both tools, export Simulink's results to a CSV or MAT file, and load
+them in the **Data Inspector** next to Nervus's.
+
 ## Differences
 
 - **Unconnected inputs are errors**, not warnings. Simulink silently treats them as zero; Nervus makes you
@@ -80,6 +101,6 @@ maps Simulink names to Nervus names.
 - **Everything is logged.** Every block output is available in the result; Scopes only mark what the editor
   plots.
 - **Models are text.** `.nervus` files are JSON and diff well in git.
-- **Charts are text.** State charts are written in a small language instead of drawn (a graphical editor is
-  planned).
-- **No `.slx` import yet.** Models have to be rebuilt; the names above make that straightforward.
+- **Charts are also text.** State charts are drawn in the chart editor and stored in a small text language, which
+  diffs well and can be edited directly.
+- **Stateflow charts and `.mdl` files are not imported.** `.slx` models are (see above); charts have to be rebuilt.

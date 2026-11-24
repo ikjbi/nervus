@@ -192,6 +192,12 @@ class MainWindow(QMainWindow):
         self.act_open = self._action("&Open…", self.open_file, K.Open, "Open a model", "open")
         self.act_save = self._action("&Save", self.save_file, K.Save, "Save the model", "save")
         self.act_save_as = self._action("Save &As…", self.save_file_as, K.SaveAs, "Save under a new name")
+        self.act_import_simulink = self._action(
+            "Import Simulink Model…",
+            self.import_simulink,
+            None,
+            "Open a Simulink .slx model (the common blocks are translated; a report lists the rest)",
+        )
         self.act_import_spice = self._action(
             "Import SPICE Netlist…", self.import_spice, None, "Open a .cir/.net netlist (e.g. from LTspice)"
         )
@@ -312,7 +318,7 @@ class MainWindow(QMainWindow):
         m.addSeparator()
         m.addActions([self.act_save, self.act_save_as])
         m.addSeparator()
-        m.addActions([self.act_import_spice, self.act_export_spice])
+        m.addActions([self.act_import_simulink, self.act_import_spice, self.act_export_spice])
         m.addSeparator()
         m.addActions([self.act_add_library, self.act_refresh_links])
         m.addSeparator()
@@ -781,6 +787,30 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"Saved {self.diagram_model.title}")
             return True
         return self.save_file_as() if self.diagram_model.file_path is None else False
+
+    def import_simulink(self, path: str | None = None, show_report: bool = True) -> bool:
+        """Open a Simulink .slx model as a new (unsaved) model, and show what was not translated."""
+        from PySide6.QtWidgets import QFileDialog
+
+        from nervus.simulink import read_slx
+
+        if path is None:
+            if not self._confirm_discard():
+                return False
+            path, _ = QFileDialog.getOpenFileName(self, "Import Simulink model", "", "Simulink models (*.slx)")
+            if not path:
+                return False
+        try:
+            model = read_slx(path)
+        except (NervusError, OSError) as exc:
+            QMessageBox.warning(self, "Nervus", f"Cannot read {path}:\n{exc}")
+            return False
+        self.diagram_model.set_diagram(model)
+        report = str(model.meta.get("simulink_report", ""))
+        self.status_label.setText(f"Imported {Path(path).name}: {report.splitlines()[0] if report else ''}")
+        if show_report and "\n" in report:
+            QMessageBox.information(self, "Simulink import", report)
+        return True
 
     def import_spice(self, path: str | None = None) -> bool:
         """Open a SPICE netlist as a new (unsaved) model."""
