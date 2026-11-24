@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Help ▸ About Nervus: the version and the environment (copy for a bug report), links, the contributors with
+  their contributions, the licence. Merged pull requests are credited automatically (CONTRIBUTORS.md).
+- The [roadmap to 1.0](https://ikjbi.github.io/nervus/roadmap/): reading from and writing to real ECUs.
 - MC/DC for state chart guards with several conditions; "C coverage (tests)" in the code generation dialog.
 - Coverage of the generated C code by the model's test cases (gcov lines and branches, HTML report):
   `nervus.codegen.c_coverage.coverage_of_tests`.

@@ -10,6 +10,9 @@ Check items off (`- [x]`) as they are done. Add new items and phases whenever we
 
 ---
 
+
+The releases these items are grouped into are on the [roadmap to 1.0](docs/roadmap.md).
+
 ## Guiding principles
 
 - **Headless engine first.** The simulation engine is pure Python with no Qt imports, so it can be used from

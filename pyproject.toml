@@ -81,9 +81,12 @@ exclude = ["__pycache__", "*.pyc"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "examples" = "nervus/examples"  # the example models and scripts, for nervus --copy-examples and File > Open Example
+"CONTRIBUTORS.md" = "nervus/CONTRIBUTORS.md"  # shown in Help > About Nervus
+"LICENSE" = "nervus/LICENSE"
 
 [tool.hatch.build.targets.sdist]
 include = ["src", "tests", "examples", "docs", "scripts", "README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md",
+           "CONTRIBUTORS.md",
            "pyproject.toml", "mkdocs.yml"]
 exclude = ["__pycache__", "*.pyc", "*.fmu"]
 

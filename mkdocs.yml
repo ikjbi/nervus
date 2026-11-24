@@ -25,6 +25,7 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 nav:
   - Home: index.md
+  - Roadmap to 1.0: roadmap.md
   - User guide:
       - Getting started: getting-started.md
       - The editor: editor.md

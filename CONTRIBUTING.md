@@ -37,6 +37,13 @@ uv run pre-commit install
 
 See [docs/developer/custom-blocks.md](docs/developer/custom-blocks.md).
 
+## Credit
+
+Every merged contribution is credited in [CONTRIBUTORS.md](CONTRIBUTORS.md) and in the editor under **Help ▸ About
+Nervus ▸ Contributors**. Fill in the *Credit* section of the pull request (the name you want to appear and one line
+about the contribution); when the pull request is merged, `.github/workflows/credit.yml` adds the row. Without it,
+your GitHub name and the pull request's title are used.
+
 ## Continuous integration
 
 Run `scripts/check.sh` before every push: it is the full check. CI (`.github/workflows/ci.yml`) runs the tests on

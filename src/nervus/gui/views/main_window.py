@@ -24,7 +24,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from nervus import __version__
 from nervus.core import Block, Connection, Diagram, Link, NervusError
 from nervus.core.expressions import format_value, parse_value
 from nervus.gui.controllers import (
@@ -37,6 +36,7 @@ from nervus.gui.controllers import (
 from nervus.gui.controllers.test_controller import TestController
 from nervus.gui.models import DiagramModel, SimulationModel, SimulationState
 from nervus.gui.theme import ThemeManager, ThemeMode, current_theme
+from nervus.gui.views.about_dialog import AboutDialog
 from nervus.gui.views.advisor_dialog import AdvisorDialog
 from nervus.gui.views.analysis_dialog import AnalysisDialog
 from nervus.gui.views.can_trace_dialog import CanTraceDialog
@@ -1196,14 +1196,10 @@ class MainWindow(QMainWindow):
         else:
             self.show_help()
 
-    def about(self) -> None:
-        QMessageBox.about(
-            self,
-            "About Nervus",
-            f"<h3>Nervus {__version__}</h3>"
-            "<p>Open-source block-diagram modeling and simulation in Python.</p>"
-            "<p>MIT License · <a href='https://github.com/ikjbi/nervus'>github.com/ikjbi/nervus</a></p>",
-        )
+    def about(self) -> AboutDialog:
+        dlg = AboutDialog(self)
+        dlg.show()
+        return dlg
 
     # ------------------------------------------------------------------ lifecycle
 
