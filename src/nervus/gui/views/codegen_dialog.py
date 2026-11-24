@@ -49,7 +49,15 @@ class CodegenDialog(QDialog):
             "tasks of an RTOS. Signals between tasks need Rate Transition blocks."
         )
         self.tasks_box.setChecked(bool(code.tasks))
-        self.tasks_box.toggled.connect(self._regenerate)
+        self.tasks_box.toggled.connect(lambda _on: self._regenerate())
+        self.integer_box = QCheckBox("Integer arithmetic only (no floating point)")
+        self.integer_box.setToolTip(
+            "For processors without a floating-point unit: signals stay stored integers and every operation is "
+            "integer arithmetic, bit-true with the simulation. Needs integer or fixed-point types (binary-point "
+            "scaling) on every signal."
+        )
+        self.integer_box.setChecked(code.integer_only)
+        self.integer_box.toggled.connect(lambda _on: self._regenerate())
 
         self.tabs = QTabWidget()
         self._show_code()
@@ -88,6 +96,7 @@ class CodegenDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.addWidget(info)
         layout.addWidget(self.tasks_box)
+        layout.addWidget(self.integer_box)
         layout.addWidget(self.tabs, 1)
         layout.addWidget(self.sil_label)
         layout.addLayout(buttons)
@@ -125,13 +134,15 @@ class CodegenDialog(QDialog):
             self.tabs.addTab(edit, fname)
         self.tabs.setCurrentIndex(max(0, current))
 
-    def _regenerate(self, tasks: bool) -> None:
-        code = self.controller.generate(self.target, tasks=tasks)
-        if code is None:  # e.g. a missing Rate Transition: the controller reported why
-            self.tasks_box.blockSignals(True)
-            self.tasks_box.setChecked(not tasks)
-            self.tasks_box.blockSignals(False)
-            self.sil_label.setText("Cannot generate one function per task; see the status bar for the reason.")
+    def _regenerate(self) -> None:
+        tasks, integer = self.tasks_box.isChecked(), self.integer_box.isChecked()
+        code = self.controller.generate(self.target, tasks=tasks, integer_only=integer)
+        if code is None:  # e.g. a missing Rate Transition, or a double signal: the controller reported why
+            for box, was in ((self.tasks_box, bool(self.code.tasks)), (self.integer_box, self.code.integer_only)):
+                box.blockSignals(True)
+                box.setChecked(was)
+                box.blockSignals(False)
+            self.sil_label.setText("Cannot generate this kind of code; see Diagnostics for the reason.")
             return
         self.code = code
         self._show_code()

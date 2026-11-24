@@ -79,6 +79,32 @@ counters, delays, discrete PID, and more. Not generated: blocks with continuous 
 Transfer Fcn, PID Controller, ...) and time-based sources (Step, Sine, ...). Keep those in the plant, outside
 the subsystem. If something cannot be generated, Diagnostics lists the blocks.
 
+## Integer-only code (no floating point)
+
+Small ECUs often have no floating-point unit. Tick **Integer arithmetic only** in the code generation dialog (or
+`generate_c(model, integer_only=True)`) and the generated code has no `double` or `float` at all: every signal stays
+its stored integer (`int16_T` for `fixdt(1, 16, 7)`, `uint8_T` for a boolean), and every block computes in an
+`int64` accumulator. Moving the binary point is an integer multiplication, or a division rounded exactly as the
+simulation rounds (`nv_div_nearest`, half away from zero; `floor`, `ceil`, `zero`), then the block's overflow
+handling (`nv_sat` or `nv_wrap`). The results are the simulation's, **bit for bit**; the back-to-back test checks it
+at zero tolerance.
+
+```c
+/* scale (Gain): 5/128 °C per ADC count, into fixdt(1, 16, 7) */
+temp_B.scale[0] = (int16_T)nv_sat(((int64_T)5 * (int64_T)temp_B.z[0]), (int64_T)-32768, (int64_T)32767);
+```
+
+What it needs:
+
+| Rule | Why |
+|---|---|
+| every signal has an integer, boolean or fixed-point type with **binary-point scaling** (slope 2^-n, no bias): set the types from the In blocks on | other scalings need real multiplications |
+| a gain is an exact binary fraction (`0.75`, `0.0390625`), or a workspace variable with a fixed-point type (then it is calibratable as a stored integer) | `0.0123` is neither: the simulation would use a value the integer code cannot |
+| blocks: In/Out, Constant, Sum, Gain, Product (`*`), Bias, Abs, MinMax, Relational Operator, Compare To Constant, Logical Operator, Switch, Saturation, Unit Delay, Integer Delay, Zero-Order Hold, Data Type Conversion, subsystem ports | the blocks of integer ECU code; others (a PID, a filter, a chart) need floating-point code |
+
+A model that breaks a rule gets a message that names the block and the rule. Results that the simulation's double
+arithmetic could round (more than 52 bits) are refused too, so the two always agree.
+
 ## Reusable functions for subsystems
 
 Normally every block of a subsystem is written into the model's code (inline). When the same subsystem appears

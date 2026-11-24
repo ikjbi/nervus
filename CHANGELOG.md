@@ -47,6 +47,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Integer-only code generation (no floating point, for processors without an FPU): "Integer arithmetic only" in
+  the code generation dialog, `generate_c(..., integer_only=True)`; bit-true with the simulation.
 - Simulink `.slx` import (File ▸ Import Simulink Model, `nervus.simulink.read_slx`): the common blocks with their
   parameters and positions, subsystems and masks; untranslated blocks become empty subsystems, listed in a report.
 - Condition coverage and MC/DC for Logical Operator decisions: in the Test Manager, the coverage report (with

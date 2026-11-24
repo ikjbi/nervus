@@ -192,10 +192,10 @@ class Emitter:
         size = self.gen.params[field_expr.split(".", 1)[1]].size
         return self.at(field_expr, "0" if size == 1 else ix)
 
-    def state(self, sname: str, init: Iterable[float], comment: str = "") -> str:
+    def state(self, sname: str, init: Iterable[float], comment: str = "", dtype: DataType = DOUBLE) -> str:
         values = [float(v) for v in np.atleast_1d(np.asarray(list(init), dtype=float))]
         fname = f"{self.cname}_{sname}"
-        self.gen.states[fname] = _Field(fname, max(1, len(values)), values or [0.0], comment or self.path)
+        self.gen.states[fname] = _Field(fname, max(1, len(values)), values or [0.0], comment or self.path, dtype)
         return f"{self.gen.ref('DW')}.{fname}"
 
     @property
@@ -281,6 +281,8 @@ class GeneratedCode:
     """Names of the task functions (one per rate) when generated with ``tasks=True``."""
     tunables: list[tuple[str, int, list[float], str, str]] = field(default_factory=list)
     """Calibratable parameters in the ``<name>_P`` struct: (field, size, initial values, C type, comment)."""
+    integer_only: bool = False
+    """Generated with integer arithmetic only (see :mod:`nervus.codegen.integer`)."""
     extra_sources: list[str] = field(default_factory=list)
     """Further C files of the ECU code: the reusable functions of subsystems (``<function>.c`` and ``.h``)."""
 
@@ -302,8 +304,11 @@ class GeneratedCode:
 
 
 class CGenerator:
-    def __init__(self, model: CompiledModel, name: str, tasks: bool = False, reusable: bool = False) -> None:
+    def __init__(self, model: CompiledModel, name: str, tasks: bool = False, reusable: bool = False,
+                 integer_only: bool = False) -> None:  # fmt: skip
         self.model = model
+        self.integer_only = integer_only
+        """Integer arithmetic only (see :mod:`nervus.codegen.integer`): signals and states are stored integers."""
         self.prefix = c_identifier(name)
         self.tasks = tasks
         """One C function per rate (for an RTOS) instead of one step function with a built-in scheduler."""
@@ -451,16 +456,23 @@ class CGenerator:
         for i, b in enumerate(m.blocks):
             if m.xc_slices[i].stop > m.xc_slices[i].start:
                 problems.append(f"{m.names[i]}: continuous states (only discrete-time blocks can become C code)")
+            elif self.integer_only and b.type_id not in _int_templates() and not isinstance(b, PortProxy):
+                problems.append(f"{m.names[i]}: {b.label or b.type_id} is not supported in integer-only code")
             elif b.type_id not in TEMPLATES and not isinstance(b, PortProxy):
                 problems.append(f"{m.names[i]}: no C code template for block type {b.type_id or type(b).__name__!r}")
         for members, _tears in m.loops:
             problems.append(f"{m.names[members[0]]}: in an algebraic loop ({' -> '.join(m.names[k] for k in members)}); "
                             "break it with a Unit Delay to generate code")  # fmt: skip
         if problems:
+            advice = (
+                "Integer-only code supports In/Out, Constant, Sum, Gain, Product (*), Bias, Abs, MinMax, comparisons, "
+                "logic, Switch, Saturation, Unit Delay, Integer Delay, Zero-Order Hold and Data Type Conversion; "
+                "generate floating-point code for the others."
+                if self.integer_only
+                else "Generate code for the controller subsystem only, with In/Out blocks at its boundary."
+            )
             raise CodegenError(
-                "cannot generate C code:\n  - "
-                + "\n  - ".join(problems)
-                + "\nGenerate code for the controller subsystem only, with In/Out blocks at its boundary.",
+                "cannot generate C code:\n  - " + "\n  - ".join(problems) + "\n" + advice,
                 tuple(p.split(":", 1)[0] for p in problems),
             )
         if not m.rates:
@@ -487,12 +499,16 @@ class CGenerator:
                 codes.append(_pass_through(Emitter(self, i)))
             else:
                 before = set(self.states)
-                codes.append(TEMPLATES[b.type_id](Emitter(self, i)))
+                fn = _int_templates()[b.type_id] if self.integer_only else TEMPLATES[b.type_id]
+                try:
+                    codes.append(fn(Emitter(self, i)))
+                except _integer_error() as exc:
+                    raise CodegenError(str(exc), (m.names[i],)) from exc
                 block_states = [k for k in self.states if k not in before]
             code = codes[-1]
             if (m.enable[i] or m.trigger[i]) and m.kinds[i] is not Kind.CONSTANT:
                 self._gate(i, code, [] if isinstance(b, PortProxy) else block_states)
-            if code.outputs:
+            if code.outputs and not self.integer_only:  # integer code: the templates convert exactly
                 rounding, overflow = b.quantization()
                 for p, dtype in enumerate(m.out_types[i]):
                     if dtype.is_double:
@@ -548,6 +564,7 @@ class CGenerator:
             tasks=[self.task_name(k) for k in self.task_plan["order"]] if self.task_plan is not None else [],
             tunables=[(f.name, f.size, list(f.init), f.dtype.c_type, f.comment) for f in self.param_fields()],
             extra_sources=sorted(f for f in self.extra_files if f.endswith((".c", ".h"))),
+            integer_only=self.integer_only,
         )
 
     def param_initializer(self) -> str:
@@ -613,6 +630,11 @@ class CGenerator:
             f" * Generated by Nervus {__version__} from model '{self.model.diagram.name}'. Do not edit by hand.",
             " */",
         ]
+
+    def _signal_types(self) -> dict[str, DataType]:
+        """The stored type of every block signal (integer code)."""
+        m = self.model
+        return {self.signal_var(i, p).split(".", 1)[1]: t for i, ts in enumerate(m.out_types) for p, t in enumerate(ts)}
 
     def _struct(
         self, name: str, fields: list[tuple[str, int, str]], types: dict[str, DataType] | None = None
@@ -690,10 +712,14 @@ class CGenerator:
             ),
             "",
             "/* Block signals */",
-            *self._struct(f"{pfx}_B_t", signals),
+            *self._struct(f"{pfx}_B_t", signals, self._signal_types() if self.integer_only else None),
             "",
             "/* States */",
-            *self._struct(f"{pfx}_DW_t", [(f.name, f.size, f.comment) for f in self.states.values()]),
+            *self._struct(
+                f"{pfx}_DW_t",
+                [(f.name, f.size, f.comment) for f in self.states.values()],
+                {f.name: f.dtype for f in self.states.values()} if self.integer_only else None,
+            ),
             "",
             f"extern {pfx}_U_t {pfx}_U;",
             f"extern {pfx}_Y_t {pfx}_Y;",
@@ -782,10 +808,12 @@ class CGenerator:
         lines += [f"void {pfx}_initialize(void)", "{", "    uint32_T i;", "    (void)i;"]
         for f in self.states.values():
             if all(v == 0 for v in f.init):
-                lines.append(f"    for (i = 0u; i < {f.size}u; i++) {{ {self.ref('DW')}.{f.name}[i] = 0.0; }}")
+                zero = f"({f.dtype.c_type})0" if self.integer_only and not f.dtype.is_double else "0.0"
+                lines.append(f"    for (i = 0u; i < {f.size}u; i++) {{ {self.ref('DW')}.{f.name}[i] = {zero}; }}")
             else:
                 for k, v in enumerate(f.init):
-                    lines.append(f"    {self.ref('DW')}.{f.name}[{k}] = {c_float(v)};")
+                    value = f"({f.dtype.c_type}){int(v)}" if self.integer_only and not f.dtype.is_double else c_float(v)
+                    lines.append(f"    {self.ref('DW')}.{f.name}[{k}] = {value};")
         if multirate:
             for k, (n, off) in enumerate(steps):
                 lines.append(
@@ -1161,7 +1189,20 @@ def _pass_through(e: Emitter) -> BlockCode:
     return BlockCode(outputs=e.each(e.w(), body))
 
 
-def generate_c(target: Diagram | Block, name: str | None = None, tasks: bool = False) -> GeneratedCode:
+def _int_templates() -> dict[str, Any]:
+    from nervus.codegen.integer import INT_TEMPLATES
+
+    return INT_TEMPLATES
+
+
+def _integer_error() -> type[Exception]:
+    from nervus.codegen.integer import IntegerCodeError
+
+    return IntegerCodeError
+
+
+def generate_c(target: Diagram | Block, name: str | None = None, tasks: bool = False,
+               integer_only: bool = False) -> GeneratedCode:  # fmt: skip
     """Generate C code for a model, or for a subsystem of a model.
 
     For a subsystem, its In/Out blocks become the inputs and outputs of the generated code, and the rest of
@@ -1182,7 +1223,7 @@ def generate_c(target: Diagram | Block, name: str | None = None, tasks: bool = F
             setattr(work_target, "system", work)  # noqa: B010  (a Subsystem's system)
         else:
             work_target = work
-        code = generate_c(work_target, label, tasks)
+        code = generate_c(work_target, label, tasks, integer_only)
         rate = None
         if isinstance(target, Block) and diagram is system and "sample_time" in target.params:
             st = target.sample_time()
@@ -1197,7 +1238,7 @@ def generate_c(target: Diagram | Block, name: str | None = None, tasks: bool = F
         rate = None if st.is_inherited else st  # an atomic subsystem: its own task period
     model = compile_diagram(diagram, default_rate=rate)
     label = name or (target.name if isinstance(target, Block) else diagram.name) or "model"
-    return CGenerator(model, label, tasks=tasks).generate()
+    return CGenerator(model, label, tasks=tasks, integer_only=integer_only).generate()
 
 
 # Register the block templates.

@@ -27,9 +27,11 @@ class CodegenController(QObject):
             return selection[0]
         return self.model.root
 
-    def generate(self, target: Diagram | Block, tasks: bool = False) -> GeneratedCode | None:
+    def generate(
+        self, target: Diagram | Block, tasks: bool = False, integer_only: bool = False
+    ) -> GeneratedCode | None:
         try:
-            return generate_c(target, tasks=tasks)
+            return generate_c(target, tasks=tasks, integer_only=integer_only)
         except CodegenError as exc:
             self.errorOccurred.emit(str(exc), exc.blocks)
         except NervusError as exc:
@@ -78,7 +80,8 @@ class CodegenController(QObject):
         for name, width in code.inputs:
             inputs[name] = rng.uniform(-1.0, 1.0, (steps, width))
         try:
-            return back_to_back(target, inputs, steps, tolerance=1e-9, tasks=bool(code.tasks))
+            return back_to_back(target, inputs, steps, tolerance=1e-9, tasks=bool(code.tasks),
+                                integer_only=code.integer_only)  # fmt: skip
         except NervusError as exc:
             self.errorOccurred.emit(str(exc), tuple(getattr(exc, "blocks", ())))
             return None

@@ -172,9 +172,10 @@ def back_to_back(
     tolerance: float = 1e-9,
     folder: str | Path | None = None,
     tasks: bool = False,
+    integer_only: bool = False,
 ) -> SilComparison:
     """Generate code for ``target``, run it and the Python model with ``inputs``, and compare the outputs."""
-    code = generate_c(target, tasks=tasks)
+    code = generate_c(target, tasks=tasks, integer_only=integer_only)
     c_out = SilModel(code, folder).run(inputs, steps)
     py_out = run_python(code, inputs, steps)
     errors = {name: float(np.max(np.abs(c_out[name] - py_out[name]))) if steps else 0.0 for name, _ in code.outputs}

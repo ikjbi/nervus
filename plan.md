@@ -221,8 +221,8 @@ tests/
 - [x] Data type propagation and checking across the diagram
 - [x] Simulation that matches the integer behaviour of the generated code bit for bit
 - [x] Data dictionary: signal and parameter objects with type, unit, range, description
-- [ ] Integer-only arithmetic in generated code (no floating point between conversions), for targets without
-      an FPU
+- [x] Integer-only arithmetic in generated code (no floating point; binary-point scaling; the blocks of integer
+      ECU code; bit-true back-to-back)
 - [x] Typed parameters (e.g. int16 calibration maps) and typed A2L characteristics
 
 ## Phase 14 – State machines

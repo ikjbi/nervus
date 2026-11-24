@@ -52,8 +52,8 @@ fixed-point value exactly, so this is bit-true.
 - Inside the step function, signals are converted with small generated helper functions
   (`nv_q_int16_nearest_saturate`, ...) that use exactly the same rounding and overflow as the simulation. The
   test suite checks this with a back-to-back test at **zero tolerance**.
-- Arithmetic is still done in `double` between the conversions. Pure integer arithmetic for targets
-  without an FPU is on the roadmap.
+- The floating-point code computes in `double` between the conversions. For targets without an FPU,
+  *integer-only code* (C code generation) keeps every signal a stored integer and computes with integers only, bit-true too.
 
 ## Example
 
