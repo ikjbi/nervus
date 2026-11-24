@@ -42,7 +42,9 @@ Every feature has a page in this Help window (the list on the left):
   Select a block and press **F1** to jump to its page.
 - **Tutorials**: idle speed control, lambda control and fuel trims, and a car on a drive cycle.
 
-The `examples` folder in the repository has complete models you can open with **File → Open**:
+Complete example models come with Nervus: **File → Open Example** lists the model of every tutorial by topic, and
+*All examples…* opens the folder. To run and change the example *scripts*, copy them to a folder of your own with
+`nervus --copy-examples ~/nervus-examples`. The examples:
 
 | Example | What it shows |
 |---|---|
