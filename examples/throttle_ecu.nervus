@@ -82,7 +82,8 @@
         "sample_time": -1.0,
         "enable_port": false,
         "when_enabled": "held",
-        "trigger": "none"
+        "trigger": "none",
+        "function_name": ""
       },
       "meta": {
         "position": [
