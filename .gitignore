@@ -20,3 +20,6 @@ site/
 
 # Conflict copies made by macOS file sync ("name 2.md")
 * [0-9].*
+
+# graphify knowledge-graph output
+graphify-out/
