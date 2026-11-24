@@ -297,7 +297,8 @@ tests/
 - [x] Packaging for PyPI: wheel with the examples (`nervus --copy-examples`, File ▸ Open Example), clean source
       package, README links for PyPI, a release workflow with trusted publishing (the first release needs the
       one-time PyPI setup in CONTRIBUTING.md)
-- [ ] Standalone installers (PyInstaller / Briefcase) for macOS, Windows and Linux
+- [x] Standalone applications (PyInstaller) for macOS (.dmg), Windows and Linux (.zip), built for every release
+- [ ] Signed and notarised applications (an Apple developer account, a Windows code-signing certificate)
 - [x] Release notes: each release gets a GitHub Release with its CHANGELOG section; docs on GitHub Pages
 - [x] Versioned docs with mike: `dev` from main, one site per minor release (the newest is `latest`)
 

@@ -74,8 +74,11 @@ Each release:
 2. Commit, then tag and push: `git tag v0.1.0 && git push origin v0.1.0`.
 3. The workflow checks that the tag matches the version, runs the tests, builds the wheel and the source package,
    checks them with `twine check`, and publishes them.
-4. The docs workflow publishes the documentation of that version (e.g. 0.2) as `latest` on
+4. The installers workflow builds the standalone applications (PyInstaller, `packaging/nervus.spec`) on macOS,
+   Windows and Linux and attaches them to the GitHub Release.
+5. The docs workflow publishes the documentation of that version (e.g. 0.2) as `latest` on
    https://ikjbi.github.io/nervus/; pushes to `main` update `dev`.
 
-Try a package before releasing: `uv build`, then `pip install "dist/nervus-<version>-py3-none-any.whl[gui]"` in a
+Try a standalone application before releasing: `cd packaging && uv run --with pyinstaller pyinstaller nervus.spec`,
+or run the *Installers* workflow by hand (Actions tab). Try a package before releasing: `uv build`, then `pip install "dist/nervus-<version>-py3-none-any.whl[gui]"` in a
 fresh environment, and `nervus --copy-examples /tmp/ex`.

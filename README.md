@@ -42,6 +42,9 @@ tool for designing, simulating and eventually generating C code for that kind of
 
 ## Installation
 
+Without Python: download the application for macOS, Windows or Linux from the
+[latest release](https://github.com/ikjbi/nervus/releases/latest).
+
 With pip (Python 3.11 or newer):
 
 ```bash
