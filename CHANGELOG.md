@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Simulink `.mdl` import (the text format), next to `.slx`: `nervus.simulink.read_model`.
 - Versioned documentation: a version selector on https://ikjbi.github.io/nervus/ (`latest`, each release, `dev`).
 - Help ▸ About Nervus: the version and the environment (copy for a bug report), links, the contributors with
   their contributions, the licence. Merged pull requests are credited automatically (CONTRIBUTORS.md).

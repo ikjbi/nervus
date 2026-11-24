@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
             "Import Simulink Model…",
             self.import_simulink,
             None,
-            "Open a Simulink .slx model (the common blocks are translated; a report lists the rest)",
+            "Open a Simulink .slx or .mdl model (the common blocks are translated; a report lists the rest)",
         )
         self.act_import_spice = self._action(
             "Import SPICE Netlist…", self.import_spice, None, "Open a .cir/.net netlist (e.g. from LTspice)"
@@ -792,16 +792,16 @@ class MainWindow(QMainWindow):
         """Open a Simulink .slx model as a new (unsaved) model, and show what was not translated."""
         from PySide6.QtWidgets import QFileDialog
 
-        from nervus.simulink import read_slx
+        from nervus.simulink import read_model
 
         if path is None:
             if not self._confirm_discard():
                 return False
-            path, _ = QFileDialog.getOpenFileName(self, "Import Simulink model", "", "Simulink models (*.slx)")
+            path, _ = QFileDialog.getOpenFileName(self, "Import Simulink model", "", "Simulink models (*.slx *.mdl)")
             if not path:
                 return False
         try:
-            model = read_slx(path)
+            model = read_model(path)
         except (NervusError, OSError) as exc:
             QMessageBox.warning(self, "Nervus", f"Cannot read {path}:\n{exc}")
             return False

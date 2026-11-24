@@ -281,7 +281,8 @@ tests/
 - [x] FMI 2.0/3.0: import FMUs as blocks (`fmpy`), export models as FMUs (FMI 2.0 co-simulation)
 - [x] Import a subset of Simulink `.slx` (about 45 block types, masks, subsystems; the rest as empty subsystems in
       a report)
-- [ ] `.mdl` (text format) and Stateflow charts
+- [x] `.mdl` (text format), read into the same import as `.slx`
+- [ ] Stateflow charts in the Simulink import (as State Chart blocks)
 - [x] Export results to MAT files (`scipy.io`) for MATLAB users (`SimResult.to_mat`)
 
 ## Phase 19 – Quality, testing and release
