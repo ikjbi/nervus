@@ -37,6 +37,12 @@ uv run pre-commit install
 
 See [docs/developer/custom-blocks.md](docs/developer/custom-blocks.md).
 
+## Continuous integration
+
+Run `scripts/check.sh` before every push: it is the full check. CI (`.github/workflows/ci.yml`) runs the tests on
+Python 3.11 and 3.13 when code changes, for pull requests, every Monday and on demand (Actions → CI → *Run
+workflow*); a newer push cancels the run of an older one. Put `[skip ci]` in a commit message to skip it.
+
 ## Performance
 
 `uv run python scripts/benchmark.py` times the simulation of some example models (best of three); run it before
