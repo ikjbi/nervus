@@ -60,7 +60,7 @@ directly, it would see the old or the new value depending on whether the slow ta
 result would depend on timing. A Rate Transition makes the transfer deterministic, in the simulation and on
 the target:
 
-![Rate Transition between a 10 ms and a 100 ms task](figures/rate_transition.png)
+![Rate Transition between a 10 ms and a 100 ms task](../images/blocks/rate_transition.png)
 
 | Direction | Set | Behaviour |
 |---|---|---|
