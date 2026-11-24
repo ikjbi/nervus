@@ -47,6 +47,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Condition coverage and MC/DC for Logical Operator decisions: in the Test Manager, the coverage report (with
+  the evaluations a test still needs) and `Coverage.mcdc_percent` / `mcdc_missing()`.
 - Packaging for PyPI: `pip install "nervus[gui]"`; the examples are in the package (File ▸ Open Example,
   `nervus --copy-examples DIR`); `nervus --version`; a release workflow (tag `vX.Y.Z`) with trusted publishing.
 - Code generation: subsystems with a *function_name* become one reusable C function, called once per subsystem

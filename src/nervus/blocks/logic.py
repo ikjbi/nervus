@@ -131,6 +131,15 @@ class LogicalOperator(Block):
             r = ~b.any(axis=0)
         return [r.astype(float)]
 
+    def coverage_conditions(self) -> tuple[str, int] | None:
+        op, n = self.params["operator"], self.num_inputs()
+        return (op, n) if op != "NOT" and n >= 2 else None
+
+    def condition_values(self, u: Sequence[Array]) -> list[tuple[bool, ...]]:
+        w = self.out_widths[0]
+        b = [np.broadcast_to(ui != 0, (w,)) for ui in u]
+        return [tuple(bool(bi[k]) for bi in b) for k in range(w)]
+
 
 def _bool_outcomes(self: Block) -> list[str]:
     return ["true", "false"]

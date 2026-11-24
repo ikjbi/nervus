@@ -425,7 +425,9 @@ class TestManagerPanel(QWidget):
         passed = sum(r.passed for r in results)
         cov = self.runner.coverage
         if cov is not None and cov.total:
-            self.coverage_label.setText(f"Coverage {cov.percent:.0f} %")
+            self.coverage_label.setText(
+                f"Coverage {cov.percent:.0f} %" + (f", MC/DC {cov.mcdc_percent:.0f} %" if cov.conditions else "")
+            )
             self.coverage_label.setToolTip(cov.summary())
         self.buttons["coverage"].setEnabled(cov is not None and cov.total > 0)
         self.buttons["report"].setEnabled(bool(results))

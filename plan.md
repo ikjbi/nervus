@@ -282,7 +282,9 @@ tests/
 ## Phase 19 – Quality, testing and release
 - [x] Model coverage: decision outcomes of switches, comparisons, limits, lookups and charts; HTML report;
       shown in the Test Manager
-- [ ] Condition/MC-DC coverage for logic, coverage of generated C (gcov)
+- [x] Condition and MC/DC coverage for logic (Logical Operator decisions; the report names the missing
+      evaluations)
+- [ ] Coverage of the generated C (gcov); MC/DC for chart guards with and/or
 - [x] Requirements traceability (link requirements to blocks and tests)
 - [x] Model Advisor: 10 rules (float equality, division, anti-windup, implicit sampling, chart reachability, ...)
 - [x] Packaging for PyPI: wheel with the examples (`nervus --copy-examples`, File ▸ Open Example), clean source

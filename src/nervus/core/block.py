@@ -341,6 +341,15 @@ class Block:
         """The outcomes taken at this time step (called with the block's inputs, outputs and state)."""
         return []
 
+    def coverage_conditions(self) -> tuple[str, int] | None:
+        """For condition and MC/DC coverage: (operator, number of conditions) if the block combines several
+        conditions into one decision (AND, OR, ...); ``None`` otherwise."""
+        return None
+
+    def condition_values(self, u: Sequence[Array]) -> list[tuple[bool, ...]]:
+        """The conditions at this step, one tuple per element of the decision (vector signals: one per element)."""
+        return []
+
     def suggestions(self, param: str) -> list[str]:
         """Values to offer for a text parameter in the editor (e.g. the messages of a DBC file)."""
         return []

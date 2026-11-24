@@ -299,6 +299,9 @@ class CompiledModel:
             if outcomes:
                 cov.register(self.names[i], b.label or b.type_id, outcomes)
                 self._cov_blocks.append((i, b, self.inputs[i]))
+                cond = b.coverage_conditions()
+                if cond is not None:
+                    cov.register_conditions(self.names[i], *cond)
 
     def collect_coverage(self, t: float, hits: frozenset[int] | None) -> None:
         """Record outcomes at a major step (discrete blocks only when they executed)."""
@@ -310,6 +313,8 @@ class CompiledModel:
                 continue
             u = [self.y[s][p] for s, p in inputs]
             cov.hit(self.names[i], b.coverage_hits(t, u, self.y[i], self.xd[i]))
+            if self.names[i] in cov.conditions:
+                cov.record_conditions(self.names[i], b.condition_values(u))
 
     def check_monitors(self, t: float) -> bool:
         """Run Stop Simulation / Assertion blocks at a major step. Returns True if the run should stop."""

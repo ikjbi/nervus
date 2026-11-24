@@ -37,6 +37,30 @@ cov.save_html("coverage.html")
 
 `simulate(model, coverage=cov)` measures a single run. One `Coverage` object can collect several runs.
 
+### Condition coverage and MC/DC
+
+Decisions with several conditions, the **Logical Operator** block with two or more inputs (`enable AND speed_ok AND
+no_fault`), are measured more strictly as well:
+
+| Measure | Satisfied when |
+|---|---|
+| condition coverage | every condition was true at least once and false at least once |
+| **MC/DC** (modified condition/decision coverage) | for every condition, two evaluations that differ *only* in that condition gave different results: each condition is shown to change the decision on its own |
+
+MC/DC is what ISO 26262 recommends for the most critical software (ASIL D) and DO-178C requires for level A. It
+finds tests that look complete but are not: `000` and `111` make every condition of a three-input AND true and false
+(100 % condition coverage) but show none of them independently (0 % MC/DC). The minimal set for an AND of *n*
+conditions is *n* + 1 evaluations: all true, and each condition false on its own (`111`, `011`, `101`, `110`).
+
+The Test Manager shows *MC/DC* next to the coverage, and the coverage report lists each decision with the
+conditions shown (green) and, for the others, the evaluation a test still needs, for example:
+
+```
+permit: condition 2: needs (1, 0, 1) → 0 (the pair (1, 1, 1) → 1 / (1, 0, 1) → 0)
+```
+
+From Python: `cov.mcdc_percent`, `cov.condition_percent`, `cov.mcdc_missing()`.
+
 ## Requirements traceability
 
 ECU software is written against **requirements** ("the engine idles at 800 ± 50 rpm when warm"), and a review
