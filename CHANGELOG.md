@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-24
+
+The first release on PyPI: `pip install "nervus[gui]"`.
+
 ### Changed
 - Simulation 10-25 % faster: physical networks are assembled in plain lists and solved once per time point;
   cheaper Step sources and integrators.

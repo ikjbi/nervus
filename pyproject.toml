@@ -8,7 +8,7 @@ authors = [{ name = "Johan Bjoerk", email = "johan.bjoerk1@gmail.com" }]
 requires-python = ">=3.11"
 keywords = ["simulation", "block diagram", "control systems", "simulink", "ecu", "model-based design"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Education",
     "License :: OSI Approved :: MIT License",
