@@ -24,8 +24,8 @@ from nervus.core import Check, TestCase, Variable
 HERE = Path(__file__).parent
 
 POSITIONS = {
-    "set_speed": (0, 0), "error": (150, 10), "cruise_control": (290, 0), "net_force": (450, 10),
-    "accel": (590, 10), "speed": (730, 10), "drag": (590, 130), "scope": (900, 0),
+    "set_speed": (0, 0), "error": (150, 0), "cruise_control": (290, 0), "net_force": (450, 0),
+    "accel": (590, 0), "speed": (730, 0), "drag": (590, 120), "scope": (900, 0),
 }  # fmt: skip
 
 

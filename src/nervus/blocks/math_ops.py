@@ -86,7 +86,12 @@ class Sum(_Math):
     ARITHMETIC = True
     type_id = "math.sum"
     label = "Sum"
-    PARAMS = (Param("signs", "++", ParamKind.STR, "One + or - per input"), output_type_param())
+    PARAMS = (
+        Param("signs", "++", ParamKind.STR, "One + or - per input",
+              hint="++ adds two inputs; +- subtracts the second from the first; +-+ has three inputs, and so on: "
+              "the number of signs is the number of inputs. | only adds space between the ports, e.g. |+-."),
+        output_type_param(),
+    )  # fmt: skip
 
     def _signs(self) -> str:
         return self.params["signs"].replace("|", "").replace(" ", "")
@@ -118,7 +123,12 @@ class Product(_Math):
     ARITHMETIC = True
     type_id = "math.product"
     label = "Product"
-    PARAMS = (Param("ops", "**", ParamKind.STR, "One * or / per input"), output_type_param())
+    PARAMS = (
+        Param("ops", "**", ParamKind.STR, "One * or / per input",
+              hint="** multiplies two inputs; */ divides the first by the second; **/ has three inputs (u0·u1/u2), "
+              "and so on: the number of characters is the number of inputs."),
+        output_type_param(),
+    )  # fmt: skip
 
     def validate_params(self) -> None:
         s = self.params["ops"]

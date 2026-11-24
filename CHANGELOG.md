@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- Wires between blocks can be drawn straight: every port sits on the grid (ports 20 px apart, centred), so a
+  two-input Sum's output is level with the next block's input.
 - Editor crash when a parameter was entered with Enter in the Properties panel (e.g. the PID's `I` in Tutorial
   1): the panel touched the field it had just rebuilt.
 - `nervus` without the editor's packages explains how to install them (`uv sync --extra gui`) instead of a
@@ -37,6 +39,8 @@ All notable changes to this project are documented here. The format follows
 - Discrete blocks with an inherited sample time used −1 as their period (Rate Limiter, Discrete Filter, ...).
 
 ### Added
+- Properties panel: clicking in (or hovering over) a field shows what can be written there, with examples (e.g.
+  Sum *signs*: `+-` subtracts the second input), the unit, the range and the default.
 - Graphical chart editor: double-click a State Chart block to edit states, transitions, priorities and the
   chart's interface as a diagram (with a synchronised text view); the layout is saved in the model.
 - MISRA C:2012: the generated code follows it (checked with cppcheck's MISRA addon for every block template);

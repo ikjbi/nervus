@@ -37,3 +37,18 @@ def test_pid_gains_from_the_workspace(window, qtbot) -> None:  # type: ignore[no
         qtbot.wait(10)
         assert block.param_source(name) == value
     assert window.properties.error.text() == ""
+
+
+def test_field_help_says_what_to_write(window, qtbot) -> None:  # type: ignore[no-untyped-def]
+    """Clicking into a field shows what can be written in it; the tooltip says the same."""
+    block = window.editor.add_block("math.sum", QPointF(0, 0))
+    window.scene.select_blocks([block.name])
+    edit = _field(window.properties, "signs")
+    assert edit is not None and "+-" in edit.toolTip()
+    window.activateWindow()
+    edit.setFocus()
+    qtbot.waitUntil(lambda: "subtracts the second" in window.properties.field_help.text(), timeout=2000)
+    gain = window.editor.add_block("math.gain", QPointF(0, 100))
+    window.scene.select_blocks([gain.name])
+    edit = _field(window.properties, "gain")
+    assert edit is not None and "workspace variable" in edit.toolTip()  # the general help for numbers

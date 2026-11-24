@@ -28,6 +28,20 @@ class ParamKind(StrEnum):
     DATATYPE = "datatype"  # double, int16, fixdt(1,16,8), inherit, ...
 
 
+_KIND_HINTS = {
+    ParamKind.FLOAT: "Write a number (2.5, 1e-3), a workspace variable (Kp) or an expression (3.6 / m, 2*pi).",
+    ParamKind.INT: "Write a whole number, or a workspace variable that holds one.",
+    ParamKind.ARRAY: "Write a number, a vector [1 2 3], a matrix [1 0; 0 1], a workspace variable or an expression "
+    "(e.g. Kp, 2*pi, [0 0.5 1] * v_max).",
+    ParamKind.SAMPLE_TIME: "-1: inherited from the input · 0: continuous · 0.01: every 10 ms · [0.1, 0.02]: every "
+    "100 ms, the first time at 20 ms (an offset).",
+    ParamKind.DATATYPE: "inherit, double, single, boolean, int8 … int32, uint8 … uint32, or fixed point: "
+    "fixdt(signed, bits, fraction bits), e.g. fixdt(1, 16, 8), or fixdt(signed, bits, slope, bias).",
+    ParamKind.CODE: "Edit the text, then press Apply code.",
+}
+"""What can be written in a field of each kind, when the parameter has no hint of its own."""
+
+
 @dataclass(frozen=True)
 class Param:
     """Declaration of one block parameter."""
@@ -40,6 +54,25 @@ class Param:
     choices: tuple[str, ...] = field(default=())
     min: float | None = None
     max: float | None = None
+    hint: str = ""
+    """What can be written, with examples (shown when the field is hovered or clicked in the editor)."""
+
+    def help_text(self) -> str:
+        """The description, what can be written (the hint, or the usual forms for this kind of parameter), the
+        allowed range and the default: the help shown for the field in the Properties panel."""
+        parts = [self.description.rstrip(".") + "." if self.description else self.name]
+        parts.append(self.hint or _KIND_HINTS.get(self.kind, ""))
+        if self.kind is ParamKind.CHOICE and self.choices:
+            parts.append("Choose one of: " + ", ".join(self.choices) + ".")
+        if self.unit:
+            parts.append(f"Unit: {self.unit}.")
+        if self.min is not None or self.max is not None:
+            lo = "" if self.min is None else f"{self.min:g} ≤ "
+            hi = "" if self.max is None else f" ≤ {self.max:g}"
+            parts.append(f"Allowed: {lo}{self.name}{hi}.")
+        if self.kind not in (ParamKind.CODE,) and self.default not in ("", None):
+            parts.append(f"Default: {self.default}.")
+        return "\n".join(x for x in parts if x)
 
     def coerce(self, value: Any) -> Any:
         """Convert ``value`` to this parameter's type, raising :class:`ParameterError` if invalid."""

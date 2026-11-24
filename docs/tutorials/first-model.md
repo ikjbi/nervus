@@ -90,7 +90,8 @@ names, so you can tune later without touching the blocks:
 | `drag` | gain `c_drag` |
 | `scope` | num_inputs `2` |
 
-Press Enter after typing a value. Hover over a parameter to see what it means, or press **F1** for the block's
+Press Enter after typing a value. Click in a field (or hover over it) to see what you can write there, e.g. for
+*signs* that `+-` subtracts the second input; press **F1** for the block's
 help page.
 
 Finally set the **Stop time** in the toolbar to `40`.

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import html
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -39,6 +40,12 @@ def _parse(p: Param, text: str) -> Any:
     if p.kind is ParamKind.INT and isinstance(value, float):
         return value
     return value
+
+
+def _help_html(p: Param) -> str:
+    """A parameter's help (description, what can be written, range, default) as rich text."""
+    lines = [html.escape(x) for x in p.help_text().split("\n")]
+    return f"<b>{html.escape(p.name)}</b>: " + "<br>".join(lines)
 
 
 class PropertyPanel(QWidget):
@@ -75,6 +82,11 @@ class PropertyPanel(QWidget):
         self.error = QLabel()
         self.error.setObjectName("error")
         self.error.setWordWrap(True)
+        self.field_help = QLabel()  # what can be written in the field being edited (or hovered)
+        self.field_help.setObjectName("muted")
+        self.field_help.setWordWrap(True)
+        self.field_help.setTextFormat(Qt.TextFormat.RichText)
+        self._help_for: dict[int, str] = {}  # id(widget) -> help (HTML)
 
         self.form_host = QWidget()
         self.form = QFormLayout(self.form_host)
@@ -98,6 +110,7 @@ class PropertyPanel(QWidget):
         layout.addLayout(header)
         layout.addWidget(self.description)
         layout.addWidget(scroll, 1)
+        layout.addWidget(self.field_help)
         layout.addWidget(self.error)
         layout.addWidget(self.placeholder, 1)
 
@@ -199,14 +212,27 @@ class PropertyPanel(QWidget):
             vbutton.clicked.connect(lambda _c=False: self.editVariantsRequested.emit(b))
             if link is None:
                 self.form.addRow("", vbutton)
+        self._help_for = {}
+        self.field_help.clear()
         for p in b.PARAMS:
             editor = self._editor_for(p, b.param_source(p.name))
             label = QLabel(p.name + (f" [{p.unit}]" if p.unit else ""))
-            label.setToolTip(p.description)
-            editor.setToolTip(p.description)
+            help_html = _help_html(p)
+            for w in (label, editor, *editor.findChildren(QWidget)):
+                w.setToolTip(help_html)
+                self._help_for[id(w)] = help_html
+                w.installEventFilter(self)
             self.form.addRow(label, editor)
             self._editors[p.name] = editor
         self._updating = False
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        """Clicking into (or hovering over) a field shows what can be written in it, under the fields."""
+        if event.type() in (QEvent.Type.FocusIn, QEvent.Type.Enter):
+            text = self._help_for.get(id(watched))
+            if text is not None:
+                self.field_help.setText(text)
+        return super().eventFilter(watched, event)
 
     def _editor_for(self, p: Param, value: Any) -> QWidget:
         if p.kind is ParamKind.BOOL:

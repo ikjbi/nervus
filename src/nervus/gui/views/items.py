@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QPointF, QRectF, Qt
@@ -19,11 +20,29 @@ if TYPE_CHECKING:
 
 GRID = 10.0
 PORT_SIZE = 8.0
-MIN_W, MIN_H = 70.0, 46.0
+MIN_W, MIN_H = 80.0, 40.0
 
 
 def snap(v: float) -> float:
     return round(v / GRID) * GRID
+
+
+def snap_up2(v: float) -> float:
+    """Up to a multiple of two grid steps: a block's middle (where a single port sits) is then on the grid."""
+    return math.ceil(v / (2 * GRID) - 1e-9) * 2 * GRID
+
+
+PORT_PITCH = 2 * GRID
+"""The smallest distance between two ports on a side."""
+
+
+def port_offset(length: float, k: int, n: int) -> float:
+    """Where port ``k`` of ``n`` sits along a side of ``length`` (a multiple of two grid steps): centred, a whole
+    number of :data:`PORT_PITCH` apart, so every port is on the grid. A single port, or the middle one of an odd
+    number, is in the middle; a two-input Sum's output is then level with the input of a one-port block next to it,
+    and the wire between them is straight."""
+    step = PORT_PITCH * max(1, math.floor(length / n / PORT_PITCH))
+    return length / 2 + (k - (n - 1) / 2) * step
 
 
 class PortItem(QGraphicsItem):
@@ -128,16 +147,17 @@ class BlockItem(QGraphicsItem):
         if self.is_physical:  # physical ports on the sides, signal ports on the top and bottom
             per_side = max(1, (len(phys) + 1) // 2)
             self._w = max(MIN_W, text_w, snap(n * 24 + 10))
-            self._h = max(MIN_H, snap(max(per_side * 22 + 10, len(lines) * 16 + 16)))
+            self._h = max(MIN_H, snap(max(per_side * PORT_PITCH, len(lines) * 16 + 16)))
         elif self.vertical:  # ports along the top and bottom edges
             self._w = max(MIN_W, text_w, snap(n * 24 + 10))
             self._h = max(MIN_H, snap(len(lines) * 16 + 16))
         else:
             self._w = max(MIN_W, text_w)
-            self._h = max(MIN_H, snap(max(n * 20 + 10, len(lines) * 16 + 16)))
+            self._h = max(MIN_H, snap(max(n * PORT_PITCH, len(lines) * 16 + 16)))
         size = self.block.meta.get("size")
         if isinstance(size, list | tuple) and len(size) == 2:  # resized by the user: at least the minimum
             self._w, self._h = max(self._w, snap(float(size[0]))), max(self._h, snap(float(size[1])))
+        self._w, self._h = snap_up2(self._w), snap_up2(self._h)
         for p in self.in_ports + self.out_ports:
             p.setParentItem(None)  # type: ignore[arg-type]
             if p.scene():
@@ -154,11 +174,10 @@ class BlockItem(QGraphicsItem):
         dx, dy = ORIENTATIONS[self.port_orientation]
         for ports, sign in ((self.in_ports, -1), (self.out_ports, 1)):
             for i, p in enumerate(ports):
-                along = (i + 1) / (len(ports) + 1)
                 if dy == 0:
-                    p.setPos(self._w / 2 + sign * dx * (self._w + PORT_SIZE) / 2, self._h * along)
+                    p.setPos(self._w / 2 + sign * dx * (self._w + PORT_SIZE) / 2, port_offset(self._h, i, len(ports)))
                 else:
-                    p.setPos(self._w * along, self._h / 2 + sign * dy * (self._h + PORT_SIZE) / 2)
+                    p.setPos(port_offset(self._w, i, len(ports)), self._h / 2 + sign * dy * (self._h + PORT_SIZE) / 2)
         self.setToolTip(f"{self.block.label} ({self.block.type_id})\nDouble-click to edit · F1 for help")
         self.update()
 
@@ -206,7 +225,7 @@ class BlockItem(QGraphicsItem):
         if getattr(self.block, "system", None) is not None:  # a subsystem: along the bottom edge
             for k, (name, dom) in enumerate(phys):
                 item = PhysicalPortItem(self, name, dom, (0, 1))
-                item.setPos(self._w * (k + 1) / (len(phys) + 1), self._h + PORT_SIZE / 2)
+                item.setPos(port_offset(self._w, k, len(phys)), self._h + PORT_SIZE / 2)
                 self.phys_ports.append(item)
             return
         half = (len(phys) + 1) // 2
@@ -216,7 +235,7 @@ class BlockItem(QGraphicsItem):
                 side = -side
             for k, (name, dom) in enumerate(ports):
                 item = PhysicalPortItem(self, name, dom, (side, 0))
-                item.setPos(self._w / 2 + side * (self._w + PORT_SIZE) / 2, self._h * (k + 1) / (len(ports) + 1))
+                item.setPos(self._w / 2 + side * (self._w + PORT_SIZE) / 2, port_offset(self._h, k, len(ports)))
                 self.phys_ports.append(item)
 
     def resize_handle(self) -> QRectF:
