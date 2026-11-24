@@ -1,6 +1,8 @@
 site_name: Nervus
 site_description: Open-source block-diagram modeling and simulation in Python
+site_url: https://ikjbi.github.io/nervus/
 repo_url: https://github.com/ikjbi/nervus
+edit_uri: edit/main/docs/
 theme:
   name: material
   features:

@@ -5,6 +5,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- The documentation is online: https://ikjbi.github.io/nervus/. Releases get a GitHub Release with their notes.
+
 ## [0.1.0] - 2026-11-24
 
 The first release on PyPI: `pip install "nervus[gui]"`.

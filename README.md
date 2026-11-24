@@ -68,6 +68,8 @@ CAN/DBC (cantools), OBD-II (pyserial), MDF4 (asammdf) and FMI (fmpy). If the edi
 
 ## Learn Nervus
 
+The documentation is online at **https://ikjbi.github.io/nervus/** (and in the editor: **Help**).
+
 Start with the tutorial [Your first model](docs/tutorials/first-model.md): you build a cruise control in the
 editor step by step, tune it, and meet integrator windup. Then pick a topic; the
 [tutorial overview](docs/tutorials/index.md) has them all:

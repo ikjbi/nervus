@@ -58,7 +58,7 @@ tests/
 - [x] GitHub Actions CI: lint, type-check and tests on every push and PR
 - [x] `README.md` (what it is, install, quick start), `CONTRIBUTING.md`, `CHANGELOG.md`
 - [x] Docs skeleton with MkDocs Material
-- [ ] Publish the docs to GitHub Pages (once the repo is public, or on a paid plan)
+- [x] Publish the docs to GitHub Pages: https://ikjbi.github.io/nervus/ (workflow docs.yml, on every docs change)
 
 ## Phase 1 – Core simulation engine (headless)
 - [x] `Block` base class: input and output ports, parameters, states, `outputs()`, `update()` (discrete),
@@ -293,7 +293,8 @@ tests/
       package, README links for PyPI, a release workflow with trusted publishing (the first release needs the
       one-time PyPI setup in CONTRIBUTING.md)
 - [ ] Standalone installers (PyInstaller / Briefcase) for macOS, Windows and Linux
-- [ ] Versioned docs, release notes; publish docs to GitHub Pages
+- [x] Release notes: each release gets a GitHub Release with its CHANGELOG section; docs on GitHub Pages
+- [ ] Versioned docs (one site per release, e.g. with mike)
 
 ## Phase 20 – Electrical and physical modelling
 *Acausal (equation-based) components connected by physical wires, like Simscape Electrical.*
