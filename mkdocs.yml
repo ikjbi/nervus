@@ -30,6 +30,7 @@ extra_javascript:
 nav:
   - Home: index.md
   - Roadmap to 1.0: roadmap.md
+  - Hardware: hardware.md
   - User guide:
       - Getting started: getting-started.md
       - The editor: editor.md
@@ -180,3 +181,4 @@ nav:
   - Developer:
       - Architecture: developer/architecture.md
       - Writing a block: developer/custom-blocks.md
+      - Help wanted: developer/help-wanted.md

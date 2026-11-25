@@ -30,7 +30,8 @@ A2L export, Simulink `.slx` import, 33 tutorials. [Changelog](https://github.com
   with the simulation.
 - **Hardware-in-the-loop (HIL)**: the plant model in real time on the PC, talking CAN to a real ECU.
 - The XCP slave on the board, so the board can be measured and calibrated like a production ECU.
-- Simulink import of Stateflow charts as State Chart blocks.
+- Simulink import of Stateflow charts as State Chart blocks (needs sample models from MATLAB:
+  [help wanted](developer/help-wanted.md#stateflow-sample-models-needs-matlab)).
 - **Faster simulation** for large models (compiled execution of the model).
 - What users report: bugs, missing blocks, unclear tutorials.
 
@@ -87,7 +88,7 @@ Nervus 1.0 is released when:
   can go back into the model in one step.
 - **Which hardware?** CAN interfaces through python-can (PEAK, Kvaser, Vector, SocketCAN, CANable and others).
   *Decided:* not one development board but several, through a small hardware layer per board, so users can take the
-  board they have.
+  board they have. What to buy: [Hardware](hardware.md).
 - **Signed applications?** Postponed: signing costs a yearly fee. The unsigned applications open with right-click ▸
   Open (macOS) or *More info ▸ Run anyway* (Windows).
 
