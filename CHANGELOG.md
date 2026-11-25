@@ -5,6 +5,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- A more modern look in light and dark mode: flat panel tabs with an accent underline, slim scrollbars, tinted
+  selections, new check boxes, radio buttons and drop-down arrows, rounded menus and tooltips, clear hover, pressed,
+  disabled and keyboard-focus states.
+
 ## [0.2.0] - 2026-11-25
 
 Standalone applications (no Python needed) on the release page.
