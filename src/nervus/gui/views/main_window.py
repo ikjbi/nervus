@@ -295,6 +295,12 @@ class MainWindow(QMainWindow):
         self.act_obd = self._action(
             "Record from &OBD-II…", self.show_obd, None, "Read live data from a car through its OBD-II port"
         )
+        self.act_open_log = self._action(
+            "Open &Vehicle Log…",
+            lambda: self.show_inspector().open_log(),
+            None,
+            "Look at a log from an OBD-II scanner app or a CAN logger (CSV, ASC, BLF, TRC, candump) in the Data Inspector",
+        )
         self.act_can_trace = self._action(
             "CAN Bus &Trace…", self.show_can_trace, None, "Frames on the simulated CAN buses of the last run"
         )
@@ -385,6 +391,7 @@ class MainWindow(QMainWindow):
         m.addAction(self.act_advisor)
         m = mb.addMenu("&Tools")
         m.addAction(self.act_obd)
+        m.addAction(self.act_open_log)
         m.addAction(self.act_can_trace)
         m = mb.addMenu("&Code")
         m.addAction(self.act_codegen)

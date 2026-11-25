@@ -380,6 +380,17 @@ def about_shots(win) -> None:  # type: ignore[no-untyped-def]
     dlg.close()
 
 
+def log_shots(win) -> None:  # type: ignore[no-untyped-def]
+    """A scanner app's CSV log (examples/data/obd_scanner_log.csv) in the Data Inspector."""
+    inspector = win.show_inspector()
+    inspector.resize(1100, 560)
+    inspector.load_file(str(Path(__file__).parent.parent / "examples" / "data" / "obd_scanner_log.csv"))
+    inspector.select(["obd_scanner_log.csv"], ["Engine RPM"])
+    grab(inspector, "vehicle-log.png")
+    inspector.close()
+    shutil.copy(OUT / "vehicle-log.png", ROOT / "src" / "nervus" / "gui" / "resources" / "figures" / "vehicle-log.png")
+
+
 def grab(widget: QWidget, name: str) -> None:
     QApplication.processEvents()
     widget.grab().save(str(OUT / name))
@@ -402,6 +413,7 @@ def main() -> None:
         ["chart"],
         ["signals"],
         ["about"],
+        ["log"],
     ):  # only the newest shots
         from nervus.gui.views.main_window import MainWindow
 
@@ -411,7 +423,7 @@ def main() -> None:
         win.show()
         shots = {"console": console_and_can_shots, "dictionary": dictionary_shots, "first": first_model_shots,
                  "requirements": requirements_shots, "chart": chart_shots,
-                 "signals": signal_shots, "about": about_shots}  # fmt: skip
+                 "signals": signal_shots, "about": about_shots, "log": log_shots}  # fmt: skip
         shots[sys.argv[1]](win)
         win.editor.undo_stack.setClean()
         win.close()

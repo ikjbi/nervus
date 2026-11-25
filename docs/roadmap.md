@@ -23,8 +23,9 @@ A2L export, Simulink `.slx` import, 33 tutorials. [Changelog](https://github.com
 
 ## 0.3: real hardware
 
-- **A development-board target** (an STM32 or ESP32 with CAN): the generated code with a scheduler template and
-  hardware drivers, built and flashed from Nervus.
+- **Development-board targets** with CAN (an STM32 Nucleo and an ESP32 first): the generated code with a scheduler
+  template and a small hardware layer per board, built and flashed from Nervus. The model stays the same; only the
+  target changes.
 - **Processor-in-the-loop (PIL)**: the generated code runs on the board, the plant in Nervus, compared step by step
   with the simulation.
 - **Hardware-in-the-loop (HIL)**: the plant model in real time on the PC, talking CAN to a real ECU.
@@ -81,12 +82,14 @@ Nervus 1.0 is released when:
 
 ## Decided along the way
 
-- **Inside Nervus or a separate application?** The measurement and calibration tool can be a workspace inside
-  Nervus or its own application that shares Nervus's A2L, XCP and CAN code. *Recommendation:* one application with a
-  **Calibration** workspace, because the same windows then work against the model, a board and the real ECU, and a
-  calibration found on the vehicle can go back into the model in one step. To be decided before 0.4.
-- **Which hardware?** CAN interfaces through python-can (PEAK, Kvaser, Vector, SocketCAN, and others); a first
-  development board for the tutorials.
+- **Inside Nervus or a separate application?** *Decided:* inside Nervus, as a **Calibration** workspace, because
+  the same windows then work against the model, a board and the real ECU, and a calibration found on the vehicle
+  can go back into the model in one step.
+- **Which hardware?** CAN interfaces through python-can (PEAK, Kvaser, Vector, SocketCAN, CANable and others).
+  *Decided:* not one development board but several, through a small hardware layer per board, so users can take the
+  board they have.
+- **Signed applications?** Postponed: signing costs a yearly fee. The unsigned applications open with right-click ▸
+  Open (macOS) or *More info ▸ Run anyway* (Windows).
 
 ## Safety and the law
 

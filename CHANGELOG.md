@@ -5,6 +5,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Vehicle logs in the Data Inspector (**Tools → Open Vehicle Log…**): CSV files from OBD-II scanner apps (Torque,
+  Car Scanner, OBD Fusion, OBDLink, FORScan, ...) and loggers, with their units, and CAN logs (`.asc`, `.blf`,
+  `.trc`, candump `.log`) decoded with a DBC file (J1939 messages from any source address) or, without one, as
+  OBD-II answers. In Python: `nervus.logs.read_log`. Results keep the units of measured signals (also from MDF4).
+
 ### Changed
 - Faster simulation: a physical network is solved once per time point instead of twice (the charging system
   example runs in half the time), and 1-D and 2-D lookup tables with one input value skip numpy (the gear-shift

@@ -276,7 +276,8 @@ tests/
 - [x] CAN FD, multiplexed signals, value tables, DBC signals as workspace variables
 - [x] A2L file generation for calibration tools (measurements and characteristics), addresses from `nm`
 - [x] XCP-on-CAN basics for live measurement and calibration (`nervus.xcp`, XCP Slave block)
-- [ ] Target: a development board (e.g. STM32 or ESP32 with CAN), as a scheduler template and HAL stubs
+- [ ] Target: development boards with CAN, as a scheduler template and a small hardware layer, so one model runs on
+      several boards (decided 2026-11-25: support more than one, e.g. STM32 Nucleo and ESP32, not a single board)
 - [ ] Processor-in-the-loop (PIL) testing
 - [ ] Hardware-in-the-loop (HIL): run the plant model in real time against a real ECU
 
@@ -301,7 +302,8 @@ tests/
       package, README links for PyPI, a release workflow with trusted publishing (the first release needs the
       one-time PyPI setup in CONTRIBUTING.md)
 - [x] Standalone applications (PyInstaller) for macOS (.dmg), Windows and Linux (.zip), built for every release
-- [ ] Signed and notarised applications (an Apple developer account, a Windows code-signing certificate)
+- [ ] Signed and notarised applications (an Apple developer account, a Windows code-signing certificate);
+      postponed (2026-11-25): it costs money every year, and the unsigned apps open with right-click ▸ Open
 - [x] Release notes: each release gets a GitHub Release with its CHANGELOG section; docs on GitHub Pages
 - [x] Versioned docs with mike: `dev` from main, one site per minor release (the newest is `latest`)
 
@@ -352,6 +354,8 @@ tests/
       clearing (04) deliberately left out: it resets the emissions readiness monitors
 - [x] OBD over a CAN interface (`python-can`, ISO-TP / ISO 15765-4) without an ELM327
 - [x] Editor: Tools → Record from OBD-II… with live plots
+- [x] Vehicle logs: CSV files of OBD-II scanner apps (wide and long), CAN logs decoded with a DBC file (J1939 by
+      parameter group) or as OBD-II answers, in the Data Inspector (`nervus.logs`)
 - [x] OBD responder in models: a simulated ECU that answers OBD requests (to test diagnostic tools): ELM327
       on a pseudo-terminal, or CAN
 - [x] Diagnostic logic in models: DTC setting/debouncing, MIL lamp, readiness monitors (Diagnostic Monitor block, with C code)
@@ -360,7 +364,8 @@ tests/
 To look into later: what it takes to handle an ECU completely, as ETAS INCA (or Vector CANape) does, either inside
 Nervus or as a separate app that shares Nervus's XCP, A2L and CAN code. Nervus already has the pieces: an XCP slave
 and a command-line XCP tool, A2L export, MDF4 files, CAN with DBC files and OBD-II.
-- [ ] Decide: inside Nervus (a "Calibration" workspace) or a separate app sharing the libraries
+- [x] Decide: inside Nervus (a "Calibration" workspace) or a separate app sharing the libraries. Decided
+      2026-11-25: **inside Nervus**, a Calibration workspace
 - [ ] A2L import of any ECU's description (not only Nervus's own), including maps, curves, axes and conversion
       methods (COMPU_METHOD), record layouts and memory segments
 - [ ] XCP master over CAN, CAN FD and Ethernet (UDP/TCP), plus CCP for older ECUs; DAQ lists with
