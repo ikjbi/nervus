@@ -78,10 +78,10 @@ def environment() -> dict[str, str]:
         info["NumPy / SciPy"] = f"{numpy.__version__} / {scipy.__version__}"
     except ImportError:  # pragma: no cover
         pass
-    try:
-        import PySide6
+    try:  # the installed version, without importing Qt (only nervus.gui may)
+        from importlib.metadata import PackageNotFoundError, version
 
-        info["Qt (PySide6)"] = PySide6.__version__
-    except ImportError:
+        info["Qt (PySide6)"] = version("PySide6")
+    except PackageNotFoundError:
         pass
     return info
