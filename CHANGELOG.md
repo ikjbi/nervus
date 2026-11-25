@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- Help window: the tutorials (by topic) and the block reference (by category) are folding sections in the list;
+  links between help pages work in the window (they were plain text), the examples in *Getting started* link to
+  their tutorials, and every mention of another page links to it.
 - A more modern look in light and dark mode: flat panel tabs with an accent underline, slim scrollbars, tinted
   selections, new check boxes, radio buttons and drop-down arrows, rounded menus and tooltips, clear hover, pressed,
   disabled and keyboard-focus states.

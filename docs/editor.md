@@ -180,7 +180,9 @@ editor at once and are **one undo step** (*Edit ▸ Undo* reverts them). Assigni
 
 ## Built-in help
 
-**Help → Nervus Help** opens the guide and the full block reference inside the app. Select a block and press
+**Help → Nervus Help** opens the guide and the full block reference inside the app. The list on the left has the
+guide pages, then **Tutorials** and **Block reference**: click one to fold it open (the tutorials by topic, the blocks
+by category). Links between pages open in the Help window. Select a block and press
 **F1** (or **?** in the Properties panel) to jump straight to its page. Equations are typeset, and many blocks
 have explanatory figures:
 
