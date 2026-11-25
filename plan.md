@@ -216,6 +216,8 @@ tests/
 - [x] First performance pass: precomputed execution tables, scalar fast paths (~25 % faster)
 - [x] Second performance pass (10-25 % faster): physical networks assemble in plain lists and solve once per
       time point, cheaper sources and integrators; `scripts/benchmark.py` times the examples
+- [x] Third performance pass: one network solve per time point (charging system 2x faster), scalar lookup tables
+      (gear shift 40 % faster)
 - [ ] Performance: avoid per-step Python overhead (vectorised execution, Numba, or simulate the generated C:
       "accelerator mode")
 

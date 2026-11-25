@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- Faster simulation: a physical network is solved once per time point instead of twice (the charging system
+  example runs in half the time), and 1-D and 2-D lookup tables with one input value skip numpy (the gear-shift
+  example is 40 % faster).
 - Help window: the tutorials (by topic) and the block reference (by category) are folding sections in the list;
   links between help pages work in the window (they were plain text), the examples in *Getting started* link to
   their tutorials, and every mention of another page links to it.
