@@ -11,7 +11,7 @@ Simulink. It is aimed at control engineering, and especially at engine and vehic
 | Area | Features | Guide |
 |---|---|---|
 | Editor | block library with search, drag and drop, wires that route around blocks, undo, copy/paste, subsystems, flip/rotate/resize, auto layout, light and dark theme, F1 help with equations for every block, a Python **console** with the model in scope, **Simulink `.slx` import** | [Editor](editor.md) |
-| Simulation | continuous, discrete and multirate models; fixed-step and variable-step solvers (also stiff: BDF); zero-crossing detection; an algebraic loop solver; real-time pacing; live scopes | [Concepts](concepts.md) |
+| Simulation | continuous, discrete and multirate models; fixed-step and variable-step solvers (also stiff: BDF); zero-crossing detection; an algebraic loop solver; real-time pacing; live scopes; **accelerated mode** (the model as compiled C, 30–700× faster) | [Concepts](concepts.md) |
 | Parameters and data | model workspace with units, limits and data types; expressions; calibration sets (`.nervcal`); a **data dictionary** of signal objects (type, unit, range) bound to named wires | [Workspace](workspace.md) |
 | Structure | subsystems, masks, enabled/triggered/function-call subsystems, atomic ECU tasks with their own period, variants, linked component libraries | [Subsystems](subsystems.md), [Libraries](libraries.md) |
 | Logic | State Chart block with a **graphical chart editor**: nested and parallel states, history, events, guards, timers, calibration parameters | [State machines](statecharts.md) |

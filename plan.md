@@ -218,8 +218,9 @@ tests/
       time point, cheaper sources and integrators; `scripts/benchmark.py` times the examples
 - [x] Third performance pass: one network solve per time point (charging system 2x faster), scalar lookup tables
       (gear shift 40 % faster)
-- [ ] Performance: avoid per-step Python overhead (vectorised execution, Numba, or simulate the generated C:
-      "accelerator mode")
+- [x] Accelerated mode: the whole model as compiled C with a fixed-step loop in C (30-700x faster); continuous
+      blocks, time sources and Python Function blocks (translated) have C code
+- [ ] Accelerated mode for physical networks (their equations in C) and for vector Python Function blocks
 
 ## Phase 13 – Data types and fixed-point (required for ECU code)
 - [x] Integer types (int8/16/32, uint8/16/32), boolean, single

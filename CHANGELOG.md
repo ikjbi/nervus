@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Accelerated simulation (**Simulation Settings → Simulation mode**, or `settings.mode = "accelerated"`): the whole
+  model runs as compiled C, 30 to 700 times faster, with the same results as a fixed-step run. C code for the
+  continuous blocks (Integrator with limits, resets and external initial value; Transfer Fcn; State-Space;
+  Derivative; PID), the time sources, top-level In blocks driven by test signals, and Python Function blocks
+  (translated from a numeric subset of Python). Models that cannot be compiled run normally and say why.
 - Vehicle logs in the Data Inspector (**Tools → Open Vehicle Log…**): CSV files from OBD-II scanner apps (Torque,
   Car Scanner, OBD Fusion, OBDLink, FORScan, ...) and loggers, with their units, and CAN logs (`.asc`, `.blf`,
   `.trc`, candump `.log`) decoded with a DBC file (J1939 messages from any source address) or, without one, as
@@ -21,6 +26,12 @@ All notable changes to this project are documented here. The format follows
 - A more modern look in light and dark mode: flat panel tabs with an accent underline, slim scrollbars, tinted
   selections, new check boxes, radio buttons and drop-down arrows, rounded menus and tooltips, clear hover, pressed,
   disabled and keyboard-focus states.
+
+### Fixed
+- Generated C of a Discrete PID without a D term: its derivative filter ran anyway and, with N·T ≥ 2, became
+  NaN and drove the output to its lower limit; it now stays still, as in the simulation.
+- Generated C of a fixed-point Discrete Filter (PT1) stored the rounded output as its state; the simulation keeps
+  the unrounded value, and so does the C now (the two agreed only to one bit).
 
 ## [0.2.0] - 2026-11-25
 

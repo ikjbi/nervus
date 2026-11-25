@@ -380,6 +380,16 @@ def about_shots(win) -> None:  # type: ignore[no-untyped-def]
     dlg.close()
 
 
+def settings_shots(win) -> None:  # type: ignore[no-untyped-def]
+    """The Simulation Settings dialog, with the simulation mode."""
+    from nervus.gui.views.settings_dialog import SettingsDialog
+
+    dlg = SettingsDialog(win.diagram_model.diagram.settings, win)
+    dlg.show()
+    grab(dlg, "settings.png")
+    dlg.close()
+
+
 def log_shots(win) -> None:  # type: ignore[no-untyped-def]
     """A scanner app's CSV log (examples/data/obd_scanner_log.csv) in the Data Inspector."""
     inspector = win.show_inspector()
@@ -414,6 +424,7 @@ def main() -> None:
         ["signals"],
         ["about"],
         ["log"],
+        ["settings"],
     ):  # only the newest shots
         from nervus.gui.views.main_window import MainWindow
 
@@ -423,7 +434,8 @@ def main() -> None:
         win.show()
         shots = {"console": console_and_can_shots, "dictionary": dictionary_shots, "first": first_model_shots,
                  "requirements": requirements_shots, "chart": chart_shots,
-                 "signals": signal_shots, "about": about_shots, "log": log_shots}  # fmt: skip
+                 "signals": signal_shots, "about": about_shots, "log": log_shots,
+                 "settings": settings_shots}  # fmt: skip
         shots[sys.argv[1]](win)
         win.editor.undo_stack.setClean()
         win.close()

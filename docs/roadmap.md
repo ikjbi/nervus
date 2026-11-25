@@ -32,7 +32,8 @@ A2L export, Simulink `.slx` import, 33 tutorials. [Changelog](https://github.com
 - The XCP slave on the board, so the board can be measured and calibrated like a production ECU.
 - Simulink import of Stateflow charts as State Chart blocks (needs sample models from MATLAB:
   [help wanted](developer/help-wanted.md#stateflow-sample-models-needs-matlab)).
-- **Faster simulation** for large models (compiled execution of the model).
+- **Faster simulation** for large models: accelerated mode, the model as compiled C (done; physical networks
+  still run in Python).
 - What users report: bugs, missing blocks, unclear tutorials.
 
 ## 0.4 to 0.6: measurement and calibration (the first INCA part)
