@@ -21,7 +21,7 @@ A2L export, Simulink `.slx` import, 33 tutorials. [Changelog](https://github.com
 - Simulink import of the older `.mdl` text format; coverage of the generated C code by the test cases; MC/DC for
   state chart guards; Help ▸ About Nervus with the contributors.
 
-## 0.3: real hardware
+## 0.3: real hardware (released; tests on real boards still open)
 
 - **Development-board targets** with CAN (an STM32 Nucleo and an ESP32 first): the generated code with a scheduler
   template and a small hardware layer per board, built and flashed from Nervus. The model stays the same; only the

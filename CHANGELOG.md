@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-25
+
+Measurement and calibration of real ECUs, development boards, accelerated simulation.
+
 ### Added
 - Development boards (**Code → Board Project…**, `nervus.codegen.boards`): the generated code as a project for an
   STM32 Nucleo-G474RE (FDCAN, STM32Cube HAL) or an ESP32 (TWAI, ESP-IDF), with a main loop, a hardware layer, a
