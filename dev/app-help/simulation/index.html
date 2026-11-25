@@ -1019,6 +1019,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#accelerated-simulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accelerated simulation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sample-times" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5447,6 +5458,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#accelerated-simulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accelerated simulation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sample-times" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5549,6 +5571,46 @@ ten times faster. Leave it empty to run as fast as possible (the default). In Py
 <code>d.settings.pacing = 1.0</code>.</p>
 <p>Use <strong>Stop Simulation</strong> to end a run when a condition becomes true, and <strong>Assertion</strong> to fail the run when a
 condition that must always hold becomes false.</p>
+<h2 id="accelerated-simulation">Accelerated simulation<a class="headerlink" href="#accelerated-simulation" title="Permanent link">&para;</a></h2>
+<p><strong>Simulation Settings → Simulation mode → Accelerated</strong> runs the whole model as compiled C: Nervus generates C
+code for every block, compiles it, and runs the simulation loop in C. Large models run <strong>30 to 700 times
+faster</strong>. The first run of a model (and the first run after a parameter change) takes a moment longer to
+compile; later runs use the compiled code again.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Normal</th>
+<th>Accelerated</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blocks</td>
+<td>all</td>
+<td>blocks with C code: the ECU blocks, Integrator, Transfer Fcn, State-Space, Derivative, PID, the time sources (Step, Sine, Pulse, Ramp, From Workspace, Drive Cycle, Clock) and Python Function blocks written in simple Python</td>
+</tr>
+<tr>
+<td>Solver</td>
+<td>the one you chose</td>
+<td>the fixed-step solver you chose; a variable-step solver is replaced by <strong>rk4</strong> (the step is the max step, else 1/1000 of the time span)</td>
+</tr>
+<tr>
+<td>Needs</td>
+<td>nothing</td>
+<td>a C compiler (on macOS: <code>xcode-select --install</code>; on Linux: gcc; on Windows: MinGW or clang)</td>
+</tr>
+</tbody>
+</table>
+<p>The results are the same as a normal run with the same fixed-step solver (to about 1e-12). Models with blocks
+that have no C code (physical networks, FMUs, CAN buses, OBD Responder), algebraic loops, or coverage
+collection run normally, and <strong>Diagnostics</strong> says why. A Python Function is translated if it uses numbers,
+<code>if</code>/<code>elif</code>/<code>else</code>, arithmetic, <code>math</code>/<code>np</code> functions, <code>min</code>/<code>max</code>/<code>abs</code>, <code>np.clip</code> and <code>np.interp</code> with lists
+of numbers; loops and arrays keep the model in normal mode. In Python:</p>
+<div class="highlight"><pre><span></span><code><span class="n">d</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="s2">"accelerated"</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">simulate</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">solver</span><span class="p">)</span>  <span class="c1"># "rk4 (accelerated, compiled C)"</span>
+</code></pre></div>
 <h2 id="sample-times">Sample times<a class="headerlink" href="#sample-times" title="Permanent link">&para;</a></h2>
 <p>Discrete blocks (Unit Delay, Zero-Order Hold, Discrete PID, ...) have a <strong>sample_time</strong> in seconds: they
 compute a new output every <em>T</em> seconds and hold it in between, just like a task on an ECU. <code>-1</code> means

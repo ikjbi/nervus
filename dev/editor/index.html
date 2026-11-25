@@ -5883,6 +5883,9 @@ runs. Hover over a plot to read the values at that time:</p>
 <p><img alt="The simulation settings dialog" src="../images/settings.png" /></p>
 <p><strong>Pacing</strong> runs the simulation no faster than a multiple of real time (1 = real time), so live scopes of a
 fast model can be watched; leave it empty to run as fast as possible.</p>
+<p><strong>Simulation mode → Accelerated</strong> runs the whole model as compiled C, 30 to 700 times faster for large models
+(it needs a C compiler). Models with blocks that have no C code (physical networks, FMUs, CAN) run normally, and
+Diagnostics says why. See <a href="../concepts/#accelerated-simulation">Concepts: accelerated simulation</a>.</p>
 <h2 id="scripting-console">Scripting console<a class="headerlink" href="#scripting-console" title="Permanent link">&para;</a></h2>
 <p><strong>View ▸ Console</strong> (a tab next to the Model Workspace) runs Python with the open model and its results in
 scope:</p>
