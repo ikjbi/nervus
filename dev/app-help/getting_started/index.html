@@ -1427,6 +1427,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../tutorial_python_scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: Scripting and testing models from Python
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../tutorial_mass_spring_damper/" class="md-nav__link">
         
   
@@ -2155,6 +2183,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../tutorial_discrete_control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: From continuous to discrete: sample times
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../tutorial_model_to_code/" class="md-nav__link">
         
   
@@ -2643,6 +2699,34 @@
     
   
     Reusable components with subsystems, masks and libraries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/python-scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripting and testing models from Python
   
 
     
@@ -4295,6 +4379,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../tutorials/discrete-control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    From continuous to discrete: sample times
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../tutorials/model-to-code/" class="md-nav__link">
         
   
@@ -5212,6 +5324,8 @@
 <h1 id="getting-started">Getting started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
 <p>Nervus models a system as a <strong>block diagram</strong>: blocks are small dynamic systems (a gain, an integrator, a
 PID controller), and the lines between them carry signals.</p>
+<p>New here? <strong>Help ▸ Editor Tour</strong> shows the parts of the editor in a minute, and <strong>Help ▸ Welcome</strong> offers the
+first tutorial (a cruise control, built step by step) and the beginner examples, each with its tutorial.</p>
 <h2 id="build-your-first-model-in-5-steps">Build your first model in 5 steps<a class="headerlink" href="#build-your-first-model-in-5-steps" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>Add blocks.</strong> Drag a block from the <strong>Library</strong> (left) onto the canvas, or double-click it in the
@@ -5455,6 +5569,14 @@ PID controller), and the lines between them carry signals.</p>
 <tr>
 <td><code>obd_ecu.nervus</code></td>
 <td>an engine ECU with trouble codes that answers OBD-II tools (<code>python -m nervus.obd simulate</code>)</td>
+</tr>
+<tr>
+<td><code>discrete_control.nervus</code></td>
+<td>one PI loop run continuously and as a sampled ECU task: overshoot and instability as the sample time grows (tutorial)</td>
+</tr>
+<tr>
+<td><code>aliasing.nervus</code></td>
+<td>a 45 Hz vibration sampled at 50 Hz looks like 5 Hz (tutorial)</td>
 </tr>
 </tbody>
 </table>

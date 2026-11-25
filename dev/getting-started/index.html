@@ -1486,6 +1486,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../app-help/tutorial_python_scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: Scripting and testing models from Python
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../app-help/tutorial_mass_spring_damper/" class="md-nav__link">
         
   
@@ -2214,6 +2242,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../app-help/tutorial_discrete_control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: From continuous to discrete: sample times
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../app-help/tutorial_model_to_code/" class="md-nav__link">
         
   
@@ -2702,6 +2758,34 @@
     
   
     Reusable components with subsystems, masks and libraries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/python-scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripting and testing models from Python
   
 
     
@@ -4354,6 +4438,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../tutorials/discrete-control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    From continuous to discrete: sample times
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../tutorials/model-to-code/" class="md-nav__link">
         
   
@@ -5380,9 +5492,13 @@ all of them.</p>
 </tbody>
 </table>
 <h2 id="the-editor">The editor<a class="headerlink" href="#the-editor" title="Permanent link">&para;</a></h2>
-<p><code>uv run nervus</code> starts the desktop editor. To learn it, follow
-the tutorial <a href="../tutorials/first-model/">Your first model</a>, which builds a cruise control step by step; the
-<a href="../editor/">editor guide</a> lists everything it can do. The rest of this page builds a model in Python.</p>
+<p><code>uv run nervus</code> starts the desktop editor. It opens with a <strong>welcome window</strong>: build your first model with the
+tutorial beside it, take a one-minute <strong>tour</strong> of the editor, open a beginner example together with its
+tutorial, or pick a recent model. <strong>Help ▸ Welcome</strong> brings the window back, and <strong>Help ▸ Editor Tour</strong> repeats
+the tour; untick <em>Show this window at startup</em> to start on an empty model instead.</p>
+<p>To learn the editor, follow the tutorial <a href="../tutorials/first-model/">Your first model</a>, which builds a cruise
+control step by step; the <a href="../editor/">editor guide</a> lists everything it can do. The rest of this page builds a
+model in Python, and <a href="../tutorials/python-scripting/">Scripting and testing models from Python</a> goes further.</p>
 <h2 id="your-first-model">Your first model<a class="headerlink" href="#your-first-model" title="Permanent link">&para;</a></h2>
 <p>A model is a <strong>diagram</strong> of <strong>blocks</strong> connected by <strong>signal lines</strong>. This builds the first-order system
 <span class="arithmatex">\(\tau \dot y = u - y\)</span> with <span class="arithmatex">\(\tau = 0.5\)</span> s:</p>
@@ -5504,6 +5620,10 @@ the tutorial <a href="../tutorials/first-model/">Your first model</a>, which bui
   model (<code>fmi_plant.nervus</code>). See the <a href="../tutorials/fmi/">tutorial</a>.</li>
 <li><code>obd_ecu.py</code>: an engine ECU with diagnostic monitors (misfire, lean) that answers real OBD-II tools while it
   runs. See <a href="../obd/">OBD-II</a>.</li>
+<li><code>scripting.py</code>: the cruise control driven from Python: parameters, sweeps, test cases, a model built in code.
+  See the <a href="../tutorials/python-scripting/">tutorial</a>.</li>
+<li><code>discrete_control.py</code>: one PI loop run continuously and as a sampled ECU task, and a signal that aliases
+  (<code>discrete_control.nervus</code>, <code>aliasing.nervus</code>). See the <a href="../tutorials/discrete-control/">tutorial</a>.</li>
 </ul>
 
 
