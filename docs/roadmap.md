@@ -25,11 +25,12 @@ A2L export, Simulink `.slx` import, 33 tutorials. [Changelog](https://github.com
 
 - **Development-board targets** with CAN (an STM32 Nucleo and an ESP32 first): the generated code with a scheduler
   template and a small hardware layer per board, built and flashed from Nervus. The model stays the same; only the
-  target changes.
+  target changes. *Done:* [board projects](boards.md) with an XCP slave in C; *open:* tests on real boards.
 - **Processor-in-the-loop (PIL)**: the generated code runs on the board, the plant in Nervus, compared step by step
   with the simulation.
 - **Hardware-in-the-loop (HIL)**: the plant model in real time on the PC, talking CAN to a real ECU.
-- The XCP slave on the board, so the board can be measured and calibrated like a production ECU.
+- The XCP slave on the board, so the board can be measured and calibrated like a production ECU (done for
+  polling; DAQ to follow).
 - Simulink import of Stateflow charts as State Chart blocks (needs sample models from MATLAB:
   [help wanted](developer/help-wanted.md#stateflow-sample-models-needs-matlab)).
 - **Faster simulation** for large models: accelerated mode, the model as compiled C (done; physical networks

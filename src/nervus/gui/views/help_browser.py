@@ -63,6 +63,7 @@ HELP_PAGES = [
     ("calibration", "Measurement and calibration"),
     ("analysis", "Linear analysis"),
     ("codegen", "C code generation"),
+    ("boards", "Development boards"),
     ("testing", "Test cases and the Data Inspector"),
     ("verification", "Coverage, requirements, Model Advisor"),
     _TUTORIALS_PAGE,

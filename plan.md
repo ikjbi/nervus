@@ -277,8 +277,10 @@ tests/
 - [x] CAN FD, multiplexed signals, value tables, DBC signals as workspace variables
 - [x] A2L file generation for calibration tools (measurements and characteristics), addresses from `nm`
 - [x] XCP-on-CAN basics for live measurement and calibration (`nervus.xcp`, XCP Slave block)
-- [ ] Target: development boards with CAN, as a scheduler template and a small hardware layer, so one model runs on
-      several boards (decided 2026-11-25: support more than one, e.g. STM32 Nucleo and ESP32, not a single board)
+- [x] Target: development boards with CAN, as a scheduler template and a small hardware layer, so one model runs on
+      several boards (decided 2026-11-25: support more than one): STM32 Nucleo-G474RE and ESP32 projects with an
+      XCP-on-CAN slave in C, built and flashed from Nervus
+- [ ] Test the board projects on real boards; DAQ and calibration pages in the C XCP slave
 - [ ] Processor-in-the-loop (PIL) testing
 - [ ] Hardware-in-the-loop (HIL): run the plant model in real time against a real ECU
 

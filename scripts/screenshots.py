@@ -407,6 +407,25 @@ def calibration_shots(win) -> None:  # type: ignore[no-untyped-def]
     cal.close()
 
 
+def board_shots(win) -> None:  # type: ignore[no-untyped-def]
+    """Code > Board Project, after creating an STM32 project for the throttle ECU."""
+    from nervus import load
+
+    win.diagram_model.set_diagram(load(ROOT / "examples" / "throttle_ecu.nervus"))
+    dlg = win.show_board_project()
+    dlg.folder.setText(str(Path(tempfile.mkdtemp()) / "throttle_ecu_stm32"))
+    dlg.make_project()
+    dlg.output.setPlainText(dlg.output.toPlainText().replace(str(Path(dlg.folder.text()).parent), "~"))
+    dlg.folder.setText("~/throttle_ecu_stm32")
+    dlg.resize(720, 400)
+    QApplication.processEvents()
+    grab(dlg, "board-project.png")
+    shutil.copy(
+        OUT / "board-project.png", ROOT / "src" / "nervus" / "gui" / "resources" / "figures" / "board-project.png"
+    )
+    dlg.close()
+
+
 def settings_shots(win) -> None:  # type: ignore[no-untyped-def]
     """The Simulation Settings dialog, with the simulation mode."""
     from nervus.gui.views.settings_dialog import SettingsDialog
@@ -453,6 +472,7 @@ def main() -> None:
         ["log"],
         ["settings"],
         ["calibration"],
+        ["board"],
     ):  # only the newest shots
         from nervus.gui.views.main_window import MainWindow
 
@@ -463,7 +483,8 @@ def main() -> None:
         shots = {"console": console_and_can_shots, "dictionary": dictionary_shots, "first": first_model_shots,
                  "requirements": requirements_shots, "chart": chart_shots,
                  "signals": signal_shots, "about": about_shots, "log": log_shots,
-                 "settings": settings_shots, "calibration": calibration_shots}  # fmt: skip
+                 "settings": settings_shots, "calibration": calibration_shots,
+                 "board": board_shots}  # fmt: skip
         shots[sys.argv[1]](win)
         win.editor.undo_stack.setClean()
         win.close()

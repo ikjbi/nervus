@@ -42,3 +42,19 @@ def test_measure_calibrate_and_record(window, qtbot, monkeypatch) -> None:  # ty
     assert window.sim_model.runs[-1].label.startswith("ECU recording")
     cal.disconnect_ecu()
     assert cal.vecu is None and cal.master is None
+
+
+def test_board_dialog_creates_and_builds_a_host_project(window, tmp_path) -> None:  # type: ignore[no-untyped-def]
+    import shutil
+
+    from nervus import load
+
+    window.diagram_model.set_diagram(load(Path(__file__).parents[2] / "examples" / "throttle_ecu.nervus"))
+    dlg = window.show_board_project()
+    dlg.board.setCurrentIndex(dlg.board.findData("host"))
+    dlg.folder.setText(str(tmp_path / "board"))
+    assert dlg.make_project() is not None and (tmp_path / "board" / "main.c").exists()
+    if shutil.which("make"):
+        assert dlg.build(), dlg.output.toPlainText()
+        assert "A2L file with the program's addresses" in dlg.output.toPlainText()
+    dlg.close()

@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Development boards (**Code → Board Project…**, `nervus.codegen.boards`): the generated code as a project for an
+  STM32 Nucleo-G474RE (FDCAN, STM32Cube HAL) or an ESP32 (TWAI, ESP-IDF), with a main loop, a hardware layer, a
+  portable XCP-on-CAN slave in C and an A2L file with the board's CAN identifiers; built and flashed from Nervus,
+  the A2L addresses filled in from the built program. A host build tests a project without hardware. (Not yet
+  tested on a real board.)
 - Measurement and calibration (**Tools → Calibration…**), like INCA or CANape: connect over XCP on CAN, UDP or TCP
   (or to a virtual ECU), measure with DAQ lists (or polling), record to MDF4 and the Data Inspector, edit values,
   curves and maps with the limits of the A2L file, switch between the working and the reference page, seed and

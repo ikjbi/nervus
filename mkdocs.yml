@@ -45,6 +45,7 @@ nav:
       - Measurement and calibration: calibration.md
       - Linear analysis: analysis.md
       - C code generation: codegen.md
+      - Development boards: boards.md
       - Test cases and results: testing.md
       - Coverage, requirements and Model Advisor: verification.md
       - In-app help pages:
@@ -63,6 +64,7 @@ nav:
           - Measurement and calibration: app-help/calibration.md
           - Linear analysis: app-help/analysis.md
           - C code generation: app-help/codegen.md
+          - Development boards: app-help/boards.md
           - Test cases and the Data Inspector: app-help/testing.md
           - Coverage and Model Advisor: app-help/verification.md
           - Tutorials (app):

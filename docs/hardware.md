@@ -30,7 +30,8 @@ A development board runs the generated C code like an ECU and talks CAN. Two kin
 | Extras | | Wi-Fi and Bluetooth |
 | Best for | learning real ECU work | cheap experiments, wireless projects |
 
-**If you buy one, take the Nucleo-G474RE.**
+**If you buy one, take the Nucleo-G474RE.** Projects for both are made with **Code → Board Project…**
+([Development boards](boards.md)).
 
 What to look at when you choose a board:
 

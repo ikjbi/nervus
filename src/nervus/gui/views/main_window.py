@@ -301,6 +301,12 @@ class MainWindow(QMainWindow):
             None,
             "Measure and calibrate an ECU over XCP (CAN, UDP, TCP), or the generated code of this model as a virtual ECU",
         )
+        self.act_board = self._action(
+            "&Board Project…",
+            self.show_board_project,
+            None,
+            "The generated code as a project for a development board (STM32 Nucleo, ESP32), built and flashed",
+        )
         self.act_open_log = self._action(
             "Open &Vehicle Log…",
             lambda: self.show_inspector().open_log(),
@@ -404,6 +410,7 @@ class MainWindow(QMainWindow):
         m = mb.addMenu("&Code")
         m.addAction(self.act_codegen)
         m.addAction(self.act_export_fmu)
+        m.addAction(self.act_board)
         m = mb.addMenu("&Help")
         m.addActions([self.act_welcome, self.act_tour])
         m.addSeparator()
@@ -519,6 +526,13 @@ class MainWindow(QMainWindow):
 
     def show_obd(self) -> ObdRecordDialog:
         dlg = ObdRecordDialog(self.sim_model, self)
+        dlg.show()
+        return dlg
+
+    def show_board_project(self) -> Any:
+        from nervus.gui.views.board_dialog import BoardDialog
+
+        dlg = BoardDialog(self.diagram_model.diagram, self)
         dlg.show()
         return dlg
 
