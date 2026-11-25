@@ -1205,6 +1205,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#logs-from-scanner-apps-and-can-loggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs from scanner apps and CAN loggers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#trouble-codes-freeze-frame-and-vin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5403,6 +5414,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#logs-from-scanner-apps-and-can-loggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs from scanner apps and CAN loggers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#trouble-codes-freeze-frame-and-vin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5495,7 +5517,8 @@ read the standard live values that SAE J1979 defines as <em>mode 01 PIDs</em>: e
 temperatures, air flow, throttle position, fuel trims and more.</p>
 <p>Use it to:</p>
 <ul>
-<li>record a real drive and compare it with your model in the <strong>Data Inspector</strong>;</li>
+<li>record a real drive and compare it with your model in the <strong>Data Inspector</strong>, or open a log you made with
+  a scanner app or a CAN logger (<a href="#logs-from-scanner-apps-and-can-loggers">below</a>);</li>
 <li>replay the recording as the input of a <strong>test case</strong> (for example, real rpm and throttle into your idle
   controller);</li>
 <li>check that your plant model behaves like your car.</li>
@@ -5520,6 +5543,61 @@ adapter (its serial port), a <strong>CAN interface</strong> (python-can: SocketC
 the car does not report are greyed out. Tick the PIDs, set a duration (or record until <strong>Stop</strong>) and an
 interval, and press <strong>Record</strong>. Each PID gets its own plot while it records. Afterwards, <strong>Save…</strong> writes a
 <code>.nervres</code> or <code>.csv</code> file and <strong>Open in Data Inspector</strong> adds the drive as a run, to compare with a simulation.</p>
+<h2 id="logs-from-scanner-apps-and-can-loggers">Logs from scanner apps and CAN loggers<a class="headerlink" href="#logs-from-scanner-apps-and-can-loggers" title="Permanent link">&para;</a></h2>
+<p>Already have a log? <strong>Tools → Open Vehicle Log…</strong> (or <em>Load…</em> in the Data Inspector) opens it as a run in the
+Data Inspector, next to your simulations. Nervus reads:</p>
+<table>
+<thead>
+<tr>
+<th>Log</th>
+<th>From</th>
+<th>How it looks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CSV, one column per value</td>
+<td>Torque, OBD Fusion, OBDLink, FORScan, ScanMaster, Nervus's own export, most loggers</td>
+<td><code>Device Time,Engine RPM(rpm),Speed (OBD)(km/h)</code></td>
+</tr>
+<tr>
+<td>CSV, one row per sample</td>
+<td>Car Scanner</td>
+<td><code>"SECONDS";"PID";"VALUE";"UNITS"</code></td>
+</tr>
+<tr>
+<td>CAN log with a DBC file</td>
+<td>CAN loggers, CANalyzer, PCAN-View, SavvyCAN, candump; trucks (J1939)</td>
+<td><code>.asc</code>, <code>.blf</code>, <code>.trc</code>, <code>.log</code></td>
+</tr>
+<tr>
+<td>CAN log without a DBC file</td>
+<td>a CAN log of a scan tool talking to the car</td>
+<td>the OBD-II answers (0x7E8 to 0x7EF)</td>
+</tr>
+</tbody>
+</table>
+<p>For CSV files, Nervus finds the header (lines above it, such as the vehicle name, are skipped), the separator
+(<code>,</code>, <code>;</code> or tab), a decimal comma, and the unit in the column name (<code>Engine RPM(rpm)</code> or <code>Fuel rate [l/h]</code>
+becomes the value <em>Engine RPM</em> in rpm). The time column is the first one called <em>time</em>, <em>seconds</em>,
+<em>timestamp</em> and the like, in seconds (milliseconds if its name or unit says <em>ms</em>), or as dates and clock times,
+counted from the first line. Empty cells and <code>-</code> (a value that was not read that time) are filled in from the
+samples around them; text columns are left out.</p>
+<p>For a CAN log, Nervus asks for a <strong>DBC file</strong> and decodes every signal of every message in it. A truck's
+J1939 messages are matched by their parameter group, whichever controller sent them, so one J1939 DBC file
+fits any truck. Cancel the DBC question to decode only the OBD-II answers in the log, with the PIDs Nervus
+knows.</p>
+<p>Every value has its own time stamps (a scanner reads one PID after the other); Nervus puts them on the time
+stamps of the value with the most samples, linearly interpolated. The units are shown in the plot.</p>
+<p><img alt="A scanner app's log (examples/data/obd_scanner_log.csv) in the Data Inspector" src="../../images/vehicle-log.png" /></p>
+<p>In Python:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">nervus.logs</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_channels</span><span class="p">,</span> <span class="n">read_log</span>
+
+<span class="n">log_channels</span><span class="p">(</span><span class="s2">"examples/data/obd_scanner_log.csv"</span><span class="p">)</span>  <span class="c1"># {'Engine RPM': 'rpm', 'Speed (OBD)': 'km/h', ...}</span>
+<span class="n">rec</span> <span class="o">=</span> <span class="n">read_log</span><span class="p">(</span><span class="s2">"examples/data/obd_scanner_log.csv"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"Engine RPM"</span><span class="p">],</span> <span class="n">raster</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">truck</span> <span class="o">=</span> <span class="n">read_log</span><span class="p">(</span><span class="s2">"truck.blf"</span><span class="p">,</span> <span class="n">dbc</span><span class="o">=</span><span class="s2">"j1939.dbc"</span><span class="p">)</span>
+<span class="n">FromWorkspace</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">rec</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">rec</span><span class="p">[</span><span class="s2">"Engine RPM"</span><span class="p">])</span>  <span class="c1"># drive a model with the recorded engine speed</span>
+</code></pre></div>
 <h2 id="trouble-codes-freeze-frame-and-vin">Trouble codes, freeze frame and VIN<a class="headerlink" href="#trouble-codes-freeze-frame-and-vin" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>nervus.obd<span class="w"> </span>dtc<span class="w"> </span>--port<span class="w"> </span>/dev/tty.usbserial-1110
 </code></pre></div>

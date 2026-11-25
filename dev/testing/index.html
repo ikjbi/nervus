@@ -5784,7 +5784,7 @@ peak-to-peak or the time of the maximum. <strong>Run</strong> simulates in the b
 <p><strong>Simulation → Data Inspector</strong> (⌘I) keeps the last 20 runs, both normal simulations and test results.
 Check runs and signals to overlay them. With two runs selected it shows the largest difference, and
 <em>Difference to first run</em> plots the deviation directly. <em>Save run…</em> writes a <code>.nervres</code> file (use it as a
-baseline), <em>Load…</em> reads one (or an MDF4 measurement), and <em>Export</em> writes CSV, MATLAB <code>.mat</code> or MDF4.</p>
+baseline), <em>Load…</em> reads one (or an MDF4 measurement, or a <a href="../obd/#logs-from-scanner-apps-and-can-loggers">vehicle log</a>), and <em>Export</em> writes CSV, MATLAB <code>.mat</code> or MDF4.</p>
 <p><img alt="The Data Inspector comparing the two calibrations of the throttle controller" src="../images/data-inspector.png" /></p>
 <h3 id="mdf4-measurement-files">MDF4 measurement files<a class="headerlink" href="#mdf4-measurement-files" title="Permanent link">&para;</a></h3>
 <p><strong>MDF4</strong> (<code>.mf4</code>, ASAM MDF) is the file format of INCA, CANape, vehicle data loggers and test benches
@@ -5831,8 +5831,8 @@ test case.</p>
 regression tests in CI. The Nervus repository does exactly that for the examples.</p>
 <h3 id="signals-from-logged-data">Signals from logged data<a class="headerlink" href="#signals-from-logged-data" title="Permanent link">&para;</a></h3>
 <p><code>Signal.from_csv("drive_log.csv", "rpm")</code> reads a column of a CSV file (first column = time), for example
-data exported from a vehicle logger, to replay a real drive as a test input. Reading ASAM MDF4 logs directly
-is on the <a href="https://github.com/ikjbi/nervus/blob/main/plan.md">roadmap</a>.</p>
+data exported from a vehicle logger, to replay a real drive as a test input. For scanner app logs and CAN logs
+use <a href="../obd/#logs-from-scanner-apps-and-can-loggers"><code>read_log</code></a>, for MDF4 files <code>read_mdf</code> (above).</p>
 
 
 

@@ -5548,8 +5548,9 @@ A2L export, Simulink <code>.slx</code> import, 33 tutorials. <a href="https://gi
 </ul>
 <h2 id="03-real-hardware">0.3: real hardware<a class="headerlink" href="#03-real-hardware" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>A development-board target</strong> (an STM32 or ESP32 with CAN): the generated code with a scheduler template and
-  hardware drivers, built and flashed from Nervus.</li>
+<li><strong>Development-board targets</strong> with CAN (an STM32 Nucleo and an ESP32 first): the generated code with a scheduler
+  template and a small hardware layer per board, built and flashed from Nervus. The model stays the same; only the
+  target changes.</li>
 <li><strong>Processor-in-the-loop (PIL)</strong>: the generated code runs on the board, the plant in Nervus, compared step by step
   with the simulation.</li>
 <li><strong>Hardware-in-the-loop (HIL)</strong>: the plant model in real time on the PC, talking CAN to a real ECU.</li>
@@ -5605,12 +5606,14 @@ A2L export, Simulink <code>.slx</code> import, 33 tutorials. <a href="https://gi
 </ol>
 <h2 id="decided-along-the-way">Decided along the way<a class="headerlink" href="#decided-along-the-way" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Inside Nervus or a separate application?</strong> The measurement and calibration tool can be a workspace inside
-  Nervus or its own application that shares Nervus's A2L, XCP and CAN code. <em>Recommendation:</em> one application with a
-  <strong>Calibration</strong> workspace, because the same windows then work against the model, a board and the real ECU, and a
-  calibration found on the vehicle can go back into the model in one step. To be decided before 0.4.</li>
-<li><strong>Which hardware?</strong> CAN interfaces through python-can (PEAK, Kvaser, Vector, SocketCAN, and others); a first
-  development board for the tutorials.</li>
+<li><strong>Inside Nervus or a separate application?</strong> <em>Decided:</em> inside Nervus, as a <strong>Calibration</strong> workspace, because
+  the same windows then work against the model, a board and the real ECU, and a calibration found on the vehicle
+  can go back into the model in one step.</li>
+<li><strong>Which hardware?</strong> CAN interfaces through python-can (PEAK, Kvaser, Vector, SocketCAN, CANable and others).
+  <em>Decided:</em> not one development board but several, through a small hardware layer per board, so users can take the
+  board they have.</li>
+<li><strong>Signed applications?</strong> Postponed: signing costs a yearly fee. The unsigned applications open with right-click ▸
+  Open (macOS) or <em>More info ▸ Run anyway</em> (Windows).</li>
 </ul>
 <h2 id="safety-and-the-law">Safety and the law<a class="headerlink" href="#safety-and-the-law" title="Permanent link">&para;</a></h2>
 <p>Writing to an ECU changes how a vehicle behaves. Nervus's calibration and flashing features are for <strong>development
