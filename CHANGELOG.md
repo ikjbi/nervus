@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-25
+
+Standalone applications (no Python needed) on the release page.
+
 ### Added
 - Standalone applications for macOS, Windows and Linux (no Python needed), attached to every release.
 - Simulink `.mdl` import (the text format), next to `.slx`: `nervus.simulink.read_model`.
