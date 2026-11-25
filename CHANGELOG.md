@@ -31,6 +31,7 @@ Standalone applications (no Python needed) on the release page.
   instability, discrete poles, and aliasing (`examples/discrete_control.nervus`, `examples/aliasing.nervus`).
 
 ### Fixed
+- Generated state chart code with a single top-level state did not compile with clang `-Werror`.
 - File ▸ Import Simulink, Import SPICE, Export SPICE and Code ▸ Export FMU did nothing from the menu.
 - Closing the window during a simulation hung for 5 s and left the simulation thread running.
 - Undo after deleting and restoring a block could fail (*list.remove(x): x not in list*) and leave a wire behind;
