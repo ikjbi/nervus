@@ -36,7 +36,7 @@ A2L export, Simulink `.slx` import, 33 tutorials. [Changelog](https://github.com
   still run in Python).
 - What users report: bugs, missing blocks, unclear tutorials.
 
-## 0.4 to 0.6: measurement and calibration (the first INCA part)
+## 0.4 to 0.6: measurement and calibration (the first INCA part; most of it is in 0.3)
 
 - **A2L import of any ECU's description** (not only Nervus's own): measurements, characteristics (values, curves,
   maps with their axes), conversion methods, record layouts, memory segments.
@@ -47,6 +47,9 @@ A2L export, Simulink `.slx` import, 33 tutorials. [Changelog](https://github.com
 - **Calibration editors**: values, curves and maps as tables and 3-D surfaces, changed live in the ECU, with
   **working and reference pages** (switch between the calibration under test and the safe one in one click).
 - The same windows work against the model (simulation), the development board and a production ECU.
+- *Done in 0.3:* the [Calibration window](calibration.md) with A2L import of any ECU, the XCP master on CAN,
+  CAN FD, UDP and TCP with DAQ lists, seed and key, working and reference pages, value/curve/map editors,
+  recording to MDF4, and a virtual ECU. *Still open:* CCP, 3-D map views, bar and state displays, triggers.
 
 ## 0.7 and 0.8: data sets, flashing and diagnostics
 

@@ -295,6 +295,12 @@ class MainWindow(QMainWindow):
         self.act_obd = self._action(
             "Record from &OBD-II…", self.show_obd, None, "Read live data from a car through its OBD-II port"
         )
+        self.act_calibration = self._action(
+            "&Calibration…",
+            self.show_calibration,
+            None,
+            "Measure and calibrate an ECU over XCP (CAN, UDP, TCP), or the generated code of this model as a virtual ECU",
+        )
         self.act_open_log = self._action(
             "Open &Vehicle Log…",
             lambda: self.show_inspector().open_log(),
@@ -390,6 +396,8 @@ class MainWindow(QMainWindow):
         m.addAction(self.act_sweep)
         m.addAction(self.act_advisor)
         m = mb.addMenu("&Tools")
+        m.addAction(self.act_calibration)
+        m.addSeparator()
         m.addAction(self.act_obd)
         m.addAction(self.act_open_log)
         m.addAction(self.act_can_trace)
@@ -513,6 +521,15 @@ class MainWindow(QMainWindow):
         dlg = ObdRecordDialog(self.sim_model, self)
         dlg.show()
         return dlg
+
+    def show_calibration(self) -> Any:
+        from nervus.gui.views.calibration import CalibrationWindow
+
+        if getattr(self, "_calibration", None) is None:
+            self._calibration = CalibrationWindow(self, self)
+        self._calibration.show()
+        self._calibration.raise_()
+        return self._calibration
 
     def show_can_trace(self) -> CanTraceDialog:
         dlg = CanTraceDialog(self.diagram_model.root, self)

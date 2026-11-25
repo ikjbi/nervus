@@ -367,18 +367,20 @@ Nervus or as a separate app that shares Nervus's XCP, A2L and CAN code. Nervus a
 and a command-line XCP tool, A2L export, MDF4 files, CAN with DBC files and OBD-II.
 - [x] Decide: inside Nervus (a "Calibration" workspace) or a separate app sharing the libraries. Decided
       2026-11-25: **inside Nervus**, a Calibration workspace
-- [ ] A2L import of any ECU's description (not only Nervus's own), including maps, curves, axes and conversion
+- [x] A2L import of any ECU's description (not only Nervus's own), including maps, curves, axes and conversion
       methods (COMPU_METHOD), record layouts and memory segments
-- [ ] XCP master over CAN, CAN FD and Ethernet (UDP/TCP), plus CCP for older ECUs; DAQ lists with
+- [x] XCP master over CAN, CAN FD and Ethernet (UDP/TCP); DAQ lists with
       time stamps, several rates, seed and key
-- [ ] Measurement windows: oscilloscope, numeric, bar and state displays; recording to MDF4; triggers
-- [ ] Calibration editors: values, curves and maps as tables and 3-D surfaces, with working and reference pages
+- [x] Measurement windows: oscilloscope and numeric display; recording to MDF4 (the Calibration window)
+- [ ] Bar and state displays; recording triggers; CCP for older ECUs; several DAQ event rates
+- [x] Calibration editors: values, curves and maps as tables (3-D surfaces still open), with working and reference pages
       (switch between them live)
 - [ ] Data sets: read and write HEX/S19 files and calibration files (DCM, CDF/CDFX); compare and merge two data sets;
       a history of changes
 - [ ] Flashing over UDS (ISO 14229) and the ECU's bootloader: program, verify, checksums
 - [ ] Diagnostics over UDS/KWP2000: read and clear trouble codes, read data by identifier, routines
 - [ ] Experiments saved as files (the windows, the variables, the layout), and scripting (Python)
+- [x] A virtual ECU (the generated code with an XCP slave on its memory) to try the tool without hardware
 - [ ] Existing open-source pieces to evaluate: pyxcp, asammdf, python-can, cantools, canmatrix, udsoncan, pya2l
 - [ ] Safety: write-protection, plausibility limits for calibration values, and only on a bench or a test vehicle
 

@@ -42,6 +42,7 @@ nav:
       - Physical modelling: physical.md
       - CAN communication: can.md
       - OBD-II live data: obd.md
+      - Measurement and calibration: calibration.md
       - Linear analysis: analysis.md
       - C code generation: codegen.md
       - Test cases and results: testing.md
@@ -59,6 +60,7 @@ nav:
           - Physical modelling: app-help/physical.md
           - CAN communication: app-help/can.md
           - OBD-II live data: app-help/obd.md
+          - Measurement and calibration: app-help/calibration.md
           - Linear analysis: app-help/analysis.md
           - C code generation: app-help/codegen.md
           - Test cases and the Data Inspector: app-help/testing.md

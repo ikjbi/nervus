@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Measurement and calibration (**Tools → Calibration…**), like INCA or CANape: connect over XCP on CAN, UDP or TCP
+  (or to a virtual ECU), measure with DAQ lists (or polling), record to MDF4 and the Data Inspector, edit values,
+  curves and maps with the limits of the A2L file, switch between the working and the reference page, seed and
+  key, and a log of every write.
+- A2L files of any ECU (`nervus.a2l`): measurements, VALUE/VAL_BLK/CURVE/MAP characteristics with their axes
+  (STD_AXIS, FIX_AXIS, COM_AXIS), conversion methods, record layouts, memory segments and the XCP connection.
+- XCP: DAQ lists with time stamps, seed and key, working and reference pages, CAN FD packet sizes, XCP on UDP and
+  TCP (`UdpTransport`, `TcpTransport`, `serve_udp`, `serve_can`).
+- Virtual ECU (`python -m nervus.vecu`, `nervus.vecu.VirtualEcu`): the generated C code running in real time with
+  an XCP slave on its real memory and an A2L file with real addresses.
 - Accelerated simulation (**Simulation Settings → Simulation mode**, or `settings.mode = "accelerated"`): the whole
   model runs as compiled C, 30 to 700 times faster, with the same results as a fixed-step run. C code for the
   continuous blocks (Integrator with limits, resets and external initial value; Transfer Fcn; State-Space;

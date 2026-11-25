@@ -60,6 +60,7 @@ HELP_PAGES = [
     ("physical", "Physical modelling"),
     ("can", "CAN communication"),
     ("obd", "OBD-II live data"),
+    ("calibration", "Measurement and calibration"),
     ("analysis", "Linear analysis"),
     ("codegen", "C code generation"),
     ("testing", "Test cases and the Data Inspector"),
