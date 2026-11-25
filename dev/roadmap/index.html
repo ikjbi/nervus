@@ -918,6 +918,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../boards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../testing/" class="md-nav__link">
         
   
@@ -984,10 +1012,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_16" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_17" >
         
           
-          <label class="md-nav__link" for="__nav_4_16" id="__nav_4_16_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_17" id="__nav_4_17_label" tabindex="0">
             
   
   
@@ -1005,8 +1033,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_16_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_16">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_17">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1443,6 +1471,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../app-help/boards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../app-help/testing/" class="md-nav__link">
         
   
@@ -1509,10 +1565,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_16_18" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_17_19" >
         
           
-          <label class="md-nav__link" for="__nav_4_16_18" id="__nav_4_16_18_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_17_19" id="__nav_4_17_19_label" tabindex="0">
             
   
   
@@ -1530,8 +1586,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_16_18_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_16_18">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_17_19_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_17_19">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -5661,11 +5717,12 @@ A2L export, Simulink <code>.slx</code> import, 33 tutorials. <a href="https://gi
 <ul>
 <li><strong>Development-board targets</strong> with CAN (an STM32 Nucleo and an ESP32 first): the generated code with a scheduler
   template and a small hardware layer per board, built and flashed from Nervus. The model stays the same; only the
-  target changes.</li>
+  target changes. <em>Done:</em> <a href="../boards/">board projects</a> with an XCP slave in C; <em>open:</em> tests on real boards.</li>
 <li><strong>Processor-in-the-loop (PIL)</strong>: the generated code runs on the board, the plant in Nervus, compared step by step
   with the simulation.</li>
 <li><strong>Hardware-in-the-loop (HIL)</strong>: the plant model in real time on the PC, talking CAN to a real ECU.</li>
-<li>The XCP slave on the board, so the board can be measured and calibrated like a production ECU.</li>
+<li>The XCP slave on the board, so the board can be measured and calibrated like a production ECU (done for
+  polling; DAQ to follow).</li>
 <li>Simulink import of Stateflow charts as State Chart blocks (needs sample models from MATLAB:
   <a href="../developer/help-wanted/#stateflow-sample-models-needs-matlab">help wanted</a>).</li>
 <li><strong>Faster simulation</strong> for large models: accelerated mode, the model as compiled C (done; physical networks
