@@ -189,6 +189,11 @@ fclose(fid);
 writematrix([res.tout res.yout], csv, 'WriteMode', 'append');
 save_system(name, fullfile(out, [name '.slx']));
 save_system(name, fullfile(out, [name '.mdl']));
+% Simulink renames the .slx to .slx.<release> when the same model is saved as .mdl next to it
+backup = dir(fullfile(out, [name '.slx.r*']));
+if ~isempty(backup)
+    movefile(fullfile(out, backup(1).name), fullfile(out, [name '.slx']), 'f');
+end
 close_system(name, 0);
 fprintf('  %s: %d time points\n', name, numel(res.tout));
 end
