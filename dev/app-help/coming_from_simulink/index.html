@@ -2579,6 +2579,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Importing a Simulink model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stateflow-charts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stateflow charts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -5578,6 +5595,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Importing a Simulink model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stateflow-charts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stateflow charts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -5724,7 +5758,7 @@ maps Simulink names to Nervus names.</p>
 </tr>
 <tr>
 <td>Stateflow chart</td>
-<td>State Chart block with a text definition (<a href="../statecharts/">State machines</a>)</td>
+<td>State Chart block with a text definition (<a href="../statecharts/">State machines</a>); imported with the model</td>
 </tr>
 <tr>
 <td>Simscape (Electrical, rotational mechanics, thermal)</td>
@@ -5875,22 +5909,96 @@ maps Simulink names to Nervus names.</p>
 </tbody>
 </table>
 <h2 id="importing-a-simulink-model">Importing a Simulink model<a class="headerlink" href="#importing-a-simulink-model" title="Permanent link">&para;</a></h2>
-<p><strong>File ▸ Import Simulink Model…</strong> opens an <code>.slx</code> file, or an <code>.mdl</code> file (Simulink's older text format), as a new
-Nervus model (save it as <code>.nervus</code>). From Python: <code>model = nervus.simulink.read_model("controller.slx")</code>.</p>
+<p><strong>File ▸ Import Simulink Model…</strong> opens an <code>.slx</code> file, or an <code>.mdl</code> file (the classic text format, and the newer one
+of R2019b and later), as a new Nervus model (save it as <code>.nervus</code>). From Python: <code>model = nervus.simulink.read_model("controller.slx")</code>.</p>
 <ul>
 <li>The common blocks are translated with their parameters and positions: sources (Constant, Step, Sine Wave, Ramp,
   Clock), math (Gain, Sum, Product, Bias, Abs, MinMax), continuous and discrete blocks (Integrator, Transfer Fcn,
   State-Space, Unit Delay, Memory, Zero-Order Hold, Discrete-Time Integrator, Discrete Transfer Fcn), discontinuities
-  (Saturation, Dead Zone, Rate Limiter, Relay, Quantizer), logic (Relational Operator, Logical Operator, Compare To
+  (Saturation, Dead Zone, Rate Limiter, Relay, Quantizer), Repeating Sequence, logic (Relational Operator, Logical Operator, Compare To
   Constant), routing (Switch, Mux, Demux, Data Type Conversion), lookup tables (1-D, 2-D), PID controllers, sinks,
   ports and subsystems with their masks.</li>
+<li><strong>Stateflow charts</strong> become State Chart blocks: see <a href="#stateflow-charts">Stateflow charts</a> below.</li>
+<li>The stop time, the solver (fixed or variable step) and the fixed step size come along.</li>
 <li>Parameters stay expressions with their workspace variables (<code>Kp</code>, <code>2*pi</code>, <code>[1 2 3]</code>); MATLAB's <code>^</code> becomes <code>**</code> and
   <code>0:0.5:2</code> becomes a list. The variables the model uses are added to the Model Workspace with the value 1: give them
   their values (they live in a MATLAB script or data dictionary that the <code>.slx</code> does not contain).</li>
-<li>A block that is not translated (an S-Function, a Stateflow chart, a block from another toolbox) becomes an empty
+<li>A block that is not translated (an S-Function, a MATLAB Function block, a block from another toolbox) becomes an empty
   subsystem with the same ports, named like the Simulink block, so the wiring stays and you can rebuild it there.</li>
 <li>The import report lists the blocks that were not translated and the workspace variables.</li>
 </ul>
+<h3 id="stateflow-charts">Stateflow charts<a class="headerlink" href="#stateflow-charts" title="Permanent link">&para;</a></h3>
+<p><img alt="" src="../../images/stateflow-import.png" /></p>
+<p>A Stateflow chart becomes a <a href="../statecharts/">State Chart</a> block with the same states, positions, inputs and outputs:</p>
+<table>
+<thead>
+<tr>
+<th>Stateflow</th>
+<th>State Chart</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>exclusive (OR) and parallel (AND) states, at any depth</td>
+<td>nested states and <code>parallel</code> states; a parallel chart becomes one parallel top state</td>
+</tr>
+<tr>
+<td><code>entry:</code>/<code>en:</code>, <code>during:</code>/<code>du:</code>, <code>exit:</code>/<code>ex:</code>, <code>en, du:</code></td>
+<td><code>entry:</code>, <code>during:</code>, <code>exit:</code></td>
+</tr>
+<tr>
+<td><code>event[condition]{condition action}/transition action</code></td>
+<td><code>guard / action</code></td>
+</tr>
+<tr>
+<td>connective junctions</td>
+<td>one transition for each way through them, with the guards joined by <code>and</code></td>
+</tr>
+<tr>
+<td>default transitions (with actions)</td>
+<td>the initial state; the action runs in the enclosing state's entry action</td>
+</tr>
+<tr>
+<td>history junctions</td>
+<td><code>history</code></td>
+</tr>
+<tr>
+<td>execution order of the transitions</td>
+<td>the order of the <code>transition</code> lines</td>
+</tr>
+<tr>
+<td>a transition drawn in a state above both its ends</td>
+<td><code>transition A -&gt; B within S</code> (it leaves and enters again every state below S)</td>
+</tr>
+<tr>
+<td><code>after(n, sec)</code>, <code>after(n, msec)</code>, <code>before(n, sec)</code></td>
+<td><code>t_in_state &gt;= n</code>, <code>t_in_state &gt;= n/1000</code>, <code>t_in_state &lt; n</code></td>
+</tr>
+<tr>
+<td><code>after(n, tick)</code></td>
+<td><code>after(n)</code></td>
+</tr>
+<tr>
+<td>MATLAB (<code>~=</code>, <code>&amp;&amp;</code>, <code>~</code>, <code>^</code>, <code>mod</code>) and C (<code>!=</code>, <code>||</code>, <code>!</code>, <code>x++</code>, <code>x += 1</code>) action language</td>
+<td>the chart language</td>
+</tr>
+<tr>
+<td>input, output, local, constant and parameter data; local events, <code>send(e)</code></td>
+<td><code>input</code>, <code>output</code>, <code>local</code>, <code>param</code>, <code>event</code>, <code>send(e)</code></td>
+</tr>
+<tr>
+<td>the first sample only enters the chart (unless <em>Execute at initialization</em>)</td>
+<td><code>first_sample: enter</code></td>
+</tr>
+</tbody>
+</table>
+<p>The chart computes what Stateflow computes: the test suite runs two models made in MATLAB R2025b (a lamp and a gearbox with
+hierarchy, parallel states, a junction and timers) and compares every sample with Simulink's results: they are
+equal. The generated C code of the imported charts is checked against the simulation too.</p>
+<p>Not imported (the import report lists each place): graphical, MATLAB, Simulink and truth-table functions, input and
+output events (triggered charts), vectors and matrices, <code>every</code>, <code>duration</code>, inner transitions (they leave and enter
+their state again in Nervus), and conditional default paths. Integer and fixed-point chart data are computed as
+double. MATLAB Function blocks and State Transition Tables are not imported either.</p>
 <p>Compare the results: run the same scenario in both tools, export Simulink's results to a CSV or MAT file, and load
 them in the <strong>Data Inspector</strong> next to Nervus's.</p>
 <h2 id="differences">Differences<a class="headerlink" href="#differences" title="Permanent link">&para;</a></h2>
@@ -5902,8 +6010,8 @@ them in the <strong>Data Inspector</strong> next to Nervus's.</p>
 <li><strong>Models are text.</strong> <code>.nervus</code> files are JSON and diff well in git.</li>
 <li><strong>Charts are also text.</strong> State charts are drawn in the chart editor and stored in a small text language, which
   diffs well and can be edited directly.</li>
-<li><strong>Stateflow charts are not imported.</strong> <code>.slx</code> and <code>.mdl</code> models are (see above); charts become empty subsystems
-  and have to be rebuilt as State Chart blocks.</li>
+<li><strong>A transition belongs to the state it is drawn in</strong> in Stateflow, so moving an arrow can change what it does.
+  In Nervus it belongs to the innermost state containing both ends, unless it says <code>within S</code>.</li>
 </ul>
 
 

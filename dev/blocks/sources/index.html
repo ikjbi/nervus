@@ -5088,6 +5088,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#repeating-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repeating Sequence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Repeating Sequence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#from-workspace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5100,7 +5128,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#parameters_6" class="md-nav__link">
+  <a href="#parameters_7" class="md-nav__link">
     <span class="md-ellipsis">
       
         Parameters
@@ -5139,7 +5167,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#parameters_7" class="md-nav__link">
+  <a href="#parameters_8" class="md-nav__link">
     <span class="md-ellipsis">
       
         Parameters
@@ -5883,6 +5911,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#repeating-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repeating Sequence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Repeating Sequence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#from-workspace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5895,7 +5951,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#parameters_6" class="md-nav__link">
+  <a href="#parameters_7" class="md-nav__link">
     <span class="md-ellipsis">
       
         Parameters
@@ -5934,7 +5990,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#parameters_7" class="md-nav__link">
+  <a href="#parameters_8" class="md-nav__link">
     <span class="md-ellipsis">
       
         Parameters
@@ -6242,6 +6298,44 @@ The first pulse starts at <em>delay</em>.</p>
 <p>Outputs the simulation time <em>t</em>.</p>
 <p><em>Direct feedthrough:</em> yes · no inputs</p>
 <hr />
+<h2 id="repeating-sequence">Repeating Sequence<a class="headerlink" href="#repeating-sequence" title="Permanent link">&para;</a></h2>
+<p><code>sources.repeating_sequence</code> · Sources</p>
+<p>Repeats a sequence of points: a sawtooth, a triangle or a drive pattern.</p>
+<p>The output interpolates linearly between the points (<em>times</em>, <em>values</em>) and starts again after the last time
+point, which is the period. Two points at the same time make a jump. As Simulink's Repeating Sequence block.</p>
+<h3 id="parameters_6">Parameters<a class="headerlink" href="#parameters_6" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Default</th>
+<th>Unit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>times</code></td>
+<td><code>[0.0, 2.0]</code></td>
+<td>s</td>
+<td>Times of the points; the last one is the period</td>
+</tr>
+<tr>
+<td><code>values</code></td>
+<td><code>[0.0, 2.0]</code></td>
+<td></td>
+<td>Values at those times</td>
+</tr>
+<tr>
+<td><code>sample_time</code></td>
+<td><code>0.0</code></td>
+<td>s</td>
+<td>0 = continuous, &gt; 0 = discrete period</td>
+</tr>
+</tbody>
+</table>
+<p><em>Direct feedthrough:</em> yes · no inputs</p>
+<hr />
 <h2 id="from-workspace">From Workspace<a class="headerlink" href="#from-workspace" title="Permanent link">&para;</a></h2>
 <p><code>sources.from_workspace</code> · Sources</p>
 <p>Plays back recorded data.</p>
@@ -6250,7 +6344,7 @@ The first pulse starts at <em>delay</em>.</p>
 <em>csv_file</em> whose first column is time and remaining columns are data (a header row is skipped automatically).</p>
 <p><em>interpolation</em>: <code>linear</code> interpolates between points; <code>hold</code> keeps the last value (zero-order hold).
 Outside the time range the first/last value is held.</p>
-<h3 id="parameters_6">Parameters<a class="headerlink" href="#parameters_6" title="Permanent link">&para;</a></h3>
+<h3 id="parameters_7">Parameters<a class="headerlink" href="#parameters_7" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -6313,7 +6407,7 @@ Outside the time range the first/last value is held.</p>
 <p>Output 0 is the speed (km/h or m/s, <em>unit</em>), output 1 the acceleration [m/s²] (the slope of the profile,
 useful as a feed-forward for a driver model). After the end of the cycle the speed stays 0. The WLTC and
 FTP-75 tables are the official second-by-second values.</p>
-<h3 id="parameters_7">Parameters<a class="headerlink" href="#parameters_7" title="Permanent link">&para;</a></h3>
+<h3 id="parameters_8">Parameters<a class="headerlink" href="#parameters_8" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>

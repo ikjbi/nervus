@@ -5775,6 +5775,14 @@ transition running -&gt; off: key &lt; 0.5 or rpm &lt; 300
 <td><code>transition A -&gt; B: guard / action</code></td>
 <td>leave A for B when <em>guard</em> is true; the action is optional</td>
 </tr>
+<tr>
+<td><code>transition A -&gt; B within S: ...</code></td>
+<td>the transition belongs to S: it leaves and enters again every state below S (<a href="#nested-states-parallel-states-history-and-events">below</a>)</td>
+</tr>
+<tr>
+<td><code>first_sample: enter</code></td>
+<td>the first sample only enters the initial states, as Stateflow does (by default they are also processed in it)</td>
+</tr>
 </tbody>
 </table>
 <p>Actions are assignments separated by <code>;</code> (<code>y = 1; n += 1</code>). Guards and actions can use <code>+ - * / **</code>,
@@ -5837,6 +5845,11 @@ transition failed -&gt; ok: fault &lt; 0.5 and after(30)
   It exits the states it leaves from the inside out (<code>exit</code> actions, innermost first), runs its action, and
   enters the states down to the target from the outside in (<code>entry</code> actions), then the target's initial
   children.</li>
+<li><strong><code>within</code></strong>: a transition belongs to the innermost state containing both its ends. <code>transition high -&gt; low
+  within gear</code> makes it belong to <code>gear</code> instead: it leaves every state below <code>gear</code> (here also <code>driving</code>, which
+  contains both) and enters them again, so their <code>exit</code> and <code>entry</code> actions run. <code>within chart</code> leaves everything,
+  every parallel region too. This is how Stateflow treats a transition drawn outside the state that contains its
+  ends; <a href="../coming-from-simulink/#stateflow-charts">imported charts</a> use it.</li>
 </ul>
 <p><strong>Priority</strong>: outer transitions are checked first: while <code>on</code> is active, <code>on -&gt; off</code> is checked before anything
 inside it. If no transition of a state fires, its <code>during</code> actions run and then its active children are
