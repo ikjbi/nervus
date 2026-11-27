@@ -51,7 +51,7 @@ on = state(ch, 'On', [240 40 120 70], sprintf('On\nentry: lamp = 1;'));
 blink = state(ch, 'Blinking', [240 180 160 90], ...
     sprintf('Blinking\nentry: lamp = 2;\nduring: count = count + 1;'));
 
-default_transition(ch, off);
+default_transition(ch, off, '{lamp = 0; count = 0;}');
 transition(ch, off, on, '[speed > 10]');
 transition(ch, on, blink, '[speed > 50]');
 transition(ch, blink, off, '[speed < 5]');
@@ -85,7 +85,7 @@ driving = state(box, 'Driving', [220 70 250 260], sprintf('Driving\nexit: shifts
 low = state(driving, 'Low', [260 120 100 50], sprintf('Low\nentry: gear = 1;'));
 high = state(driving, 'High', [260 230 100 50], sprintf('High\nentry: gear = 2;'));
 
-default_transition(box, parked);
+default_transition(box, parked, '{gear = 0; shifts = 0;}');
 default_transition(driving, low);
 transition(box, parked, driving, '[pedal > 0.1]');
 transition(driving, low, high, 'after(1, sec)[pedal > 0.5]');
@@ -99,7 +99,7 @@ transition(box, j, parked, '');
 % Inside Monitor (exclusive): Ok and Busy.
 ok = state(monitor, 'Ok', [560 80 110 60], sprintf('Ok\nentry: warning = 0;'));
 busy = state(monitor, 'Busy', [560 220 110 60], sprintf('Busy\nentry: warning = 1;'));
-default_transition(monitor, ok);
+default_transition(monitor, ok, '{warning = 0;}');
 transition(monitor, ok, busy, '[shifts >= 2]');
 transition(monitor, busy, ok, 'after(2, sec)');
 
@@ -134,6 +134,10 @@ d = Stateflow.Data(ch);
 d.Name = name;
 d.Scope = scope;
 d.DataType = type;
+if ~strcmp(scope, 'Input')
+    % MATLAB action language wants every output to have a value before it is first read
+    d.Props.InitialValue = '0';
+end
 end
 
 
@@ -155,9 +159,12 @@ t.LabelString = label;
 end
 
 
-function default_transition(parent, dst)
+function default_transition(parent, dst, label)
 t = Stateflow.Transition(parent);
 t.Destination = dst;
+if nargin > 2
+    t.LabelString = label;
+end
 t.DestinationOClock = 0;
 x = dst.Position(1) + dst.Position(3) / 2;
 y = dst.Position(2) - 25;
