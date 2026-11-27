@@ -4,8 +4,9 @@ Things where Nervus needs something only a user can provide.
 
 ## Stateflow sample models (needs MATLAB)
 
-To import Simulink models with **Stateflow** charts, the tests need real files saved by Simulink, with what
-Simulink computes for them. If you have MATLAB with Simulink and Stateflow:
+The [Stateflow import](../coming-from-simulink.md#stateflow-charts) is tested with two models made in MATLAB R2025b
+(thank you!). More samples from other releases, or charts that use what the samples do not, make it better. If you
+have MATLAB with Simulink and Stateflow:
 
 1. In MATLAB, go to the folder `scripts/matlab` of the Nervus repository (`cd <the nervus folder>/scripts/matlab`).
 2. Run `make_stateflow_samples`. It builds two small models (a lamp with three states; a gearbox with states

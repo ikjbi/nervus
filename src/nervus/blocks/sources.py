@@ -200,6 +200,53 @@ class Clock(_Source):
 
 
 @register
+class RepeatingSequence(_Source):
+    """Repeats a sequence of points: a sawtooth, a triangle or a drive pattern.
+
+    The output interpolates linearly between the points (*times*, *values*) and starts again after the last time
+    point, which is the period. Two points at the same time make a jump. As Simulink's Repeating Sequence block.
+    """
+
+    type_id = "sources.repeating_sequence"
+    label = "Repeating Sequence"
+    PARAMS = (
+        Param("times", [0.0, 2.0], ParamKind.ARRAY, "Times of the points; the last one is the period", "s"),
+        Param("values", [0.0, 2.0], ParamKind.ARRAY, "Values at those times"),
+        _ST_CONT,
+    )
+
+    def validate_params(self) -> None:
+        times = np.asarray(self.params["times"], dtype=np.float64).ravel()
+        values = np.asarray(self.params["values"], dtype=np.float64).ravel()
+        if times.size < 2 or times.size != values.size:
+            raise ParameterError("times and values need the same number of points (at least two)")
+        if np.any(np.diff(times) < 0) or times[-1] <= times[0]:
+            raise ParameterError("times must increase (equal times make a jump)")
+        self._times, self._values = times, values
+
+    def outputs(self, t: float, u: Sequence[Array], xc: Array, xd: Array) -> list[Array]:
+        t0, period = self._times[0], self._times[-1] - self._times[0]
+        tau = t0 + (t - t0) % period
+        k = int(np.searchsorted(self._times, tau, side="right"))  # at a jump: the value after it
+        if k >= self._times.size:
+            return [as_signal(self._values[-1])]
+        if k == 0:
+            return [as_signal(self._values[0])]
+        ta, tb = self._times[k - 1], self._times[k]
+        va, vb = self._values[k - 1], self._values[k]
+        return [as_signal(va + (vb - va) * (tau - ta) / (tb - ta))]
+
+    def breakpoints(self, t_start: float, t_final: float) -> list[float]:
+        t0, period = self._times[0], self._times[-1] - self._times[0]
+        pts: list[float] = []
+        k = max(0, math.floor((t_start - t0) / period))
+        while t0 + k * period <= t_final and len(pts) < 100000:
+            pts += [float(t0 + k * period + x - t0) for x in self._times]
+            k += 1
+        return [p for p in pts if t_start <= p <= t_final]
+
+
+@register
 class FromWorkspace(_Source):
     """Plays back recorded data.
 

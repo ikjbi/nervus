@@ -351,6 +351,24 @@ def chart_shots(win) -> None:  # type: ignore[no-untyped-def]
         shutil.copy(OUT / shot, ROOT / "src" / "nervus" / "gui" / "resources" / "figures" / shot)
 
 
+def stateflow_shots(win) -> None:  # type: ignore[no-untyped-def]
+    """A Stateflow chart made in MATLAB (scripts/matlab/stateflow_samples), imported, in the chart editor."""
+    win.import_simulink(str(ROOT / "scripts" / "matlab" / "stateflow_samples" / "sf_gearbox.slx"), show_report=False)
+    block = next(b for _p, b in win.diagram_model.root.walk() if b.type_id == "charts.state_chart")
+    ed = win.open_chart_editor(block)
+    ed.resize(1280, 700)
+    QApplication.processEvents()
+    ed.fit()
+    tr = next(t for t in ed.transition_items if t.transition.source == "High" and t.transition.target == "Low")
+    tr.setSelected(True)
+    QApplication.processEvents()
+    grab(ed, "stateflow-import.png")
+    ed.close()
+    shutil.copy(
+        OUT / "stateflow-import.png", ROOT / "src" / "nervus" / "gui" / "resources" / "figures" / "stateflow-import.png"
+    )
+
+
 def signal_shots(win) -> None:  # type: ignore[no-untyped-def]
     """The Signal Builder's editor: a pedal and a brake signal, two scenarios."""
     from PySide6.QtCore import QPointF
@@ -473,6 +491,7 @@ def main() -> None:
         ["settings"],
         ["calibration"],
         ["board"],
+        ["stateflow"],
     ):  # only the newest shots
         from nervus.gui.views.main_window import MainWindow
 
@@ -484,7 +503,7 @@ def main() -> None:
                  "requirements": requirements_shots, "chart": chart_shots,
                  "signals": signal_shots, "about": about_shots, "log": log_shots,
                  "settings": settings_shots, "calibration": calibration_shots,
-                 "board": board_shots}  # fmt: skip
+                 "board": board_shots, "stateflow": stateflow_shots}  # fmt: skip
         shots[sys.argv[1]](win)
         win.editor.undo_stack.setClean()
         win.close()

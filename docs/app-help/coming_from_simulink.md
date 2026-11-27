@@ -34,7 +34,7 @@ maps Simulink names to Nervus names.
 | Variant Subsystem, variant conditions | Variants…: conditions such as `ENGINE == 2` |
 | Library (`.slx` library), library links | Component libraries (`.nervlib`), linked subsystems ([Libraries](libraries.md)) |
 | Flip block (Ctrl+I), rotate block (Ctrl+R) | Flip Block (Ctrl+Shift+F), Rotate Block (Ctrl+Shift+R) |
-| Stateflow chart | State Chart block with a text definition ([State machines](statecharts.md)) |
+| Stateflow chart | State Chart block with a text definition ([State machines](statecharts.md)); imported with the model |
 | Simscape (Electrical, rotational mechanics, thermal) | physical blocks joined by links ([Physical modelling](physical.md)) |
 | LTspice / SPICE netlists | File → Import SPICE Netlist…, `nervus.spice` |
 | MATLAB Function block | Python Function block (with a *parameters* vector) |
@@ -75,21 +75,54 @@ maps Simulink names to Nervus names.
 
 ## Importing a Simulink model
 
-**File ▸ Import Simulink Model…** opens an `.slx` file, or an `.mdl` file (Simulink's older text format), as a new
-Nervus model (save it as `.nervus`). From Python: `model = nervus.simulink.read_model("controller.slx")`.
+**File ▸ Import Simulink Model…** opens an `.slx` file, or an `.mdl` file (the classic text format, and the newer one
+of R2019b and later), as a new Nervus model (save it as `.nervus`). From Python: `model = nervus.simulink.read_model("controller.slx")`.
 
 - The common blocks are translated with their parameters and positions: sources (Constant, Step, Sine Wave, Ramp,
   Clock), math (Gain, Sum, Product, Bias, Abs, MinMax), continuous and discrete blocks (Integrator, Transfer Fcn,
   State-Space, Unit Delay, Memory, Zero-Order Hold, Discrete-Time Integrator, Discrete Transfer Fcn), discontinuities
-  (Saturation, Dead Zone, Rate Limiter, Relay, Quantizer), logic (Relational Operator, Logical Operator, Compare To
+  (Saturation, Dead Zone, Rate Limiter, Relay, Quantizer), Repeating Sequence, logic (Relational Operator, Logical Operator, Compare To
   Constant), routing (Switch, Mux, Demux, Data Type Conversion), lookup tables (1-D, 2-D), PID controllers, sinks,
   ports and subsystems with their masks.
+- **Stateflow charts** become State Chart blocks: see [Stateflow charts](#stateflow-charts) below.
+- The stop time, the solver (fixed or variable step) and the fixed step size come along.
 - Parameters stay expressions with their workspace variables (`Kp`, `2*pi`, `[1 2 3]`); MATLAB's `^` becomes `**` and
   `0:0.5:2` becomes a list. The variables the model uses are added to the Model Workspace with the value 1: give them
   their values (they live in a MATLAB script or data dictionary that the `.slx` does not contain).
-- A block that is not translated (an S-Function, a Stateflow chart, a block from another toolbox) becomes an empty
+- A block that is not translated (an S-Function, a MATLAB Function block, a block from another toolbox) becomes an empty
   subsystem with the same ports, named like the Simulink block, so the wiring stays and you can rebuild it there.
 - The import report lists the blocks that were not translated and the workspace variables.
+
+### Stateflow charts
+
+![](../images/stateflow-import.png)
+
+A Stateflow chart becomes a [State Chart](statecharts.md) block with the same states, positions, inputs and outputs:
+
+| Stateflow | State Chart |
+|---|---|
+| exclusive (OR) and parallel (AND) states, at any depth | nested states and `parallel` states; a parallel chart becomes one parallel top state |
+| `entry:`/`en:`, `during:`/`du:`, `exit:`/`ex:`, `en, du:` | `entry:`, `during:`, `exit:` |
+| `event[condition]{condition action}/transition action` | `guard / action` |
+| connective junctions | one transition for each way through them, with the guards joined by `and` |
+| default transitions (with actions) | the initial state; the action runs in the enclosing state's entry action |
+| history junctions | `history` |
+| execution order of the transitions | the order of the `transition` lines |
+| a transition drawn in a state above both its ends | `transition A -> B within S` (it leaves and enters again every state below S) |
+| `after(n, sec)`, `after(n, msec)`, `before(n, sec)` | `t_in_state >= n`, `t_in_state >= n/1000`, `t_in_state < n` |
+| `after(n, tick)` | `after(n)` |
+| MATLAB (`~=`, `&&`, `~`, `^`, `mod`) and C (`!=`, `||`, `!`, `x++`, `x += 1`) action language | the chart language |
+| input, output, local, constant and parameter data; local events, `send(e)` | `input`, `output`, `local`, `param`, `event`, `send(e)` |
+| the first sample only enters the chart (unless *Execute at initialization*) | `first_sample: enter` |
+
+The chart computes what Stateflow computes: the test suite runs two models made in MATLAB R2025b (a lamp and a gearbox with
+hierarchy, parallel states, a junction and timers) and compares every sample with Simulink's results: they are
+equal. The generated C code of the imported charts is checked against the simulation too.
+
+Not imported (the import report lists each place): graphical, MATLAB, Simulink and truth-table functions, input and
+output events (triggered charts), vectors and matrices, `every`, `duration`, inner transitions (they leave and enter
+their state again in Nervus), and conditional default paths. Integer and fixed-point chart data are computed as
+double. MATLAB Function blocks and State Transition Tables are not imported either.
 
 Compare the results: run the same scenario in both tools, export Simulink's results to a CSV or MAT file, and load
 them in the **Data Inspector** next to Nervus's.
@@ -103,5 +136,5 @@ them in the **Data Inspector** next to Nervus's.
 - **Models are text.** `.nervus` files are JSON and diff well in git.
 - **Charts are also text.** State charts are drawn in the chart editor and stored in a small text language, which
   diffs well and can be edited directly.
-- **Stateflow charts are not imported.** `.slx` and `.mdl` models are (see above); charts become empty subsystems
-  and have to be rebuilt as State Chart blocks.
+- **A transition belongs to the state it is drawn in** in Stateflow, so moving an arrow can change what it does.
+  In Nervus it belongs to the innermost state containing both ends, unless it says `within S`.

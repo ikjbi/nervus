@@ -289,7 +289,8 @@ tests/
 - [x] Import a subset of Simulink `.slx` (about 45 block types, masks, subsystems; the rest as empty subsystems in
       a report)
 - [x] `.mdl` (text format), read into the same import as `.slx`
-- [ ] Stateflow charts in the Simulink import (as State Chart blocks)
+- [x] Stateflow charts in the Simulink import (as State Chart blocks), tested against models made in MATLAB R2025b
+- [x] `.mdl` files of R2019b and later (OPC text packages); stop time, solver and step from the configuration
 - [x] Export results to MAT files (`scipy.io`) for MATLAB users (`SimResult.to_mat`)
 
 ## Phase 19 – Quality, testing and release

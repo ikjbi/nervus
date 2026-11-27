@@ -40,6 +40,8 @@ class ETransition:
     target: str
     guard: str = ""
     action: str = ""
+    within: str = ""
+    """The state the transition belongs to, when above both ends (``transition A -> B within S``)."""
 
     def label(self) -> str:
         guard = "" if self.guard in ("", "true", "True") else self.guard
@@ -60,6 +62,8 @@ class EditableChart:
     initial: str | None = None
     """The top-level state entered first."""
     layout: dict[str, list[float]] = field(default_factory=dict)
+    enter_only_first: bool = False
+    """``first_sample: enter`` (Stateflow's start: the first sample only enters the initial states)."""
 
     # ------------------------------------------------------------------ queries
 
@@ -125,6 +129,7 @@ class EditableChart:
         for t in self.transitions:
             t.source = new if t.source == old else t.source
             t.target = new if t.target == old else t.target
+            t.within = new if t.within == old else t.within
         if self.initial == old:
             self.initial = new
         if old in self.layout:
@@ -135,6 +140,9 @@ class EditableChart:
         gone = {name, *self.descendants(name)}
         self.states = [s for s in self.states if s.name not in gone]
         self.transitions = [t for t in self.transitions if t.source not in gone and t.target not in gone]
+        for t in self.transitions:
+            if t.within in gone:
+                t.within = ""
         for s in self.states:
             if s.initial in gone:
                 s.initial = None
@@ -164,6 +172,8 @@ class EditableChart:
         for kw, pairs in (("output", self.outputs), ("local", self.locals)):
             if pairs:
                 lines.append(f"{kw} {', '.join(f'{n} = {v}' if v not in ('', '0', '0.0') else n for n, v in pairs)}")
+        if self.enter_only_first:
+            lines.append("first_sample: enter")
         if self.initial is not None and self.states and self.initial != self.children(None)[0].name:
             lines.append(f"initial {self.initial}")
 
@@ -189,8 +199,10 @@ class EditableChart:
             lines.append("")
         for t in self.transitions:
             guard = t.guard.strip() or "true"
+            within = f" within {t.within}" if t.within else ""
             lines.append(
-                f"transition {t.source} -> {t.target}: {guard}" + (f" / {t.action.strip()}" if t.action.strip() else "")
+                f"transition {t.source} -> {t.target}{within}: {guard}"
+                + (f" / {t.action.strip()}" if t.action.strip() else "")
             )
         text = "\n".join(lines).lstrip("\n") + "\n"
         parse_chart(text)  # raises with the line number if something is wrong
@@ -209,6 +221,7 @@ def from_text(text: str, layout: dict[str, list[float]] | None = None) -> Editab
         params=list(spec.params),
         events=list(spec.events),
         initial=names[spec.initial],
+        enter_only_first=spec.enter_only_first,
     )
     for st in spec.states:
         chart.states.append(EState(st.name, None if st.parent is None else names[st.parent], st.entry_src,
@@ -216,7 +229,8 @@ def from_text(text: str, layout: dict[str, list[float]] | None = None) -> Editab
                                    None if st.initial is None else names[st.initial]))  # fmt: skip
     for t in spec.transitions:
         guard = "" if t.guard_src in ("true", "True") else t.guard_src
-        chart.transitions.append(ETransition(names[t.source], names[t.target], guard, t.action_src))
+        within = "" if t.within is None else "chart" if t.within < 0 else names[t.within]
+        chart.transitions.append(ETransition(names[t.source], names[t.target], guard, t.action_src, within))
     chart.layout = {k: list(map(float, v)) for k, v in (layout or {}).items() if k in names and len(v) == 4}
     auto_layout(chart)
     return chart

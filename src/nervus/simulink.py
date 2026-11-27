@@ -14,7 +14,12 @@ controllers, ports and subsystems, with masks). MATLAB expressions in parameters
 variables (``K``, ``2*pi``, ``[1 2 3]``; ``^`` becomes ``**`` and ``0:0.5:2`` a list). A block that cannot be
 translated becomes an empty subsystem with the same ports, named after the Simulink block, so the wiring stays; the
 import report lists those blocks and the workspace variables the model uses (added with the value 1: give them their
-values). Older ``.mdl`` files and Stateflow charts are not read.
+values). ``.mdl`` files are read too, the classic text format and the newer one (R2019b on) that packs the same XML
+parts as an ``.slx``.
+
+**Stateflow charts** become State Chart blocks (see :mod:`nervus.stateflow`): states, hierarchy, parallel states,
+transitions through junctions, temporal logic and the chart's data. The report lists what was approximated. The
+stop time and fixed step of the model's configuration are imported too.
 """
 
 from __future__ import annotations
@@ -56,9 +61,11 @@ from nervus.blocks import (
     RateLimiter,
     RelationalOperator,
     Relay,
+    RepeatingSequence,
     Saturation,
     Scope,
     Sine,
+    StateChart,
     StateSpace,
     Step,
     Subsystem,
@@ -87,9 +94,13 @@ class ImportReport:
     variables: list[str] = field(default_factory=list)
     """Workspace variables the model uses (added with the value 1)."""
     notes: list[str] = field(default_factory=list)
+    charts: list[str] = field(default_factory=list)
+    """Stateflow charts imported as State Charts."""
 
     def __str__(self) -> str:
         lines = [f"Imported {self.blocks} blocks."]
+        if self.charts:
+            lines.append(f"Stateflow charts imported as State Charts ({len(self.charts)}): {', '.join(self.charts)}")
         if self.unsupported:
             lines.append(f"Not supported, imported as empty subsystems ({len(self.unsupported)}): "
                          + ", ".join(self.unsupported))  # fmt: skip
@@ -137,18 +148,52 @@ class _Archive:
         self.open_refs: set[str] = set()
         """The systems being read (a subsystem that contains itself would never end)."""
 
+    def read(self, name: str) -> bytes | None:
+        """A part of the archive (``simulink/stateflow/machine.xml``), or ``None``."""
+        if name not in self.names:
+            return None
+        try:
+            return self.zip.read(name)
+        except (zipfile.BadZipFile, OSError) as exc:
+            raise NervusError(f"cannot read {name} in the .slx file: {exc}") from exc
+
     def system(self, ref: str) -> ET.Element:
         name = f"simulink/systems/{ref}.xml"
-        if name not in self.names:
-            raise NervusError(f"the .slx file has no {name}")
+        data = self.read(name)
+        if data is None:
+            raise NervusError(f"the model file has no {name}")
         try:
-            return ET.fromstring(self.zip.read(name))
-        except (ET.ParseError, zipfile.BadZipFile, OSError) as exc:
-            raise NervusError(f"cannot read {name} in the .slx file: {exc}") from exc
+            return ET.fromstring(data)
+        except ET.ParseError as exc:
+            raise NervusError(f"cannot read {name} in the model file: {exc}") from exc
+
+
+class _TextPackage(_Archive):
+    """An ``.mdl`` file of R2019b and later: the parts of an ``.slx`` as text, each after a line
+    ``__MWOPC_PART_BEGIN__ /simulink/systems/system_root.xml`` (binary parts are base64 and not needed)."""
+
+    def __init__(self, text: str) -> None:
+        self.parts: dict[str, bytes] = {}
+        for chunk in text.split("__MWOPC_PART_BEGIN__ ")[1:]:
+            head, _, body = chunk.partition("\n")
+            name = head.strip().split(" ")[0].lstrip("/")
+            if head.strip().endswith("BASE64"):
+                continue
+            body = body.split("__MWOPC_PACKAGE_END__")[0]
+            self.parts[name] = body.encode("utf-8")
+        self.names = set(self.parts)
+        self.open_refs = set()
+
+    def read(self, name: str) -> bytes | None:
+        return self.parts.get(name)
 
 
 def _params(el: ET.Element) -> dict[str, str]:
-    return {p.get("Name", ""): (p.text or "") for p in el.findall("P")}
+    """The block's parameters, with those of a library block's ``<InstanceData>``."""
+    out = {p.get("Name", ""): (p.text or "") for p in el.findall("P")}
+    for inst in el.findall("InstanceData"):
+        out.update({p.get("Name", ""): (p.text or "") for p in inst.findall("P")})
+    return out
 
 
 def _mask(el: ET.Element) -> dict[str, str]:
@@ -197,6 +242,8 @@ def _make(btype: str, p: dict[str, str], mask_source: str) -> Block | None:
             if "Discrete" in source or g("TimeDomain", "") == "Discrete-time":
                 return DiscretePID(sample_time=e(g("SampleTime", "-1")), **kw)
             return PID(**kw)
+        if "Repeating" in source and "Sequence" in source and "Stair" not in source:
+            return RepeatingSequence(times=e(g("rep_seq_t", "[0 2]")), values=e(g("rep_seq_y", "[0 2]")))
         return None
     if btype == "Gain":
         return Gain(gain=e(g("Gain", "1")))
@@ -364,6 +411,11 @@ def _build(archive: Any, system: ET.Element, d: Diagram, path: str, report: Impo
             block = Inport(port=_port_number(p, f"{path}{name}"))
         elif btype == "Outport":
             block = Outport(port=_port_number(p, f"{path}{name}"))
+        elif btype == "SubSystem" and p.get("SFBlockType", "") == "Chart":
+            block = _chart(archive, f"{path}{name}", name, _ports(p), report)
+        elif btype == "SubSystem" and p.get("SFBlockType", "") not in ("", "NONE"):
+            block = _placeholder(*_ports(p), p["SFBlockType"])
+            report.unsupported.append(f"{path}{name} ({p['SFBlockType']})")
         elif btype == "SubSystem":
             ref = el.find("System")
             if ref is None or ref.get("Ref") is None:
@@ -413,6 +465,43 @@ def _build(archive: Any, system: ET.Element, d: Diagram, path: str, report: Impo
         by_sid[sid] = block
     for line in system.findall("Line"):
         _connect(d, by_sid, line, None, path, report)
+
+
+def _chart(archive: Any, block_path: str, name: str, ports: tuple[int, int], report: ImportReport) -> Block:
+    """The Stateflow chart of the block at ``block_path`` as a State Chart (a placeholder if it cannot be read)."""
+    from nervus.stateflow import convert_chart
+
+    where = block_path
+    try:
+        xml = _chart_xml(archive, block_path, name)
+        result = convert_chart(xml, name)
+    except (NervusError, ET.ParseError) as exc:
+        report.unsupported.append(f"{where} (Stateflow chart: {str(exc).splitlines()[0]})")
+        return _placeholder(*ports, "Stateflow chart")
+    block = StateChart(definition=result.definition, state_output=False, sample_time=result.sample_time)
+    block.meta["chart_layout"] = result.layout
+    report.notes += [f"{where}: {n}" for n in dict.fromkeys(result.notes)]
+    report.charts.append(where)
+    return block
+
+
+def _chart_xml(archive: Any, block_path: str, name: str) -> bytes:
+    """``simulink/stateflow/chart_<id>.xml`` of the chart block: machine.xml maps block paths to chart ids."""
+    machine = archive.read("simulink/stateflow/machine.xml")
+    charts = sorted(n for n in archive.names if re.fullmatch(r"simulink/stateflow/chart_\d+\.xml", n))
+    if machine is not None:
+        root = ET.fromstring(machine)
+        for inst in root.iter("instance"):
+            p = _params(inst)
+            if p.get("name", "").replace("\n", " ") == block_path.replace("\n", " "):
+                data = archive.read(f"simulink/stateflow/chart_{p.get('chart', '')}.xml")
+                if data is not None:
+                    return data
+    for part in charts:  # no instance: the chart with the block's name
+        data = archive.read(part)
+        if data is not None and re.search(rf'<P Name="name">{re.escape(name)}</P>', data.decode("utf-8", "replace")):
+            return data
+    raise NervusError("the chart is not in the model file (a chart in a library or an older .mdl file)")
 
 
 def _unique(d: Diagram, name: str) -> str:
@@ -516,10 +605,15 @@ class _MdlArchive:
         self._sid = 0
         self.open_refs: set[str] = set()
         """The systems being read (see `_Archive`)."""
+        self.names: set[str] = set()
+        """No parts: the classic .mdl keeps Stateflow in its own section (not read)."""
         self.systems["system_root"] = self._convert(system)
 
     def system(self, ref: str) -> ET.Element:
         return self.systems[ref]
+
+    def read(self, name: str) -> bytes | None:
+        return None  # the classic .mdl keeps Stateflow in its own section (not read)
 
     def _convert(self, sec: _Section) -> ET.Element:
         el = ET.Element("System")
@@ -571,6 +665,9 @@ def read_model(path: str | Path) -> Diagram:
 def read_mdl(path: str | Path) -> Diagram:
     """Read a Simulink ``.mdl`` model (the text format). The import report is in ``model.meta["simulink_report"]``."""
     p = Path(path)
+    text = p.read_text(encoding="utf-8", errors="replace")
+    if "__MWOPC_PACKAGE_BEGIN__" in text:
+        return _read(_TextPackage(text), p)
     return _read(_MdlArchive(p), p)
 
 
@@ -580,12 +677,43 @@ def read_slx(path: str | Path) -> Diagram:
     return _read(_Archive(p), p)
 
 
+def _settings(archive: Any, d: Diagram, report: ImportReport) -> None:
+    """Stop time, solver and fixed step from the active configuration set."""
+    data = archive.read("simulink/configSet0.xml")
+    if data is None:
+        return
+    p: dict[str, str] = {}
+    for el in ET.fromstring(data).iter("P"):
+        p.setdefault(el.get("Name", ""), el.text or "")
+
+    def number(key: str) -> float | None:
+        try:
+            v = float(p.get(key, "").strip())
+        except ValueError:
+            return None
+        return v if math.isfinite(v) else None
+
+    s = d.settings
+    start, stop = number("StartTime"), number("StopTime")
+    if start is not None:
+        s.t_start = start
+    if stop is not None and stop >= s.t_start:
+        s.t_final = stop
+    solver = p.get("SolverName", p.get("Solver", ""))
+    if p.get("SolverType", "") == "Fixed-step" or solver.startswith("FixedStep") or solver in ("ode1", "ode4"):
+        s.solver = {"ode1": "euler", "FixedStepDiscrete": "euler"}.get(solver, "rk4")
+        s.step = number("FixedStep")
+    text = f"Simulation: {s.t_start:g} to {s.t_final:g} s, solver {s.solver}"
+    report.notes.append(text + (f", step {s.step:g} s" if s.step else ""))
+
+
 def _read(archive: Any, p: Path) -> Diagram:
     root = archive.system("system_root")
     d = Diagram(re.sub(r"\W", "_", p.stem))
     report = ImportReport()
     used: set[str] = set()
     _build(archive, root, d, "", report, used)
+    _settings(archive, d, report)
     for name in sorted(used):
         if name not in d.workspace:
             d.workspace.add(Variable(name, 1.0, "from the Simulink model: give it its value"))

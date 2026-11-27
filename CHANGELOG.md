@@ -5,6 +5,25 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Simulink import of **Stateflow charts** as State Chart blocks (`nervus.stateflow`): exclusive and parallel states
+  at any depth, entry/during/exit actions, transitions with their execution order, paths through junctions,
+  default transitions with actions, history, `after`/`before` in seconds and ticks, local events, input, output,
+  local and parameter data, MATLAB and C action language, and the states' positions. Two models made in MATLAB
+  R2025b (`scripts/matlab/stateflow_samples`) compute exactly what Simulink computed, sample for sample. The import
+  report lists what is not imported.
+- `.mdl` files of R2019b and later (the XML parts of an `.slx` as text) are read; the Simulink import also takes the
+  stop time, the solver and the fixed step, and the parameters of library blocks.
+- **Repeating Sequence** block (Sources), also imported from Simulink.
+- Chart language: `transition A -> B within S` (the transition belongs to S and leaves and enters every state below
+  it, as a Stateflow transition drawn in S) and `first_sample: enter` (Stateflow's start: the first sample only
+  enters the chart). The chart editor shows the scope of a transition.
+
+### Fixed
+- A transition guard with a division (`x / 2 > 1`) was cut at its `/` as if the rest were the action.
+- The MATLAB script for the Stateflow samples gives the chart outputs a value before they are read, and keeps the
+  `.slx` next to the `.mdl`.
+
 ## [0.3.0] - 2026-11-25
 
 Measurement and calibration of real ECUs, development boards, accelerated simulation.

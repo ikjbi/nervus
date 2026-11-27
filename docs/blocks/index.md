@@ -178,6 +178,7 @@ This reference is generated from the block source code (`scripts/gen_block_refer
 - **Sine Wave**: Sine wave:
 - **Pulse Generator**: Square pulse train. High (*amplitude*) for *duty* percent of each *period*, otherwise 0.
 - **Clock**: Outputs the simulation time *t*.
+- **Repeating Sequence**: Repeats a sequence of points: a sawtooth, a triangle or a drive pattern.
 - **From Workspace**: Plays back recorded data.
 - **Ground**: Outputs zero. Use it to connect an input you do not need, instead of leaving it unconnected.
 - **Drive Cycle**: A standard drive cycle as a speed profile (the target for a driver model):

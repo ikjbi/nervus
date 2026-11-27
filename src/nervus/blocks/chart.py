@@ -152,6 +152,10 @@ class ChartTransition:
     action: list[ast.stmt]
     guard_src: str
     action_src: str
+    within: int | None = None
+    """``transition A -> B within S``: the state the transition belongs to (-1: the chart), when it is above the
+    innermost state containing both ends; every state below it is left and entered again (as in Stateflow, where
+    a transition belongs to the state it is drawn in)."""
 
 
 @dataclass
@@ -167,6 +171,9 @@ class ChartSpec:
     """Read-only names whose values come from the model workspace or a mask (calibration parameters)."""
     events: list[str] = field(default_factory=list)
     """Local events: ``send(name)`` broadcasts one; a guard sees ``name`` as 1 while it is processed."""
+    enter_only_first: bool = False
+    """``first_sample: enter``: the first sample only enters the initial states (Stateflow's default); otherwise
+    they are entered and processed in it."""
 
     @property
     def variables(self) -> list[str]:
@@ -271,6 +278,24 @@ def _parse_vars(text: str, where: str, with_init: bool) -> list[tuple[str, float
     return out
 
 
+def _split_label(label: str) -> tuple[str, str]:
+    """``guard / action``: split at the first ``/`` with a guard before it and actions after it, so a guard may
+    divide (``x / 2 > 1 / y = 1``). Without such a ``/`` the whole label is the guard."""
+    for k, ch in enumerate(label):
+        if ch != "/":
+            continue
+        guard, action = label[:k].strip(), label[k + 1 :].strip()
+        try:
+            ast.parse(guard or "True", mode="eval")
+            body = ast.parse("\n".join(p.strip() for p in action.split(";")), mode="exec").body
+        except SyntaxError:
+            continue
+        if body and all(isinstance(st, ast.Assign | ast.AugAssign)
+                        or (isinstance(st, ast.Expr) and isinstance(st.value, ast.Call)) for st in body):  # fmt: skip
+            return guard, action
+    return label.strip(), ""
+
+
 def parse_chart(text: str) -> ChartSpec:
     """Parse the chart language (see the module docstring). Raises :class:`ParameterError` with the line."""
     inputs: list[str] = []
@@ -279,10 +304,11 @@ def parse_chart(text: str) -> ChartSpec:
     outputs: list[tuple[str, float]] = []
     locals_: list[tuple[str, float]] = []
     states: list[ChartState] = []
-    raw_transitions: list[tuple[int, str, str, str, str]] = []
+    raw_transitions: list[tuple[int, str, str, str, str, str | None]] = []
     initial_names: list[tuple[int | None, str, int]] = []  # (owner state, name, line)
     pending: list[tuple[ChartState, str, str, int]] = []
     stack: list[tuple[int, int]] = []  # (indentation of a state line, state index), outermost first
+    enter_only_first = False
     for lineno, raw in enumerate(text.splitlines(), 1):
         line = raw.split("#", 1)[0].rstrip().replace("\t", "    ")
         if not line.strip():
@@ -318,11 +344,11 @@ def parse_chart(text: str) -> ChartSpec:
         elif keyword == "initial":
             initial_names.append((owner, rest.strip(), lineno))
         elif keyword == "transition":
-            m = re.match(r"^(\w+)\s*->\s*(\w+)\s*:(.*)$", rest.strip())
+            m = re.match(r"^(\w+)\s*->\s*(\w+)(?:\s+within\s+(\w+))?\s*:(.*)$", rest.strip())
             if not m:
                 raise ParameterError(f"{where}: write 'transition A -> B: guard' (optionally '/ action')")
-            guard, _, action = m.group(3).partition("/")
-            raw_transitions.append((lineno, m.group(1), m.group(2), guard.strip(), action.strip()))
+            guard, action = _split_label(m.group(4))
+            raw_transitions.append((lineno, m.group(1), m.group(2), guard.strip(), action.strip(), m.group(3)))
         elif owner is not None:
             raise ParameterError(f"{where}: inside a state only entry, during, exit, state, initial and history")
         elif keyword == "input":
@@ -335,8 +361,15 @@ def parse_chart(text: str) -> ChartSpec:
             params += [n for n, _ in _parse_vars(rest, where, with_init=False)]
         elif keyword == "event":
             events += [n for n, _ in _parse_vars(rest, where, with_init=False)]
+        elif keyword == "first_sample:" or stripped.startswith("first_sample:"):
+            mode = stripped.partition(":")[2].strip()
+            if mode not in ("enter", "process"):
+                raise ParameterError(f"{where}: write 'first_sample: enter' or 'first_sample: process'")
+            enter_only_first = mode == "enter"
         else:
-            raise ParameterError(f"{where}: expected input, output, local, param, event, state, initial or transition")
+            raise ParameterError(
+                f"{where}: expected input, output, local, param, event, first_sample, state, initial or transition"
+            )
     if not states:
         raise ParameterError("a chart needs at least one state")
     names = set(inputs) | {n for n, _ in outputs} | {n for n, _ in locals_} | set(params) | {"t_in_state"}
@@ -369,11 +402,18 @@ def parse_chart(text: str) -> ChartSpec:
         if st.history and (not st.composite or st.parallel):
             raise ParameterError(f"state '{st.name}': history needs child states (and not parallel ones)")
     transitions = []
-    for lineno, a, b, guard, action in raw_transitions:
+    for lineno, a, b, guard, action, within_name in raw_transitions:
         for sname in (a, b):
             if sname not in index:
                 raise ParameterError(f"line {lineno}: unknown state '{sname}'")
         src, dst = index[a], index[b]
+        within: int | None = None
+        if within_name is not None:
+            within = -1 if within_name == "chart" else index.get(within_name)
+            if within is None:
+                raise ParameterError(f"line {lineno}: unknown state '{within_name}'")
+            if within >= 0 and not (within in _ancestry(states, src)[1:] and within in _ancestry(states, dst)[1:]):
+                raise ParameterError(f"line {lineno}: '{within_name}' must contain both {a} and {b}")
         anc_s, anc_d = _ancestry(states, src), _ancestry(states, dst)
         lca = next((x for x in anc_s[1:] if x in anc_d), None)
         below = [x for x in anc_s if x != lca][-1:] + [x for x in anc_d if x != lca][-1:]
@@ -386,8 +426,8 @@ def parse_chart(text: str) -> ChartSpec:
         _check_ast(g, names, assignable, f"line {lineno}", ev)
         transitions.append(ChartTransition(src, dst, g.body, _parse_actions(action, names, assignable,
                                                                             f"line {lineno}", ev),
-                                           guard or "true", action))  # fmt: skip
-    return ChartSpec(inputs, outputs, locals_, states, transitions, root_initial, params, events)
+                                           guard or "true", action, within))  # fmt: skip
+    return ChartSpec(inputs, outputs, locals_, states, transitions, root_initial, params, events, enter_only_first)
 
 
 def _guard_conditions(guard: ast.expr) -> tuple[list[Any], Any] | None:
@@ -426,7 +466,10 @@ def transition_scope(spec: ChartSpec, t: ChartTransition) -> int | None:
     """The innermost state that contains both ends of ``t`` and is left neither way (``None``: the chart itself).
 
     Everything below it on the source side is exited, on the target side entered. A self-transition, and a
-    transition to an enclosing state, leave that state and enter it again (its exit and entry actions run)."""
+    transition to an enclosing state, leave that state and enter it again (its exit and entry actions run). A
+    transition written ``within S`` belongs to S (``None`` for ``within chart``)."""
+    if t.within is not None:
+        return None if t.within < 0 else t.within
     anc_s, anc_d = spec.ancestors(t.source), spec.ancestors(t.target)
     return next((x for x in anc_s[1:] if x in anc_d[1:]), None)
 
@@ -561,7 +604,7 @@ class _Interpreter:
         Changes ``active``, ``ticks`` and ``hist`` in place.
 
         In the first sample (no state is active yet) the initial states are entered first, with the inputs of that
-        sample, and then processed like the rest of the chart."""
+        sample, and then processed like the rest of the chart (with ``first_sample: enter``, only entered)."""
         self.active, self.ticks, self.hist, self.period = active, ticks, hist, period
         self.entered = set()
         self.fired = []
@@ -571,6 +614,8 @@ class _Interpreter:
             env[name] = 0.0
         if not any(active[k] for k in self.spec.top):
             self._enter_default(self.spec.initial, env)
+            if self.spec.enter_only_first:
+                return  # Stateflow: the first sample only enters (the clocks start in the next one)
         event: int | None = None
         for _ in range(MAX_EVENT_PASSES + 1):
             if event is not None:

@@ -67,6 +67,8 @@ transition running -> off: key < 0.5 or rpm < 300
 | `  during: ...` | actions every period the state stays active |
 | `  exit: ...` | actions when the state is left |
 | `transition A -> B: guard / action` | leave A for B when *guard* is true; the action is optional |
+| `transition A -> B within S: ...` | the transition belongs to S: it leaves and enters again every state below S ([below](#nested-states-parallel-states-history-and-events)) |
+| `first_sample: enter` | the first sample only enters the initial states, as Stateflow does (by default they are also processed in it) |
 
 Actions are assignments separated by `;` (`y = 1; n += 1`). Guards and actions can use `+ - * / **`,
 comparisons, `and or not`, `abs min max sqrt exp log sin cos floor ceil`, `pi` and `e`.
@@ -134,6 +136,11 @@ transition failed -> ok: fault < 0.5 and after(30)
   It exits the states it leaves from the inside out (`exit` actions, innermost first), runs its action, and
   enters the states down to the target from the outside in (`entry` actions), then the target's initial
   children.
+- **`within`**: a transition belongs to the innermost state containing both its ends. `transition high -> low
+  within gear` makes it belong to `gear` instead: it leaves every state below `gear` (here also `driving`, which
+  contains both) and enters them again, so their `exit` and `entry` actions run. `within chart` leaves everything,
+  every parallel region too. This is how Stateflow treats a transition drawn outside the state that contains its
+  ends; [imported charts](coming_from_simulink.md#stateflow-charts) use it.
 
 **Priority**: outer transitions are checked first: while `on` is active, `on -> off` is checked before anything
 inside it. If no transition of a state fires, its `during` actions run and then its active children are

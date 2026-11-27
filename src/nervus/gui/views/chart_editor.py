@@ -512,6 +512,9 @@ class ChartEditor(QDialog):
         row.addWidget(up)
         row.addWidget(down)
         form.addRow(row)
+        self.tr_within = QLabel()
+        self.tr_within.setWordWrap(True)
+        form.addRow(self.tr_within)
         note = QLabel("The transitions leaving a state are checked in priority order; the first whose guard is true "
                       "fires.")  # fmt: skip
         note.setWordWrap(True)
@@ -635,6 +638,14 @@ class ChartEditor(QDialog):
             self.tr_priority.setText(f"Priority {self.chart.priority(tr)} of {n}")
             self.tr_up.setEnabled(self.chart.priority(tr) > 1)
             self.tr_down.setEnabled(self.chart.priority(tr) < n)
+            where = "the chart" if tr.within == "chart" else tr.within
+            self.tr_within.setText(
+                f"Belongs to {where}: leaves and enters again every state below it (as drawn in Stateflow; "
+                "change it in the Text tab)."
+                if tr.within
+                else ""
+            )
+            self.tr_within.setVisible(bool(tr.within))
             self.panel.setCurrentIndex(2)
         else:
             c = self.chart

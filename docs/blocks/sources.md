@@ -155,6 +155,27 @@ Outputs the simulation time *t*.
 
 ---
 
+## Repeating Sequence
+
+`sources.repeating_sequence` · Sources
+
+Repeats a sequence of points: a sawtooth, a triangle or a drive pattern.
+
+The output interpolates linearly between the points (*times*, *values*) and starts again after the last time
+point, which is the period. Two points at the same time make a jump. As Simulink's Repeating Sequence block.
+
+### Parameters
+
+| Name | Default | Unit | Description |
+|---|---|---|---|
+| `times` | `[0.0, 2.0]` | s | Times of the points; the last one is the period |
+| `values` | `[0.0, 2.0]` |  | Values at those times |
+| `sample_time` | `0.0` | s | 0 = continuous, > 0 = discrete period |
+
+*Direct feedthrough:* yes · no inputs
+
+---
+
 ## From Workspace
 
 `sources.from_workspace` · Sources

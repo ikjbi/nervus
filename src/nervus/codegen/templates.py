@@ -962,19 +962,24 @@ def _state_chart(e: Emitter) -> BlockCode:
     lines = ["{", f"    real_T act0[{n}];", f"    int entered[{n}];", "    int i;"]
     if spec.events:
         lines += [f"    int q[{MAX_EVENT_PASSES}];", "    int nq = 0;", "    int ev = -1;", "    int pass;"]
-    lines += [f"    for (i = 0; i < {n}; i++) {{ entered[i] = 0; }}", *[f"    {x}" for x in start]]
     if spec.events:  # one pass, then one more for each broadcast event
-        lines += [
-            f"    for (pass = 0; pass <= {MAX_EVENT_PASSES}; pass++) {{",
-            *[f"        {x}" for x in body],
-            "        if (nq == 0) { break; }",
-            "        ev = q[0];",
-            "        for (i = 1; i < nq; i++) { q[i - 1] = q[i]; }",
-            "        nq--;",
-            "    }",
+        run = [
+            f"for (pass = 0; pass <= {MAX_EVENT_PASSES}; pass++) {{",
+            *[f"    {x}" for x in body],
+            "    if (nq == 0) { break; }",
+            "    ev = q[0];",
+            "    for (i = 1; i < nq; i++) { q[i - 1] = q[i]; }",
+            "    nq--;",
+            "}",
         ]
     else:
-        lines += [f"    {x}" for x in body]
+        run = body
+    if spec.enter_only_first:  # Stateflow: the first sample only enters; processing starts in the second
+        start[-1] = "} else {"
+        run = [*start, *[f"    {x}" for x in run], "}"]
+    else:
+        run = [*start, *run]
+    lines += [f"    for (i = 0; i < {n}; i++) {{ entered[i] = 0; }}", *[f"    {x}" for x in run]]
     lines += [
         f"    for (i = 0; i < {n}; i++) {{",
         f"        if (({s}[i] != 0.0) && (entered[i] == 0)) {{ {s}[{n} + i] += 1.0; }}",
